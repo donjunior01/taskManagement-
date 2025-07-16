@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JD Cosmetic - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #dadce6 0%, #3f3c42 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .company-name {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .company-tagline {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            outline: none;
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: #667eea;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3b4571 0%, #1a0430 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .forgot-password {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .forgot-password a {
+            color: #141f4d;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .input-valid {
+            border-color: #27ae60 !important;
+        }
+
+        .input-invalid {
+            border-color: #e74c3c !important;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+
+            .logo {
+                width: 100px;
+                height: 100px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div>
+        <img src="gpi-logo1.png" alt="GPI img" height="80" width="100">
+    </div>
+    <!-- <h1 class="company-name">JD SARL</h1> -->
+    <!-- <p class="company-tagline">Gestion des Performances Individuelles</p> -->
+    <p class="company-tagline">Gestion des Performances Individuelles</p>
+
+    <form th:action="@{/api/auth/login}" method="post">
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required placeholder="Enter your email">
+            <div class="error-message" id="emailError">Please enter a valid @jdcosmetics.com email address</div>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required placeholder="Enter your password">
+            <div class="error-message" id="passwordError">Password is required</div>
+        </div>
+
+        <button type="submit" class="login-btn">Sign In</button>
+    </form>
+
+    <!-- <div class="forgot-password">
+        <a href="#">Forgot your password?</a>
+    </div> -->
+</div>
+
+<script>
+    const form = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
+
+    // Real-time email validation
+    emailInput.addEventListener('input', function() {
+        validateEmail();
+    });
+
+    emailInput.addEventListener('blur', function() {
+        validateEmail();
+    });
+
+    passwordInput.addEventListener('input', function() {
+        validatePassword();
+    });
+
+    function validateEmail() {
+        const email = emailInput.value.trim();
+        const emailPattern = /^[^\s@]+@jdcosmetics\.com$/;
+
+        if (email === '') {
+            emailInput.classList.remove('input-valid', 'input-invalid');
+            emailError.style.display = 'none';
+            return false;
+        }
+
+        if (emailPattern.test(email)) {
+            emailInput.classList.remove('input-invalid');
+            emailInput.classList.add('input-valid');
+            emailError.style.display = 'none';
+            return true;
+        } else {
+            emailInput.classList.remove('input-valid');
+            emailInput.classList.add('input-invalid');
+            emailError.style.display = 'block';
+            return false;
+        }
+    }
+
+    function validatePassword() {
+        const password = passwordInput.value.trim();
+
+        if (password === '') {
+            passwordInput.classList.remove('input-valid', 'input-invalid');
+            passwordError.style.display = 'none';
+            return false;
+        }
+
+        if (password.length >= 1) {
+            passwordInput.classList.remove('input-invalid');
+            passwordInput.classList.add('input-valid');
+            passwordError.style.display = 'none';
+            return true;
+        } else {
+            passwordInput.classList.remove('input-valid');
+            passwordInput.classList.add('input-invalid');
+            passwordError.style.display = 'block';
+            return false;
+        }
+    }
+
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const isEmailValid = validateEmail();
+        const isPasswordValid = validatePassword();
+
+        if (isEmailValid && isPasswordValid) {
+            // Simulate login process
+
+            const loginBtn = document.querySelector('.login-btn');
+            loginBtn.innerHTML = 'Signing In...';
+            loginBtn.disabled = true;
+
+            th:action="@{/api/auth/login}"; method="post";
+            setTimeout(() => {
+                alert('Login successful! Welcome to JD Cosmetic.');
+                loginBtn.innerHTML = 'Sign In';
+                loginBtn.disabled = false;
+                // In a real application, you would redirect to the dashboard
+            }, 1500);
+        } else {
+            // Show errors for invalid fields
+            if (!isEmailValid) {
+                emailError.style.display = 'block';
+            }
+            if (!isPasswordValid) {
+                passwordError.style.display = 'block';
+            }
+        }
+    });
+
+    // Add some interactive feedback
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'translateY(-2px)';
+        });
+
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'translateY(0)';
+        });
+    });
+</script>
+</body>
+</html>
