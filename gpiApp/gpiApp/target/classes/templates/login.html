@@ -148,11 +148,11 @@
     <!-- <p class="company-tagline">Gestion des Performances Individuelles</p> -->
     <p class="company-tagline">Gestion des Performances Individuelles</p>
 
-    <form th:action="@{/api/auth/login}" method="post">
+    <form id="loginForm" th:action="@{/api/auth/login}" method="post">
         <div class="form-group">
             <label for="email">Email Address</label>
             <input type="email" id="email" name="email" required placeholder="Enter your email">
-            <div class="error-message" id="emailError">Please enter a valid @jdcosmetics.com email address</div>
+            <div class="error-message" id="emailError">Please enter a valid email address</div>
         </div>
 
         <div class="form-group">
@@ -191,7 +191,7 @@
 
     function validateEmail() {
         const email = emailInput.value.trim();
-        const emailPattern = /^[^\s@]+@jdcosmetics\.com$/;
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (email === '') {
             emailInput.classList.remove('input-valid', 'input-invalid');
@@ -242,19 +242,12 @@
         const isPasswordValid = validatePassword();
 
         if (isEmailValid && isPasswordValid) {
-            // Simulate login process
-
             const loginBtn = document.querySelector('.login-btn');
             loginBtn.innerHTML = 'Signing In...';
             loginBtn.disabled = true;
 
-            th:action="@{/api/auth/login}"; method="post";
-            setTimeout(() => {
-                alert('Login successful! Welcome to JD Cosmetic.');
-                loginBtn.innerHTML = 'Sign In';
-                loginBtn.disabled = false;
-                // In a real application, you would redirect to the dashboard
-            }, 1500);
+            // Submit the form
+            form.submit();
         } else {
             // Show errors for invalid fields
             if (!isEmailValid) {

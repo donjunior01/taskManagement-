@@ -113,10 +113,11 @@
                 </button>
             </div>
             <div class="admin-profile">
-                <img src="https://via.placeholder.com/40x40/4361ee/ffffff?text=SA" alt="Super Admin Avatar">
+                <img th:if="${user.profilePictureUrl}" th:src="${user.profilePictureUrl}" alt="Admin Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                <img th:unless="${user.profilePictureUrl}" th:src="'https://via.placeholder.com/40x40/4361ee/ffffff?text=' + ${#strings.substring(user.firstName,0,1)} + ${#strings.substring(user.lastName,0,1)}" alt="Admin Avatar">
                 <div class="admin-details">
-                    <span class="username">Super Admin</span>
-                    <span class="role">System Administrator</span>
+                    <span class="username" th:text="${user.firstName + ' ' + user.lastName}">Super Admin</span>
+                    <span class="role" th:text="${user.userPost}">System Administrator</span>
                 </div>
             </div>
         </div>

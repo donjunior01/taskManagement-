@@ -1,220 +1,249 @@
 package com.example.gpiApp.service.impl;
 
 import com.example.gpiApp.dto.UserDTO;
-import com.example.gpiApp.dto.UserListResponseDTO;
 import com.example.gpiApp.dto.UserRequestDTO;
 import com.example.gpiApp.dto.UserResponseDTO;
 import com.example.gpiApp.entity.allUsers;
-import com.example.gpiApp.entity.allUsers.Role;
 import com.example.gpiApp.repository.UserRepository;
-import com.example.gpiApp.repository.UserService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import com.example.gpiApp.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
     @Override
-    public UserListResponseDTO getAllUsers(int page, int size, String sortBy, String sortDir) {
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) 
-            ? Sort.by(sortBy).ascending() 
-            : Sort.by(sortBy).descending();
-        
-        PageRequest pageable = PageRequest.of(page, size, sort);
-        Page<allUsers> usersPage = userRepository.findAll(pageable);
-        
-        List<UserDTO> userDTOs = usersPage.getContent().stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
-            
-        return new UserListResponseDTO(
-            true,
-            "Users retrieved successfully",
-            userDTOs,
-            usersPage.getNumber(),
-            usersPage.getSize(),
-            usersPage.getTotalElements(),
-            usersPage.getTotalPages(),
-            usersPage.isFirst(),
-            usersPage.isLast()
-        );
-    }
-
-    @Override
-    public UserResponseDTO getUserById(Long id) {
-        Optional<allUsers> userOptional = userRepository.findById(id);
-        if (userOptional.isPresent()) {
-            UserDTO userDTO = convertToDTO(userOptional.get());
-            return new UserResponseDTO(true, "allUsers retrieved successfully", userDTO);
-        }
-        return new UserResponseDTO(false, "allUsers not found", null);
-    }
-
-    @Override
-    public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
-        System.out.println("Creating user with data: " + userRequestDTO);
-        
-        if (userRepository.existsByUsername(userRequestDTO.getUsername())) {
-            System.out.println("Username already exists: " + userRequestDTO.getUsername());
-            return new UserResponseDTO(false, "Username already exists", null);
-        }
+    public UserDTO createUser(UserRequestDTO userRequestDTO) {
+        // Check if email already exists
         if (userRepository.existsByEmail(userRequestDTO.getEmail())) {
-            System.out.println("Email already exists: " + userRequestDTO.getEmail());
-            return new UserResponseDTO(false, "Email already exists", null);
+            throw new RuntimeException("Email already exists: " + userRequestDTO.getEmail());
         }
 
-        try {
-            allUsers allUsers = new allUsers();
-            updateUserFromDTO(allUsers, userRequestDTO);
-            allUsers.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
-            System.out.println("Saving allUsers: " + allUsers);
-            allUsers savedAllUsers = userRepository.save(allUsers);
-            System.out.println("allUsers saved successfully with ID: " + savedAllUsers.getId());
-            UserDTO userDTO = convertToDTO(savedAllUsers);
-            return new UserResponseDTO(true, "allUsers created successfully", userDTO);
-        } catch (Exception e) {
-            System.out.println("Error creating user: " + e.getMessage());
-            e.printStackTrace();
-            return new UserResponseDTO(false, "Error creating user: " + e.getMessage(), null);
-        }
+        allUsers user = allUsers.builder()
+                .email(userRequestDTO.getEmail())
+                .passwordHash(passwordEncoder.encode(userRequestDTO.getPassword()))
+                .firstName(userRequestDTO.getFirstName())
+                .lastName(userRequestDTO.getLastName())
+                .phone(userRequestDTO.getPhone())
+                .profilePictureUrl(userRequestDTO.getProfilePictureUrl())
+                .userRole(userRequestDTO.getUserRole())
+                .userPost(userRequestDTO.getUserPost())
+                .isActive(true)
+                .build();
+
+        allUsers savedUser = userRepository.save(user);
+        return convertToDTO(savedUser);
     }
 
     @Override
-    public UserResponseDTO updateUser(Long id, UserRequestDTO userRequestDTO) {
-        System.out.println("Starting update for user ID: " + id);
-        System.out.println("Update data received: " + userRequestDTO);
-        
-        Optional<allUsers> userOptional = userRepository.findById(id);
-        if (userOptional.isEmpty()) {
-            System.out.println("allUsers not found with ID: " + id);
-            return new UserResponseDTO(false, "allUsers not found", null);
-        }
-
-        allUsers existingAllUsers = userOptional.get();
-        System.out.println("Found existing user: " + existingAllUsers);
-
-        // Check for duplicate username only if username is being changed
-        if (!existingAllUsers.getUsername().equals(userRequestDTO.getUsername())
-            && userRepository.existsByUsername(userRequestDTO.getUsername())) {
-            System.out.println("Username already exists: " + userRequestDTO.getUsername());
-            return new UserResponseDTO(false, "Username already exists", null);
-        }
-
-        // Check for duplicate email only if email is being changed
-        if (!existingAllUsers.getEmail().equals(userRequestDTO.getEmail())
-            && userRepository.existsByEmail(userRequestDTO.getEmail())) {
-            System.out.println("Email already exists: " + userRequestDTO.getEmail());
-            return new UserResponseDTO(false, "Email already exists", null);
-        }
-
-        try {
-            // Update user fields
-            existingAllUsers.setUsername(userRequestDTO.getUsername());
-            existingAllUsers.setEmail(userRequestDTO.getEmail());
-            existingAllUsers.setFirstName(userRequestDTO.getFirstName());
-            existingAllUsers.setLastName(userRequestDTO.getLastName());
+    public UserDTO updateUser(UUID userId, UserRequestDTO userRequestDTO) {
+        Optional<allUsers> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            allUsers user = userOpt.get();
             
-            // Handle role and status enums
-            if (userRequestDTO.getRole() != null) {
-                existingAllUsers.setRole(allUsers.Role.valueOf(userRequestDTO.getRole().toString()));
-            }
+            // Update fields
+            user.setEmail(userRequestDTO.getEmail());
+            user.setFirstName(userRequestDTO.getFirstName());
+            user.setLastName(userRequestDTO.getLastName());
+            user.setPhone(userRequestDTO.getPhone());
+            user.setProfilePictureUrl(userRequestDTO.getProfilePictureUrl());
+            user.setUserRole(userRequestDTO.getUserRole());
+            user.setUserPost(userRequestDTO.getUserPost());
             
-            // Only update password if a new one is provided
+            // Update password if provided
             if (userRequestDTO.getPassword() != null && !userRequestDTO.getPassword().isEmpty()) {
-                System.out.println("Updating password for user ID: " + id);
-                existingAllUsers.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
+                user.setPasswordHash(passwordEncoder.encode(userRequestDTO.getPassword()));
             }
-
-            System.out.println("Saving updated user: " + existingAllUsers);
-            allUsers updatedAllUsers = userRepository.save(existingAllUsers);
-            System.out.println("allUsers saved successfully: " + updatedAllUsers);
-
-            UserDTO userDTO = convertToDTO(updatedAllUsers);
-            return new UserResponseDTO(true, "allUsers updated successfully", userDTO);
-        } catch (Exception e) {
-            System.out.println("Error updating user: " + e.getMessage());
-            e.printStackTrace();
-            return new UserResponseDTO(false, "Error updating user: " + e.getMessage(), null);
-        }
-    }
-
-    @Override
-    public UserResponseDTO deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            return new UserResponseDTO(false, "allUsers not found", null);
-        }
-        userRepository.deleteById(id);
-        return new UserResponseDTO(true, "allUsers deleted successfully", null);
-    }
-
-    @Override
-    public UserListResponseDTO filterUsers(String role, String status, int page, int size, String sortBy, String sortDir) {
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) 
-            ? Sort.by(sortBy).ascending() 
-            : Sort.by(sortBy).descending();
-        
-        PageRequest pageable = PageRequest.of(page, size, sort);
-        Page<allUsers> usersPage;
-        
-        if (role != null) {
-            usersPage = userRepository.findByRole(
-                allUsers.Role.valueOf(role.toUpperCase()),
-                pageable
-            );
-        } else {
-            usersPage = userRepository.findAll(pageable);
-        }
-        
-        List<UserDTO> userDTOs = usersPage.getContent().stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
             
-        return new UserListResponseDTO(
-            true,
-            "Users filtered successfully",
-            userDTOs,
-            usersPage.getNumber(),
-            usersPage.getSize(),
-            usersPage.getTotalElements(),
-            usersPage.getTotalPages(),
-            usersPage.isFirst(),
-            usersPage.isLast()
-        );
+            user.setUpdatedAt(LocalDateTime.now());
+            allUsers updatedUser = userRepository.save(user);
+            return convertToDTO(updatedUser);
+        }
+        throw new RuntimeException("User not found with ID: " + userId);
     }
 
-    private UserDTO convertToDTO(allUsers allUsers) {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setId(allUsers.getId());
-        userDTO.setUsername(allUsers.getUsername());
-        userDTO.setEmail(allUsers.getEmail());
-        userDTO.setPassword(allUsers.getPassword());
-        userDTO.setFirstName(allUsers.getFirstName());
-        userDTO.setLastName(allUsers.getLastName());
-        userDTO.setRole(allUsers.getRole());
-        userDTO.setFullName(allUsers.getFirstName() + " " + allUsers.getLastName());
-        return userDTO;
+    @Override
+    public void deleteUser(UUID userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+        userRepository.deleteById(userId);
     }
 
-    private void updateUserFromDTO(allUsers allUsers, UserRequestDTO userRequestDTO) {
-        allUsers.setUsername(userRequestDTO.getUsername());
-        allUsers.setEmail(userRequestDTO.getEmail());
-        allUsers.setFirstName(userRequestDTO.getFirstName());
-        allUsers.setLastName(userRequestDTO.getLastName());
-        allUsers.setRole(Role.valueOf(userRequestDTO.getRole().toString()));
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<UserDTO> getUserById(UUID userId) {
+        return userRepository.findById(userId).map(this::convertToDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<UserDTO> getUserByEmail(String email) {
+        return userRepository.findByEmail(email).map(this::convertToDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserDTO> getActiveUsers() {
+        return userRepository.findByIsActiveTrue().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserDTO> getUsersByRole(allUsers.UserRole role) {
+        return userRepository.findByUserRole(role).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserDTO> getUsersByPost(allUsers.UserPost post) {
+        return userRepository.findByUserPost(post).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countActiveUsers() {
+        return userRepository.countByIsActiveTrue();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countUsersByRole(allUsers.UserRole role) {
+        return userRepository.countByUserRole(role);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public UserResponseDTO authenticateUser(String email, String password) {
+        Optional<allUsers> userOpt = userRepository.findByEmailAndIsActiveTrue(email);
+        if (userOpt.isPresent()) {
+            allUsers user = userOpt.get();
+            if (passwordEncoder.matches(password, user.getPasswordHash())) {
+                // Update last login
+                user.setLastLoginAt(LocalDateTime.now());
+                userRepository.save(user);
+                
+                UserDTO userDTO = convertToDTO(user);
+                return new UserResponseDTO(true, "Authentication successful", userDTO);
+            }
+        }
+        return new UserResponseDTO(false, "Invalid email or password", null);
+    }
+
+    @Override
+    public void updateUserProfile(UUID userId, UserRequestDTO userRequestDTO) {
+        Optional<allUsers> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            allUsers user = userOpt.get();
+            
+            // Update profile fields only
+            user.setFirstName(userRequestDTO.getFirstName());
+            user.setLastName(userRequestDTO.getLastName());
+            user.setPhone(userRequestDTO.getPhone());
+            user.setProfilePictureUrl(userRequestDTO.getProfilePictureUrl());
+            user.setUpdatedAt(LocalDateTime.now());
+            
+            userRepository.save(user);
+        } else {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+    }
+
+    @Override
+    public void updateUserPassword(UUID userId, String newPassword) {
+        Optional<allUsers> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            allUsers user = userOpt.get();
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+        } else {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+    }
+
+    @Override
+    public void deactivateUser(UUID userId) {
+        Optional<allUsers> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            allUsers user = userOpt.get();
+            user.setIsActive(false);
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+        } else {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+    }
+
+    @Override
+    public void activateUser(UUID userId) {
+        Optional<allUsers> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            allUsers user = userOpt.get();
+            user.setIsActive(true);
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+        } else {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserDTO> searchUsers(String keyword) {
+        return userRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                keyword, keyword, keyword).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private UserDTO convertToDTO(allUsers user) {
+        return UserDTO.builder()
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .phone(user.getPhone())
+                .profilePictureUrl(user.getProfilePictureUrl())
+                .userRole(user.getUserRole())
+                .userPost(user.getUserPost())
+                .isActive(user.getIsActive())
+                .emailVerifiedAt(user.getEmailVerifiedAt())
+                .lastLoginAt(user.getLastLoginAt())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
     }
 } 

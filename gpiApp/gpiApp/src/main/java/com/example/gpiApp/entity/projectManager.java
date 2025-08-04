@@ -14,6 +14,6 @@ import lombok.Setter;
 public class projectManager extends allUsers {
     public projectManager() {
         super();
-        this.setRole(Role.PROJECT_MANAGER);
+        this.setUserRole(UserRole.MANAGER);
     }
 }

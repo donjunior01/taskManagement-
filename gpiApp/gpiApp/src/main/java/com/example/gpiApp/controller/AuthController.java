@@ -1,6 +1,6 @@
 package com.example.gpiApp.controller;
 
-import com.example.gpiApp.repository.UserService;
+import com.example.gpiApp.service.UserService;
 import com.example.gpiApp.config.security.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create User - Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body data-theme="dark">
+    <div class="container">
+        <div class="form-container">
+            <div class="form-header">
+                <h2><i class="fas fa-user-plus"></i> Create New User</h2>
+                <a href="/admin/dashboard" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+
+            <form th:action="@{/api/users}" method="post" class="user-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name *</label>
+                        <input type="text" id="firstName" name="firstName" required placeholder="Enter first name">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name *</label>
+                        <input type="text" id="lastName" name="lastName" required placeholder="Enter last name">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" required placeholder="Enter email address">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Enter phone number">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userRole">User Role *</label>
+                        <select id="userRole" name="userRole" required>
+                            <option value="">Select Role</option>
+                            <option value="EMPLOYEE">Employee</option>
+                            <option value="MANAGER">Manager</option>
+                            <option value="SUPER_ADMIN">Super Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPost">User Post *</label>
+                        <select id="userPost" name="userPost" required>
+                            <option value="">Select Post</option>
+                            <option value="DEVELOPER">Developer</option>
+                            <option value="DESIGNER">Designer</option>
+                            <option value="ANALYST">Analyst</option>
+                            <option value="PROJECT_MANAGER">Project Manager</option>
+                            <option value="TEAM_LEAD">Team Lead</option>
+                            <option value="ARCHITECT">Architect</option>
+                            <option value="QA_ENGINEER">QA Engineer</option>
+                            <option value="DEVOPS">DevOps</option>
+                            <option value="PRODUCT_OWNER">Product Owner</option>
+                            <option value="SCRUM_MASTER">Scrum Master</option>
+                            <option value="BUSINESS_ANALYST">Business Analyst</option>
+                            <option value="UI_UX_DESIGNER">UI/UX Designer</option>
+                            <option value="DATA_SCIENTIST">Data Scientist</option>
+                            <option value="MARKETING_SPECIALIST">Marketing Specialist</option>
+                            <option value="HR_SPECIALIST">HR Specialist</option>
+                            <option value="FINANCE_OFFICER">Finance Officer</option>
+                            <option value="OPERATIONS_MANAGER">Operations Manager</option>
+                            <option value="SALES_REPRESENTATIVE">Sales Representative</option>
+                            <option value="CUSTOMER_SUPPORT">Customer Support</option>
+                            <option value="INTERN">Intern</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input type="password" id="password" name="password" required placeholder="Enter password">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password *</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm password">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="profilePictureUrl">Profile Picture URL</label>
+                        <input type="url" id="profilePictureUrl" name="profilePictureUrl" placeholder="Enter profile picture URL">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Create User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Form validation
+        document.querySelector('.user-form').addEventListener('submit', function(e) {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const userRole = document.getElementById('userRole').value;
+            const userPost = document.getElementById('userPost').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!firstName || !lastName || !email || !userRole || !userPost || !password || !confirmPassword) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return false;
+            }
+
+            // Email validation
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                e.preventDefault();
+                alert('Please enter a valid email address.');
+                return false;
+            }
+
+            // Password validation
+            if (password.length < 6) {
+                e.preventDefault();
+                alert('Password must be at least 6 characters long.');
+                return false;
+            }
+
+            // Password confirmation
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match.');
+                return false;
+            }
+        });
+
+        // Auto-generate profile picture URL based on name
+        document.getElementById('firstName').addEventListener('input', function() {
+            const firstName = this.value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            if (firstName && lastName) {
+                const initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+                document.getElementById('profilePictureUrl').value = 
+                    `https://via.placeholder.com/150x150/4361ee/ffffff?text=${initials}`;
+            }
+        });
+
+        document.getElementById('lastName').addEventListener('input', function() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = this.value.trim();
+            if (firstName && lastName) {
+                const initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+                document.getElementById('profilePictureUrl').value = 
+                    `https://via.placeholder.com/150x150/4361ee/ffffff?text=${initials}`;
+            }
+        });
+    </script>
+</body>
+</html> 

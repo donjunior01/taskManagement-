@@ -8,10 +8,6 @@ import lombok.Data;
 
 @Data
 public class UserRequestDTO {
-    @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
-    private String username;
-
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
     private String email;
@@ -25,5 +21,11 @@ public class UserRequestDTO {
     @NotBlank(message = "Last name is required")
     private String lastName;
 
-    private allUsers.Role role;
+    private String phone;
+    
+    private String profilePictureUrl;
+    
+    private allUsers.UserRole userRole;
+    
+    private allUsers.UserPost userPost;
 } 

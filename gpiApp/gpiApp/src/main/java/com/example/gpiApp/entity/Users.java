@@ -14,6 +14,6 @@ import lombok.Setter;
 public class Users extends allUsers {
     public Users() {
         super();
-        this.setRole(Role.USER);
+        this.setUserRole(UserRole.EMPLOYEE);
     }
 } 

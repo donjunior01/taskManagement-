@@ -14,6 +14,6 @@ import lombok.Setter;
 public class Admin extends allUsers {
     public Admin() {
         super();
-        this.setRole(Role.ADMIN);
+        this.setUserRole(UserRole.SUPER_ADMIN);
     }
 } 
