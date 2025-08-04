@@ -184,7 +184,7 @@ Key configuration options in `application.properties`:
 # Database
 spring.datasource.url=jdbc:mysql://localhost:3306/task_management_db
 spring.datasource.username=root
-spring.datasource.password=password
+spring.datasource.password=root
 
 # JWT
 jwt.secret=your-secret-key
@@ -210,13 +210,6 @@ The application implements comprehensive security features:
 - Session management
 - Audit logging
 - Input validation
-
-## Monitoring and Health Checks
-
-The application includes Spring Boot Actuator for monitoring:
-- Health checks: `/api/actuator/health`
-- Application info: `/api/actuator/info`
-- Metrics: `/api/actuator/metrics`
 
 ## Development
 
@@ -257,6 +250,3 @@ For technical support or questions:
 - Ensure all prerequisites are properly installed
 - Verify database connectivity and credentials
 
-## License
-
-This project is licensed under the MIT License.
