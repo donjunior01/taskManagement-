@@ -8,7 +8,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/task-priorities")
@@ -26,7 +25,7 @@ public class TaskPriorityController {
     
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TaskPriorityDTO> getTaskPriorityById(@PathVariable UUID id) {
+    public ResponseEntity<TaskPriorityDTO> getTaskPriorityById(@PathVariable Long id) {
         return taskPriorityService.getTaskPriorityById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -40,13 +39,13 @@ public class TaskPriorityController {
     
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TaskPriorityDTO> updateTaskPriority(@PathVariable UUID id, @RequestBody TaskPriorityDTO taskPriorityDTO) {
+    public ResponseEntity<TaskPriorityDTO> updateTaskPriority(@PathVariable Long id, @RequestBody TaskPriorityDTO taskPriorityDTO) {
         return ResponseEntity.ok(taskPriorityService.updateTaskPriority(id, taskPriorityDTO));
     }
     
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<Void> deleteTaskPriority(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteTaskPriority(@PathVariable Long id) {
         taskPriorityService.deleteTaskPriority(id);
         return ResponseEntity.ok().build();
     }

@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -17,9 +16,9 @@ import java.util.UUID;
 @Builder
 public class SystemSettings {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "setting_id")
-    private UUID settingId;
+    private Long settingId;
 
     @Column(name = "setting_key", nullable = false, unique = true)
     private String settingKey;
@@ -36,14 +35,9 @@ public class SystemSettings {
     @Column(name = "is_encrypted", nullable = false)
     private Boolean isEncrypted = false;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "updated_by")
-    private allUsers updatedBy;
-
-    @PrePersist
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

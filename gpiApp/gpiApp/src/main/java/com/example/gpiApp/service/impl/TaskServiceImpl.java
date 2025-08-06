@@ -21,7 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +34,8 @@ public class TaskServiceImpl implements TaskService {
     private final ProjectRepository projectRepository;
     private final TaskCategoryRepository taskCategoryRepository;
     private final TaskPriorityRepository taskPriorityRepository;
+
+    Random random = new Random();
     
     @Override
     public TaskDTO createTask(TaskDTO taskDTO) {
@@ -51,7 +53,7 @@ public class TaskServiceImpl implements TaskService {
                 .build();
         
         // Set created by (current user)
-        Optional<allUsers> creator = userRepository.findById(UUID.randomUUID()); // TODO: Get from security context
+        Optional<allUsers> creator = userRepository.findById(random.nextLong()); // TODO: Get from security context
         creator.ifPresent(task::setCreatedBy);
         
         // Set project if provided
@@ -77,7 +79,7 @@ public class TaskServiceImpl implements TaskService {
     }
     
     @Override
-    public TaskDTO updateTask(UUID taskId, TaskDTO taskDTO) {
+    public TaskDTO updateTask(Long taskId, TaskDTO taskDTO) {
         Optional<Task> taskOpt = taskRepository.findById(taskId);
         if (taskOpt.isPresent()) {
             Task task = taskOpt.get();
@@ -114,13 +116,13 @@ public class TaskServiceImpl implements TaskService {
     }
     
     @Override
-    public void deleteTask(UUID taskId) {
+    public void deleteTask(Long taskId) {
         taskRepository.deleteById(taskId);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<TaskDTO> getTaskById(UUID taskId) {
+    public Optional<TaskDTO> getTaskById(Long taskId) {
         return taskRepository.findById(taskId).map(this::convertToDTO);
     }
     
@@ -134,7 +136,7 @@ public class TaskServiceImpl implements TaskService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<TaskDTO> getTasksByCreator(UUID userId) {
+    public List<TaskDTO> getTasksByCreator(Long userId) {
         return taskRepository.findByCreatedByUserId(userId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -142,7 +144,7 @@ public class TaskServiceImpl implements TaskService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<TaskDTO> getTasksByProject(UUID projectId) {
+    public List<TaskDTO> getTasksByProject(Long projectId) {
         return taskRepository.findByProjectProjectId(projectId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -166,7 +168,7 @@ public class TaskServiceImpl implements TaskService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<TaskDTO> getTasksByCreatorAndStatus(UUID userId, Task.TaskStatus status) {
+    public List<TaskDTO> getTasksByCreatorAndStatus(Long userId, Task.TaskStatus status) {
         return taskRepository.findByCreatorAndStatus(userId, status).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -182,7 +184,7 @@ public class TaskServiceImpl implements TaskService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<TaskDTO> getTasksByUserAndDateRange(UUID userId, LocalDate startDate, LocalDate endDate) {
+    public List<TaskDTO> getTasksByUserAndDateRange(Long userId, LocalDate startDate, LocalDate endDate) {
         return taskRepository.findTasksByUserAndDateRange(userId, startDate, endDate).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -190,7 +192,7 @@ public class TaskServiceImpl implements TaskService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<TaskDTO> getTasksByTeam(UUID teamId) {
+    public List<TaskDTO> getTasksByTeam(Long teamId) {
         return taskRepository.findTasksByTeam(teamId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -220,7 +222,7 @@ public class TaskServiceImpl implements TaskService {
     
     @Override
     @Transactional(readOnly = true)
-    public long countTasksByUserAndStatus(UUID userId, Task.TaskStatus status) {
+    public long countTasksByUserAndStatus(Long userId, Task.TaskStatus status) {
         if (status == null) {
             return taskRepository.findByCreatedByUserId(userId).size();
         }
@@ -228,7 +230,7 @@ public class TaskServiceImpl implements TaskService {
     }
     
     @Override
-    public TaskDTO updateTaskStatus(UUID taskId, Task.TaskStatus status) {
+    public TaskDTO updateTaskStatus(Long taskId, Task.TaskStatus status) {
         Optional<Task> taskOpt = taskRepository.findById(taskId);
         if (taskOpt.isPresent()) {
             Task task = taskOpt.get();
@@ -246,7 +248,7 @@ public class TaskServiceImpl implements TaskService {
     }
     
     @Override
-    public TaskDTO updateTaskProgress(UUID taskId, Double progressPercentage) {
+    public TaskDTO updateTaskProgress(Long taskId, Double progressPercentage) {
         Optional<Task> taskOpt = taskRepository.findById(taskId);
         if (taskOpt.isPresent()) {
             Task task = taskOpt.get();
@@ -266,7 +268,7 @@ public class TaskServiceImpl implements TaskService {
     }
     
     @Override
-    public TaskDTO assignTask(UUID taskId, UUID assigneeId) {
+    public TaskDTO assignTask(Long taskId, Long assigneeId) {
         Optional<Task> taskOpt = taskRepository.findById(taskId);
         Optional<allUsers> assigneeOpt = userRepository.findById(assigneeId);
         
@@ -280,7 +282,7 @@ public class TaskServiceImpl implements TaskService {
     }
     
     @Override
-    public TaskDTO completeTask(UUID taskId) {
+    public TaskDTO completeTask(Long taskId) {
         return this.updateTaskStatus(taskId, Task.TaskStatus.COMPLETED);
     }
     

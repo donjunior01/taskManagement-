@@ -7,17 +7,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TaskDifficultyDTO {
-    private UUID difficultyId;
-    private UUID taskId;
+    private Long difficultyId;
+    private Long taskId;
     private String taskTitle;
-    private UUID reportedById;
+    private Long reportedById;
     private String reportedByName;
     private String difficultyDescription;
     private TaskDifficulty.ImpactLevel impactLevel;

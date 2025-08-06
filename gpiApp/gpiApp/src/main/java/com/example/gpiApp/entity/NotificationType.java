@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -17,9 +16,9 @@ import java.util.UUID;
 @Builder
 public class NotificationType {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "type_id")
-    private UUID typeId;
+    private Long typeId;
 
     @Column(name = "type_name", nullable = false, unique = true)
     private String typeName;
@@ -35,7 +34,4 @@ public class NotificationType {
 
     @OneToMany(mappedBy = "notificationType", cascade = CascadeType.ALL)
     private List<Notification> notifications;
-
-    @OneToMany(mappedBy = "notificationType", cascade = CascadeType.ALL)
-    private List<NotificationPreference> notificationPreferences;
 } 

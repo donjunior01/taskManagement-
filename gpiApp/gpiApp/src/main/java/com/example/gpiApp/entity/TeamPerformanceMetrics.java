@@ -6,10 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -19,9 +17,9 @@ import java.util.UUID;
 @Builder
 public class TeamPerformanceMetrics {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "metric_id")
-    private UUID metricId;
+    private Long metricId;
 
     @ManyToOne
     @JoinColumn(name = "team_id", nullable = false)
@@ -31,21 +29,21 @@ public class TeamPerformanceMetrics {
     private LocalDate metricDate;
 
     @Column(name = "total_team_members", nullable = false)
-    private int totalTeamMembers = 0;
+    private Integer totalTeamMembers;
 
     @Column(name = "total_tasks_completed", nullable = false)
-    private int totalTasksCompleted = 0;
+    private Integer totalTasksCompleted;
 
     @Column(name = "total_tasks_overdue", nullable = false)
-    private int totalTasksOverdue = 0;
+    private Integer totalTasksOverdue;
 
-    @Column(name = "team_productivity_score", precision = 5, scale = 2)
-    private BigDecimal teamProductivityScore;
+    @Column(name = "team_productivity_score")
+    private Double teamProductivityScore;
 
-    @Column(name = "average_task_completion_rate", precision = 5, scale = 2)
-    private BigDecimal averageTaskCompletionRate;
+    @Column(name = "average_task_completion_rate")
+    private Double averageTaskCompletionRate;
 
-    @Column(name = "calculated_at", nullable = false)
+    @Column(name = "calculated_at")
     private LocalDateTime calculatedAt;
 
     @PrePersist

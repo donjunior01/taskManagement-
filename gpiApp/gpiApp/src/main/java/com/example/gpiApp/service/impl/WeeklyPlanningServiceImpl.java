@@ -16,7 +16,6 @@ import java.time.temporal.WeekFields;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,7 +47,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     }
     
     @Override
-    public WeeklyPlanningDTO updateWeeklyPlanning(UUID planningId, WeeklyPlanningDTO weeklyPlanningDTO) {
+    public WeeklyPlanningDTO updateWeeklyPlanning(Long planningId, WeeklyPlanningDTO weeklyPlanningDTO) {
         Optional<WeeklyPlanning> planningOpt = weeklyPlanningRepository.findById(planningId);
         if (planningOpt.isPresent()) {
             WeeklyPlanning planning = planningOpt.get();
@@ -65,13 +64,13 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     }
     
     @Override
-    public void deleteWeeklyPlanning(UUID planningId) {
+    public void deleteWeeklyPlanning(Long planningId) {
         weeklyPlanningRepository.deleteById(planningId);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<WeeklyPlanningDTO> getWeeklyPlanningById(UUID planningId) {
+    public Optional<WeeklyPlanningDTO> getWeeklyPlanningById(Long planningId) {
         return weeklyPlanningRepository.findById(planningId).map(this::convertToDTO);
     }
     
@@ -85,7 +84,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<WeeklyPlanningDTO> getWeeklyPlanningsByUser(UUID userId) {
+    public List<WeeklyPlanningDTO> getWeeklyPlanningsByUser(Long userId) {
         return weeklyPlanningRepository.findByUserId(userId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -93,23 +92,16 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<WeeklyPlanningDTO> getWeeklyPlanningByUserAndWeek(UUID userId, Integer weekNumber, Integer year) {
+    public Optional<WeeklyPlanningDTO> getWeeklyPlanningByUserAndWeek(Long userId, Integer weekNumber, Integer year) {
         return weeklyPlanningRepository.findByUserAndWeek(userId, weekNumber, year)
                 .map(this::convertToDTO);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<WeeklyPlanningDTO> getWeeklyPlanningsForDate(LocalDate date) {
-        return weeklyPlanningRepository.findPlanningsForDate(date).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public List<WeeklyPlanningDTO> getWeeklyPlanningsByComplianceStatus(WeeklyPlanning.ComplianceStatus status) {
-        return weeklyPlanningRepository.findByComplianceStatus(status).stream()
+    public List<WeeklyPlanningDTO> getWeeklyPlanningsByStatus(WeeklyPlanningDTO.ComplianceStatus status) {
+        WeeklyPlanning.ComplianceStatus entityStatus = WeeklyPlanning.ComplianceStatus.valueOf(status.name());
+        return weeklyPlanningRepository.findByComplianceStatus(entityStatus).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -124,7 +116,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<WeeklyPlanningDTO> getApprovedPlanningsByUser(UUID userId) {
+    public List<WeeklyPlanningDTO> getApprovedPlanningsByUser(Long userId) {
         return weeklyPlanningRepository.findApprovedPlanningsByUser(userId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -132,22 +124,14 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<WeeklyPlanningDTO> getCurrentWeeklyPlanning() {
-        LocalDate now = LocalDate.now();
-        WeekFields weekFields = WeekFields.of(Locale.getDefault());
-        int currentWeek = now.get(weekFields.weekOfWeekBasedYear());
-        int currentYear = now.getYear();
-        
-        // For now, return the first planning for current week/year
-        // In a real application, you might want to get the current user's planning
-        return weeklyPlanningRepository.findByWeekAndYear(currentWeek, currentYear)
-                .stream()
-                .findFirst()
-                .map(this::convertToDTO);
+    public List<WeeklyPlanningDTO> getCompliantPlanningsByUser(Long userId) {
+        return weeklyPlanningRepository.findCompliantPlanningsByUser(userId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
     
     @Override
-    public WeeklyPlanningDTO submitWeeklyPlanning(UUID planningId) {
+    public WeeklyPlanningDTO submitWeeklyPlanning(Long planningId) {
         Optional<WeeklyPlanning> planningOpt = weeklyPlanningRepository.findById(planningId);
         if (planningOpt.isPresent()) {
             WeeklyPlanning planning = planningOpt.get();
@@ -161,7 +145,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     }
     
     @Override
-    public WeeklyPlanningDTO approveWeeklyPlanning(UUID planningId, UUID approverId) {
+    public WeeklyPlanningDTO approveWeeklyPlanning(Long planningId, Long approverId) {
         Optional<WeeklyPlanning> planningOpt = weeklyPlanningRepository.findById(planningId);
         Optional<allUsers> approverOpt = userRepository.findById(approverId);
         
@@ -180,7 +164,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     }
     
     @Override
-    public WeeklyPlanningDTO rejectWeeklyPlanning(UUID planningId, UUID approverId, String reason) {
+    public WeeklyPlanningDTO rejectWeeklyPlanning(Long planningId, Long approverId, String reason) {
         Optional<WeeklyPlanning> planningOpt = weeklyPlanningRepository.findById(planningId);
         Optional<allUsers> approverOpt = userRepository.findById(approverId);
         
@@ -200,20 +184,31 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     
     @Override
     @Transactional(readOnly = true)
-    public long countCompliantPlanningsByUser(UUID userId) {
+    public long countPlanningsByUser(Long userId) {
+        return weeklyPlanningRepository.findByUserId(userId).size();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public long countCompliantPlanningsByUser(Long userId) {
         return weeklyPlanningRepository.countCompliantPlanningsByUser(userId);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<WeeklyPlanningDTO> getWeeklyPlanningsInDateRange(LocalDate startDate, LocalDate endDate) {
-        return weeklyPlanningRepository.findPlanningsInDateRange(startDate, endDate).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public double calculateComplianceRate(Long userId) {
+        long totalPlannings = countPlanningsByUser(userId);
+        long compliantPlannings = countCompliantPlanningsByUser(userId);
+        
+        if (totalPlannings == 0) {
+            return 0.0;
+        }
+        
+        return (double) compliantPlannings / totalPlannings * 100.0;
     }
     
     @Override
-    public WeeklyPlanningDTO calculateComplianceStatus(UUID planningId) {
+    public WeeklyPlanningDTO calculateComplianceStatus(Long planningId) {
         Optional<WeeklyPlanning> planningOpt = weeklyPlanningRepository.findById(planningId);
         if (planningOpt.isPresent()) {
             WeeklyPlanning planning = planningOpt.get();
@@ -239,7 +234,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
                 .year(planning.getYear())
                 .weekStartDate(planning.getWeekStartDate())
                 .weekEndDate(planning.getWeekEndDate())
-                .complianceStatus(planning.getComplianceStatus())
+                .complianceStatus(WeeklyPlanningDTO.ComplianceStatus.valueOf(planning.getComplianceStatus().name()))
                 .totalTasksPlanned(planning.getTotalTasksPlanned())
                 .submittedAt(planning.getSubmittedAt())
                 .isApproved(planning.getIsApproved())

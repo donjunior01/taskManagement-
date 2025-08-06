@@ -6,10 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface TaskPriorityRepository extends JpaRepository<TaskPriority, UUID> {
+public interface TaskPriorityRepository extends JpaRepository<TaskPriority, Long> {
     List<TaskPriority> findByIsActiveTrue();
     
     Optional<TaskPriority> findByPriorityName(String priorityName);

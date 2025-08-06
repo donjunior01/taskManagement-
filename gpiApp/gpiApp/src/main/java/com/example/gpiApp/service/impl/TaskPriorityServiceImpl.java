@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +33,7 @@ public class TaskPriorityServiceImpl implements TaskPriorityService {
     }
     
     @Override
-    public TaskPriorityDTO updateTaskPriority(UUID priorityId, TaskPriorityDTO taskPriorityDTO) {
+    public TaskPriorityDTO updateTaskPriority(Long priorityId, TaskPriorityDTO taskPriorityDTO) {
         Optional<TaskPriority> priorityOpt = taskPriorityRepository.findById(priorityId);
         if (priorityOpt.isPresent()) {
             TaskPriority priority = priorityOpt.get();
@@ -50,13 +49,13 @@ public class TaskPriorityServiceImpl implements TaskPriorityService {
     }
     
     @Override
-    public void deleteTaskPriority(UUID priorityId) {
+    public void deleteTaskPriority(Long priorityId) {
         taskPriorityRepository.deleteById(priorityId);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<TaskPriorityDTO> getTaskPriorityById(UUID priorityId) {
+    public Optional<TaskPriorityDTO> getTaskPriorityById(Long priorityId) {
         return taskPriorityRepository.findById(priorityId).map(this::convertToDTO);
     }
     

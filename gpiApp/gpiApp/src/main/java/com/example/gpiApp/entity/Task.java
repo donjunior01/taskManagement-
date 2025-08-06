@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -20,9 +19,9 @@ import java.util.UUID;
 @Builder
 public class Task {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "task_id")
-    private UUID taskId;
+    private Long taskId;
 
     @Column(nullable = false)
     private String title;

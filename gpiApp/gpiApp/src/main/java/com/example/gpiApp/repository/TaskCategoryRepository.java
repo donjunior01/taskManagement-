@@ -6,10 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface TaskCategoryRepository extends JpaRepository<TaskCategory, UUID> {
+public interface TaskCategoryRepository extends JpaRepository<TaskCategory, Long> {
     List<TaskCategory> findByIsActiveTrue();
     
     Optional<TaskCategory> findByCategoryName(String categoryName);

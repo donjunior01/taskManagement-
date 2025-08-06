@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.Random;
 import java.util.UUID;
 
 @Component
@@ -24,6 +25,9 @@ public class DataLoader implements CommandLineRunner {
     private final TaskCategoryRepository taskCategoryRepository;
     private final TaskPriorityRepository taskPriorityRepository;
     private final PasswordEncoder passwordEncoder;
+
+    Random random = new Random();
+    Long randomLong = random.nextLong();
     
     @Override
     public void run(String... args) throws Exception {
@@ -51,7 +55,7 @@ public class DataLoader implements CommandLineRunner {
         log.info("Loading users...");
         
         allUsers admin = allUsers.builder()
-                .userId(UUID.randomUUID())
+                .userId(randomLong)
                 .email("admin@company.com")
                 .passwordHash(passwordEncoder.encode("password"))
                 .firstName("John")
@@ -63,7 +67,7 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         
         allUsers manager = allUsers.builder()
-                .userId(UUID.randomUUID())
+                .userId(randomLong)
                 .email("manager@company.com")
                 .passwordHash(passwordEncoder.encode("password"))
                 .firstName("Sarah")
@@ -75,7 +79,7 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         
         allUsers employee = allUsers.builder()
-                .userId(UUID.randomUUID())
+                .userId(randomLong)
                 .email("employee@company.com")
                 .passwordHash(passwordEncoder.encode("password"))
                 .firstName("Alice")
@@ -94,7 +98,7 @@ public class DataLoader implements CommandLineRunner {
         log.info("Loading task categories...");
         
         TaskCategory development = TaskCategory.builder()
-                .categoryId(UUID.randomUUID())
+                .categoryId(randomLong)
                 .categoryName("Development")
                 .description("Software development tasks")
                 .colorCode("#007bff")
@@ -102,7 +106,7 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         
         TaskCategory design = TaskCategory.builder()
-                .categoryId(UUID.randomUUID())
+                .categoryId(randomLong)
                 .categoryName("Design")
                 .description("UI/UX design tasks")
                 .colorCode("#28a745")
@@ -110,7 +114,7 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         
         TaskCategory testing = TaskCategory.builder()
-                .categoryId(UUID.randomUUID())
+                .categoryId(randomLong)
                 .categoryName("Testing")
                 .description("Quality assurance tasks")
                 .colorCode("#ffc107")
@@ -118,7 +122,7 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         
         TaskCategory documentation = TaskCategory.builder()
-                .categoryId(UUID.randomUUID())
+                .categoryId(randomLong)
                 .categoryName("Documentation")
                 .description("Documentation tasks")
                 .colorCode("#17a2b8")
@@ -126,7 +130,7 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         
         TaskCategory meeting = TaskCategory.builder()
-                .categoryId(UUID.randomUUID())
+                .categoryId(randomLong)
                 .categoryName("Meeting")
                 .description("Meeting and coordination tasks")
                 .colorCode("#6f42c1")
@@ -141,7 +145,7 @@ public class DataLoader implements CommandLineRunner {
         log.info("Loading task priorities...");
         
         TaskPriority low = TaskPriority.builder()
-                .priorityId(UUID.randomUUID())
+                .priorityId(randomLong)
                 .priorityName("Low")
                 .priorityLevel(1)
                 .colorCode("#6c757d")
@@ -149,7 +153,7 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         
         TaskPriority medium = TaskPriority.builder()
-                .priorityId(UUID.randomUUID())
+                .priorityId(randomLong)
                 .priorityName("Medium")
                 .priorityLevel(2)
                 .colorCode("#ffc107")
@@ -157,7 +161,7 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         
         TaskPriority high = TaskPriority.builder()
-                .priorityId(UUID.randomUUID())
+                .priorityId(randomLong)
                 .priorityName("High")
                 .priorityLevel(3)
                 .colorCode("#fd7e14")
@@ -165,7 +169,7 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         
         TaskPriority critical = TaskPriority.builder()
-                .priorityId(UUID.randomUUID())
+                .priorityId(randomLong)
                 .priorityName("Critical")
                 .priorityLevel(4)
                 .colorCode("#dc3545")

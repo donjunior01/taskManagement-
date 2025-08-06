@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -18,9 +17,9 @@ import java.util.UUID;
 @Builder
 public class Comment {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "comment_id")
-    private UUID commentId;
+    private Long commentId;
 
     @ManyToOne
     @JoinColumn(name = "task_id", nullable = false)

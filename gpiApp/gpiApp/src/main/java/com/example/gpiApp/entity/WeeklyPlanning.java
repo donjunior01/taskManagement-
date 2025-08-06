@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -19,9 +18,9 @@ import java.util.UUID;
 @Builder
 public class WeeklyPlanning {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "planning_id")
-    private UUID planningId;
+    private Long planningId;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -44,7 +43,7 @@ public class WeeklyPlanning {
     private ComplianceStatus complianceStatus;
 
     @Column(name = "total_tasks_planned", nullable = false)
-    private int totalTasksPlanned = 0;
+    private Integer totalTasksPlanned;
 
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
@@ -65,11 +64,11 @@ public class WeeklyPlanning {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "weeklyPlanning", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "planning", cascade = CascadeType.ALL)
     private List<DailyTaskSchedule> dailyTaskSchedules;
 
     public enum ComplianceStatus {
-        COMPLIANT, NON_COMPLIANT, PARTIALLY_COMPLIANT
+        COMPLIANT, PARTIALLY_COMPLIANT, NON_COMPLIANT
     }
 
     @PrePersist

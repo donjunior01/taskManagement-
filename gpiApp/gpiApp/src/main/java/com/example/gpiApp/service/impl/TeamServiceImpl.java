@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,7 +44,7 @@ public class TeamServiceImpl implements TeamService {
     }
     
     @Override
-    public TeamDTO updateTeam(UUID teamId, TeamDTO teamDTO) {
+    public TeamDTO updateTeam(Long teamId, TeamDTO teamDTO) {
         Optional<Team> teamOpt = teamRepository.findById(teamId);
         if (teamOpt.isPresent()) {
             Team team = teamOpt.get();
@@ -64,7 +63,7 @@ public class TeamServiceImpl implements TeamService {
     }
     
     @Override
-    public void deleteTeam(UUID teamId) {
+    public void deleteTeam(Long teamId) {
         Optional<Team> teamOpt = teamRepository.findById(teamId);
         if (teamOpt.isPresent()) {
             Team team = teamOpt.get();
@@ -75,7 +74,7 @@ public class TeamServiceImpl implements TeamService {
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<TeamDTO> getTeamById(UUID teamId) {
+    public Optional<TeamDTO> getTeamById(Long teamId) {
         return teamRepository.findById(teamId).map(this::convertToDTO);
     }
     
@@ -97,7 +96,7 @@ public class TeamServiceImpl implements TeamService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<TeamDTO> getTeamsByLeader(UUID leaderId) {
+    public List<TeamDTO> getTeamsByLeader(Long leaderId) {
         return teamRepository.findByTeamLeaderUserId(leaderId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -105,14 +104,14 @@ public class TeamServiceImpl implements TeamService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<TeamDTO> getTeamsByMember(UUID memberId) {
+    public List<TeamDTO> getTeamsByMember(Long memberId) {
         return teamRepository.findTeamsByMember(memberId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
     
     @Override
-    public TeamDTO addMemberToTeam(UUID teamId, UUID userId) {
+    public TeamDTO addMemberToTeam(Long teamId, Long userId) {
         Optional<Team> teamOpt = teamRepository.findById(teamId);
         Optional<allUsers> userOpt = userRepository.findById(userId);
         
@@ -129,7 +128,7 @@ public class TeamServiceImpl implements TeamService {
     }
     
     @Override
-    public TeamDTO removeMemberFromTeam(UUID teamId, UUID userId) {
+    public TeamDTO removeMemberFromTeam(Long teamId, Long userId) {
         Optional<UserTeam> userTeamOpt = userTeamRepository.findByTeamTeamIdAndUserUserId(teamId, userId);
         if (userTeamOpt.isPresent()) {
             UserTeam userTeam = userTeamOpt.get();
@@ -144,7 +143,7 @@ public class TeamServiceImpl implements TeamService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<UserDTO> getTeamMembers(UUID teamId) {
+    public List<UserDTO> getTeamMembers(Long teamId) {
         return userTeamRepository.findByTeamTeamIdAndIsActiveTrue(teamId).stream()
                 .map(userTeam -> convertUserToDTO(userTeam.getUser()))
                 .collect(Collectors.toList());
@@ -163,7 +162,7 @@ public class TeamServiceImpl implements TeamService {
     }
     
     @Override
-    public TeamDTO assignTeamLeader(UUID teamId, UUID leaderId) {
+    public TeamDTO assignTeamLeader(Long teamId, Long leaderId) {
         Optional<Team> teamOpt = teamRepository.findById(teamId);
         Optional<allUsers> leaderOpt = userRepository.findById(leaderId);
         

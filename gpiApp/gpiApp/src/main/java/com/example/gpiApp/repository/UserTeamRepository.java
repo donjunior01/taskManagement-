@@ -8,25 +8,23 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-
 @Repository
-public interface UserTeamRepository extends JpaRepository<UserTeam, UUID> {
+public interface UserTeamRepository extends JpaRepository<UserTeam, Long> {
     @Query("SELECT ut FROM UserTeam ut WHERE ut.team.teamId = :teamId")
-    List<UserTeam> findByTeamTeamId(@Param("teamId") UUID teamId);
+    List<UserTeam> findByTeamTeamId(@Param("teamId") Long teamId);
     
     @Query("SELECT ut FROM UserTeam ut WHERE ut.user.userId = :userId")
-    List<UserTeam> findByUserUserId(@Param("userId") UUID userId);
+    List<UserTeam> findByUserUserId(@Param("userId") Long userId);
     
     @Query("SELECT ut FROM UserTeam ut WHERE ut.team.teamId = :teamId AND ut.isActive = true")
-    List<UserTeam> findByTeamTeamIdAndIsActiveTrue(@Param("teamId") UUID teamId);
+    List<UserTeam> findByTeamTeamIdAndIsActiveTrue(@Param("teamId") Long teamId);
     
     @Query("SELECT ut FROM UserTeam ut WHERE ut.user.userId = :userId AND ut.isActive = true")
-    List<UserTeam> findByUserUserIdAndIsActiveTrue(@Param("userId") UUID userId);
+    List<UserTeam> findByUserUserIdAndIsActiveTrue(@Param("userId") Long userId);
     
     @Query("SELECT ut FROM UserTeam ut WHERE ut.team.teamId = :teamId AND ut.user.userId = :userId")
-    Optional<UserTeam> findByTeamTeamIdAndUserUserId(@Param("teamId") UUID teamId, @Param("userId") UUID userId);
+    Optional<UserTeam> findByTeamTeamIdAndUserUserId(@Param("teamId") Long teamId, @Param("userId") Long userId);
     
     @Query("SELECT COUNT(ut) FROM UserTeam ut WHERE ut.team.teamId = :teamId AND ut.isActive = true")
-    long countActiveMembersByTeam(@Param("teamId") UUID teamId);
+    long countActiveMembersByTeam(@Param("teamId") Long teamId);
 } 

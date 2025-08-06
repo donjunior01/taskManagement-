@@ -8,7 +8,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/task-categories")
@@ -26,7 +25,7 @@ public class TaskCategoryController {
     
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TaskCategoryDTO> getTaskCategoryById(@PathVariable UUID id) {
+    public ResponseEntity<TaskCategoryDTO> getTaskCategoryById(@PathVariable Long id) {
         return taskCategoryService.getTaskCategoryById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -40,13 +39,13 @@ public class TaskCategoryController {
     
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TaskCategoryDTO> updateTaskCategory(@PathVariable UUID id, @RequestBody TaskCategoryDTO taskCategoryDTO) {
+    public ResponseEntity<TaskCategoryDTO> updateTaskCategory(@PathVariable Long id, @RequestBody TaskCategoryDTO taskCategoryDTO) {
         return ResponseEntity.ok(taskCategoryService.updateTaskCategory(id, taskCategoryDTO));
     }
     
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<Void> deleteTaskCategory(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteTaskCategory(@PathVariable Long id) {
         taskCategoryService.deleteTaskCategory(id);
         return ResponseEntity.ok().build();
     }

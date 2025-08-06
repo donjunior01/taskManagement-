@@ -6,34 +6,33 @@ import com.example.gpiApp.entity.Task;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface TaskService {
     TaskDTO createTask(TaskDTO taskDTO);
     
-    TaskDTO updateTask(UUID taskId, TaskDTO taskDTO);
+    TaskDTO updateTask(Long taskId, TaskDTO taskDTO);
     
-    void deleteTask(UUID taskId);
+    void deleteTask(Long taskId);
     
-    Optional<TaskDTO> getTaskById(UUID taskId);
+    Optional<TaskDTO> getTaskById(Long taskId);
     
     List<TaskDTO> getAllTasks();
     
-    List<TaskDTO> getTasksByCreator(UUID userId);
+    List<TaskDTO> getTasksByCreator(Long userId);
     
-    List<TaskDTO> getTasksByProject(UUID projectId);
+    List<TaskDTO> getTasksByProject(Long projectId);
     
     List<TaskDTO> getTasksByStatus(Task.TaskStatus status);
     
     List<TaskDTO> getTasksByType(Task.TaskType taskType);
     
-    List<TaskDTO> getTasksByCreatorAndStatus(UUID userId, Task.TaskStatus status);
+    List<TaskDTO> getTasksByCreatorAndStatus(Long userId, Task.TaskStatus status);
     
     List<TaskDTO> getOverdueTasks();
     
-    List<TaskDTO> getTasksByUserAndDateRange(UUID userId, LocalDate startDate, LocalDate endDate);
+    List<TaskDTO> getTasksByUserAndDateRange(Long userId, LocalDate startDate, LocalDate endDate);
     
-    List<TaskDTO> getTasksByTeam(UUID teamId);
+    List<TaskDTO> getTasksByTeam(Long teamId);
     
     List<TaskDTO> getTasksByDifficulty(Task.DifficultyLevel difficulty);
     
@@ -41,13 +40,13 @@ public interface TaskService {
     
     long countTasksByStatus(Task.TaskStatus status);
     
-    long countTasksByUserAndStatus(UUID userId, Task.TaskStatus status);
+    long countTasksByUserAndStatus(Long userId, Task.TaskStatus status);
     
-    TaskDTO updateTaskStatus(UUID taskId, Task.TaskStatus status);
+    TaskDTO updateTaskStatus(Long taskId, Task.TaskStatus status);
     
-    TaskDTO updateTaskProgress(UUID taskId, Double progressPercentage);
+    TaskDTO updateTaskProgress(Long taskId, Double progressPercentage);
     
-    TaskDTO assignTask(UUID taskId, UUID assigneeId);
+    TaskDTO assignTask(Long taskId, Long assigneeId);
     
-    TaskDTO completeTask(UUID taskId);
+    TaskDTO completeTask(Long taskId);
 } 

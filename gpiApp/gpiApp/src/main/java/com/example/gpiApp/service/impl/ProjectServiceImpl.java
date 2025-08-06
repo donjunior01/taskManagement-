@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,7 +43,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
     
     @Override
-    public ProjectDTO updateProject(UUID projectId, ProjectDTO projectDTO) {
+    public ProjectDTO updateProject(Long projectId, ProjectDTO projectDTO) {
         Optional<Project> projectOpt = projectRepository.findById(projectId);
         if (projectOpt.isPresent()) {
             Project project = projectOpt.get();
@@ -66,13 +65,13 @@ public class ProjectServiceImpl implements ProjectService {
     }
     
     @Override
-    public void deleteProject(UUID projectId) {
+    public void deleteProject(Long projectId) {
         projectRepository.deleteById(projectId);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<ProjectDTO> getProjectById(UUID projectId) {
+    public Optional<ProjectDTO> getProjectById(Long projectId) {
         return projectRepository.findById(projectId).map(this::convertToDTO);
     }
     
@@ -86,7 +85,7 @@ public class ProjectServiceImpl implements ProjectService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<ProjectDTO> getProjectsByTeam(UUID teamId) {
+    public List<ProjectDTO> getProjectsByTeam(Long teamId) {
         return projectRepository.findByTeamTeamId(teamId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -102,7 +101,7 @@ public class ProjectServiceImpl implements ProjectService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<ProjectDTO> getProjectsByTeamAndStatus(UUID teamId, Project.ProjectStatus status) {
+    public List<ProjectDTO> getProjectsByTeamAndStatus(Long teamId, Project.ProjectStatus status) {
         return projectRepository.findByTeamAndStatus(teamId, status).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -118,7 +117,7 @@ public class ProjectServiceImpl implements ProjectService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<ProjectDTO> getProjectsByTeamLeader(UUID leaderId) {
+    public List<ProjectDTO> getProjectsByTeamLeader(Long leaderId) {
         return projectRepository.findProjectsByTeamLeader(leaderId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -139,7 +138,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
     
     @Override
-    public ProjectDTO updateProjectStatus(UUID projectId, Project.ProjectStatus status) {
+    public ProjectDTO updateProjectStatus(Long projectId, Project.ProjectStatus status) {
         Optional<Project> projectOpt = projectRepository.findById(projectId);
         if (projectOpt.isPresent()) {
             Project project = projectOpt.get();
@@ -151,7 +150,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
     
     @Override
-    public ProjectDTO assignProjectToTeam(UUID projectId, UUID teamId) {
+    public ProjectDTO assignProjectToTeam(Long projectId, Long teamId) {
         Optional<Project> projectOpt = projectRepository.findById(projectId);
         Optional<Team> teamOpt = teamRepository.findById(teamId);
         

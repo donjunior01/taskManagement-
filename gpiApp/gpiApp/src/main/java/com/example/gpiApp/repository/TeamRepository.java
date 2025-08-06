@@ -8,23 +8,22 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface TeamRepository extends JpaRepository<Team, UUID> {
+public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Team> findByIsActiveTrue();
     
     @Query("SELECT t FROM Team t WHERE t.teamId = :teamId AND t.isActive = true")
-    Optional<Team> findByTeamIdAndIsActiveTrue(@Param("teamId") UUID teamId);
+    Optional<Team> findByTeamIdAndIsActiveTrue(@Param("teamId") Long teamId);
     
     @Query("SELECT t FROM Team t WHERE t.teamLeader.userId = :teamLeaderId")
-    List<Team> findByTeamLeaderUserId(@Param("teamLeaderId") UUID teamLeaderId);
+    List<Team> findByTeamLeaderUserId(@Param("teamLeaderId") Long teamLeaderId);
     
     @Query("SELECT t FROM Team t WHERE t.teamLeader.userId = :leaderId AND t.isActive = true")
-    List<Team> findActiveTeamsByLeader(@Param("leaderId") UUID leaderId);
+    List<Team> findActiveTeamsByLeader(@Param("leaderId") Long leaderId);
     
     @Query("SELECT t FROM Team t JOIN t.userTeams ut WHERE ut.user.userId = :userId AND t.isActive = true")
-    List<Team> findTeamsByMember(@Param("userId") UUID userId);
+    List<Team> findTeamsByMember(@Param("userId") Long userId);
     
     boolean existsByTeamName(String teamName);
     

@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -18,9 +17,9 @@ import java.util.UUID;
 @Builder
 public class TaskProgress {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "progress_id")
-    private UUID progressId;
+    private Long progressId;
 
     @ManyToOne
     @JoinColumn(name = "task_id", nullable = false)
@@ -43,7 +42,8 @@ public class TaskProgress {
     private LocalDateTime updatedAt;
 
     @PrePersist
-    protected void onCreate() {
+    @PreUpdate
+    protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
 } 

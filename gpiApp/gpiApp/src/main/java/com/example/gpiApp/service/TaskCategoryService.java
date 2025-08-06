@@ -4,13 +4,12 @@ import com.example.gpiApp.dto.TaskCategoryDTO;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface TaskCategoryService {
     TaskCategoryDTO createTaskCategory(TaskCategoryDTO taskCategoryDTO);
-    TaskCategoryDTO updateTaskCategory(UUID categoryId, TaskCategoryDTO taskCategoryDTO);
-    void deleteTaskCategory(UUID categoryId);
-    Optional<TaskCategoryDTO> getTaskCategoryById(UUID categoryId);
+    TaskCategoryDTO updateTaskCategory(Long categoryId, TaskCategoryDTO taskCategoryDTO);
+    void deleteTaskCategory(Long categoryId);
+    Optional<TaskCategoryDTO> getTaskCategoryById(Long categoryId);
     List<TaskCategoryDTO> getAllTaskCategories();
     List<TaskCategoryDTO> getActiveTaskCategories();
     boolean existsByCategoryName(String categoryName);
