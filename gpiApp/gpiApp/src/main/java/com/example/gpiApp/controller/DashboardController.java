@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Random;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -19,6 +19,7 @@ import java.util.UUID;
 public class DashboardController {
     
     private final TaskService taskService;
+    Random random = new Random();
     
     @GetMapping("/statistics")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
@@ -26,7 +27,8 @@ public class DashboardController {
         Map<String, Object> statistics = new HashMap<>();
         
         // Get current user ID (in real implementation, get from security context)
-        UUID currentUserId = UUID.randomUUID(); // TODO: Get from security context
+
+        Long currentUserId = random.nextLong(); // TODO: Get from security context
         
         try {
             long totalTasks = taskService.countTasksByUserAndStatus(currentUserId, null);
@@ -70,7 +72,7 @@ public class DashboardController {
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<List<TaskDTO>> getRecentActivity() {
         try {
-            List<TaskDTO> recentTasks = taskService.getTasksByCreator(UUID.randomUUID());
+            List<TaskDTO> recentTasks = taskService.getTasksByCreator(random.nextLong());
             return ResponseEntity.ok(recentTasks.subList(0, Math.min(recentTasks.size(), 5)));
         } catch (Exception e) {
             return ResponseEntity.ok(List.of()); // Return empty list if service fails

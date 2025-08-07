@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -18,13 +17,13 @@ import java.util.UUID;
 @Builder
 public class DailyTaskSchedule {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "schedule_id")
-    private UUID scheduleId;
+    private Long scheduleId;
 
     @ManyToOne
     @JoinColumn(name = "planning_id", nullable = false)
-    private WeeklyPlanning weeklyPlanning;
+    private WeeklyPlanning planning;
 
     @ManyToOne
     @JoinColumn(name = "task_id", nullable = false)
@@ -42,14 +41,15 @@ public class DailyTaskSchedule {
     @Column(name = "estimated_duration_minutes")
     private Integer estimatedDurationMinutes;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "day_of_week", nullable = false)
-    private DayOfWeek dayOfWeek;
+    @Column(name = "day_of_week")
+    private String dayOfWeek;
 
     @Column(name = "is_completed", nullable = false)
     private Boolean isCompleted = false;
 
     public enum DayOfWeek {
-        MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+        MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY
     }
-} 
+
+
+}

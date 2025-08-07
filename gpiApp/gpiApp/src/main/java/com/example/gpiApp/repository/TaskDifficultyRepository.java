@@ -7,20 +7,19 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.UUID;
 
 @Repository
-public interface TaskDifficultyRepository extends JpaRepository<TaskDifficulty, UUID> {
+public interface TaskDifficultyRepository extends JpaRepository<TaskDifficulty, Long> {
     @Query("SELECT td FROM TaskDifficulty td WHERE td.task.taskId = :taskId")
-    List<TaskDifficulty> findByTaskTaskId(@Param("taskId") UUID taskId);
+    List<TaskDifficulty> findByTaskTaskId(@Param("taskId") Long taskId);
     
     @Query("SELECT td FROM TaskDifficulty td WHERE td.reportedBy.userId = :userId")
-    List<TaskDifficulty> findByReportedByUserId(@Param("userId") UUID userId);
+    List<TaskDifficulty> findByReportedByUserId(@Param("userId") Long userId);
     
     List<TaskDifficulty> findByIsResolvedFalse();
     
     @Query("SELECT td FROM TaskDifficulty td WHERE td.task.taskId = :taskId AND td.isResolved = false")
-    List<TaskDifficulty> findUnresolvedDifficultiesByTask(@Param("taskId") UUID taskId);
+    List<TaskDifficulty> findUnresolvedDifficultiesByTask(@Param("taskId") Long taskId);
     
     @Query("SELECT td FROM TaskDifficulty td WHERE td.impactLevel = :impactLevel")
     List<TaskDifficulty> findByImpactLevel(@Param("impactLevel") TaskDifficulty.ImpactLevel impactLevel);

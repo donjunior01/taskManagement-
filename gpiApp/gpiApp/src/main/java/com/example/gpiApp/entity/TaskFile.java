@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -17,42 +16,44 @@ import java.util.UUID;
 @Builder
 public class TaskFile {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "file_id")
-    private UUID fileId;
+    private Long fileId;
 
     @ManyToOne
     @JoinColumn(name = "task_id", nullable = false)
     private Task task;
 
-    @ManyToOne
-    @JoinColumn(name = "uploaded_by", nullable = false)
-    private allUsers uploadedBy;
+    @Column(name = "file_name", nullable = false)
+    private String fileName;
 
-    @Column(name = "original_filename", nullable = false)
+    @Column(name = "file_url", nullable = false)
+    private String fileUrl;
+
+    @Column(name = "original_filename")
     private String originalFilename;
 
-    @Column(name = "stored_filename", nullable = false)
+    @Column(name = "stored_filename")
     private String storedFilename;
 
-    @Column(name = "file_path", nullable = false)
+    @Column(name = "file_path")
     private String filePath;
 
-    @Column(name = "mime_type", nullable = false)
+    @Column(name = "mime_type")
     private String mimeType;
 
-    @Column(name = "file_size_bytes", nullable = false)
+    @Column(name = "file_size_bytes")
     private Long fileSizeBytes;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "file_type", nullable = false)
+    @Column(name = "file_type")
     private FileType fileType;
 
     @Column(name = "is_deliverable", nullable = false)
     private Boolean isDeliverable = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "approval_status", nullable = false)
+    @Column(name = "approval_status")
     private ApprovalStatus approvalStatus = ApprovalStatus.PENDING;
 
     @ManyToOne
@@ -68,8 +69,12 @@ public class TaskFile {
     @Column(name = "uploaded_at", nullable = false)
     private LocalDateTime uploadedAt;
 
+    @ManyToOne
+    @JoinColumn(name = "uploaded_by", nullable = false)
+    private allUsers uploadedBy;
+
     public enum FileType {
-        DELIVERABLE, ATTACHMENT, REFERENCE
+        DOCUMENT, IMAGE, VIDEO, AUDIO, ARCHIVE, OTHER
     }
 
     public enum ApprovalStatus {

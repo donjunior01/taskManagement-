@@ -10,23 +10,22 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TaskDTO {
-    private UUID taskId;
+    private Long taskId;
     private String title;
     private String description;
-    private UUID createdById;
+    private Long createdById;
     private String createdByName;
-    private UUID projectId;
+    private Long projectId;
     private String projectName;
-    private UUID categoryId;
+    private Long categoryId;
     private String categoryName;
-    private UUID priorityId;
+    private Long priorityId;
     private String priorityName;
     private Task.TaskType taskType;
     private Task.TaskStatus status;

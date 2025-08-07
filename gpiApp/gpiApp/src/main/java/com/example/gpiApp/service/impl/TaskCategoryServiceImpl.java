@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +33,7 @@ public class TaskCategoryServiceImpl implements TaskCategoryService {
     }
     
     @Override
-    public TaskCategoryDTO updateTaskCategory(UUID categoryId, TaskCategoryDTO taskCategoryDTO) {
+    public TaskCategoryDTO updateTaskCategory(Long categoryId, TaskCategoryDTO taskCategoryDTO) {
         Optional<TaskCategory> categoryOpt = taskCategoryRepository.findById(categoryId);
         if (categoryOpt.isPresent()) {
             TaskCategory category = categoryOpt.get();
@@ -50,13 +49,13 @@ public class TaskCategoryServiceImpl implements TaskCategoryService {
     }
     
     @Override
-    public void deleteTaskCategory(UUID categoryId) {
+    public void deleteTaskCategory(Long categoryId) {
         taskCategoryRepository.deleteById(categoryId);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<TaskCategoryDTO> getTaskCategoryById(UUID categoryId) {
+    public Optional<TaskCategoryDTO> getTaskCategoryById(Long categoryId) {
         return taskCategoryRepository.findById(categoryId).map(this::convertToDTO);
     }
     

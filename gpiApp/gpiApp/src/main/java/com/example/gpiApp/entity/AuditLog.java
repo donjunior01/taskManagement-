@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -17,12 +16,12 @@ import java.util.UUID;
 @Builder
 public class AuditLog {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "log_id")
-    private UUID logId;
+    private Long logId;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private allUsers user;
 
     @Column(name = "action_type", nullable = false)
@@ -31,13 +30,13 @@ public class AuditLog {
     @Column(name = "table_name", nullable = false)
     private String tableName;
 
-    @Column(name = "record_id")
-    private UUID recordId;
+    @Column(name = "record_id", nullable = false)
+    private Long recordId;
 
-    @Column(name = "old_values", columnDefinition = "JSON")
+    @Column(name = "old_values", columnDefinition = "TEXT")
     private String oldValues;
 
-    @Column(name = "new_values", columnDefinition = "JSON")
+    @Column(name = "new_values", columnDefinition = "TEXT")
     private String newValues;
 
     @Column(name = "ip_address")

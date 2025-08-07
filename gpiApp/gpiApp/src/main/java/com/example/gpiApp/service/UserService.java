@@ -8,13 +8,12 @@ import com.example.gpiApp.entity.allUsers;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface UserService {
     UserDTO createUser(UserRequestDTO userRequestDTO);
-    UserDTO updateUser(UUID userId, UserRequestDTO userRequestDTO);
-    void deleteUser(UUID userId);
-    Optional<UserDTO> getUserById(UUID userId);
+    UserDTO updateUser(Long userId, UserRequestDTO userRequestDTO);
+    void deleteUser(Long userId);
+    Optional<UserDTO> getUserById(Long userId);
     Optional<UserDTO> getUserByEmail(String email);
     List<UserDTO> getAllUsers();
     List<UserDTO> getActiveUsers();
@@ -24,9 +23,9 @@ public interface UserService {
     long countUsersByRole(allUsers.UserRole role);
     boolean existsByEmail(String email);
     UserResponseDTO authenticateUser(String email, String password);
-    void updateUserProfile(UUID userId, UserRequestDTO userRequestDTO);
-    void updateUserPassword(UUID userId, String newPassword);
-    void deactivateUser(UUID userId);
-    void activateUser(UUID userId);
+    void updateUserProfile(Long userId, UserRequestDTO userRequestDTO);
+    void updateUserPassword(Long userId, String newPassword);
+    void deactivateUser(Long userId);
+    void activateUser(Long userId);
     List<UserDTO> searchUsers(String keyword);
 } 

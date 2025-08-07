@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -17,9 +16,9 @@ import java.util.UUID;
 @Builder
 public class TaskAssignment {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "assignment_id")
-    private UUID assignmentId;
+    private Long assignmentId;
 
     @ManyToOne
     @JoinColumn(name = "task_id", nullable = false)
@@ -47,11 +46,6 @@ public class TaskAssignment {
     private String assignmentNotes;
 
     public enum AssignmentStatus {
-        PENDING, ACCEPTED, DECLINED
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        assignedAt = LocalDateTime.now();
+        PENDING, ACCEPTED, REJECTED, COMPLETED
     }
 } 

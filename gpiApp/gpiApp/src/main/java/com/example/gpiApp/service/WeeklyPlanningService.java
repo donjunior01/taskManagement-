@@ -1,47 +1,44 @@
 package com.example.gpiApp.service;
 
 import com.example.gpiApp.dto.WeeklyPlanningDTO;
-import com.example.gpiApp.entity.WeeklyPlanning;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface WeeklyPlanningService {
-    WeeklyPlanningDTO createWeeklyPlanning(WeeklyPlanningDTO planningDTO);
+    WeeklyPlanningDTO createWeeklyPlanning(WeeklyPlanningDTO weeklyPlanningDTO);
     
-    WeeklyPlanningDTO updateWeeklyPlanning(UUID planningId, WeeklyPlanningDTO planningDTO);
+    WeeklyPlanningDTO updateWeeklyPlanning(Long planningId, WeeklyPlanningDTO planningDTO);
     
-    void deleteWeeklyPlanning(UUID planningId);
+    void deleteWeeklyPlanning(Long planningId);
     
-    Optional<WeeklyPlanningDTO> getWeeklyPlanningById(UUID planningId);
+    Optional<WeeklyPlanningDTO> getWeeklyPlanningById(Long planningId);
     
     List<WeeklyPlanningDTO> getAllWeeklyPlannings();
     
-    List<WeeklyPlanningDTO> getWeeklyPlanningsByUser(UUID userId);
+    List<WeeklyPlanningDTO> getWeeklyPlanningsByUser(Long userId);
     
-    Optional<WeeklyPlanningDTO> getWeeklyPlanningByUserAndWeek(UUID userId, Integer weekNumber, Integer year);
+    Optional<WeeklyPlanningDTO> getWeeklyPlanningByUserAndWeek(Long userId, Integer weekNumber, Integer year);
     
-    List<WeeklyPlanningDTO> getWeeklyPlanningsForDate(LocalDate date);
-    
-    List<WeeklyPlanningDTO> getWeeklyPlanningsByComplianceStatus(WeeklyPlanning.ComplianceStatus status);
+    List<WeeklyPlanningDTO> getWeeklyPlanningsByStatus(WeeklyPlanningDTO.ComplianceStatus status);
     
     List<WeeklyPlanningDTO> getPendingApprovals();
     
-    List<WeeklyPlanningDTO> getApprovedPlanningsByUser(UUID userId);
+    List<WeeklyPlanningDTO> getApprovedPlanningsByUser(Long userId);
     
-    Optional<WeeklyPlanningDTO> getCurrentWeeklyPlanning();
+    List<WeeklyPlanningDTO> getCompliantPlanningsByUser(Long userId);
     
-    WeeklyPlanningDTO submitWeeklyPlanning(UUID planningId);
+    WeeklyPlanningDTO submitWeeklyPlanning(Long planningId);
     
-    WeeklyPlanningDTO approveWeeklyPlanning(UUID planningId, UUID approverId);
+    WeeklyPlanningDTO approveWeeklyPlanning(Long planningId, Long approverId);
     
-    WeeklyPlanningDTO rejectWeeklyPlanning(UUID planningId, UUID approverId, String reason);
+    WeeklyPlanningDTO rejectWeeklyPlanning(Long planningId, Long approverId, String reason);
     
-    long countCompliantPlanningsByUser(UUID userId);
+    long countPlanningsByUser(Long userId);
     
-    List<WeeklyPlanningDTO> getWeeklyPlanningsInDateRange(LocalDate startDate, LocalDate endDate);
+    long countCompliantPlanningsByUser(Long userId);
     
-    WeeklyPlanningDTO calculateComplianceStatus(UUID planningId);
+    double calculateComplianceRate(Long userId);
+    
+    WeeklyPlanningDTO calculateComplianceStatus(Long planningId);
 } 

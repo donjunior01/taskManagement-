@@ -11,8 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.Random;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -21,6 +20,7 @@ import java.util.UUID;
 public class TaskController {
     
     private final TaskService taskService;
+    Random random = new Random();
     
     @GetMapping
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
@@ -30,7 +30,7 @@ public class TaskController {
     
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TaskDTO> getTaskById(@PathVariable UUID id) {
+    public ResponseEntity<TaskDTO> getTaskById(@PathVariable Long id) {
         return taskService.getTaskById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -44,26 +44,26 @@ public class TaskController {
     
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TaskDTO> updateTask(@PathVariable UUID id, @RequestBody TaskDTO taskDTO) {
+    public ResponseEntity<TaskDTO> updateTask(@PathVariable Long id, @RequestBody TaskDTO taskDTO) {
         return ResponseEntity.ok(taskService.updateTask(id, taskDTO));
     }
     
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<Void> deleteTask(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
         return ResponseEntity.ok().build();
     }
     
     @GetMapping("/creator/{userId}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<List<TaskDTO>> getTasksByCreator(@PathVariable UUID userId) {
+    public ResponseEntity<List<TaskDTO>> getTasksByCreator(@PathVariable Long userId) {
         return ResponseEntity.ok(taskService.getTasksByCreator(userId));
     }
     
     @GetMapping("/project/{projectId}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<List<TaskDTO>> getTasksByProject(@PathVariable UUID projectId) {
+    public ResponseEntity<List<TaskDTO>> getTasksByProject(@PathVariable Long projectId) {
         return ResponseEntity.ok(taskService.getTasksByProject(projectId));
     }
     
@@ -93,25 +93,25 @@ public class TaskController {
     
     @PutMapping("/{id}/status/{status}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TaskDTO> updateTaskStatus(@PathVariable UUID id, @PathVariable Task.TaskStatus status) {
+    public ResponseEntity<TaskDTO> updateTaskStatus(@PathVariable Long id, @PathVariable Task.TaskStatus status) {
         return ResponseEntity.ok(taskService.updateTaskStatus(id, status));
     }
     
     @PutMapping("/{id}/progress")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TaskDTO> updateTaskProgress(@PathVariable UUID id, @RequestParam Double progressPercentage) {
+    public ResponseEntity<TaskDTO> updateTaskProgress(@PathVariable Long id, @RequestParam Double progressPercentage) {
         return ResponseEntity.ok(taskService.updateTaskProgress(id, progressPercentage));
     }
     
     @PutMapping("/{id}/assign/{assigneeId}")
     @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TaskDTO> assignTask(@PathVariable UUID id, @PathVariable UUID assigneeId) {
+    public ResponseEntity<TaskDTO> assignTask(@PathVariable Long id, @PathVariable Long assigneeId) {
         return ResponseEntity.ok(taskService.assignTask(id, assigneeId));
     }
     
     @PutMapping("/{id}/complete")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TaskDTO> completeTask(@PathVariable UUID id) {
+    public ResponseEntity<TaskDTO> completeTask(@PathVariable Long id) {
         return ResponseEntity.ok(taskService.completeTask(id));
     }
     
@@ -121,19 +121,19 @@ public class TaskController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
         return ResponseEntity.ok(taskService.getTasksByUserAndDateRange(
-            UUID.randomUUID(), start, end)); // TODO: Get current user ID
+                random.nextLong(), start, end)); // TODO: Get current user ID
     }
     
     @GetMapping("/recent")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<List<TaskDTO>> getRecentTasks() {
-        return ResponseEntity.ok(taskService.getTasksByCreator(UUID.randomUUID())); // TODO: Get current user ID
+        return ResponseEntity.ok(taskService.getTasksByCreator(random.nextLong())); // TODO: Get current user ID
     }
     
     @PutMapping("/{id}/dates")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<TaskDTO> updateTaskDates(
-            @PathVariable UUID id,
+            @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueDate) {
         TaskDTO taskDTO = new TaskDTO();

@@ -7,19 +7,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TaskAssignmentDTO {
-    private UUID assignmentId;
-    private UUID taskId;
+    private Long assignmentId;
+    private Long taskId;
     private String taskTitle;
-    private UUID assignedById;
+    private Long assignedById;
     private String assignedByName;
-    private UUID assignedToId;
+    private Long assignedToId;
     private String assignedToName;
     private LocalDateTime assignedAt;
     private LocalDateTime acceptedAt;

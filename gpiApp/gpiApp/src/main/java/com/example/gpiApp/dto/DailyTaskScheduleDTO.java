@@ -8,16 +8,15 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class DailyTaskScheduleDTO {
-    private UUID scheduleId;
-    private UUID planningId;
-    private UUID taskId;
+    private Long scheduleId;
+    private Long planningId;
+    private Long taskId;
     private String taskTitle;
     private LocalDate scheduledDate;
     private LocalTime startTime;

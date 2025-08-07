@@ -6,10 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -19,9 +17,9 @@ import java.util.UUID;
 @Builder
 public class UserPerformanceMetrics {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "metric_id")
-    private UUID metricId;
+    private Long metricId;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -31,24 +29,24 @@ public class UserPerformanceMetrics {
     private LocalDate metricDate;
 
     @Column(name = "tasks_completed", nullable = false)
-    private int tasksCompleted = 0;
+    private Integer tasksCompleted;
 
     @Column(name = "tasks_overdue", nullable = false)
-    private int tasksOverdue = 0;
+    private Integer tasksOverdue;
 
-    @Column(name = "average_completion_time_hours", precision = 5, scale = 2)
-    private BigDecimal averageCompletionTimeHours;
+    @Column(name = "average_completion_time_hours")
+    private Double averageCompletionTimeHours;
 
-    @Column(name = "planning_compliance_rate", precision = 5, scale = 2)
-    private BigDecimal planningComplianceRate;
+    @Column(name = "planning_compliance_rate")
+    private Double planningComplianceRate;
 
-    @Column(name = "satisfaction_score", precision = 3, scale = 2)
-    private BigDecimal satisfactionScore;
+    @Column(name = "satisfaction_score")
+    private Double satisfactionScore;
 
-    @Column(name = "total_tasks_assigned", nullable = false)
-    private int totalTasksAssigned = 0;
+    @Column(name = "total_tasks_assigned")
+    private Integer totalTasksAssigned;
 
-    @Column(name = "calculated_at", nullable = false)
+    @Column(name = "calculated_at")
     private LocalDateTime calculatedAt;
 
     @PrePersist

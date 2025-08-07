@@ -9,17 +9,16 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProjectDTO {
-    private UUID projectId;
+    private Long projectId;
     private String projectName;
     private String description;
-    private UUID teamId;
+    private Long teamId;
     private String teamName;
     private Project.ProjectStatus status;
     private LocalDate startDate;

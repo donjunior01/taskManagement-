@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -17,9 +16,9 @@ import java.util.UUID;
 @Builder
 public class TaskDifficulty {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "difficulty_id")
-    private UUID difficultyId;
+    private Long difficultyId;
 
     @ManyToOne
     @JoinColumn(name = "task_id", nullable = false)
@@ -53,11 +52,11 @@ public class TaskDifficulty {
     private LocalDateTime resolvedAt;
 
     public enum ImpactLevel {
-        LOW, MEDIUM, HIGH
+        LOW, MEDIUM, HIGH, CRITICAL
     }
 
     public enum CriticalityLevel {
-        NON_URGENT, IMPORTANT, URGENT
+        MINOR, IMPORTANT, URGENT, CRITICAL
     }
 
     @PrePersist

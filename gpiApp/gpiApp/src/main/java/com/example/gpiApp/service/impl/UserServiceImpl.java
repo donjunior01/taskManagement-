@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,7 +48,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO updateUser(UUID userId, UserRequestDTO userRequestDTO) {
+    public UserDTO updateUser(Long userId, UserRequestDTO userRequestDTO) {
         Optional<allUsers> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
             allUsers user = userOpt.get();
@@ -76,7 +75,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteUser(UUID userId) {
+    public void deleteUser(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new RuntimeException("User not found with ID: " + userId);
         }
@@ -85,7 +84,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<UserDTO> getUserById(UUID userId) {
+    public Optional<UserDTO> getUserById(Long userId) {
         return userRepository.findById(userId).map(this::convertToDTO);
     }
 
@@ -163,7 +162,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUserProfile(UUID userId, UserRequestDTO userRequestDTO) {
+    public void updateUserProfile(Long userId, UserRequestDTO userRequestDTO) {
         Optional<allUsers> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
             allUsers user = userOpt.get();
@@ -182,7 +181,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUserPassword(UUID userId, String newPassword) {
+    public void updateUserPassword(Long userId, String newPassword) {
         Optional<allUsers> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
             allUsers user = userOpt.get();
@@ -195,7 +194,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deactivateUser(UUID userId) {
+    public void deactivateUser(Long userId) {
         Optional<allUsers> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
             allUsers user = userOpt.get();
@@ -208,7 +207,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void activateUser(UUID userId) {
+    public void activateUser(Long userId) {
         Optional<allUsers> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
             allUsers user = userOpt.get();

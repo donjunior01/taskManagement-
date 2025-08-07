@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -17,9 +16,9 @@ import java.util.UUID;
 @Builder
 public class UserTeam {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_team_id")
-    private UUID userTeamId;
+    private Long userTeamId;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)

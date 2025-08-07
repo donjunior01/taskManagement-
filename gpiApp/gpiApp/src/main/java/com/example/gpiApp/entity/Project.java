@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -19,9 +18,9 @@ import java.util.UUID;
 @Builder
 public class Project {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "project_id")
-    private UUID projectId;
+    private Long projectId;
 
     @Column(name = "project_name", nullable = false)
     private String projectName;
@@ -30,7 +29,7 @@ public class Project {
     private String description;
 
     @ManyToOne
-    @JoinColumn(name = "team_id", nullable = false)
+    @JoinColumn(name = "team_id")
     private Team team;
 
     @Enumerated(EnumType.STRING)

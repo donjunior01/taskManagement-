@@ -8,27 +8,37 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 @Repository
-public interface DailyTaskScheduleRepository extends JpaRepository<DailyTaskSchedule, UUID> {
-    @Query("SELECT dts FROM DailyTaskSchedule dts WHERE dts.weeklyPlanning.planningId = :planningId")
-    List<DailyTaskSchedule> findByWeeklyPlanningPlanningId(@Param("planningId") UUID planningId);
-    
+public interface DailyTaskScheduleRepository extends JpaRepository<DailyTaskSchedule, Long> {
+
+    // Changed from 'weeklyPlanning' to 'planning'
+    @Query("SELECT dts FROM DailyTaskSchedule dts WHERE dts.planning.planningId = :planningId")
+    List<DailyTaskSchedule> findByWeeklyPlanningPlanningId(@Param("planningId") Long planningId);
+
+    // Changed from 'task.taskId' to match your Task entity's ID field
     @Query("SELECT dts FROM DailyTaskSchedule dts WHERE dts.task.taskId = :taskId")
-    List<DailyTaskSchedule> findByTaskTaskId(@Param("taskId") UUID taskId);
-    
+    List<DailyTaskSchedule> findByTaskTaskId(@Param("taskId") Long taskId);
+
     List<DailyTaskSchedule> findByScheduledDate(LocalDate scheduledDate);
-    
-    @Query("SELECT dts FROM DailyTaskSchedule dts WHERE dts.weeklyPlanning.user.userId = :userId AND dts.scheduledDate = :date")
-    List<DailyTaskSchedule> findByUserAndDate(@Param("userId") UUID userId, @Param("date") LocalDate date);
-    
-    @Query("SELECT dts FROM DailyTaskSchedule dts WHERE dts.weeklyPlanning.user.userId = :userId AND dts.scheduledDate BETWEEN :startDate AND :endDate")
-    List<DailyTaskSchedule> findByUserAndDateRange(@Param("userId") UUID userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
-    
+
+    // Changed from 'weeklyPlanning' to 'planning'
+    @Query("SELECT dts FROM DailyTaskSchedule dts WHERE dts.planning.user.userId = :userId AND dts.scheduledDate = :date")
+    List<DailyTaskSchedule> findByUserAndDate(@Param("userId") Long userId, @Param("date") LocalDate date);
+
+    // Changed from 'weeklyPlanning' to 'planning'
+    @Query("SELECT dts FROM DailyTaskSchedule dts WHERE dts.planning.user.userId = :userId AND dts.scheduledDate BETWEEN :startDate AND :endDate")
+    List<DailyTaskSchedule> findByUserAndDateRange(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
     @Query("SELECT dts FROM DailyTaskSchedule dts WHERE dts.isCompleted = false AND dts.scheduledDate < :date")
     List<DailyTaskSchedule> findOverdueSchedules(@Param("date") LocalDate date);
-    
-    @Query("SELECT COUNT(dts) FROM DailyTaskSchedule dts WHERE dts.weeklyPlanning.user.userId = :userId AND dts.isCompleted = true")
-    long countCompletedSchedulesByUser(@Param("userId") UUID userId);
-} 
+
+    // Changed from 'weeklyPlanning' to 'planning'
+    @Query("SELECT COUNT(dts) FROM DailyTaskSchedule dts WHERE dts.planning.user.userId = :userId AND dts.isCompleted = true")
+    long countCompletedSchedulesByUser(@Param("userId") Long userId);
+
+    // Alternative: Using Spring Data method naming (no @Query needed)
+    // These methods will work based on your entity structure:
+    List<DailyTaskSchedule> findByPlanningPlanningId(Long planningId);
+    long countByPlanningUserUserIdAndIsCompletedTrue(Long userId);
+}

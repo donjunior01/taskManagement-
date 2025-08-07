@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -17,9 +16,9 @@ import java.util.UUID;
 @Builder
 public class Notification {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "notification_id")
-    private UUID notificationId;
+    private Long notificationId;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -45,7 +44,7 @@ public class Notification {
     @Column(nullable = false)
     private NotificationPriority priority;
 
-    @Column(columnDefinition = "JSON")
+    @Column(name = "metadata", columnDefinition = "JSON")
     private String metadata;
 
     @Column(name = "sent_at", nullable = false)
@@ -59,10 +58,5 @@ public class Notification {
 
     public enum NotificationPriority {
         LOW, NORMAL, HIGH, URGENT
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        sentAt = LocalDateTime.now();
     }
 } 

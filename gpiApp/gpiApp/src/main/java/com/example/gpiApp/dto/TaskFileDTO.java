@@ -7,17 +7,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TaskFileDTO {
-    private UUID fileId;
-    private UUID taskId;
+    private Long fileId;
+    private Long taskId;
     private String taskTitle;
-    private UUID uploadedById;
+    private Long uploadedById;
     private String uploadedByName;
     private String originalFilename;
     private String storedFilename;
@@ -27,7 +26,7 @@ public class TaskFileDTO {
     private TaskFile.FileType fileType;
     private Boolean isDeliverable;
     private TaskFile.ApprovalStatus approvalStatus;
-    private UUID approvedById;
+    private Long approvedById;
     private String approvedByName;
     private LocalDateTime approvedAt;
     private String approvalNotes;

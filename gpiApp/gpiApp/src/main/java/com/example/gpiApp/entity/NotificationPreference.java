@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -17,9 +16,9 @@ import java.util.UUID;
 @Builder
 public class NotificationPreference {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "preference_id")
-    private UUID preferenceId;
+    private Long preferenceId;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -41,10 +40,9 @@ public class NotificationPreference {
     @Column(name = "custom_settings", columnDefinition = "JSON")
     private String customSettings;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @PrePersist
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -18,11 +17,11 @@ import java.util.UUID;
 @Builder
 public class Team {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "team_id")
-    private UUID teamId;
+    private Long teamId;
 
-    @Column(name = "team_name", nullable = false)
+    @Column(name = "team_name", nullable = false, unique = true)
     private String teamName;
 
     @Column(columnDefinition = "TEXT")
@@ -42,10 +41,10 @@ public class Team {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL)
-    private List<UserTeam> userTeams;
+    private List<Project> projects;
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL)
-    private List<Project> projects;
+    private List<UserTeam> userTeams;
 
     @PrePersist
     protected void onCreate() {

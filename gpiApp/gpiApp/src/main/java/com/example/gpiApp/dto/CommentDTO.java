@@ -7,17 +7,16 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CommentDTO {
-    private UUID commentId;
-    private UUID taskId;
+    private Long commentId;
+    private Long taskId;
     private String taskTitle;
-    private UUID userId;
+    private Long userId;
     private String userName;
     private String commentText;
     private Boolean isPrivate;

@@ -9,7 +9,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/teams")
@@ -33,7 +32,7 @@ public class TeamController {
     
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TeamDTO> getTeamById(@PathVariable UUID id) {
+    public ResponseEntity<TeamDTO> getTeamById(@PathVariable Long id) {
         return teamService.getTeamById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -47,50 +46,50 @@ public class TeamController {
     
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TeamDTO> updateTeam(@PathVariable UUID id, @RequestBody TeamDTO teamDTO) {
+    public ResponseEntity<TeamDTO> updateTeam(@PathVariable Long id, @RequestBody TeamDTO teamDTO) {
         return ResponseEntity.ok(teamService.updateTeam(id, teamDTO));
     }
     
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<Void> deleteTeam(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteTeam(@PathVariable Long id) {
         teamService.deleteTeam(id);
         return ResponseEntity.ok().build();
     }
     
     @GetMapping("/leader/{leaderId}")
     @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<List<TeamDTO>> getTeamsByLeader(@PathVariable UUID leaderId) {
+    public ResponseEntity<List<TeamDTO>> getTeamsByLeader(@PathVariable Long leaderId) {
         return ResponseEntity.ok(teamService.getTeamsByLeader(leaderId));
     }
     
     @GetMapping("/member/{memberId}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<List<TeamDTO>> getTeamsByMember(@PathVariable UUID memberId) {
+    public ResponseEntity<List<TeamDTO>> getTeamsByMember(@PathVariable Long memberId) {
         return ResponseEntity.ok(teamService.getTeamsByMember(memberId));
     }
     
     @PostMapping("/{teamId}/members/{userId}")
     @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TeamDTO> addMemberToTeam(@PathVariable UUID teamId, @PathVariable UUID userId) {
+    public ResponseEntity<TeamDTO> addMemberToTeam(@PathVariable Long teamId, @PathVariable Long userId) {
         return ResponseEntity.ok(teamService.addMemberToTeam(teamId, userId));
     }
     
     @DeleteMapping("/{teamId}/members/{userId}")
     @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TeamDTO> removeMemberFromTeam(@PathVariable UUID teamId, @PathVariable UUID userId) {
+    public ResponseEntity<TeamDTO> removeMemberFromTeam(@PathVariable Long teamId, @PathVariable Long userId) {
         return ResponseEntity.ok(teamService.removeMemberFromTeam(teamId, userId));
     }
     
     @GetMapping("/{teamId}/members")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<List<UserDTO>> getTeamMembers(@PathVariable UUID teamId) {
+    public ResponseEntity<List<UserDTO>> getTeamMembers(@PathVariable Long teamId) {
         return ResponseEntity.ok(teamService.getTeamMembers(teamId));
     }
     
     @PutMapping("/{teamId}/leader/{leaderId}")
     @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<TeamDTO> assignTeamLeader(@PathVariable UUID teamId, @PathVariable UUID leaderId) {
+    public ResponseEntity<TeamDTO> assignTeamLeader(@PathVariable Long teamId, @PathVariable Long leaderId) {
         return ResponseEntity.ok(teamService.assignTeamLeader(teamId, leaderId));
     }
     

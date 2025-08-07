@@ -7,17 +7,16 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TeamDTO {
-    private UUID teamId;
+    private Long teamId;
     private String teamName;
     private String description;
-    private UUID teamLeaderId;
+    private Long teamLeaderId;
     private String teamLeaderName;
     private Boolean isActive;
     private LocalDateTime createdAt;

@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
@@ -17,9 +16,9 @@ import java.util.UUID;
 @Builder
 public class UserSession {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "session_id")
-    private UUID sessionId;
+    private Long sessionId;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -40,20 +39,14 @@ public class UserSession {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "last_activity_at", nullable = false)
+    @Column(name = "last_activity_at")
     private LocalDateTime lastActivityAt;
 
-    @Column(name = "expires_at", nullable = false)
+    @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        lastActivityAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        lastActivityAt = LocalDateTime.now();
     }
 } 
