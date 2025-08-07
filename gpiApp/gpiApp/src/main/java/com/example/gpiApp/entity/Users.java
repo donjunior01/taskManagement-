@@ -9,7 +9,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "users")
 @DiscriminatorValue("EMPLOYEE")
 public class Users extends allUsers {
     public Users() {

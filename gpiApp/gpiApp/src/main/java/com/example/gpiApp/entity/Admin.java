@@ -9,7 +9,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "admins")
 @DiscriminatorValue("SUPER_ADMIN")
 public class Admin extends allUsers {
     public Admin() {
