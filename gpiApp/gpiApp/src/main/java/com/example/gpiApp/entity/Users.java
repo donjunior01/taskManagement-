@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "users")
-@DiscriminatorValue("USER")
+@DiscriminatorValue("EMPLOYEE")
 public class Users extends allUsers {
     public Users() {
         super();

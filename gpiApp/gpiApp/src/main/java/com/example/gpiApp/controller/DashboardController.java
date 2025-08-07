@@ -1,27 +1,84 @@
 package com.example.gpiApp.controller;
 
 import com.example.gpiApp.dto.TaskDTO;
+import com.example.gpiApp.entity.allUsers;
+import com.example.gpiApp.repository.UserRepository;
 import com.example.gpiApp.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
-@RestController
-@RequestMapping("/api/dashboard")
+@Controller
+@RequestMapping("/")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class DashboardController {
     
     private final TaskService taskService;
+    private final UserRepository userRepository;
+
     Random random = new Random();
+
+    @GetMapping("/admin/adminDashboard")
+    public String adminDashboard(Model model, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/api/auth/login";
+        }
+
+        Optional<allUsers> currentUser = userRepository.findByEmail(authentication.getName());
+        if (currentUser.isEmpty()) {
+            return "redirect:/api/auth/login";
+        }
+
+        model.addAttribute("user", currentUser.get());
+
+        // Add admin-specific statistics
+        model.addAttribute("totalUsers", userRepository.count());
+        return "admin/adminDashboard";
+    }
+
+    @GetMapping("/project-manager/pmDashboard")
+    public String projectManagerDashboard(Authentication authentication, Model model) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/api/auth/login";
+        }
+
+        Optional<allUsers> currentUserOpt = userRepository.findByEmail(authentication.getName());
+        if (currentUserOpt.isEmpty()) {
+            return "redirect:/api/auth/login";
+        }
+
+        model.addAttribute("user", currentUserOpt.get());
+
+
+        return "project-manager/pmDashboard";
+    }
+
+    @GetMapping("/user/userDashboard")
+    public String userDashboard(Model model, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/api/auth/login";
+        }
+
+        Optional<allUsers> currentUser = userRepository.findByEmail(authentication.getName());
+        if (currentUser.isEmpty()) {
+            return "redirect:/api/auth/login";
+        }
+
+        model.addAttribute("user", currentUser.get());
+
+        // Add admin-specific statistics
+        model.addAttribute("totalUsers", userRepository.count());
+        return "user/userDashboard";
+    }
     
-    @GetMapping("/statistics")
+    @GetMapping("/api/dashboard/statistics")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<Map<String, Object>> getDashboardStatistics() {
         Map<String, Object> statistics = new HashMap<>();
@@ -55,7 +112,7 @@ public class DashboardController {
         }
     }
     
-    @GetMapping("/performance")
+    @GetMapping("/api/dashboard/performance")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<Map<String, Object>> getPerformanceData() {
         Map<String, Object> performance = new HashMap<>();
@@ -68,7 +125,7 @@ public class DashboardController {
         return ResponseEntity.ok(performance);
     }
     
-    @GetMapping("/recent-activity")
+    @GetMapping("/api/dashboard/recent-activity")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<List<TaskDTO>> getRecentActivity() {
         try {

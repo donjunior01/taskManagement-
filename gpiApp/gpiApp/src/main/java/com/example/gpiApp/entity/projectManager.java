@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "project_Managers")
-@DiscriminatorValue("PROJECT_MANAGER")
+@DiscriminatorValue("MANAGER")
 public class projectManager extends allUsers {
     public projectManager() {
         super();

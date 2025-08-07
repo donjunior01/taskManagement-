@@ -13,7 +13,7 @@ public class UserRequestDTO {
     private String email;
 
     @Size(min = 6, message = "Password must be at least 6 characters long")
-    private String password;
+    private String passwordHash;
 
     @NotBlank(message = "First name is required")
     private String firstName;

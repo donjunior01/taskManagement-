@@ -12,6 +12,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
@@ -56,23 +57,29 @@ public class DataLoader implements CommandLineRunner {
         
         allUsers admin = allUsers.builder()
                 .userId(randomLong)
-                .email("admin@company.com")
+                .email("admin@jdcosmetics.com")
                 .passwordHash(passwordEncoder.encode("password"))
                 .firstName("John")
                 .lastName("Admin")
                 .phone("+1234567890")
+                .profilePictureUrl("https://example.com/profiles/admin.jpg")
                 .userRole(allUsers.UserRole.SUPER_ADMIN)
                 .userPost(allUsers.UserPost.OPERATIONS_MANAGER)
                 .isActive(true)
+                .emailVerifiedAt(LocalDateTime.now())
+                .lastLoginAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
         
         allUsers manager = allUsers.builder()
                 .userId(randomLong)
-                .email("manager@company.com")
+                .email("pm@jdcosmetics.com")
                 .passwordHash(passwordEncoder.encode("password"))
                 .firstName("Sarah")
                 .lastName("Manager")
                 .phone("+1234567891")
+                .profilePictureUrl("https://example.com/profiles/admin.jpg")
                 .userRole(allUsers.UserRole.MANAGER)
                 .userPost(allUsers.UserPost.PROJECT_MANAGER)
                 .isActive(true)
@@ -80,11 +87,12 @@ public class DataLoader implements CommandLineRunner {
         
         allUsers employee = allUsers.builder()
                 .userId(randomLong)
-                .email("employee@company.com")
+                .email("user@jdcosmetics.com")
                 .passwordHash(passwordEncoder.encode("password"))
                 .firstName("Alice")
                 .lastName("Developer")
                 .phone("+1234567892")
+                .profilePictureUrl("https://example.com/profiles/admin.jpg")
                 .userRole(allUsers.UserRole.EMPLOYEE)
                 .userPost(allUsers.UserPost.DEVELOPER)
                 .isActive(true)

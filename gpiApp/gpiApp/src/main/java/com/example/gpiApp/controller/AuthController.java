@@ -27,6 +27,11 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
 
+    @GetMapping("/")
+    public String showHomePage() {
+        return "index";
+    }
+
     @GetMapping("/login")
     public String showLoginPage(@RequestParam(value = "error", required = false) String error,
                                 @RequestParam(value = "logout", required = false) String logout,
@@ -37,7 +42,7 @@ public class AuthController {
         if (logout != null) {
             model.addAttribute("message", "You have been logged out successfully");
         }
-        return "login";
+        return "auth/login";
     }
 
     @GetMapping("/register")

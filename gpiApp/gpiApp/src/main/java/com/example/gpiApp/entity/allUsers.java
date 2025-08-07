@@ -15,11 +15,11 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "users")
+@Table(name = "allusers")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
-@DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING, columnDefinition = "VARCHAR(31) DEFAULT 'User'")
+@DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 public class  allUsers implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -23,12 +23,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        allUsers allUsers = userRepository.findByEmail(email)
+        allUsers allUsers = userRepository.findByEmailAndIsActiveTrue(email)
                 .orElseThrow(() -> new UsernameNotFoundException("allUsers not found with email: " + email));
 
         return new org.springframework.security.core.userdetails.User(
                 allUsers.getEmail(),
-                allUsers.getPassword(),
+                allUsers.getPasswordHash(),
                 true, // enabled
                 true, // accountNonExpired
                 true, // credentialsNonExpired

@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
 
         allUsers user = allUsers.builder()
                 .email(userRequestDTO.getEmail())
-                .passwordHash(passwordEncoder.encode(userRequestDTO.getPassword()))
+                .passwordHash(passwordEncoder.encode(userRequestDTO.getPasswordHash()))
                 .firstName(userRequestDTO.getFirstName())
                 .lastName(userRequestDTO.getLastName())
                 .phone(userRequestDTO.getPhone())
@@ -63,8 +63,8 @@ public class UserServiceImpl implements UserService {
             user.setUserPost(userRequestDTO.getUserPost());
             
             // Update password if provided
-            if (userRequestDTO.getPassword() != null && !userRequestDTO.getPassword().isEmpty()) {
-                user.setPasswordHash(passwordEncoder.encode(userRequestDTO.getPassword()));
+            if (userRequestDTO.getPasswordHash() != null && !userRequestDTO.getPasswordHash().isEmpty()) {
+                user.setPasswordHash(passwordEncoder.encode(userRequestDTO.getPasswordHash()));
             }
             
             user.setUpdatedAt(LocalDateTime.now());

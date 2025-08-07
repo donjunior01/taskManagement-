@@ -56,13 +56,13 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             String role = authority.getAuthority();
             logger.info("Processing role: " + role);
             
-            if (role.equals("ROLE_ADMIN")) {
+            if (role.equals("ROLE_SUPER_ADMIN")) {
                 logger.info("Found ADMIN role, redirecting to admin dashboard");
                 return "/admin/adminDashboard";
-            } else if (role.equals("ROLE_PROJECT_MANAGER")) {
+            } else if (role.equals("ROLE_MANAGER")) {
                 logger.info("Found PROJECT_MANAGER role, redirecting to project manager dashboard");
                 return "/project-manager/pmDashboard";
-            } else if (role.equals("ROLE_USER")) {
+            } else if (role.equals("ROLE_EMPLOYEE")) {
                 logger.info("Found USER role, redirecting to user dashboard");
                 return "/user/userDashboard";
             }
