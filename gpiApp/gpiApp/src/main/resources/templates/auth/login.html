@@ -149,7 +149,7 @@
     <!-- <p class="company-tagline">Gestion des Performances Individuelles</p> -->
     <p class="company-tagline">Gestion des Performances Individuelles</p>
 
-    <form th:action="@{/api/auth/login}" method="post">
+    <form th:action="@{/api/auth/login}" method="post" id="loginForm">
         <div class="form-group">
             <label for="email">Email Address</label>
             <input type="email" id="email" name="email" required placeholder="Enter your email">
@@ -237,33 +237,10 @@
 
     // Form submission
     form.addEventListener('submit', function(e) {
-        e.preventDefault();
-
         const isEmailValid = validateEmail();
         const isPasswordValid = validatePassword();
-
-        if (isEmailValid && isPasswordValid) {
-            // Simulate login process
-
-            const loginBtn = document.querySelector('.login-btn');
-            loginBtn.innerHTML = 'Signing In...';
-            loginBtn.disabled = true;
-
-            th:action="@{/api/auth/login}"; method="post";
-            setTimeout(() => {
-                alert('Login successful! Welcome to JD Cosmetic.');
-                loginBtn.innerHTML = 'Sign In';
-                loginBtn.disabled = false;
-                // In a real application, you would redirect to the dashboard
-            }, 1500);
-        } else {
-            // Show errors for invalid fields
-            if (!isEmailValid) {
-                emailError.style.display = 'block';
-            }
-            if (!isPasswordValid) {
-                passwordError.style.display = 'block';
-            }
+        if (!isEmailValid || !isPasswordValid) {
+            e.preventDefault();
         }
     });
 

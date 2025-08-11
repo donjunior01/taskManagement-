@@ -23,82 +23,30 @@ public class DashboardController {
     private final TaskService taskService;
     private final UserRepository userRepository;
 
-    Random random = new Random();
-
     @GetMapping("/admin/adminDashboard")
-    public String adminDashboard(Model model, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/api/auth/login";
-        }
-
-        Optional<allUsers> currentUser = userRepository.findByEmail(authentication.getName());
-        if (currentUser.isEmpty()) {
-            return "redirect:/api/auth/login";
-        }
-
-        model.addAttribute("user", currentUser.get());
-
-        // Add admin-specific statistics
-        model.addAttribute("totalUsers", userRepository.count());
-        return "admin/adminDashboard";
-    }
+    public String adminDashboardLegacy() { return "redirect:/admin/dashboard"; }
 
     @GetMapping("/project-manager/pmDashboard")
-    public String projectManagerDashboard(Authentication authentication, Model model) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/api/auth/login";
-        }
-
-        Optional<allUsers> currentUserOpt = userRepository.findByEmail(authentication.getName());
-        if (currentUserOpt.isEmpty()) {
-            return "redirect:/api/auth/login";
-        }
-
-        model.addAttribute("user", currentUserOpt.get());
-
-
-        return "project-manager/pmDashboard";
-    }
+    public String projectManagerDashboardLegacy() { return "redirect:/project-manager/dashboard"; }
 
     @GetMapping("/user/userDashboard")
-    public String userDashboard(Model model, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/api/auth/login";
-        }
-
-        Optional<allUsers> currentUser = userRepository.findByEmail(authentication.getName());
-        if (currentUser.isEmpty()) {
-            return "redirect:/api/auth/login";
-        }
-
-        model.addAttribute("user", currentUser.get());
-
-        // Add admin-specific statistics
-        model.addAttribute("totalUsers", userRepository.count());
-        return "user/userDashboard";
-    }
+    public String userDashboardLegacy() { return "redirect:/user/dashboard"; }
     
     @GetMapping("/api/dashboard/statistics")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<Map<String, Object>> getDashboardStatistics() {
         Map<String, Object> statistics = new HashMap<>();
         
-        // Get current user ID (in real implementation, get from security context)
-
-        Long currentUserId = random.nextLong(); // TODO: Get from security context
-        
         try {
-            long totalTasks = taskService.countTasksByUserAndStatus(currentUserId, null);
-            long completedTasks = taskService.countTasksByUserAndStatus(currentUserId, 
-                com.example.gpiApp.entity.Task.TaskStatus.COMPLETED);
-            long inProgressTasks = taskService.countTasksByUserAndStatus(currentUserId, 
-                com.example.gpiApp.entity.Task.TaskStatus.IN_PROGRESS);
-            long overdueTasks = taskService.countTasksByUserAndStatus(currentUserId, 
-                com.example.gpiApp.entity.Task.TaskStatus.ASSIGNED); // Simplified for demo
+            // Using the new service methods
+            long totalTasks = taskService.getTotalTasksCount();
+            long completedTasks = taskService.getCompletedTasksCount();
+            long activeTasks = taskService.getActiveTasksCount();
+            long overdueTasks = taskService.getOverdueTasksCount();
             
             statistics.put("totalTasks", totalTasks);
             statistics.put("completedTasks", completedTasks);
-            statistics.put("inProgressTasks", inProgressTasks);
+            statistics.put("inProgressTasks", activeTasks);
             statistics.put("overdueTasks", overdueTasks);
             
             return ResponseEntity.ok(statistics);
@@ -129,17 +77,10 @@ public class DashboardController {
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<List<TaskDTO>> getRecentActivity() {
         try {
-            List<TaskDTO> recentTasks = taskService.getTasksByCreator(random.nextLong());
+            List<TaskDTO> recentTasks = taskService.getAllTasks();
             return ResponseEntity.ok(recentTasks.subList(0, Math.min(recentTasks.size(), 5)));
         } catch (Exception e) {
             return ResponseEntity.ok(List.of()); // Return empty list if service fails
         }
-    }
-
-//    all user pages
-
-    @GetMapping("/user/tasks")
-    public String TaskPage(Authentication authentication, Model model) {
-        return "/user/tasks";
     }
 }

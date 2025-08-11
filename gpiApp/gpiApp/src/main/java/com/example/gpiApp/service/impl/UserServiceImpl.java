@@ -1,19 +1,15 @@
 package com.example.gpiApp.service.impl;
 
 import com.example.gpiApp.dto.UserDTO;
-import com.example.gpiApp.dto.UserRequestDTO;
-import com.example.gpiApp.dto.UserResponseDTO;
 import com.example.gpiApp.entity.allUsers;
 import com.example.gpiApp.repository.UserRepository;
 import com.example.gpiApp.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,77 +18,6 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-
-    @Override
-    public UserDTO createUser(UserRequestDTO userRequestDTO) {
-        // Check if email already exists
-        if (userRepository.existsByEmail(userRequestDTO.getEmail())) {
-            throw new RuntimeException("Email already exists: " + userRequestDTO.getEmail());
-        }
-
-        allUsers user = allUsers.builder()
-                .email(userRequestDTO.getEmail())
-                .passwordHash(passwordEncoder.encode(userRequestDTO.getPasswordHash()))
-                .firstName(userRequestDTO.getFirstName())
-                .lastName(userRequestDTO.getLastName())
-                .phone(userRequestDTO.getPhone())
-                .profilePictureUrl(userRequestDTO.getProfilePictureUrl())
-                .userRole(userRequestDTO.getUserRole())
-                .userPost(userRequestDTO.getUserPost())
-                .isActive(true)
-                .build();
-
-        allUsers savedUser = userRepository.save(user);
-        return convertToDTO(savedUser);
-    }
-
-    @Override
-    public UserDTO updateUser(Long userId, UserRequestDTO userRequestDTO) {
-        Optional<allUsers> userOpt = userRepository.findById(userId);
-        if (userOpt.isPresent()) {
-            allUsers user = userOpt.get();
-            
-            // Update fields
-            user.setEmail(userRequestDTO.getEmail());
-            user.setFirstName(userRequestDTO.getFirstName());
-            user.setLastName(userRequestDTO.getLastName());
-            user.setPhone(userRequestDTO.getPhone());
-            user.setProfilePictureUrl(userRequestDTO.getProfilePictureUrl());
-            user.setUserRole(userRequestDTO.getUserRole());
-            user.setUserPost(userRequestDTO.getUserPost());
-            
-            // Update password if provided
-            if (userRequestDTO.getPasswordHash() != null && !userRequestDTO.getPasswordHash().isEmpty()) {
-                user.setPasswordHash(passwordEncoder.encode(userRequestDTO.getPasswordHash()));
-            }
-            
-            user.setUpdatedAt(LocalDateTime.now());
-            allUsers updatedUser = userRepository.save(user);
-            return convertToDTO(updatedUser);
-        }
-        throw new RuntimeException("User not found with ID: " + userId);
-    }
-
-    @Override
-    public void deleteUser(Long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new RuntimeException("User not found with ID: " + userId);
-        }
-        userRepository.deleteById(userId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<UserDTO> getUserById(Long userId) {
-        return userRepository.findById(userId).map(this::convertToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<UserDTO> getUserByEmail(String email) {
-        return userRepository.findByEmail(email).map(this::convertToDTO);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -104,143 +29,119 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserDTO> getActiveUsers() {
-        return userRepository.findByIsActiveTrue().stream()
+    public UserDTO getUserById(Long id) {
+        return userRepository.findById(id)
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .orElse(null);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserDTO> getUsersByRole(allUsers.UserRole role) {
-        return userRepository.findByUserRole(role).stream()
+    public UserDTO getUserByUsername(String username) {
+        return userRepository.findByEmail(username)
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .orElse(null);
+    }
+
+    @Override
+    public UserDTO createUser(UserDTO userDTO) {
+        allUsers user = allUsers.builder()
+                .email(userDTO.getEmail())
+                .firstName(userDTO.getName().split(" ")[0])
+                .lastName(userDTO.getName().split(" ").length > 1 ? userDTO.getName().split(" ")[1] : "")
+                .userRole(allUsers.UserRole.valueOf(userDTO.getRole()))
+                .userPost(allUsers.UserPost.valueOf(userDTO.getDepartment()))
+                .profilePictureUrl(userDTO.getAvatar())
+                .isActive("ACTIVE".equals(userDTO.getStatus()))
+                .build();
+        
+        allUsers savedUser = userRepository.save(user);
+        return convertToDTO(savedUser);
+    }
+
+    @Override
+    public UserDTO updateUser(UserDTO userDTO) {
+        return userRepository.findById(userDTO.getId())
+                .map(user -> {
+                    user.setEmail(userDTO.getEmail());
+                    user.setFirstName(userDTO.getName().split(" ")[0]);
+                    user.setLastName(userDTO.getName().split(" ").length > 1 ? userDTO.getName().split(" ")[1] : "");
+                    user.setUserRole(allUsers.UserRole.valueOf(userDTO.getRole()));
+                    user.setUserPost(allUsers.UserPost.valueOf(userDTO.getDepartment()));
+                    user.setProfilePictureUrl(userDTO.getAvatar());
+                    user.setIsActive("ACTIVE".equals(userDTO.getStatus()));
+                    user.setUpdatedAt(LocalDateTime.now());
+                    
+                    allUsers updatedUser = userRepository.save(user);
+                    return convertToDTO(updatedUser);
+                })
+                .orElse(null);
+    }
+
+    @Override
+    public boolean deleteUser(Long id) {
+        if (userRepository.existsById(id)) {
+            userRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserDTO> getUsersByPost(allUsers.UserPost post) {
-        return userRepository.findByUserPost(post).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public String getUserRole(String username) {
+        return String.valueOf(userRepository.findByEmail(username)
+                .map(allUsers::getUserRole)
+                .orElse(allUsers.UserRole.valueOf("USER")));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public long countActiveUsers() {
-        return userRepository.countByIsActiveTrue();
+    public Long getTotalUsersCount() {
+        return userRepository.count();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public long countUsersByRole(allUsers.UserRole role) {
-        return userRepository.countByUserRole(role);
+    public Map<String, Object> getUserActivityData() {
+        long totalUsers = userRepository.count();
+        long activeUsers = userRepository.countByIsActiveTrue();
+        long inactiveUsers = totalUsers - activeUsers;
+        
+        Map<String, Object> activity = new HashMap<>();
+        activity.put("activeUsers", activeUsers);
+        activity.put("inactiveUsers", inactiveUsers);
+        activity.put("newUsersThisWeek", 3); // This would need a date-based query
+        activity.put("averageLoginTime", 45.2); // This would need login tracking
+        return activity;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    @Override
-    public UserResponseDTO authenticateUser(String email, String password) {
-        Optional<allUsers> userOpt = userRepository.findByEmailAndIsActiveTrue(email);
-        if (userOpt.isPresent()) {
-            allUsers user = userOpt.get();
-            if (passwordEncoder.matches(password, user.getPasswordHash())) {
-                // Update last login
-                user.setLastLoginAt(LocalDateTime.now());
-                userRepository.save(user);
-                
-                UserDTO userDTO = convertToDTO(user);
-                return new UserResponseDTO(true, "Authentication successful", userDTO);
-            }
-        }
-        return new UserResponseDTO(false, "Invalid email or password", null);
-    }
-
-    @Override
-    public void updateUserProfile(Long userId, UserRequestDTO userRequestDTO) {
-        Optional<allUsers> userOpt = userRepository.findById(userId);
-        if (userOpt.isPresent()) {
-            allUsers user = userOpt.get();
-            
-            // Update profile fields only
-            user.setFirstName(userRequestDTO.getFirstName());
-            user.setLastName(userRequestDTO.getLastName());
-            user.setPhone(userRequestDTO.getPhone());
-            user.setProfilePictureUrl(userRequestDTO.getProfilePictureUrl());
-            user.setUpdatedAt(LocalDateTime.now());
-            
-            userRepository.save(user);
-        } else {
-            throw new RuntimeException("User not found with ID: " + userId);
-        }
-    }
-
-    @Override
-    public void updateUserPassword(Long userId, String newPassword) {
-        Optional<allUsers> userOpt = userRepository.findById(userId);
-        if (userOpt.isPresent()) {
-            allUsers user = userOpt.get();
-            user.setPasswordHash(passwordEncoder.encode(newPassword));
-            user.setUpdatedAt(LocalDateTime.now());
-            userRepository.save(user);
-        } else {
-            throw new RuntimeException("User not found with ID: " + userId);
-        }
-    }
-
-    @Override
-    public void deactivateUser(Long userId) {
-        Optional<allUsers> userOpt = userRepository.findById(userId);
-        if (userOpt.isPresent()) {
-            allUsers user = userOpt.get();
-            user.setIsActive(false);
-            user.setUpdatedAt(LocalDateTime.now());
-            userRepository.save(user);
-        } else {
-            throw new RuntimeException("User not found with ID: " + userId);
-        }
-    }
-
-    @Override
-    public void activateUser(Long userId) {
-        Optional<allUsers> userOpt = userRepository.findById(userId);
-        if (userOpt.isPresent()) {
-            allUsers user = userOpt.get();
-            user.setIsActive(true);
-            user.setUpdatedAt(LocalDateTime.now());
-            userRepository.save(user);
-        } else {
-            throw new RuntimeException("User not found with ID: " + userId);
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<UserDTO> searchUsers(String keyword) {
-        return userRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-                keyword, keyword, keyword).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Map<String, Object> getUserReports() {
+        long totalUsers = userRepository.count();
+        long activeUsers = userRepository.countByIsActiveTrue();
+        long inactiveUsers = totalUsers - activeUsers;
+        
+        Map<String, Object> reports = new HashMap<>();
+        reports.put("totalUsers", totalUsers);
+        reports.put("activeUsers", activeUsers);
+        reports.put("inactiveUsers", inactiveUsers);
+        reports.put("newUsersThisMonth", 8); // This would need a date-based query
+        return reports;
     }
 
     private UserDTO convertToDTO(allUsers user) {
         return UserDTO.builder()
-                .userId(user.getUserId())
+                .id(user.getUserId())
+                .username(user.getEmail())
+                .name(user.getFirstName() + " " + user.getLastName())
                 .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .phone(user.getPhone())
-                .profilePictureUrl(user.getProfilePictureUrl())
-                .userRole(user.getUserRole())
-                .userPost(user.getUserPost())
-                .isActive(user.getIsActive())
-                .emailVerifiedAt(user.getEmailVerifiedAt())
-                .lastLoginAt(user.getLastLoginAt())
+                .role(String.valueOf(user.getUserRole()))
+                .status(user.getIsActive() ? "ACTIVE" : "INACTIVE")
+                .avatar(user.getProfilePictureUrl())
+                .department(String.valueOf(user.getUserPost()))
+                .position(String.valueOf(user.getUserPost()))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();

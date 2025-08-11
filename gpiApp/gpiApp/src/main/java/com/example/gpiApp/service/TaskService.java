@@ -1,52 +1,39 @@
 package com.example.gpiApp.service;
 
 import com.example.gpiApp.dto.TaskDTO;
-import com.example.gpiApp.entity.Task;
-
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 public interface TaskService {
-    TaskDTO createTask(TaskDTO taskDTO);
-    
-    TaskDTO updateTask(Long taskId, TaskDTO taskDTO);
-    
-    void deleteTask(Long taskId);
-    
-    Optional<TaskDTO> getTaskById(Long taskId);
-    
     List<TaskDTO> getAllTasks();
+    List<TaskDTO> getTasksByManager(String managerUsername);
+    List<TaskDTO> getTasksByUser(String username);
+    TaskDTO getTaskById(Long id);
+    TaskDTO createTask(TaskDTO taskDTO);
+    TaskDTO updateTask(TaskDTO taskDTO);
+    boolean deleteTask(Long id);
     
-    List<TaskDTO> getTasksByCreator(Long userId);
+    // Dashboard statistics
+    Long getTotalTasksCount();
+    Long getActiveTasksCount();
+    Long getCompletedTasksCount();
+    Long getOverdueTasksCount();
+    Long getTasksCountByManager(String managerUsername);
+    Long getActiveTasksCountByManager(String managerUsername);
+    Long getCompletedTasksCountByManager(String managerUsername);
+    Long getOverdueTasksCountByManager(String managerUsername);
+    Long getTasksCountByUser(String username);
+    Long getActiveTasksCountByUser(String username);
+    Long getCompletedTasksCountByUser(String username);
+    Long getOverdueTasksCountByUser(String username);
     
-    List<TaskDTO> getTasksByProject(Long projectId);
+    // Chart data
+    Map<String, Object> getTaskStatusDistribution();
+    Map<String, Object> getTeamPerformanceData(String managerUsername);
+    Map<String, Object> getTaskProgressByUser(String username);
     
-    List<TaskDTO> getTasksByStatus(Task.TaskStatus status);
-    
-    List<TaskDTO> getTasksByType(Task.TaskType taskType);
-    
-    List<TaskDTO> getTasksByCreatorAndStatus(Long userId, Task.TaskStatus status);
-    
-    List<TaskDTO> getOverdueTasks();
-    
-    List<TaskDTO> getTasksByUserAndDateRange(Long userId, LocalDate startDate, LocalDate endDate);
-    
-    List<TaskDTO> getTasksByTeam(Long teamId);
-    
-    List<TaskDTO> getTasksByDifficulty(Task.DifficultyLevel difficulty);
-    
-    List<TaskDTO> searchTasksByKeyword(String keyword);
-    
-    long countTasksByStatus(Task.TaskStatus status);
-    
-    long countTasksByUserAndStatus(Long userId, Task.TaskStatus status);
-    
-    TaskDTO updateTaskStatus(Long taskId, Task.TaskStatus status);
-    
-    TaskDTO updateTaskProgress(Long taskId, Double progressPercentage);
-    
-    TaskDTO assignTask(Long taskId, Long assigneeId);
-    
-    TaskDTO completeTask(Long taskId);
+    // Reports
+    Map<String, Object> getSystemReports();
+    Map<String, Object> getTeamReports(String managerUsername);
+    Map<String, Object> getPersonalReports(String username);
 } 

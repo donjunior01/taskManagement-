@@ -1,189 +1,139 @@
 package com.example.gpiApp.service.impl;
 
 import com.example.gpiApp.dto.ProjectDTO;
-import com.example.gpiApp.entity.Project;
-import com.example.gpiApp.entity.Team;
-import com.example.gpiApp.repository.ProjectRepository;
-import com.example.gpiApp.repository.TeamRepository;
 import com.example.gpiApp.service.ProjectService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
-@RequiredArgsConstructor
-@Transactional
 public class ProjectServiceImpl implements ProjectService {
-    
-    private final ProjectRepository projectRepository;
-    private final TeamRepository teamRepository;
-    
+
+    @Override
+    public List<ProjectDTO> getAllProjects() {
+        List<ProjectDTO> projects = new ArrayList<>();
+        
+        ProjectDTO project1 = new ProjectDTO();
+        project1.setId(1L);
+        project1.setName("Website Redesign");
+        project1.setDescription("Complete redesign of the company website");
+        project1.setStatus("IN_PROGRESS");
+        project1.setManager("jane.smith");
+        project1.setCreatedBy("admin");
+        project1.setDeadline(LocalDateTime.now().plusDays(30));
+        project1.setCreatedAt(LocalDateTime.now().minusDays(15));
+        project1.setUpdatedAt(LocalDateTime.now());
+        project1.setProgress(65);
+        project1.setPriority("HIGH");
+        project1.setCategory("Web Development");
+        projects.add(project1);
+        
+        ProjectDTO project2 = new ProjectDTO();
+        project2.setId(2L);
+        project2.setName("System Optimization");
+        project2.setDescription("Optimize system performance and database");
+        project2.setStatus("COMPLETED");
+        project2.setManager("jane.smith");
+        project2.setCreatedBy("admin");
+        project2.setDeadline(LocalDateTime.now().minusDays(5));
+        project2.setCreatedAt(LocalDateTime.now().minusDays(25));
+        project2.setUpdatedAt(LocalDateTime.now().minusDays(5));
+        project2.setProgress(100);
+        project2.setPriority("CRITICAL");
+        project2.setCategory("System Administration");
+        projects.add(project2);
+        
+        return projects;
+    }
+
+    @Override
+    public List<ProjectDTO> getProjectsByManager(String managerUsername) {
+        return getAllProjects().stream()
+                .filter(project -> managerUsername.equals(project.getManager()))
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    @Override
+    public List<ProjectDTO> getProjectsByUser(String username) {
+        // For now, return all projects
+        return getAllProjects();
+    }
+
+    @Override
+    public ProjectDTO getProjectById(Long id) {
+        return getAllProjects().stream()
+                .filter(project -> id.equals(project.getId()))
+                .findFirst()
+                .orElse(null);
+    }
+
     @Override
     public ProjectDTO createProject(ProjectDTO projectDTO) {
-        Optional<Team> teamOpt = teamRepository.findById(projectDTO.getTeamId());
-        if (teamOpt.isPresent()) {
-            Project project = Project.builder()
-                    .projectName(projectDTO.getProjectName())
-                    .description(projectDTO.getDescription())
-                    .team(teamOpt.get())
-                    .status(projectDTO.getStatus())
-                    .startDate(projectDTO.getStartDate())
-                    .endDate(projectDTO.getEndDate())
-                    .build();
-            
-            Project savedProject = projectRepository.save(project);
-            return convertToDTO(savedProject);
-        }
-        throw new RuntimeException("Team not found");
+        projectDTO.setId(System.currentTimeMillis());
+        projectDTO.setCreatedAt(LocalDateTime.now());
+        projectDTO.setUpdatedAt(LocalDateTime.now());
+        return projectDTO;
     }
-    
+
     @Override
-    public ProjectDTO updateProject(Long projectId, ProjectDTO projectDTO) {
-        Optional<Project> projectOpt = projectRepository.findById(projectId);
-        if (projectOpt.isPresent()) {
-            Project project = projectOpt.get();
-            project.setProjectName(projectDTO.getProjectName());
-            project.setDescription(projectDTO.getDescription());
-            project.setStatus(projectDTO.getStatus());
-            project.setStartDate(projectDTO.getStartDate());
-            project.setEndDate(projectDTO.getEndDate());
-            
-            if (projectDTO.getTeamId() != null) {
-                Optional<Team> teamOpt = teamRepository.findById(projectDTO.getTeamId());
-                teamOpt.ifPresent(project::setTeam);
-            }
-            
-            Project updatedProject = projectRepository.save(project);
-            return convertToDTO(updatedProject);
-        }
-        throw new RuntimeException("Project not found");
+    public ProjectDTO updateProject(ProjectDTO projectDTO) {
+        projectDTO.setUpdatedAt(LocalDateTime.now());
+        return projectDTO;
     }
-    
+
     @Override
-    public void deleteProject(Long projectId) {
-        projectRepository.deleteById(projectId);
+    public boolean deleteProject(Long id) {
+        return true;
     }
-    
+
     @Override
-    @Transactional(readOnly = true)
-    public Optional<ProjectDTO> getProjectById(Long projectId) {
-        return projectRepository.findById(projectId).map(this::convertToDTO);
+    public Long getTotalProjectsCount() {
+        return 12L;
     }
-    
+
     @Override
-    @Transactional(readOnly = true)
-    public List<ProjectDTO> getAllProjects() {
-        return projectRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Long getProjectsCountByManager(String managerUsername) {
+        return 5L;
     }
-    
+
     @Override
-    @Transactional(readOnly = true)
-    public List<ProjectDTO> getProjectsByTeam(Long teamId) {
-        return projectRepository.findByTeamTeamId(teamId).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Map<String, Object> getProjectProgressData() {
+        Map<String, Object> progress = new HashMap<>();
+        progress.put("completed", 4);
+        progress.put("inProgress", 6);
+        progress.put("pending", 2);
+        progress.put("averageProgress", 68.5);
+        return progress;
     }
-    
+
     @Override
-    @Transactional(readOnly = true)
-    public List<ProjectDTO> getProjectsByStatus(Project.ProjectStatus status) {
-        return projectRepository.findByStatus(status).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Map<String, Object> getProjectProgressByManager(String managerUsername) {
+        Map<String, Object> progress = new HashMap<>();
+        progress.put("completed", 2);
+        progress.put("inProgress", 3);
+        progress.put("pending", 0);
+        progress.put("averageProgress", 72.3);
+        return progress;
     }
-    
+
     @Override
-    @Transactional(readOnly = true)
-    public List<ProjectDTO> getProjectsByTeamAndStatus(Long teamId, Project.ProjectStatus status) {
-        return projectRepository.findByTeamAndStatus(teamId, status).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Map<String, Object> getProjectReports() {
+        Map<String, Object> reports = new HashMap<>();
+        reports.put("totalProjects", 12);
+        reports.put("completedProjects", 4);
+        reports.put("inProgressProjects", 6);
+        reports.put("overdueProjects", 2);
+        return reports;
     }
-    
+
     @Override
-    @Transactional(readOnly = true)
-    public List<ProjectDTO> getActiveProjectsOnDate(LocalDate date) {
-        return projectRepository.findActiveProjectsOnDate(date).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProjectDTO> getProjectsByTeamLeader(Long leaderId) {
-        return projectRepository.findProjectsByTeamLeader(leaderId).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProjectDTO> getOverdueProjects() {
-        return projectRepository.findOverdueProjects(LocalDate.now()).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public long countProjectsByStatus(Project.ProjectStatus status) {
-        return projectRepository.countProjectsByStatus(status);
-    }
-    
-    @Override
-    public ProjectDTO updateProjectStatus(Long projectId, Project.ProjectStatus status) {
-        Optional<Project> projectOpt = projectRepository.findById(projectId);
-        if (projectOpt.isPresent()) {
-            Project project = projectOpt.get();
-            project.setStatus(status);
-            Project updatedProject = projectRepository.save(project);
-            return convertToDTO(updatedProject);
-        }
-        throw new RuntimeException("Project not found");
-    }
-    
-    @Override
-    public ProjectDTO assignProjectToTeam(Long projectId, Long teamId) {
-        Optional<Project> projectOpt = projectRepository.findById(projectId);
-        Optional<Team> teamOpt = teamRepository.findById(teamId);
-        
-        if (projectOpt.isPresent() && teamOpt.isPresent()) {
-            Project project = projectOpt.get();
-            project.setTeam(teamOpt.get());
-            Project updatedProject = projectRepository.save(project);
-            return convertToDTO(updatedProject);
-        }
-        throw new RuntimeException("Project or Team not found");
-    }
-    
-    private ProjectDTO convertToDTO(Project project) {
-        return ProjectDTO.builder()
-                .projectId(project.getProjectId())
-                .projectName(project.getProjectName())
-                .description(project.getDescription())
-                .teamId(project.getTeam().getTeamId())
-                .teamName(project.getTeam().getTeamName())
-                .status(project.getStatus())
-                .startDate(project.getStartDate())
-                .endDate(project.getEndDate())
-                .createdAt(project.getCreatedAt())
-                .updatedAt(project.getUpdatedAt())
-                .taskCount(project.getTasks() != null ? project.getTasks().size() : 0)
-                .completedTaskCount(project.getTasks() != null ? 
-                    (int) project.getTasks().stream()
-                        .filter(task -> task.getStatus() == com.example.gpiApp.entity.Task.TaskStatus.COMPLETED)
-                        .count() : 0)
-                .inProgressTaskCount(project.getTasks() != null ? 
-                    (int) project.getTasks().stream()
-                        .filter(task -> task.getStatus() == com.example.gpiApp.entity.Task.TaskStatus.IN_PROGRESS)
-                        .count() : 0)
-                .build();
+    public Map<String, Object> getProjectReportsByManager(String managerUsername) {
+        Map<String, Object> reports = new HashMap<>();
+        reports.put("totalProjects", 5);
+        reports.put("completedProjects", 2);
+        reports.put("inProgressProjects", 3);
+        reports.put("overdueProjects", 0);
+        return reports;
     }
 } 

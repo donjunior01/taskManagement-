@@ -192,15 +192,15 @@ public class TeamServiceImpl implements TeamService {
     
     private UserDTO convertUserToDTO(allUsers user) {
         return UserDTO.builder()
-                .userId(user.getUserId())
+                .id(user.getUserId())
+                .username(user.getEmail()) // Using email as username for now
+                .name(user.getFirstName() + " " + user.getLastName())
                 .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .phone(user.getPhone())
-                .profilePictureUrl(user.getProfilePictureUrl())
-                .userRole(user.getUserRole())
-                .userPost(user.getUserPost())
-                .isActive(user.getIsActive())
+                .role(String.valueOf(user.getUserRole()))
+                .status(user.getIsActive() ? "ACTIVE" : "INACTIVE")
+                .avatar(user.getProfilePictureUrl())
+                .department(String.valueOf(user.getUserPost())) // Using userPost as department for now
+                .position(String.valueOf(user.getUserPost()))
                 .build();
     }
 } 

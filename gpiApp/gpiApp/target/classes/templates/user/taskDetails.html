@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Details</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body data-theme="dark">
+<div class="sidebar">
+  <div class="logo">U</div>
+  <a th:href="@{/user/dashboard}" class="nav-item"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+  <a th:href="@{/user/tasks}" class="nav-item active"><i class="fas fa-tasks"></i><span>My Tasks</span></a>
+  <a th:href="@{/user/calendar}" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Calendar</span></a>
+  <a th:href="@{/user/profile}" class="nav-item"><i class="fas fa-user"></i><span>Profile</span></a>
+  <a th:href="@{/api/auth/logout-confirm}" id="logout-link" class="nav-item" style="margin-top:auto;"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+  </div>
+  <div class="main-content">
+    <div th:replace="~{fragments/userfragmentTB :: topbar}"></div>
+    <div class="content-wrapper">
+      <div class="section-header">
+        <h2 class="section-title">Task Details</h2>
+        <div>
+          <a th:href="@{/user/tasks/1/edit}" class="btn btn-secondary"><i class="fas fa-edit"></i> Edit</a>
+          <a th:href="@{/user/tasks/1/complete}" class="btn btn-primary"><i class="fas fa-check"></i> Mark Complete</a>
+        </div>
+      </div>
+      <div class="table-container">
+        <div class="table-header"><h3 class="table-title">Details</h3></div>
+        <table class="data-table"><tbody>
+          <tr><td>Title</td><td>Update Website Content</td></tr>
+          <tr><td>Priority</td><td>Medium</td></tr>
+          <tr><td>Deadline</td><td>2025-07-20</td></tr>
+          <tr><td>Status</td><td>In Progress</td></tr>
+          <tr><td>Description</td><td>Revise and update homepage copy.</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+  <script th:src="@{/js/script.js}"></script>
+</body>
+</html>
+
+

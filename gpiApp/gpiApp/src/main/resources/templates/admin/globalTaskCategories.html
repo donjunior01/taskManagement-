@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Task Categories - Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-tasks"></i>
+                <span>Task Manager</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin/dashboard}" class="nav-item" data-page="dashboard">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a th:href="@{/admin/user-management}" class="nav-item" data-page="user-management">
+                <i class="fas fa-users"></i>
+                <span>User Management</span>
+            </a>
+
+            <a th:href="@{/admin/create-user}" class="nav-item" data-page="create-user">
+                <i class="fas fa-user-plus"></i>
+                <span>Create User</span>
+            </a>
+
+            <a th:href="@{/admin/roles-permissions}" class="nav-item" data-page="roles-permissions">
+                <i class="fas fa-user-shield"></i>
+                <span>Roles & Permissions</span>
+            </a>
+
+            <a th:href="@{/admin/project-management}" class="nav-item" data-page="project-management">
+                <i class="fas fa-project-diagram"></i>
+                <span>Project Management</span>
+            </a>
+
+            <a th:href="@{/admin/global-tasks}" class="nav-item" data-page="global-tasks">
+                <i class="fas fa-tasks"></i>
+                <span>Global Tasks</span>
+            </a>
+
+            <a th:href="@{/admin/team-assignment}" class="nav-item" data-page="team-assignment">
+                <i class="fas fa-users-cog"></i>
+                <span>Team Assignment</span>
+            </a>
+
+            <a th:href="@{/admin/global-reports}" class="nav-item" data-page="global-reports">
+                <i class="fas fa-chart-bar"></i>
+                <span>Global Reports</span>
+            </a>
+
+            <a th:href="@{/admin/activity-logs}" class="nav-item" data-page="activity-logs">
+                <i class="fas fa-history"></i>
+                <span>Activity Logs</span>
+            </a>
+
+            <a th:href="@{/admin/system-settings}" class="nav-item" data-page="system-settings">
+                <i class="fas fa-cog"></i>
+                <span>System Settings</span>
+            </a>
+
+            <a th:href="@{/admin/integrations}" class="nav-item" data-page="integrations">
+                <i class="fas fa-plug"></i>
+                <span>Integrations</span>
+            </a>
+
+            <a th:href="@{/admin/security-backups}" class="nav-item" data-page="security">
+                <i class="fas fa-shield-alt"></i>
+                <span>Security & Backup</span>
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a th:href="@{/admin/support}" class="nav-item" data-page="support">
+                <i class="fas fa-life-ring"></i>
+                <span>Support Center</span>
+            </a>
+
+            <a th:href="@{/api/auth/logout-confirm}" id="logout-link" class="nav-item" style="margin-top: auto;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Include Top Bar Fragment -->
+        <div th:replace="~{fragments/adminfragmentTB :: topbar}"></div>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Global Task Categories Page -->
+            <div class="page-content active" id="global-task-categories">
+                <div class="section-header">
+                    <h2 class="section-title">Global Task Categories</h2>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Category
+                    </button>
+                </div>
+
+                <!-- Category Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>24</h3>
+                            <p>Total Categories</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(40, 167, 69, 0.1); color: var(--success);">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>18</h3>
+                            <p>Active Categories</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(23, 162, 184, 0.1); color: var(--info);">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>6</h3>
+                            <p>Inactive Categories</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(255, 193, 7, 0.1); color: var(--warning);">
+                            <i class="fas fa-pause-circle"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>1,247</h3>
+                            <p>Tasks Using Categories</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(108, 117, 125, 0.1); color: var(--secondary);">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Management -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Category Management</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Category Name</th>
+                                        <th>Description</th>
+                                        <th>Color</th>
+                                        <th>Icon</th>
+                                        <th>Tasks Count</th>
+                                        <th>Status</th>
+                                        <th>Created Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="category-info">
+                                                <span class="category-color" style="background-color: #007bff;"></span>
+                                                <span>Development</span>
+                                            </div>
+                                        </td>
+                                        <td>Software development and coding tasks</td>
+                                        <td><span class="color-preview" style="background-color: #007bff;"></span></td>
+                                        <td><i class="fas fa-code"></i></td>
+                                        <td>156</td>
+                                        <td><span class="status-badge success">Active</span></td>
+                                        <td>2024-01-01</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-secondary">Edit</button>
+                                            <button class="btn btn-sm btn-danger">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="category-info">
+                                                <span class="category-color" style="background-color: #28a745;"></span>
+                                                <span>Design</span>
+                                            </div>
+                                        </td>
+                                        <td>UI/UX design and creative tasks</td>
+                                        <td><span class="color-preview" style="background-color: #28a745;"></span></td>
+                                        <td><i class="fas fa-palette"></i></td>
+                                        <td>89</td>
+                                        <td><span class="status-badge success">Active</span></td>
+                                        <td>2024-01-02</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-secondary">Edit</button>
+                                            <button class="btn btn-sm btn-danger">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="category-info">
+                                                <span class="category-color" style="background-color: #ffc107;"></span>
+                                                <span>Marketing</span>
+                                            </div>
+                                        </td>
+                                        <td>Marketing campaigns and promotional activities</td>
+                                        <td><span class="color-preview" style="background-color: #ffc107;"></span></td>
+                                        <td><i class="fas fa-bullhorn"></i></td>
+                                        <td>67</td>
+                                        <td><span class="status-badge success">Active</span></td>
+                                        <td>2024-01-03</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-secondary">Edit</button>
+                                            <button class="btn btn-sm btn-danger">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="category-info">
+                                                <span class="category-color" style="background-color: #dc3545;"></span>
+                                                <span>Testing</span>
+                                            </div>
+                                        </td>
+                                        <td>Quality assurance and testing tasks</td>
+                                        <td><span class="color-preview" style="background-color: #dc3545;"></span></td>
+                                        <td><i class="fas fa-bug"></i></td>
+                                        <td>45</td>
+                                        <td><span class="status-badge success">Active</span></td>
+                                        <td>2024-01-04</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-secondary">Edit</button>
+                                            <button class="btn btn-sm btn-danger">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="category-info">
+                                                <span class="category-color" style="background-color: #6c757d;"></span>
+                                                <span>Documentation</span>
+                                            </div>
+                                        </td>
+                                        <td>Documentation and writing tasks</td>
+                                        <td><span class="color-preview" style="background-color: #6c757d;"></span></td>
+                                        <td><i class="fas fa-file-alt"></i></td>
+                                        <td>23</td>
+                                        <td><span class="status-badge warning">Inactive</span></td>
+                                        <td>2024-01-05</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-secondary">Edit</button>
+                                            <button class="btn btn-sm btn-success">Activate</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add New Category -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Add New Category</h3>
+                    </div>
+                    <div class="card-body">
+                        <form class="form-grid">
+                            <div class="form-group">
+                                <label for="category-name">Category Name</label>
+                                <input type="text" id="category-name" class="form-control" placeholder="Enter category name">
+                            </div>
+                            <div class="form-group">
+                                <label for="category-description">Description</label>
+                                <textarea id="category-description" class="form-control" rows="3" placeholder="Enter category description"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="category-color">Color</label>
+                                <input type="color" id="category-color" class="form-control" value="#007bff">
+                            </div>
+                            <div class="form-group">
+                                <label for="category-icon">Icon</label>
+                                <select id="category-icon" class="form-control">
+                                    <option value="fas fa-tasks">Tasks</option>
+                                    <option value="fas fa-code">Code</option>
+                                    <option value="fas fa-palette">Design</option>
+                                    <option value="fas fa-bullhorn">Marketing</option>
+                                    <option value="fas fa-bug">Testing</option>
+                                    <option value="fas fa-file-alt">Documentation</option>
+                                    <option value="fas fa-users">Team</option>
+                                    <option value="fas fa-cog">Settings</option>
+                                    <option value="fas fa-chart-bar">Analytics</option>
+                                    <option value="fas fa-tools">Tools</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="category-priority">Priority Level</label>
+                                <select id="category-priority" class="form-control">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="category-active" checked>
+                                    <span>Active</span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="category-default">
+                                    <span>Set as default category</span>
+                                </label>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Create Category</button>
+                                <button type="reset" class="btn btn-secondary">Reset</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Category Usage Analytics -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Category Usage Analytics</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="analytics-grid">
+                            <div class="analytics-item">
+                                <h4>Most Used Categories</h4>
+                                <div class="usage-chart">
+                                    <div class="usage-item">
+                                        <span class="usage-label">Development</span>
+                                        <div class="usage-bar">
+                                            <div class="usage-fill" style="width: 85%;"></div>
+                                        </div>
+                                        <span class="usage-value">156 tasks</span>
+                                    </div>
+                                    <div class="usage-item">
+                                        <span class="usage-label">Design</span>
+                                        <div class="usage-bar">
+                                            <div class="usage-fill" style="width: 65%;"></div>
+                                        </div>
+                                        <span class="usage-value">89 tasks</span>
+                                    </div>
+                                    <div class="usage-item">
+                                        <span class="usage-label">Marketing</span>
+                                        <div class="usage-bar">
+                                            <div class="usage-fill" style="width: 45%;"></div>
+                                        </div>
+                                        <span class="usage-value">67 tasks</span>
+                                    </div>
+                                    <div class="usage-item">
+                                        <span class="usage-label">Testing</span>
+                                        <div class="usage-bar">
+                                            <div class="usage-fill" style="width: 35%;"></div>
+                                        </div>
+                                        <span class="usage-value">45 tasks</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="analytics-item">
+                                <h4>Category Performance</h4>
+                                <div class="performance-metrics">
+                                    <div class="metric-item">
+                                        <div class="metric-icon">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div class="metric-info">
+                                            <h5>Average Completion Rate</h5>
+                                            <span class="metric-value">87.5%</span>
+                                        </div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-icon">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <div class="metric-info">
+                                            <h5>Average Duration</h5>
+                                            <span class="metric-value">3.2 days</span>
+                                        </div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-icon">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <div class="metric-info">
+                                            <h5>Active Users</h5>
+                                            <span class="metric-value">24</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Templates -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Category Templates</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="template-grid">
+                            <div class="template-item">
+                                <div class="template-icon">
+                                    <i class="fas fa-code"></i>
+                                </div>
+                                <div class="template-info">
+                                    <h4>Development Template</h4>
+                                    <p>Pre-configured settings for development tasks</p>
+                                    <div class="template-meta">
+                                        <span class="template-color" style="background-color: #007bff;"></span>
+                                        <span class="template-icon">fas fa-code</span>
+                                    </div>
+                                </div>
+                                <div class="template-actions">
+                                    <button class="btn btn-sm btn-primary">Use Template</button>
+                                    <button class="btn btn-sm btn-secondary">Preview</button>
+                                </div>
+                            </div>
+
+                            <div class="template-item">
+                                <div class="template-icon">
+                                    <i class="fas fa-palette"></i>
+                                </div>
+                                <div class="template-info">
+                                    <h4>Design Template</h4>
+                                    <p>Pre-configured settings for design tasks</p>
+                                    <div class="template-meta">
+                                        <span class="template-color" style="background-color: #28a745;"></span>
+                                        <span class="template-icon">fas fa-palette</span>
+                                    </div>
+                                </div>
+                                <div class="template-actions">
+                                    <button class="btn btn-sm btn-primary">Use Template</button>
+                                    <button class="btn btn-sm btn-secondary">Preview</button>
+                                </div>
+                            </div>
+
+                            <div class="template-item">
+                                <div class="template-icon">
+                                    <i class="fas fa-bullhorn"></i>
+                                </div>
+                                <div class="template-info">
+                                    <h4>Marketing Template</h4>
+                                    <p>Pre-configured settings for marketing tasks</p>
+                                    <div class="template-meta">
+                                        <span class="template-color" style="background-color: #ffc107;"></span>
+                                        <span class="template-icon">fas fa-bullhorn</span>
+                                    </div>
+                                </div>
+                                <div class="template-actions">
+                                    <button class="btn btn-sm btn-primary">Use Template</button>
+                                    <button class="btn btn-sm btn-secondary">Preview</button>
+                                </div>
+                            </div>
+
+                            <div class="template-item">
+                                <div class="template-icon">
+                                    <i class="fas fa-bug"></i>
+                                </div>
+                                <div class="template-info">
+                                    <h4>Testing Template</h4>
+                                    <p>Pre-configured settings for testing tasks</p>
+                                    <div class="template-meta">
+                                        <span class="template-color" style="background-color: #dc3545;"></span>
+                                        <span class="template-icon">fas fa-bug</span>
+                                    </div>
+                                </div>
+                                <div class="template-actions">
+                                    <button class="btn btn-sm btn-primary">Use Template</button>
+                                    <button class="btn btn-sm btn-secondary">Preview</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/script.js}"></script>
+</body>
+</html>

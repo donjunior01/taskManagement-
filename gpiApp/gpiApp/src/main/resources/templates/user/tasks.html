@@ -12,32 +12,40 @@
 <!-- Sidebar -->
 <div class="sidebar">
   <div class="logo">U</div>
-  <a href="userDashboard.html" class="nav-item">
+  <a th:href="@{/user/dashboard}" class="nav-item">
     <i class="fas fa-th-large"></i>
     <span>Dashboard</span>
   </a>
-  <a href="#" class="nav-item active">
+  <a th:href="@{/user/tasks}" class="nav-item active">
     <i class="fas fa-tasks"></i>
     <span>My Tasks</span>
   </a>
-  <a href="calendar.html" class="nav-item">
+  <a th:href="@{/user/calendar}" class="nav-item">
     <i class="fas fa-calendar-alt"></i>
     <span>Calendar</span>
   </a>
-  <a href="profile.html" class="nav-item">
+  <a th:href="@{/user/profile}" class="nav-item">
     <i class="fas fa-user"></i>
     <span>Profile</span>
   </a>
-  <a href="collaboration.html" class="nav-item">
+  <a th:href="@{/user/collaboration}" class="nav-item">
     <i class="fas fa-comments"></i>
     <span>Collaboration</span>
   </a>
-  <a href="time-tracking.html" class="nav-item">
+  <a th:href="@{/user/time-tracking}" class="nav-item">
    <i class="fas fa-clock"></i>
     <span>Time Tracking</span>
   </a>
+  <a th:href="@{/user/notifications}" class="nav-item">
+    <i class="fas fa-bell"></i>
+    <span>Notifications</span>
+  </a>
+  <a th:href="@{/user/notification-settings}" class="nav-item">
+    <i class="fas fa-cog"></i>
+    <span>Notification Settings</span>
+  </a>
   <div class="nav-divider"></div>
-  <a th:href="@{/auth/login}" id="logout-link" class="nav-item" style="margin-top: auto;">
+  <a th:href="@{/api/auth/logout-confirm}" id="logout-link" class="nav-item" style="margin-top: auto;">
     <i class="fas fa-sign-out-alt"></i>
     <span>Logout</span>
   </a>
@@ -91,18 +99,18 @@
           </thead>
           <tbody>
           <tr>
-            <td>Update Website Content</td>
+            <td><a th:href="@{/user/tasks/1}">Update Website Content</a></td>
             <td>Medium</td>
             <td>2025-07-20</td>
             <td>60%</td>
             <td><span class="status-badge active">In Progress</span></td>
             <td>
-              <button class="btn btn-secondary edit-task-btn" style="padding: 8px 12px; margin-right: 5px;" data-task-id="1">
+              <a th:href="@{/user/tasks/1/edit}" class="btn btn-secondary" style="padding: 8px 12px; margin-right: 5px;">
                 <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn btn-danger" style="padding: 8px 12px;" data-task-id="1">
+              </a>
+              <a th:href="@{/user/tasks/1/complete}" class="btn btn-danger" style="padding: 8px 12px;">
                 <i class="fas fa-exclamation-circle"></i>
-              </button>
+              </a>
             </td>
           </tr>
           </tbody>
@@ -112,5 +120,6 @@
   </div>
 </div>
     <script th:src="@{/js/script.js}"></script>
+    <script th:src="@{/js/dashboard.js}"></script>
 </body>
 </html>

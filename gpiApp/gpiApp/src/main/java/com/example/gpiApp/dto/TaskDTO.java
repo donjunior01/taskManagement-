@@ -1,49 +1,22 @@
 package com.example.gpiApp.dto;
 
-import com.example.gpiApp.entity.Task;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class TaskDTO {
-    private Long taskId;
+    private Long id;
     private String title;
     private String description;
-    private Long createdById;
-    private String createdByName;
-    private Long projectId;
-    private String projectName;
-    private Long categoryId;
-    private String categoryName;
-    private Long priorityId;
-    private String priorityName;
-    private Task.TaskType taskType;
-    private Task.TaskStatus status;
-    private Task.DifficultyLevel difficultyLevel;
-    private Integer estimatedHours;
-    private Integer actualHours;
-    private BigDecimal progressPercentage;
-    private LocalDate startDate;
-    private LocalDate dueDate;
-    private LocalDateTime completedAt;
+    private String status;
+    private String priority;
+    private String assignee;
+    private String createdBy;
+    private LocalDateTime deadline;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<TaskAssignmentDTO> assignments;
-    private List<CommentDTO> comments;
-    private List<TaskFileDTO> files;
-    private List<TaskProgressDTO> progressHistory;
-    private List<TaskDifficultyDTO> difficulties;
-    private Integer commentCount;
-    private Integer fileCount;
-    private Integer assignmentCount;
+    private Long projectId;
+    private String projectName;
+    private Integer progress;
+    private String difficulty;
 } 

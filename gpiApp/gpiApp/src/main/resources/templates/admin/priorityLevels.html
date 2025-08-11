@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Priority Levels - Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-tasks"></i>
+                <span>Task Manager</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin/dashboard}" class="nav-item" data-page="dashboard">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a th:href="@{/admin/user-management}" class="nav-item" data-page="user-management">
+                <i class="fas fa-users"></i>
+                <span>User Management</span>
+            </a>
+
+            <a th:href="@{/admin/create-user}" class="nav-item" data-page="create-user">
+                <i class="fas fa-user-plus"></i>
+                <span>Create User</span>
+            </a>
+
+            <a th:href="@{/admin/roles-permissions}" class="nav-item" data-page="roles-permissions">
+                <i class="fas fa-user-shield"></i>
+                <span>Roles & Permissions</span>
+            </a>
+
+            <a th:href="@{/admin/project-management}" class="nav-item" data-page="project-management">
+                <i class="fas fa-project-diagram"></i>
+                <span>Project Management</span>
+            </a>
+
+            <a th:href="@{/admin/global-tasks}" class="nav-item" data-page="global-tasks">
+                <i class="fas fa-tasks"></i>
+                <span>Global Tasks</span>
+            </a>
+
+            <a th:href="@{/admin/team-assignment}" class="nav-item" data-page="team-assignment">
+                <i class="fas fa-users-cog"></i>
+                <span>Team Assignment</span>
+            </a>
+
+            <a th:href="@{/admin/global-reports}" class="nav-item" data-page="global-reports">
+                <i class="fas fa-chart-bar"></i>
+                <span>Global Reports</span>
+            </a>
+
+            <a th:href="@{/admin/activity-logs}" class="nav-item" data-page="activity-logs">
+                <i class="fas fa-history"></i>
+                <span>Activity Logs</span>
+            </a>
+
+            <a th:href="@{/admin/system-settings}" class="nav-item" data-page="system-settings">
+                <i class="fas fa-cog"></i>
+                <span>System Settings</span>
+            </a>
+
+            <a th:href="@{/admin/integrations}" class="nav-item" data-page="integrations">
+                <i class="fas fa-plug"></i>
+                <span>Integrations</span>
+            </a>
+
+            <a th:href="@{/admin/security-backups}" class="nav-item" data-page="security">
+                <i class="fas fa-shield-alt"></i>
+                <span>Security & Backup</span>
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a th:href="@{/admin/support}" class="nav-item" data-page="support">
+                <i class="fas fa-life-ring"></i>
+                <span>Support Center</span>
+            </a>
+
+            <a th:href="@{/api/auth/logout-confirm}" id="logout-link" class="nav-item" style="margin-top: auto;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Include Top Bar Fragment -->
+        <div th:replace="~{fragments/adminfragmentTB :: topbar}"></div>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Priority Levels Page -->
+            <div class="page-content active" id="priority-levels">
+                <div class="section-header">
+                    <h2 class="section-title">Priority Levels</h2>
+                    <button class="btn btn-primary" onclick="openModal('add-priority-modal')">
+                        <i class="fas fa-plus"></i> Add New Priority
+                    </button>
+                </div>
+
+                <!-- Priority Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>5</h3>
+                            <p>Priority Levels</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(40, 167, 69, 0.1); color: var(--success);">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>156</h3>
+                            <p>Critical Tasks</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(220, 53, 69, 0.1); color: var(--danger);">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>89</h3>
+                            <p>High Priority Tasks</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(255, 193, 7, 0.1); color: var(--warning);">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>1,247</h3>
+                            <p>Total Tasks</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(23, 162, 184, 0.1); color: var(--info);">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Priority Levels Management -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Priority Levels Configuration</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="priority-levels">
+                            <div class="priority-item critical" data-priority-id="1">
+                                <div class="priority-header">
+                                    <div class="priority-info">
+                                        <h4>Critical</h4>
+                                        <p>Immediate attention required</p>
+                                    </div>
+                                    <div class="priority-meta">
+                                        <span class="priority-color" style="background-color: #dc3545;"></span>
+                                        <span class="priority-score">5</span>
+                                    </div>
+                                </div>
+                                <div class="priority-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Response Time:</span>
+                                        <span class="detail-value">1 hour</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Tasks Count:</span>
+                                        <span class="detail-value">156</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Auto-escalation:</span>
+                                        <span class="detail-value">Yes</span>
+                                    </div>
+                                </div>
+                                <div class="priority-actions">
+                                    <button class="btn btn-sm btn-secondary btn-edit" data-id="1" data-type="priority">Edit</button>
+                                    <button class="btn btn-sm btn-danger btn-delete" data-id="1" data-type="priority">Delete</button>
+                                </div>
+                            </div>
+
+                            <div class="priority-item high" data-priority-id="2">
+                                <div class="priority-header">
+                                    <div class="priority-info">
+                                        <h4>High</h4>
+                                        <p>Important tasks requiring attention</p>
+                                    </div>
+                                    <div class="priority-meta">
+                                        <span class="priority-color" style="background-color: #fd7e14;"></span>
+                                        <span class="priority-score">4</span>
+                                    </div>
+                                </div>
+                                <div class="priority-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Response Time:</span>
+                                        <span class="detail-value">4 hours</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Tasks Count:</span>
+                                        <span class="detail-value">89</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Auto-escalation:</span>
+                                        <span class="detail-value">Yes</span>
+                                    </div>
+                                </div>
+                                <div class="priority-actions">
+                                    <button class="btn btn-sm btn-secondary btn-edit" data-id="2" data-type="priority">Edit</button>
+                                    <button class="btn btn-sm btn-danger btn-delete" data-id="2" data-type="priority">Delete</button>
+                                </div>
+                            </div>
+
+                            <div class="priority-item medium" data-priority-id="3">
+                                <div class="priority-header">
+                                    <div class="priority-info">
+                                        <h4>Medium</h4>
+                                        <p>Normal priority tasks</p>
+                                    </div>
+                                    <div class="priority-meta">
+                                        <span class="priority-color" style="background-color: #ffc107;"></span>
+                                        <span class="priority-score">3</span>
+                                    </div>
+                                </div>
+                                <div class="priority-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Response Time:</span>
+                                        <span class="detail-value">1 day</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Tasks Count:</span>
+                                        <span class="detail-value">234</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Auto-escalation:</span>
+                                        <span class="detail-value">No</span>
+                                    </div>
+                                </div>
+                                <div class="priority-actions">
+                                    <button class="btn btn-sm btn-secondary btn-edit" data-id="3" data-type="priority">Edit</button>
+                                    <button class="btn btn-sm btn-danger btn-delete" data-id="3" data-type="priority">Delete</button>
+                                </div>
+                            </div>
+
+                            <div class="priority-item low" data-priority-id="4">
+                                <div class="priority-header">
+                                    <div class="priority-info">
+                                        <h4>Low</h4>
+                                        <p>Low priority tasks</p>
+                                    </div>
+                                    <div class="priority-meta">
+                                        <span class="priority-color" style="background-color: #28a745;"></span>
+                                        <span class="priority-score">2</span>
+                                    </div>
+                                </div>
+                                <div class="priority-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Response Time:</span>
+                                        <span class="detail-value">3 days</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Tasks Count:</span>
+                                        <span class="detail-value">567</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Auto-escalation:</span>
+                                        <span class="detail-value">No</span>
+                                    </div>
+                                </div>
+                                <div class="priority-actions">
+                                    <button class="btn btn-sm btn-secondary btn-edit" data-id="4" data-type="priority">Edit</button>
+                                    <button class="btn btn-sm btn-danger btn-delete" data-id="4" data-type="priority">Delete</button>
+                                </div>
+                            </div>
+
+                            <div class="priority-item minimal" data-priority-id="5">
+                                <div class="priority-header">
+                                    <div class="priority-info">
+                                        <h4>Minimal</h4>
+                                        <p>Minimal priority tasks</p>
+                                    </div>
+                                    <div class="priority-meta">
+                                        <span class="priority-color" style="background-color: #6c757d;"></span>
+                                        <span class="priority-score">1</span>
+                                    </div>
+                                </div>
+                                <div class="priority-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Response Time:</span>
+                                        <span class="detail-value">1 week</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Tasks Count:</span>
+                                        <span class="detail-value">201</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Auto-escalation:</span>
+                                        <span class="detail-value">No</span>
+                                    </div>
+                                </div>
+                                <div class="priority-actions">
+                                    <button class="btn btn-sm btn-secondary btn-edit" data-id="5" data-type="priority">Edit</button>
+                                    <button class="btn btn-sm btn-danger btn-delete" data-id="5" data-type="priority">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add New Priority Level -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Add New Priority Level</h3>
+                    </div>
+                    <div class="card-body">
+                        <form class="form-grid">
+                            <div class="form-group">
+                                <label for="priority-name">Priority Name</label>
+                                <input type="text" id="priority-name" class="form-control" placeholder="Enter priority name">
+                            </div>
+                            <div class="form-group">
+                                <label for="priority-description">Description</label>
+                                <textarea id="priority-description" class="form-control" rows="3" placeholder="Enter priority description"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="priority-score">Priority Score</label>
+                                <input type="number" id="priority-score" class="form-control" min="1" max="10" placeholder="Enter priority score (1-10)">
+                            </div>
+                            <div class="form-group">
+                                <label for="priority-color">Color</label>
+                                <input type="color" id="priority-color" class="form-control" value="#007bff">
+                            </div>
+                            <div class="form-group">
+                                <label for="response-time">Response Time</label>
+                                <select id="response-time" class="form-control">
+                                    <option value="1hour">1 hour</option>
+                                    <option value="4hours">4 hours</option>
+                                    <option value="1day">1 day</option>
+                                    <option value="3days">3 days</option>
+                                    <option value="1week">1 week</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="escalation-rules">Escalation Rules</label>
+                                <select id="escalation-rules" class="form-control">
+                                    <option value="none">No escalation</option>
+                                    <option value="automatic">Automatic escalation</option>
+                                    <option value="manual">Manual escalation</option>
+                                    <option value="conditional">Conditional escalation</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="notification-settings">Notification Settings</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="email-notification" checked>
+                                        <span>Email notification</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="push-notification" checked>
+                                        <span>Push notification</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="sms-notification">
+                                        <span>SMS notification</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="slack-notification">
+                                        <span>Slack notification</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="priority-active" checked>
+                                    <span>Active</span>
+                                </label>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Create Priority Level</button>
+                                <button type="reset" class="btn btn-secondary">Reset</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Priority Analytics -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Priority Analytics</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="analytics-grid">
+                            <div class="analytics-item">
+                                <h4>Priority Distribution</h4>
+                                <div class="priority-chart">
+                                    <div class="chart-item">
+                                        <span class="chart-label">Critical</span>
+                                        <div class="chart-bar">
+                                            <div class="chart-fill" style="width: 12.5%; background-color: #dc3545;"></div>
+                                        </div>
+                                        <span class="chart-value">156 (12.5%)</span>
+                                    </div>
+                                    <div class="chart-item">
+                                        <span class="chart-label">High</span>
+                                        <div class="chart-bar">
+                                            <div class="chart-fill" style="width: 7.1%; background-color: #fd7e14;"></div>
+                                        </div>
+                                        <span class="chart-value">89 (7.1%)</span>
+                                    </div>
+                                    <div class="chart-item">
+                                        <span class="chart-label">Medium</span>
+                                        <div class="chart-bar">
+                                            <div class="chart-fill" style="width: 18.8%; background-color: #ffc107;"></div>
+                                        </div>
+                                        <span class="chart-value">234 (18.8%)</span>
+                                    </div>
+                                    <div class="chart-item">
+                                        <span class="chart-label">Low</span>
+                                        <div class="chart-bar">
+                                            <div class="chart-fill" style="width: 45.5%; background-color: #28a745;"></div>
+                                        </div>
+                                        <span class="chart-value">567 (45.5%)</span>
+                                    </div>
+                                    <div class="chart-item">
+                                        <span class="chart-label">Minimal</span>
+                                        <div class="chart-bar">
+                                            <div class="chart-fill" style="width: 16.1%; background-color: #6c757d;"></div>
+                                        </div>
+                                        <span class="chart-value">201 (16.1%)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="analytics-item">
+                                <h4>Priority Performance</h4>
+                                <div class="performance-metrics">
+                                    <div class="metric-item">
+                                        <div class="metric-icon">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <div class="metric-info">
+                                            <h5>Average Response Time</h5>
+                                            <span class="metric-value">2.3 days</span>
+                                        </div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div class="metric-info">
+                                            <h5>On-Time Completion</h5>
+                                            <span class="metric-value">87.5%</span>
+                                        </div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-icon">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </div>
+                                        <div class="metric-info">
+                                            <h5>Overdue Tasks</h5>
+                                            <span class="metric-value">12.5%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Priority Rules -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Priority Rules & Automation</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="rules-grid">
+                            <div class="rule-item">
+                                <div class="rule-header">
+                                    <h4>Auto-Escalation Rules</h4>
+                                    <span class="rule-status active">Active</span>
+                                </div>
+                                <div class="rule-content">
+                                    <p>Automatically escalate tasks that exceed their response time</p>
+                                    <div class="rule-details">
+                                        <span class="rule-detail">Critical: 1 hour</span>
+                                        <span class="rule-detail">High: 4 hours</span>
+                                        <span class="rule-detail">Medium: 1 day</span>
+                                    </div>
+                                </div>
+                                <div class="rule-actions">
+                                    <button class="btn btn-sm btn-secondary">Edit</button>
+                                    <button class="btn btn-sm btn-danger">Disable</button>
+                                </div>
+                            </div>
+
+                            <div class="rule-item">
+                                <div class="rule-header">
+                                    <h4>Notification Rules</h4>
+                                    <span class="rule-status active">Active</span>
+                                </div>
+                                <div class="rule-content">
+                                    <p>Send notifications based on priority levels</p>
+                                    <div class="rule-details">
+                                        <span class="rule-detail">Critical: Immediate</span>
+                                        <span class="rule-detail">High: 2 hours</span>
+                                        <span class="rule-detail">Medium: Daily</span>
+                                    </div>
+                                </div>
+                                <div class="rule-actions">
+                                    <button class="btn btn-sm btn-secondary">Edit</button>
+                                    <button class="btn btn-sm btn-danger">Disable</button>
+                                </div>
+                            </div>
+
+                            <div class="rule-item">
+                                <div class="rule-header">
+                                    <h4>Assignment Rules</h4>
+                                    <span class="rule-status inactive">Inactive</span>
+                                </div>
+                                <div class="rule-content">
+                                    <p>Automatically assign tasks based on priority and availability</p>
+                                    <div class="rule-details">
+                                        <span class="rule-detail">Critical: Senior staff</span>
+                                        <span class="rule-detail">High: Available team</span>
+                                        <span class="rule-detail">Medium: Any member</span>
+                                    </div>
+                                </div>
+                                <div class="rule-actions">
+                                    <button class="btn btn-sm btn-secondary">Edit</button>
+                                    <button class="btn btn-sm btn-success">Enable</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Priority Modal -->
+    <div id="add-priority-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Priority Level</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-priority-form" class="form-grid">
+                    <div class="form-group">
+                        <label for="priority-name">Priority Name</label>
+                        <input type="text" id="priority-name" name="name" class="form-control" placeholder="Enter priority name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="priority-description">Description</label>
+                        <textarea id="priority-description" name="description" class="form-control" rows="3" placeholder="Enter priority description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="priority-score">Priority Score</label>
+                        <input type="number" id="priority-score" name="score" class="form-control" min="1" max="10" placeholder="Enter priority score (1-10)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="priority-color">Color</label>
+                        <input type="color" id="priority-color" name="color" class="form-control" value="#007bff">
+                    </div>
+                    <div class="form-group">
+                        <label for="response-time">Response Time</label>
+                        <select id="response-time" name="responseTime" class="form-control">
+                            <option value="1hour">1 hour</option>
+                            <option value="4hours">4 hours</option>
+                            <option value="1day">1 day</option>
+                            <option value="3days">3 days</option>
+                            <option value="1week">1 week</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="escalation-rules">Escalation Rules</label>
+                        <select id="escalation-rules" name="escalationRules" class="form-control">
+                            <option value="none">No escalation</option>
+                            <option value="automatic">Automatic escalation</option>
+                            <option value="manual">Manual escalation</option>
+                            <option value="conditional">Conditional escalation</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Create Priority Level</button>
+                        <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Priority Modal -->
+    <div id="edit-priority-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Priority Level</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-priority-form" class="form-grid">
+                    <input type="hidden" name="id" id="edit-priority-id">
+                    <div class="form-group">
+                        <label for="edit-priority-name">Priority Name</label>
+                        <input type="text" id="edit-priority-name" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-priority-description">Description</label>
+                        <textarea id="edit-priority-description" name="description" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-priority-score">Priority Score</label>
+                        <input type="number" id="edit-priority-score" name="score" class="form-control" min="1" max="10" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-priority-color">Color</label>
+                        <input type="color" id="edit-priority-color" name="color" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-response-time">Response Time</label>
+                        <select id="edit-response-time" name="responseTime" class="form-control">
+                            <option value="1hour">1 hour</option>
+                            <option value="4hours">4 hours</option>
+                            <option value="1day">1 day</option>
+                            <option value="3days">3 days</option>
+                            <option value="1week">1 week</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-escalation-rules">Escalation Rules</label>
+                        <select id="edit-escalation-rules" name="escalationRules" class="form-control">
+                            <option value="none">No escalation</option>
+                            <option value="automatic">Automatic escalation</option>
+                            <option value="manual">Manual escalation</option>
+                            <option value="conditional">Conditional escalation</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Update Priority</button>
+                        <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-confirmation-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Delete</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this priority level? This action cannot be undone.</p>
+                <div class="modal-actions">
+                    <button id="confirm-delete" class="btn btn-danger">Delete</button>
+                    <button class="btn btn-secondary modal-close">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/script.js}"></script>
+    <script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>

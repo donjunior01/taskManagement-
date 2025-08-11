@@ -1,14 +1,12 @@
 package com.example.gpiApp.controller;
 
 import com.example.gpiApp.dto.UserDTO;
-import com.example.gpiApp.dto.UserRequestDTO;
 import com.example.gpiApp.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Random;
 
 @RestController
 @RequestMapping("/api/users")
@@ -16,7 +14,6 @@ import java.util.Random;
 public class UserController {
 
     private final UserService userService;
-    Random random = new Random();
 
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers() {
@@ -25,36 +22,36 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        UserDTO user = userService.getUserById(id);
+        if (user != null) {
+            return ResponseEntity.ok(user);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserRequestDTO userRequestDTO) {
-        return ResponseEntity.ok(userService.createUser(userRequestDTO));
+    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
+        return ResponseEntity.ok(userService.createUser(userDTO));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(
             @PathVariable Long id,
-            @RequestBody UserRequestDTO userRequestDTO) {
-        return ResponseEntity.ok(userService.updateUser(id, userRequestDTO));
+            @RequestBody UserDTO userDTO) {
+        userDTO.setId(id);
+        UserDTO updatedUser = userService.updateUser(userDTO);
+        if (updatedUser != null) {
+            return ResponseEntity.ok(updatedUser);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/active")
-    public ResponseEntity<List<UserDTO>> getActiveUsers() {
-        return ResponseEntity.ok(userService.getActiveUsers());
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<List<UserDTO>> searchUsers(@RequestParam String keyword) {
-        return ResponseEntity.ok(userService.searchUsers(keyword));
+        boolean deleted = userService.deleteUser(id);
+        if (deleted) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 } 

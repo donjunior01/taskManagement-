@@ -50,6 +50,11 @@ public class AuthController {
         return "auth/register";
     }
 
+    @GetMapping("/logout-confirm")
+    public String showLogoutConfirmPage() {
+        return "common/logout-confirm";
+    }
+
 //    @PostMapping("/register")
 //    public String register(@ModelAttribute RegisterRequest registerRequest) {
 //        allUsers user = new allUsers();

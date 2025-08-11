@@ -1,29 +1,22 @@
 package com.example.gpiApp.dto;
 
-import com.example.gpiApp.entity.allUsers;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
-@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
 public class UserDTO {
-    private Long userId;
+    private Long id;
+    private String username;
+    private String name;
     private String email;
-    private String firstName;
-    private String lastName;
-    private String phone;
-    private String profilePictureUrl;
-    private allUsers.UserRole userRole;
-    private allUsers.UserPost userPost;
-    private Boolean isActive;
-    private LocalDateTime emailVerifiedAt;
-    private LocalDateTime lastLoginAt;
+    private String role;
+    private String status;
+    private String avatar;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-} 
+    private String department;
+    private String position;
+
+}

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shared Tasks</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body data-theme="dark">
+<div class="sidebar">
+  <div class="logo">U</div>
+  <a th:href="@{/user/dashboard}" class="nav-item"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+  <a th:href="@{/user/shared-tasks}" class="nav-item active"><i class="fas fa-share-alt"></i><span>Shared Tasks</span></a>
+  <a th:href="@{/user/tasks}" class="nav-item"><i class="fas fa-tasks"></i><span>My Tasks</span></a>
+  <a th:href="@{/api/auth/logout-confirm}" class="nav-item" style="margin-top:auto;"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+</div>
+<div class="main-content">
+  <div th:replace="~{fragments/userfragmentTB :: topbar}"></div>
+  <div class="content-wrapper">
+    <div class="section-header">
+      <h2 class="section-title">Shared Tasks</h2>
+    </div>
+    <div class="table-container">
+      <div class="table-header"><h3 class="table-title">Tasks shared with your team</h3></div>
+      <table class="data-table">
+        <thead><tr><th>Task</th><th>Owner</th><th>Due</th><th>Actions</th></tr></thead>
+        <tbody><tr><td>Design Review</td><td>Jane Smith</td><td>Next Week</td><td><a th:href="@{/user/tasks/1}" class="btn btn-secondary">Open</a></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script th:src="@{/js/script.js}"></script>
+</body>
+</html>
+
+

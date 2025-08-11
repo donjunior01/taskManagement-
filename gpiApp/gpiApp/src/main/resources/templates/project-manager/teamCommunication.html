@@ -12,37 +12,37 @@
 <!-- Sidebar -->
 <div class="sidebar">
   <div class="logo">PM</div>
-  <a href="#" class="nav-item active" data-page="dashboard">
+  <a th:href="@{/project-manager/dashboard}" class="nav-item" data-page="dashboard">
     <i class="fas fa-th-large"></i>
     <span>Dashboard</span>
   </a>
-  <a href="#" class="nav-item" data-page="tasks">
+  <a th:href="@{/project-manager/team-tasks}" class="nav-item" data-page="tasks">
     <i class="fas fa-tasks"></i>
     <span>Team Tasks</span>
   </a>
-  <a href="#" class="nav-item" data-page="assignments">
+  <a th:href="@{/project-manager/team-assignment}" class="nav-item" data-page="assignments">
     <i class="fas fa-users-cog"></i>
     <span>Task Assignments</span>
   </a>
   <div class="nav-divider"></div>
-  <a href="#" class="nav-item" data-page="reports">
+  <a th:href="@{/project-manager/reports-analytics}" class="nav-item" data-page="reports">
     <i class="fas fa-chart-line"></i>
     <span>Reports & Analytics</span>
   </a>
-  <a href="#" class="nav-item" data-page="non-compliant">
+  <a th:href="@{/project-manager/non-compliant-users}" class="nav-item" data-page="non-compliant">
     <i class="fas fa-exclamation-triangle"></i>
     <span>Non-Compliant Users</span>
   </a>
   <div class="nav-divider"></div>
-  <a href="#" class="nav-item" data-page="communication">
+  <a th:href="@{/project-manager/team-communication}" class="nav-item active" data-page="communication">
     <i class="fas fa-comments"></i>
     <span>Team Communication</span>
   </a>
-  <a href="#" class="nav-item" data-page="deliverables">
+  <a th:href="@{/project-manager/deliverable/1}" class="nav-item" data-page="deliverables">
     <i class="fas fa-file-alt"></i>
     <span>Deliverables</span>
   </a>
-  <a th:href="@{/auth/login}" id="logout-link" class="nav-item" style="margin-top: auto;">
+  <a th:href="@{/api/auth/logout-confirm}" id="logout-link" class="nav-item" style="margin-top: auto;">
     <i class="fas fa-sign-out-alt"></i>
     <span>Logout</span>
   </a>

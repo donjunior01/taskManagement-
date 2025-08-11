@@ -1,15 +1,12 @@
 package com.example.gpiApp.controller;
 
 import com.example.gpiApp.dto.ProjectDTO;
-import com.example.gpiApp.entity.Project;
 import com.example.gpiApp.service.ProjectService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -29,9 +26,11 @@ public class ProjectController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<ProjectDTO> getProjectById(@PathVariable Long id) {
-        return projectService.getProjectById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        ProjectDTO project = projectService.getProjectById(id);
+        if (project != null) {
+            return ResponseEntity.ok(project);
+        }
+        return ResponseEntity.notFound().build();
     }
     
     @PostMapping
@@ -43,67 +42,21 @@ public class ProjectController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<ProjectDTO> updateProject(@PathVariable Long id, @RequestBody ProjectDTO projectDTO) {
-        return ResponseEntity.ok(projectService.updateProject(id, projectDTO));
+        projectDTO.setId(id);
+        ProjectDTO updatedProject = projectService.updateProject(projectDTO);
+        if (updatedProject != null) {
+            return ResponseEntity.ok(updatedProject);
+        }
+        return ResponseEntity.notFound().build();
     }
     
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
-        projectService.deleteProject(id);
-        return ResponseEntity.ok().build();
-    }
-    
-    @GetMapping("/team/{teamId}")
-    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<List<ProjectDTO>> getProjectsByTeam(@PathVariable Long teamId) {
-        return ResponseEntity.ok(projectService.getProjectsByTeam(teamId));
-    }
-    
-    @GetMapping("/status/{status}")
-    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<List<ProjectDTO>> getProjectsByStatus(@PathVariable Project.ProjectStatus status) {
-        return ResponseEntity.ok(projectService.getProjectsByStatus(status));
-    }
-    
-    @GetMapping("/team/{teamId}/status/{status}")
-    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<List<ProjectDTO>> getProjectsByTeamAndStatus(@PathVariable Long teamId, @PathVariable Project.ProjectStatus status) {
-        return ResponseEntity.ok(projectService.getProjectsByTeamAndStatus(teamId, status));
-    }
-    
-    @GetMapping("/active")
-    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<List<ProjectDTO>> getActiveProjectsOnDate(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(projectService.getActiveProjectsOnDate(date));
-    }
-    
-    @GetMapping("/leader/{leaderId}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<List<ProjectDTO>> getProjectsByTeamLeader(@PathVariable Long leaderId) {
-        return ResponseEntity.ok(projectService.getProjectsByTeamLeader(leaderId));
-    }
-    
-    @GetMapping("/overdue")
-    @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<List<ProjectDTO>> getOverdueProjects() {
-        return ResponseEntity.ok(projectService.getOverdueProjects());
-    }
-    
-    @PutMapping("/{id}/status/{status}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<ProjectDTO> updateProjectStatus(@PathVariable Long id, @PathVariable Project.ProjectStatus status) {
-        return ResponseEntity.ok(projectService.updateProjectStatus(id, status));
-    }
-    
-    @PutMapping("/{projectId}/team/{teamId}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<ProjectDTO> assignProjectToTeam(@PathVariable Long projectId, @PathVariable Long teamId) {
-        return ResponseEntity.ok(projectService.assignProjectToTeam(projectId, teamId));
-    }
-    
-    @GetMapping("/count/status/{status}")
-    @PreAuthorize("hasAnyRole('MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<Long> getProjectCountByStatus(@PathVariable Project.ProjectStatus status) {
-        return ResponseEntity.ok(projectService.countProjectsByStatus(status));
+        boolean deleted = projectService.deleteProject(id);
+        if (deleted) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 } 

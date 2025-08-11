@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Templates - Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-tasks"></i>
+                <span>Task Manager</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin/dashboard}" class="nav-item" data-page="dashboard">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a th:href="@{/admin/user-management}" class="nav-item" data-page="user-management">
+                <i class="fas fa-users"></i>
+                <span>User Management</span>
+            </a>
+
+            <a th:href="@{/admin/create-user}" class="nav-item" data-page="create-user">
+                <i class="fas fa-user-plus"></i>
+                <span>Create User</span>
+            </a>
+
+            <a th:href="@{/admin/roles-permissions}" class="nav-item" data-page="roles-permissions">
+                <i class="fas fa-user-shield"></i>
+                <span>Roles & Permissions</span>
+            </a>
+
+            <a th:href="@{/admin/project-management}" class="nav-item" data-page="project-management">
+                <i class="fas fa-project-diagram"></i>
+                <span>Project Management</span>
+            </a>
+
+            <a th:href="@{/admin/global-tasks}" class="nav-item" data-page="global-tasks">
+                <i class="fas fa-tasks"></i>
+                <span>Global Tasks</span>
+            </a>
+
+            <a th:href="@{/admin/team-assignment}" class="nav-item" data-page="team-assignment">
+                <i class="fas fa-users-cog"></i>
+                <span>Team Assignment</span>
+            </a>
+
+            <a th:href="@{/admin/global-reports}" class="nav-item" data-page="global-reports">
+                <i class="fas fa-chart-bar"></i>
+                <span>Global Reports</span>
+            </a>
+
+            <a th:href="@{/admin/activity-logs}" class="nav-item" data-page="activity-logs">
+                <i class="fas fa-history"></i>
+                <span>Activity Logs</span>
+            </a>
+
+            <a th:href="@{/admin/system-settings}" class="nav-item" data-page="system-settings">
+                <i class="fas fa-cog"></i>
+                <span>System Settings</span>
+            </a>
+
+            <a th:href="@{/admin/integrations}" class="nav-item" data-page="integrations">
+                <i class="fas fa-plug"></i>
+                <span>Integrations</span>
+            </a>
+
+            <a th:href="@{/admin/security-backups}" class="nav-item" data-page="security">
+                <i class="fas fa-shield-alt"></i>
+                <span>Security & Backup</span>
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <a th:href="@{/admin/support}" class="nav-item" data-page="support">
+                <i class="fas fa-life-ring"></i>
+                <span>Support Center</span>
+            </a>
+
+            <a th:href="@{/api/auth/logout-confirm}" id="logout-link" class="nav-item" style="margin-top: auto;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Include Top Bar Fragment -->
+        <div th:replace="~{fragments/adminfragmentTB :: topbar}"></div>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Notification Templates Page -->
+            <div class="page-content active" id="notification-templates">
+                <div class="section-header">
+                    <h2 class="section-title">Notification Templates</h2>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create New Template
+                    </button>
+                </div>
+
+                <!-- Template Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>24</h3>
+                            <p>Active Templates</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(40, 167, 69, 0.1); color: var(--success);">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>1,247</h3>
+                            <p>Notifications Sent</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(23, 162, 184, 0.1); color: var(--info);">
+                            <i class="fas fa-paper-plane"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>98.5%</h3>
+                            <p>Delivery Rate</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(255, 193, 7, 0.1); color: var(--warning);">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>5</h3>
+                            <p>Custom Templates</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: rgba(108, 117, 125, 0.1); color: var(--secondary);">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Template Categories -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Template Categories</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="template-categories">
+                            <div class="category-item active">
+                                <div class="category-icon">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <div class="category-info">
+                                    <h4>Task Notifications</h4>
+                                    <p>Task assignments, updates, and completions</p>
+                                    <span class="template-count">8 templates</span>
+                                </div>
+                            </div>
+
+                            <div class="category-item">
+                                <div class="category-icon">
+                                    <i class="fas fa-project-diagram"></i>
+                                </div>
+                                <div class="category-info">
+                                    <h4>Project Notifications</h4>
+                                    <p>Project updates, milestones, and deadlines</p>
+                                    <span class="template-count">6 templates</span>
+                                </div>
+                            </div>
+
+                            <div class="category-item">
+                                <div class="category-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="category-info">
+                                    <h4>Team Notifications</h4>
+                                    <p>Team changes, assignments, and announcements</p>
+                                    <span class="template-count">4 templates</span>
+                                </div>
+                            </div>
+
+                            <div class="category-item">
+                                <div class="category-icon">
+                                    <i class="fas fa-cog"></i>
+                                </div>
+                                <div class="category-info">
+                                    <h4>System Notifications</h4>
+                                    <p>System updates, maintenance, and alerts</p>
+                                    <span class="template-count">3 templates</span>
+                                </div>
+                            </div>
+
+                            <div class="category-item">
+                                <div class="category-icon">
+                                    <i class="fas fa-custom"></i>
+                                </div>
+                                <div class="category-info">
+                                    <h4>Custom Notifications</h4>
+                                    <p>User-defined notification templates</p>
+                                    <span class="template-count">5 templates</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Template List -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Task Notification Templates</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="template-list">
+                            <div class="template-item">
+                                <div class="template-info">
+                                    <h4>Task Assignment Notification</h4>
+                                    <p>Sent when a task is assigned to a user</p>
+                                    <div class="template-meta">
+                                        <span class="template-type">Email</span>
+                                        <span class="template-status active">Active</span>
+                                        <span class="template-usage">Used 156 times</span>
+                                    </div>
+                                </div>
+                                <div class="template-preview">
+                                    <div class="preview-content">
+                                        <strong>Subject:</strong> New Task Assigned - {task_name}<br>
+                                        <strong>Body:</strong> Hello {user_name}, you have been assigned a new task: {task_name}. Please review the details and update the status accordingly.
+                                    </div>
+                                </div>
+                                <div class="template-actions">
+                                    <button class="btn btn-sm btn-secondary">Edit</button>
+                                    <button class="btn btn-sm btn-primary">Preview</button>
+                                    <button class="btn btn-sm btn-info">Test</button>
+                                    <button class="btn btn-sm btn-danger">Delete</button>
+                                </div>
+                            </div>
+
+                            <div class="template-item">
+                                <div class="template-info">
+                                    <h4>Task Deadline Reminder</h4>
+                                    <p>Sent when a task deadline is approaching</p>
+                                    <div class="template-meta">
+                                        <span class="template-type">Email + Push</span>
+                                        <span class="template-status active">Active</span>
+                                        <span class="template-usage">Used 89 times</span>
+                                    </div>
+                                </div>
+                                <div class="template-preview">
+                                    <div class="preview-content">
+                                        <strong>Subject:</strong> Task Deadline Reminder - {task_name}<br>
+                                        <strong>Body:</strong> Reminder: Your task "{task_name}" is due on {deadline_date}. Please ensure completion before the deadline.
+                                    </div>
+                                </div>
+                                <div class="template-actions">
+                                    <button class="btn btn-sm btn-secondary">Edit</button>
+                                    <button class="btn btn-sm btn-primary">Preview</button>
+                                    <button class="btn btn-sm btn-info">Test</button>
+                                    <button class="btn btn-sm btn-danger">Delete</button>
+                                </div>
+                            </div>
+
+                            <div class="template-item">
+                                <div class="template-info">
+                                    <h4>Task Completion Notification</h4>
+                                    <p>Sent when a task is marked as completed</p>
+                                    <div class="template-meta">
+                                        <span class="template-type">Email</span>
+                                        <span class="template-status active">Active</span>
+                                        <span class="template-usage">Used 234 times</span>
+                                    </div>
+                                </div>
+                                <div class="template-preview">
+                                    <div class="preview-content">
+                                        <strong>Subject:</strong> Task Completed - {task_name}<br>
+                                        <strong>Body:</strong> Great news! The task "{task_name}" has been completed by {assignee_name}. Please review and provide feedback if needed.
+                                    </div>
+                                </div>
+                                <div class="template-actions">
+                                    <button class="btn btn-sm btn-secondary">Edit</button>
+                                    <button class="btn btn-sm btn-primary">Preview</button>
+                                    <button class="btn btn-sm btn-info">Test</button>
+                                    <button class="btn btn-sm btn-danger">Delete</button>
+                                </div>
+                            </div>
+
+                            <div class="template-item">
+                                <div class="template-info">
+                                    <h4>Task Update Notification</h4>
+                                    <p>Sent when a task status or details are updated</p>
+                                    <div class="template-meta">
+                                        <span class="template-type">Email + SMS</span>
+                                        <span class="template-status inactive">Inactive</span>
+                                        <span class="template-usage">Used 67 times</span>
+                                    </div>
+                                </div>
+                                <div class="template-preview">
+                                    <div class="preview-content">
+                                        <strong>Subject:</strong> Task Updated - {task_name}<br>
+                                        <strong>Body:</strong> The task "{task_name}" has been updated. New status: {new_status}. Please check for any changes.
+                                    </div>
+                                </div>
+                                <div class="template-actions">
+                                    <button class="btn btn-sm btn-secondary">Edit</button>
+                                    <button class="btn btn-sm btn-primary">Preview</button>
+                                    <button class="btn btn-sm btn-success">Activate</button>
+                                    <button class="btn btn-sm btn-danger">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create New Template -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Create New Template</h3>
+                    </div>
+                    <div class="card-body">
+                        <form class="form-grid">
+                            <div class="form-group">
+                                <label for="template-name">Template Name</label>
+                                <input type="text" id="template-name" class="form-control" placeholder="Enter template name">
+                            </div>
+                            <div class="form-group">
+                                <label for="template-category">Category</label>
+                                <select id="template-category" class="form-control">
+                                    <option value="">Select category</option>
+                                    <option value="task">Task Notifications</option>
+                                    <option value="project">Project Notifications</option>
+                                    <option value="team">Team Notifications</option>
+                                    <option value="system">System Notifications</option>
+                                    <option value="custom">Custom Notifications</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="notification-type">Notification Type</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="email-notification" checked>
+                                        <span>Email</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="push-notification">
+                                        <span>Push Notification</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="sms-notification">
+                                        <span>SMS</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="in-app-notification" checked>
+                                        <span>In-App Notification</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="template-subject">Subject Line</label>
+                                <input type="text" id="template-subject" class="form-control" placeholder="Enter email subject">
+                            </div>
+                            <div class="form-group">
+                                <label for="template-body">Message Body</label>
+                                <textarea id="template-body" class="form-control" rows="6" placeholder="Enter message body. Use {variable_name} for dynamic content."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="template-variables">Available Variables</label>
+                                <div class="variables-list">
+                                    <span class="variable-tag">{user_name}</span>
+                                    <span class="variable-tag">{task_name}</span>
+                                    <span class="variable-tag">{project_name}</span>
+                                    <span class="variable-tag">{deadline_date}</span>
+                                    <span class="variable-tag">{assignee_name}</span>
+                                    <span class="variable-tag">{status}</span>
+                                    <span class="variable-tag">{priority}</span>
+                                    <span class="variable-tag">{description}</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="template-active" checked>
+                                    <span>Activate template immediately</span>
+                                </label>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Create Template</button>
+                                <button type="reset" class="btn btn-secondary">Reset</button>
+                                <button type="button" class="btn btn-info">Preview</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Template Settings -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Global Template Settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <form class="form-grid">
+                            <div class="form-group">
+                                <label for="default-sender">Default Sender Email</label>
+                                <input type="email" id="default-sender" class="form-control" value="noreply@taskmanager.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="default-sender-name">Default Sender Name</label>
+                                <input type="text" id="default-sender-name" class="form-control" value="Task Manager System">
+                            </div>
+                            <div class="form-group">
+                                <label for="notification-frequency">Default Notification Frequency</label>
+                                <select id="notification-frequency" class="form-control">
+                                    <option value="immediate">Immediate</option>
+                                    <option value="hourly">Hourly</option>
+                                    <option value="daily" selected>Daily Digest</option>
+                                    <option value="weekly">Weekly Digest</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="timezone">Default Timezone</label>
+                                <select id="timezone" class="form-control">
+                                    <option value="UTC">UTC</option>
+                                    <option value="EST">Eastern Time</option>
+                                    <option value="PST">Pacific Time</option>
+                                    <option value="GMT">GMT</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="enable-notifications" checked>
+                                    <span>Enable all notifications</span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="log-notifications" checked>
+                                    <span>Log all notifications</span>
+                                </label>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Save Settings</button>
+                                <button type="reset" class="btn btn-secondary">Reset</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/script.js}"></script>
+</body>
+</html>

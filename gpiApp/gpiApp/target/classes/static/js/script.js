@@ -35,9 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
             const pageId = this.getAttribute('data-page');
+            const href = this.getAttribute('href');
 
-            if (pageId && pageId !== 'logout') {
-                window.location.href = `${pageId}.html`;
+            if (pageId && pageId !== 'logout' && href) {
+                window.location.href = href;
             } else if (this.id === 'logout-link') {
                 fetch('/api/auth/logout', {
                     method: 'POST',
@@ -271,7 +272,9 @@ document.addEventListener('DOMContentLoaded', () => {
         'create-task-form': () => alert('Task created!'),
         'edit-task-form': () => alert('Task updated!'),
         'send-message-form': () => alert('Message sent!'),
-        'review-deliverable-form': () => alert('Review submitted!')
+        'review-deliverable-form': () => alert('Review submitted!'),
+        'add-priority-form': () => alert('Priority level created!'),
+        'edit-priority-form': () => alert('Priority level updated!')
     };
 
     Object.keys(forms).forEach(formId => {
@@ -284,4 +287,19 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+
+    // Global modal functions
+    window.openModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('active');
+        }
+    };
+
+    window.closeModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    };
 });
