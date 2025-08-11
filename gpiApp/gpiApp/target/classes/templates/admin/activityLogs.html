@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Task Planning & Management System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body data-theme="dark">
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">SA</div>
+
+  <!-- Main Navigation -->
+  <a href="#" class="nav-item active" data-page="dashboard">
+    <i class="fas fa-th-large"></i>
+    <span>Dashboard</span>
+  </a>
+
+  <!-- User Management -->
+  <a href="#" class="nav-item" data-page="users">
+    <i class="fas fa-users"></i>
+    <span>User Management</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="roles">
+    <i class="fas fa-user-shield"></i>
+    <span>Roles & Permissions</span>
+  </a>
+
+  <div class="nav-divider"></div>
+
+  <!-- Project Management -->
+  <a href="#" class="nav-item" data-page="projects">
+    <i class="fas fa-folder-open"></i>
+    <span>Project Management</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="tasks">
+    <i class="fas fa-tasks"></i>
+    <span>Global Tasks</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="teams">
+    <i class="fas fa-users-cog"></i>
+    <span>Team Assignments</span>
+  </a>
+
+  <div class="nav-divider"></div>
+
+  <!-- Reports & Analytics -->
+  <a href="#" class="nav-item" data-page="reports">
+    <i class="fas fa-chart-line"></i>
+    <span>Global Reports</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="activity">
+    <i class="fas fa-history"></i>
+    <span>Activity Logs</span>
+  </a>
+
+  <div class="nav-divider"></div>
+
+  <!-- Configuration -->
+  <a href="#" class="nav-item" data-page="settings">
+    <i class="fas fa-cog"></i>
+    <span>System Settings</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="integrations">
+    <i class="fas fa-plug"></i>
+    <span>Integrations</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="security">
+    <i class="fas fa-shield-alt"></i>
+    <span>Security & Backup</span>
+  </a>
+
+  <div class="nav-divider"></div>
+
+  <!-- Support -->
+  <a href="#" class="nav-item" data-page="support">
+    <i class="fas fa-life-ring"></i>
+    <span>Support Center</span>
+  </a>
+
+  <a th:href="@{/auth/login}" id="logout-link" class="nav-item" style="margin-top: auto;">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+  </a>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <!-- Include Top Bar Fragment -->
+  <div th:replace="~{fragments/adminfragmentTB :: topbar}"></div>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    <!-- Activity Logs Page -->
+    <div class="page-content" id="activity">
+      <div class="section-header">
+        <h2 class="section-title">Activity Logs</h2>
+      </div>
+
+      <div class="activity-timeline">
+        <h3 style="margin-bottom: 20px;">System Activity Logs</h3>
+
+        <div class="timeline-item">
+          <div class="timeline-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
+            <i class="fas fa-user-plus"></i>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-title">User Created</div>
+            <div class="timeline-text">Super Admin created user Jane Smith</div>
+            <div class="timeline-time">2 minutes ago</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-icon" style="background-color: rgba(42, 157, 143, 0.1); color: var(--success);">
+            <i class="fas fa-cog"></i>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-title">System Settings Updated</div>
+            <div class="timeline-text">Notification settings modified</div>
+            <div class="timeline-time">1 hour ago</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-icon" style="background-color: rgba(244, 162, 97, 0.1); color: var(--warning);">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-title">Security Alert</div>
+            <div class="timeline-text">Multiple failed login attempts detected</div>
+            <div class="timeline-time">3 hours ago</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script th:src="@{/js/script.js}"></script>
+</body>
+</html>

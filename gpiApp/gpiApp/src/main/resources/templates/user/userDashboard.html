@@ -12,27 +12,27 @@
 <!-- Sidebar -->
 <div class="sidebar">
     <div class="logo">U</div>
-    <a href="#" class="nav-item active" data-page="dashboard">
+    <a href="#" class="nav-item active">
         <i class="fas fa-th-large"></i>
         <span>Dashboard</span>
     </a>
-    <a href="#" class="nav-item" data-page="tasks">
+    <a href="tasks.html" class="nav-item">
         <i class="fas fa-tasks"></i>
         <span>My Tasks</span>
     </a>
-    <a href="#" class="nav-item" data-page="calendar">
+    <a href="calendar.html" class="nav-item">
         <i class="fas fa-calendar-alt"></i>
         <span>Calendar</span>
     </a>
-    <a href="#" class="nav-item" data-page="profile">
+    <a href="profile.html" class="nav-item">
         <i class="fas fa-user"></i>
         <span>Profile</span>
     </a>
-    <a href="#" class="nav-item" data-page="collaboration">
+    <a href="collaboration.html" class="nav-item">
         <i class="fas fa-comments"></i>
         <span>Collaboration</span>
     </a>
-    <a href="#" class="nav-item" data-page="time-tracking">
+    <a href="time-tracking.html" class="nav-item">
         <i class="fas fa-clock"></i>
         <span>Time Tracking</span>
     </a>
@@ -45,32 +45,8 @@
 
 <!-- Main Content -->
 <div class="main-content">
-    <!-- Top Bar -->
-    <div class="top-bar">
-        <div class="search-bar">
-            <i class="fas fa-search"></i>
-            <input type="text" placeholder="Search tasks...">
-        </div>
-        <div class="user-info">
-            <div class="notification-icons">
-                <div class="notifications">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge">2</span>
-                </div>
-                <button class="theme-toggle" id="theme-toggle">
-                    <i class="fas fa-moon"></i>
-                </button>
-            </div>
-            <div class="user-profile">
-                <img th:if="${user.profilePictureUrl}" th:src="${user.profilePictureUrl}" alt="User Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                <img th:unless="${user.profilePictureUrl}" th:src="'https://via.placeholder.com/40x40/4361ee/ffffff?text=' + ${#strings.substring(user.firstName,0,1)} + ${#strings.substring(user.lastName,0,1)}" alt="User Avatar">
-                <div class="user-details">
-                    <span class="username" th:text="${user.firstName + ' ' + user.lastName}">User Name</span>
-                    <span class="role" th:text="${user.userPost}">Role</span>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Include Top Bar Fragment -->
+    <div th:replace="~{fragments/userfragmentTB :: topbar}"></div>
 
     <!-- Content Wrapper -->
     <div class="content-wrapper">
@@ -138,191 +114,11 @@
             </div>
         </div>
 
-        <!-- My Tasks Page -->
-        <div class="page-content" id="tasks">
-            <div class="section-header">
-                <h2 class="section-title">My Tasks</h2>
-                <button class="btn btn-primary" onclick="openModal('create-task-modal')">
-                    <i class="fas fa-plus"></i> Create Task
-                </button>
-            </div>
 
-            <div class="table-container">
-                <div class="table-header">
-                    <h3 class="table-title">All Tasks</h3>
-                    <div style="display: flex; gap: 10px;">
-                        <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
-                            <option>All Status</option>
-                            <option>In Progress</option>
-                            <option>Completed</option>
-                            <option>Overdue</option>
-                        </select>
-                        <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
-                            <option>All Priorities</option>
-                            <option>High</option>
-                            <option>Medium</option>
-                            <option>Low</option>
-                        </select>
-                    </div>
-                </div>
 
-                <table class="data-table">
-                    <thead>
-                    <tr>
-                        <th>Task Name</th>
-                        <th>Priority</th>
-                        <th>Deadline</th>
-                        <th>Progress</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>Update Website Content</td>
-                        <td>Medium</td>
-                        <td>2025-07-20</td>
-                        <td>60%</td>
-                        <td><span class="status-badge active">In Progress</span></td>
-                        <td>
-                            <button class="btn btn-secondary edit-task-btn" style="padding: 8px 12px; margin-right: 5px;" data-task-id="1">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-danger" style="padding: 8px 12px;" data-task-id="1">
-                                <i class="fas fa-exclamation-circle"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
 
-        <!-- Calendar Page -->
-        <div class="page-content" id="calendar">
-            <div class="section-header">
-                <h2 class="section-title">Calendar</h2>
-                <button class="btn btn-primary" onclick="openModal('create-task-modal')">
-                    <i class="fas fa-plus"></i> Schedule Task
-                </button>
-            </div>
 
-            <div class="calendar-container">
-                <div class="calendar-header">
-                    <h3 class="calendar-title">Task Calendar</h3>
-                    <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
-                        <option>Month</option>
-                        <option>Week</option>
-                        <option>Day</option>
-                    </select>
-                </div>
-                <div class="calendar-view">
-                    <p style="color: var(--text-secondary);">Interactive Calendar Placeholder (Drag & Drop Tasks)</p>
-                </div>
-            </div>
-        </div>
 
-        <!-- Profile Page -->
-        <div class="page-content" id="profile">
-            <div class="section-header">
-                <h2 class="section-title">Profile</h2>
-                <button class="btn btn-primary" onclick="openModal('edit-profile-modal')">
-                    <i class="fas fa-edit"></i> Edit Profile
-                </button>
-            </div>
-
-            <div class="table-container">
-                <div class="table-header">
-                    <h3 class="table-title">Profile Information</h3>
-                </div>
-                <table class="data-table">
-                    <tbody>
-                    <tr>
-                        <td>Name</td>
-                        <td>John Smith</td>
-                    </tr>
-                    <tr>
-                        <td>Email</td>
-                        <td>john.smith@company.com</td>
-                    </tr>
-                    <tr>
-                        <td>Contact</td>
-                        <td>+1 234 567 890</td>
-                    </tr>
-                    <tr>
-                        <td>Photo</td>
-                        <td><img src="https://via.placeholder.com/40x40/4361ee/ffffff?text=JS" alt="Profile Photo" style="width: 40px; height: 40px; border-radius: 50%;"></td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Collaboration Page -->
-        <div class="page-content" id="collaboration">
-            <div class="section-header">
-                <h2 class="section-title">Collaboration</h2>
-                <button class="btn btn-primary" onclick="openModal('add-comment-modal')">
-                    <i class="fas fa-comment"></i> Add Comment
-                </button>
-            </div>
-
-            <div class="table-container">
-                <div class="table-header">
-                    <h3 class="table-title">Task Comments</h3>
-                </div>
-                <table class="data-table">
-                    <thead>
-                    <tr>
-                        <th>Task</th>
-                        <th>Comment</th>
-                        <th>Posted By</th>
-                        <th>Date</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>Update Website Content</td>
-                        <td>Need clarification on the content requirements</td>
-                        <td>Jane Smith</td>
-                        <td>2025-07-15</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Time Tracking Page -->
-        <div class="page-content" id="time-tracking">
-            <div class="section-header">
-                <h2 class="section-title">Time Tracking</h2>
-                <button class="btn btn-primary" onclick="openModal('log-time-modal')">
-                    <i class="fas fa-clock"></i> Log Time
-                </button>
-            </div>
-
-            <div class="table-container">
-                <div class="table-header">
-                    <h3 class="table-title">Time Logs</h3>
-                </div>
-                <table class="data-table">
-                    <thead>
-                    <tr>
-                        <th>Task</th>
-                        <th>Time Spent</th>
-                        <th>Date</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>Update Website Content</td>
-                        <td>2 hours</td>
-                        <td>2025-07-15</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
 </div>
 

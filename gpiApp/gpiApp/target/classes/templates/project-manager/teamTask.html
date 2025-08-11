@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard - Task Planning & Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+
+</head>
+<body data-theme="dark">
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="logo">PM</div>
+    <a href="#" class="nav-item active" data-page="dashboard">
+        <i class="fas fa-th-large"></i>
+        <span>Dashboard</span>
+    </a>
+    <a href="#" class="nav-item" data-page="tasks">
+        <i class="fas fa-tasks"></i>
+        <span>Team Tasks</span>
+    </a>
+    <a href="#" class="nav-item" data-page="assignments">
+        <i class="fas fa-users-cog"></i>
+        <span>Task Assignments</span>
+    </a>
+    <div class="nav-divider"></div>
+    <a href="#" class="nav-item" data-page="reports">
+        <i class="fas fa-chart-line"></i>
+        <span>Reports & Analytics</span>
+    </a>
+    <a href="#" class="nav-item" data-page="non-compliant">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Non-Compliant Users</span>
+    </a>
+    <div class="nav-divider"></div>
+    <a href="#" class="nav-item" data-page="communication">
+        <i class="fas fa-comments"></i>
+        <span>Team Communication</span>
+    </a>
+    <a href="#" class="nav-item" data-page="deliverables">
+        <i class="fas fa-file-alt"></i>
+        <span>Deliverables</span>
+    </a>
+    <a th:href="@{/auth/login}" id="logout-link" class="nav-item" style="margin-top: auto;">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+    </a>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Include Top Bar Fragment -->
+    <div th:replace="~{fragments/pmfragmentTB :: topbar}"></div>
+
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+
+        <!-- Team Tasks Page -->
+        <div class="page-content" id="tasks">
+            <div class="section-header">
+                <h2 class="section-title">Team Tasks</h2>
+                <button class="btn btn-primary" onclick="openModal('create-task-modal')">
+                    <i class="fas fa-plus"></i> Create Task
+                </button>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">All Team Tasks</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
+                            <option>All Status</option>
+                            <option>In Progress</option>
+                            <option>Completed</option>
+                            <option>Overdue</option>
+                        </select>
+                        <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
+                            <option>All Priorities</option>
+                            <option>High</option>
+                            <option>Medium</option>
+                            <option>Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Task Name</th>
+                        <th>Assigned To</th>
+                        <th>Priority</th>
+                        <th>Progress</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>Design Landing Page</td>
+                        <td>Jane Smith</td>
+                        <td>High</td>
+                        <td>50%</td>
+                        <td><span class="status-badge active">In Progress</span></td>
+                        <td>
+                            <button class="btn btn-secondary edit-task-btn" style="padding: 8px 12px; margin-right: 5px;" data-task-id="1">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger" style="padding: 8px 12px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Create Task Modal -->
+<div class="modal" id="create-task-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Create New Task</h3>
+            <button class="close-btn">×</button>
+        </div>
+        <form id="create-task-form">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="task-name">Task Name</label>
+                    <input type="text" id="task-name" name="task-name" placeholder="Enter task name" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-description">Description</label>
+                    <textarea id="task-description" name="task-description" placeholder="Enter task description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="task-assignee">Assign To</label>
+                    <select id="task-assignee" name="task-assignee" required>
+                        <option value="">Select Team Member</option>
+                        <option value="jane-smith">Jane Smith</option>
+                        <option value="john-doe">John Doe</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="task-priority">Priority</label>
+                    <select id="task-priority" name="task-priority" required>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="task-deadline">Deadline</label>
+                    <input type="date" id="task-deadline" name="task-deadline" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-difficulty">Difficulty</label>
+                    <select id="task-difficulty" name="task-difficulty" required>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="difficult">Difficult</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-btn">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Task</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div class="modal" id="edit-task-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Task</h3>
+            <button class="close-btn">×</button>
+        </div>
+        <form id="edit-task-form">
+            <div class="modal-body">
+                <input type="hidden" id="edit-task-id" name="task-id">
+                <div class="form-group">
+                    <label for="edit-task-name">Task Name</label>
+                    <input type="text" id="edit-task-name" name="task-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-task-description">Description</label>
+                    <textarea id="edit-task-description" name="task-description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit-task-assignee">Assign To</label>
+                    <select id="edit-task-assignee" name="task-assignee" required>
+                        <option value="">Select Team Member</option>
+                        <option value="jane-smith">Jane Smith</option>
+                        <option value="john-doe">John Doe</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-task-priority">Priority</label>
+                    <select id="edit-task-priority" name="task-priority" required>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-task-deadline">Deadline</label>
+                    <input type="date" id="edit-task-deadline" name="task-deadline" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-task-difficulty">Difficulty</label>
+                    <select id="edit-task-difficulty" name="task-difficulty" required>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="difficult">Difficult</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-task-progress">Progress</label>
+                    <input type="number" id="edit-task-progress" name="task-progress" min="0" max="100" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-btn">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:src="@{/js/script.js}"></script>
+</body>
+</html>

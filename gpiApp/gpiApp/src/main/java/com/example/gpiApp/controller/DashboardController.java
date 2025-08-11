@@ -135,4 +135,11 @@ public class DashboardController {
             return ResponseEntity.ok(List.of()); // Return empty list if service fails
         }
     }
+
+//    all user pages
+
+    @GetMapping("/user/tasks")
+    public String TaskPage(Authentication authentication, Model model) {
+        return "/user/tasks";
+    }
 }
