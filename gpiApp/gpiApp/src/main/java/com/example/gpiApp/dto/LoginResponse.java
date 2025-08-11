@@ -1,7 +1,7 @@
 package com.example.gpiApp.dto;
 
 import com.example.gpiApp.entity.allUsers;
-import com.example.gpiApp.entity.allUsers.Role;
+import com.example.gpiApp.entity.allUsers.UserRole;
 import lombok.Data;
 
 @Data
@@ -14,11 +14,11 @@ public class LoginResponse {
     public LoginResponse(String token, allUsers allUsers) {
         this.token = token;
         this.email = allUsers.getEmail();
-        this.role = allUsers.getRole().name();
-//        this.redirectUrl = allUsers.getRole() == Role.ADMIN ? "/admin/dashboard" : "/project-manager/dashboard";
-        if (allUsers.getRole() == Role.ADMIN) {
+        this.role = allUsers.getUserRole().name();
+//        this.redirectUrl = allUsers.getUserRole() == UserRole.ADMIN ? "/admin/dashboard" : "/project-manager/dashboard";
+        if (allUsers.getUserRole() == UserRole.SUPER_ADMIN) {
             this.redirectUrl = "/admin/adminDashboard";
-        }else if (allUsers.getRole() == Role.USER) {
+        }else if (allUsers.getUserRole() == UserRole.EMPLOYEE) {
             this.redirectUrl = "/user/userDashboard";
         } else
             this.redirectUrl = "/project_manager/pmDashboard";

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div th:fragment="topbar">
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search users, projects, tasks...">
+        </div>
+        <div class="admin-info">
+            <div class="notification-icons">
+                <div class="notifications" data-sidebar="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge" id="notification-count">2</span>
+                </div>
+                <div class="messages" data-sidebar="messages">
+                    <i class="fas fa-envelope"></i>
+                    <span class="badge" id="message-count">8</span>
+                </div>
+                <div class="user-settings-icon" data-sidebar="user-settings">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <button class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+            <div class="admin-profile">
+                <img src="https://via.placeholder.com/40x40/4361ee/ffffff?text=SA" alt="Super Admin Avatar">
+                <div class="admin-details">
+                    <span class="username">Super Admin</span>
+                    <span class="role">System Administrator</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Sidebar -->
+    <div class="secondary-sidebar" id="secondary-sidebar">
+        <!-- Notifications Content -->
+        <div class="sidebar-content" id="notifications-content">
+            <div class="sidebar-header">
+                <h3>Notifications</h3>
+                <div class="sidebar-actions">
+                    <button class="btn btn-secondary mark-all-read" data-type="notifications">
+                        <i class="fas fa-check"></i> Mark All Read
+                    </button>
+                    <button class="btn btn-danger delete-selected" data-type="notifications">
+                        <i class="fas fa-trash"></i> Delete Selected
+                    </button>
+                </div>
+            </div>
+            <div class="message-item unread" data-id="1">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">User Created</div>
+                    <div class="message-preview">Super Admin created user Jane Smith</div>
+                    <div class="message-time">2025-08-07 17:42:00</div>
+                    <div class="message-content">A new user, Jane Smith, was created with Manager role. The user has been assigned to the Marketing Campaign Q2 project with full access permissions.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="1"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item unread" data-id="2">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">System Settings Updated</div>
+                    <div class="message-preview">Notification settings modified</div>
+                    <div class="message-time">2025-08-07 16:44:00</div>
+                    <div class="message-content">Notification settings were modified by Super Admin. Email notifications are now enabled for all critical system events and user activities.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="2"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item" data-id="3">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">Security Alert</div>
+                    <div class="message-preview">Multiple failed login attempts detected</div>
+                    <div class="message-time">2025-08-07 14:44:00</div>
+                    <div class="message-content">Multiple failed login attempts detected from IP 192.168.1.1. Please review the security settings and consider enabling additional authentication measures.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="3"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+
+        <!-- Messages Content -->
+        <div class="sidebar-content" id="messages-content">
+            <div class="sidebar-header">
+                <h3>Messages</h3>
+                <div class="sidebar-actions">
+                    <button class="btn btn-secondary mark-all-read" data-type="messages">
+                        <i class="fas fa-check"></i> Mark All Read
+                    </button>
+                    <button class="btn btn-danger delete-selected" data-type="messages">
+                        <i class="fas fa-trash"></i> Delete Selected
+                    </button>
+                </div>
+            </div>
+            <div class="message-item" data-id="1">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">Task Deadline Reminder</div>
+                    <div class="message-preview">Design Landing Page due soon</div>
+                    <div class="message-time">2025-08-07 17:55:00</div>
+                    <div class="message-content">The Design Landing Page task for Marketing Campaign Q2 is due tomorrow at 5:00 PM. Please ensure all deliverables are ready.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="1"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item unread" data-id="2">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">Project Update</div>
+                    <div class="message-preview">Marketing Campaign Q2 needs review</div>
+                    <div class="message-time">2025-08-07 17:30:00</div>
+                    <div class="message-content">The Marketing Campaign Q2 project requires your review for the latest deliverables. Please check the attached documents and provide feedback by end of day.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="2"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item unread" data-id="3">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">System Maintenance</div>
+                    <div class="message-preview">Scheduled maintenance tomorrow</div>
+                    <div class="message-time">2025-08-07 17:15:00</div>
+                    <div class="message-content">System maintenance is scheduled for tomorrow at 2:00 AM. The system will be down for approximately 2 hours. Please ensure all critical tasks are completed before the maintenance window.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="3"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item unread" data-id="4">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">Team Meeting</div>
+                    <div class="message-preview">Weekly sync scheduled</div>
+                    <div class="message-time">2025-08-07 17:00:00</div>
+                    <div class="message-content">A weekly sync meeting is scheduled for tomorrow at 10:00 AM. Please prepare updates on your tasks and projects.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="4"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item unread" data-id="5">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">Task Assignment</div>
+                    <div class="message-preview">New task assigned to you</div>
+                    <div class="message-time">2025-08-07 16:45:00</div>
+                    <div class="message-content">You have been assigned a new task: 'Review Marketing Materials' for the Q2 Campaign. Deadline is in 3 days.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="5"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item unread" data-id="6">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">System Update</div>
+                    <div class="message-preview">New features deployed</div>
+                    <div class="message-time">2025-08-07 16:30:00</div>
+                    <div class="message-content">New features for task tracking and reporting have been deployed. Check the documentation for details.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="6"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item" data-id="7">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">Project Milestone</div>
+                    <div class="message-preview">Phase 1 completed</div>
+                    <div class="message-time">2025-08-07 16:15:00</div>
+                    <div class="message-content">Phase 1 of the Marketing Campaign Q2 has been completed successfully. Please prepare for Phase 2 kickoff.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="7"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item" data-id="8">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">User Feedback</div>
+                    <div class="message-preview">Feedback on dashboard received</div>
+                    <div class="message-time">2025-08-07 16:00:00</div>
+                    <div class="message-content">User feedback on the task dashboard has been received. Please review the suggestions and prioritize updates.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="8"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item" data-id="9">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">Security Update</div>
+                    <div class="message-preview">Password policy updated</div>
+                    <div class="message-time">2025-08-07 15:45:00</div>
+                    <div class="message-content">The password policy has been updated to require stronger passwords. Please ensure compliance.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="9"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item" data-id="10">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">Task Comment</div>
+                    <div class="message-preview">Comment added to task</div>
+                    <div class="message-time">2025-08-07 15:30:00</div>
+                    <div class="message-content">A new comment was added to the 'Design Landing Page' task by Jane Smith. Please review.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="10"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item" data-id="11">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">Project Budget</div>
+                    <div class="message-preview">Budget review needed</div>
+                    <div class="message-time">2025-08-07 15:15:00</div>
+                    <div class="message-content">The budget for Marketing Campaign Q2 needs review. Please check the financials and approve.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="11"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item" data-id="12">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">New User Request</div>
+                    <div class="message-preview">User access request</div>
+                    <div class="message-time">2025-08-07 15:00:00</div>
+                    <div class="message-content">A new user access request has been submitted for the HR team. Please review and approve.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="12"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item" data-id="13">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">System Backup</div>
+                    <div class="message-preview">Backup completed</div>
+                    <div class="message-time">2025-08-07 14:45:00</div>
+                    <div class="message-content">The daily system backup was completed successfully at 2:00 AM.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="13"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item" data-id="14">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">Task Overdue</div>
+                    <div class="message-preview">Task overdue alert</div>
+                    <div class="message-time">2025-08-07 14:30:00</div>
+                    <div class="message-content">The task 'Content Creation' is overdue. Please take action to resolve.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="14"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="message-item" data-id="15">
+                <input type="checkbox" class="message-checkbox">
+                <div class="message-body">
+                    <div class="message-title">System Performance</div>
+                    <div class="message-preview">Performance report available</div>
+                    <div class="message-time">2025-08-07 14:15:00</div>
+                    <div class="message-content">The weekly system performance report is available. Please review the metrics.</div>
+                </div>
+                <button class="btn btn-danger delete-message" data-id="15"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+
+        <!-- User Settings Content -->
+        <div class="sidebar-content" id="user-settings-content">
+            <h3>User Settings</h3>
+            <div class="user-settings">
+                <div class="user-info">
+                    <div class="user-info-item">
+                        <label>Name</label>
+                        <span>Super Admin</span>
+                    </div>
+                    <div class="user-info-item">
+                        <label>Email</label>
+                        <span>admin@example.com</span>
+                    </div>
+                    <div class="user-info-item">
+                        <label>Role</label>
+                        <span>System Administrator</span>
+                    </div>
+                    <div class="user-info-item">
+                        <label>Last Login</label>
+                        <span>2025-08-07 17:44:00</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="delete-confirmation">
+        <div class="modal-content">
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete the selected items?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancel-delete">Cancel</button>
+                <button class="btn btn-danger" id="confirm-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

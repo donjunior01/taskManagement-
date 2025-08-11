@@ -1,63 +1,60 @@
 package com.example.gpiApp.controller;
 
-import com.example.gpiApp.dto.UserListResponseDTO;
+import com.example.gpiApp.dto.UserDTO;
 import com.example.gpiApp.dto.UserRequestDTO;
-import com.example.gpiApp.dto.UserResponseDTO;
-import com.example.gpiApp.repository.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.gpiApp.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Random;
+
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
-
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+    Random random = new Random();
 
     @GetMapping
-    public ResponseEntity<UserListResponseDTO> getAllUsers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
-        return ResponseEntity.ok(userService.getAllUsers(page, size, sortBy, sortDir));
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+        return userService.getUserById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<UserResponseDTO> createUser(@RequestBody UserRequestDTO userRequestDTO) {
+    public ResponseEntity<UserDTO> createUser(@RequestBody UserRequestDTO userRequestDTO) {
         return ResponseEntity.ok(userService.createUser(userRequestDTO));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponseDTO> updateUser(
+    public ResponseEntity<UserDTO> updateUser(
             @PathVariable Long id,
             @RequestBody UserRequestDTO userRequestDTO) {
         return ResponseEntity.ok(userService.updateUser(id, userRequestDTO));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<UserResponseDTO> deleteUser(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.deleteUser(id));
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/filter")
-    public ResponseEntity<UserListResponseDTO> filterUsers(
-            @RequestParam(required = false) String role,
-            @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
-        return ResponseEntity.ok(userService.filterUsers(role, status, page, size, sortBy, sortDir));
+    @GetMapping("/active")
+    public ResponseEntity<List<UserDTO>> getActiveUsers() {
+        return ResponseEntity.ok(userService.getActiveUsers());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<UserDTO>> searchUsers(@RequestParam String keyword) {
+        return ResponseEntity.ok(userService.searchUsers(keyword));
     }
 } 

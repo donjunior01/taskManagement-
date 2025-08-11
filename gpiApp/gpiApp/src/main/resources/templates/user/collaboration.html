@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - Task Planning & Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body data-theme="dark">
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="logo">U</div>
+    <a href="userDashboard.html" class="nav-item">
+        <i class="fas fa-th-large"></i>
+        <span>Dashboard</span>
+    </a>
+    <a href="tasks.html" class="nav-item">
+        <i class="fas fa-tasks"></i>
+        <span>My Tasks</span>
+    </a>
+    <a href="calendar.html" class="nav-item">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Calendar</span>
+    </a>
+    <a href="profile.html" class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+    <a href="#" class="nav-item active">
+        <i class="fas fa-comments"></i>
+        <span>Collaboration</span>
+    </a>
+    <a href="time-tracking.html" class="nav-item">
+        <i class="fas fa-clock"></i>
+        <span>Time Tracking</span>
+    </a>
+    <div class="nav-divider"></div>
+    <a th:href="@{/auth/login}" id="logout-link" class="nav-item" style="margin-top: auto;">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+    </a>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Include Top Bar Fragment -->
+    <div th:replace="~{fragments/userfragmentTB :: topbar}"></div>
+
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+        <!-- Collaboration Page -->
+        <div class="page-content" id="collaboration">
+            <div class="section-header">
+                <h2 class="section-title">Collaboration</h2>
+                <button class="btn btn-primary" onclick="openModal('add-comment-modal')">
+                    <i class="fas fa-comment"></i> Add Comment
+                </button>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">Task Comments</h3>
+                </div>
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Comment</th>
+                        <th>Posted By</th>
+                        <th>Date</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>Update Website Content</td>
+                        <td>Need clarification on the content requirements</td>
+                        <td>Jane Smith</td>
+                        <td>2025-07-15</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+        <script th:src="@{/js/script.js}"></script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Dashboard - Task Planning & Management System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body data-theme="dark">
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">U</div>
+  <a href="userDashboard.html" class="nav-item">
+    <i class="fas fa-th-large"></i>
+    <span>Dashboard</span>
+  </a>
+  <a href="#" class="nav-item active">
+    <i class="fas fa-tasks"></i>
+    <span>My Tasks</span>
+  </a>
+  <a href="calendar.html" class="nav-item">
+    <i class="fas fa-calendar-alt"></i>
+    <span>Calendar</span>
+  </a>
+  <a href="profile.html" class="nav-item">
+    <i class="fas fa-user"></i>
+    <span>Profile</span>
+  </a>
+  <a href="collaboration.html" class="nav-item">
+    <i class="fas fa-comments"></i>
+    <span>Collaboration</span>
+  </a>
+  <a href="time-tracking.html" class="nav-item">
+   <i class="fas fa-clock"></i>
+    <span>Time Tracking</span>
+  </a>
+  <div class="nav-divider"></div>
+  <a th:href="@{/auth/login}" id="logout-link" class="nav-item" style="margin-top: auto;">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+  </a>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <!-- Include Top Bar Fragment -->
+  <div th:replace="~{fragments/userfragmentTB :: topbar}"></div>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    <!-- My Tasks Page -->
+    <div class="page-content" id="tasks">
+      <div class="section-header">
+        <h2 class="section-title">My Tasks</h2>
+        <button class="btn btn-primary" onclick="openModal('create-task-modal')">
+          <i class="fas fa-plus"></i> Create Task
+        </button>
+      </div>
+
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">All Tasks</h3>
+          <div style="display: flex; gap: 10px;">
+            <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
+              <option>All Status</option>
+              <option>In Progress</option>
+              <option>Completed</option>
+              <option>Overdue</option>
+            </select>
+            <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
+              <option>All Priorities</option>
+              <option>High</option>
+              <option>Medium</option>
+              <option>Low</option>
+            </select>
+          </div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Task Name</th>
+            <th>Priority</th>
+            <th>Deadline</th>
+            <th>Progress</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td>Update Website Content</td>
+            <td>Medium</td>
+            <td>2025-07-20</td>
+            <td>60%</td>
+            <td><span class="status-badge active">In Progress</span></td>
+            <td>
+              <button class="btn btn-secondary edit-task-btn" style="padding: 8px 12px; margin-right: 5px;" data-task-id="1">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-danger" style="padding: 8px 12px;" data-task-id="1">
+                <i class="fas fa-exclamation-circle"></i>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+    <script th:src="@{/js/script.js}"></script>
+</body>
+</html>

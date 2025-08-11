@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Dashboard - Task Planning & Management System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+
+</head>
+<body data-theme="dark">
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">PM</div>
+  <a href="#" class="nav-item active" data-page="dashboard">
+    <i class="fas fa-th-large"></i>
+    <span>Dashboard</span>
+  </a>
+  <a href="#" class="nav-item" data-page="tasks">
+    <i class="fas fa-tasks"></i>
+    <span>Team Tasks</span>
+  </a>
+  <a href="#" class="nav-item" data-page="assignments">
+    <i class="fas fa-users-cog"></i>
+    <span>Task Assignments</span>
+  </a>
+  <div class="nav-divider"></div>
+  <a href="#" class="nav-item" data-page="reports">
+    <i class="fas fa-chart-line"></i>
+    <span>Reports & Analytics</span>
+  </a>
+  <a href="#" class="nav-item" data-page="non-compliant">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span>Non-Compliant Users</span>
+  </a>
+  <div class="nav-divider"></div>
+  <a href="#" class="nav-item" data-page="communication">
+    <i class="fas fa-comments"></i>
+    <span>Team Communication</span>
+  </a>
+  <a href="#" class="nav-item" data-page="deliverables">
+    <i class="fas fa-file-alt"></i>
+    <span>Deliverables</span>
+  </a>
+  <a th:href="@{/auth/login}" id="logout-link" class="nav-item" style="margin-top: auto;">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+  </a>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <!-- Include Top Bar Fragment -->
+  <div th:replace="~{fragments/pmfragmentTB :: topbar}"></div>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+
+    <!-- Task Assignments Page -->
+    <div class="page-content" id="assignments">
+      <div class="section-header">
+        <h2 class="section-title">Task Assignments</h2>
+        <button class="btn btn-primary" onclick="openModal('create-task-modal')">
+          <i class="fas fa-plus"></i> Assign Task
+        </button>
+      </div>
+
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">Team Assignments</h3>
+          <div style="display: flex; gap: 10px;">
+            <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
+              <option>All Team Members</option>
+              <option>Jane Smith</option>
+              <option>John Doe</option>
+            </select>
+          </div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Team Member</th>
+            <th>Task Count</th>
+            <th>Tasks In Progress</th>
+            <th>Tasks Completed</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td>Jane Smith</td>
+            <td>5</td>
+            <td>3</td>
+            <td>2</td>
+            <td>
+              <button class="btn btn-secondary" style="padding: 8px 12px; margin-right: 5px;" onclick="openModal('create-task-modal')">
+                <i class="fas fa-plus"></i>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script th:src="@{/js/script.js}"></script>
+</body>
+</html>

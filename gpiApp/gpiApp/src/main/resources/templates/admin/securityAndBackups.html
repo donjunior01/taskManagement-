@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Task Planning & Management System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body data-theme="dark">
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">SA</div>
+
+  <!-- Main Navigation -->
+  <a href="#" class="nav-item active" data-page="dashboard">
+    <i class="fas fa-th-large"></i>
+    <span>Dashboard</span>
+  </a>
+
+  <!-- User Management -->
+  <a href="#" class="nav-item" data-page="users">
+    <i class="fas fa-users"></i>
+    <span>User Management</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="roles">
+    <i class="fas fa-user-shield"></i>
+    <span>Roles & Permissions</span>
+  </a>
+
+  <div class="nav-divider"></div>
+
+  <!-- Project Management -->
+  <a href="#" class="nav-item" data-page="projects">
+    <i class="fas fa-folder-open"></i>
+    <span>Project Management</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="tasks">
+    <i class="fas fa-tasks"></i>
+    <span>Global Tasks</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="teams">
+    <i class="fas fa-users-cog"></i>
+    <span>Team Assignments</span>
+  </a>
+
+  <div class="nav-divider"></div>
+
+  <!-- Reports & Analytics -->
+  <a href="#" class="nav-item" data-page="reports">
+    <i class="fas fa-chart-line"></i>
+    <span>Global Reports</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="activity">
+    <i class="fas fa-history"></i>
+    <span>Activity Logs</span>
+  </a>
+
+  <div class="nav-divider"></div>
+
+  <!-- Configuration -->
+  <a href="#" class="nav-item" data-page="settings">
+    <i class="fas fa-cog"></i>
+    <span>System Settings</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="integrations">
+    <i class="fas fa-plug"></i>
+    <span>Integrations</span>
+  </a>
+
+  <a href="#" class="nav-item" data-page="security">
+    <i class="fas fa-shield-alt"></i>
+    <span>Security & Backup</span>
+  </a>
+
+  <div class="nav-divider"></div>
+
+  <!-- Support -->
+  <a href="#" class="nav-item" data-page="support">
+    <i class="fas fa-life-ring"></i>
+    <span>Support Center</span>
+  </a>
+
+  <a th:href="@{/auth/login}" id="logout-link" class="nav-item" style="margin-top: auto;">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+  </a>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <!-- Include Top Bar Fragment -->
+  <div th:replace="~{fragments/adminfragmentTB :: topbar}"></div>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    <!-- Security & Backup Page -->
+    <div class="page-content" id="security">
+      <div class="section-header">
+        <h2 class="section-title">Security & Backup</h2>
+        <button class="btn btn-primary">
+          <i class="fas fa-save"></i> Update Security Settings
+        </button>
+      </div>
+
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">Security Settings</h3>
+        </div>
+
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Setting</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td>Two-Factor Authentication</td>
+            <td><span class="status-badge active">Enabled</span></td>
+            <td>
+              <button class="btn btn-secondary" style="padding: 8px 12px;">
+                <i class="fas fa-edit"></i>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td>Backup Frequency</td>
+            <td>Daily</td>
+            <td>
+              <button class="btn btn-secondary" style="padding: 8px 12px;">
+                <i class="fas fa-edit"></i>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td>Activity Log Monitoring</td>
+            <td><span class="status-badge active">Enabled</span></td>
+            <td>
+              <button class="btn btn-secondary" style="padding: 8px 12px;">
+                <i class="fas fa-edit"></i>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script th:src="@{/js/script.js}"></script>
+</body>
+</html>

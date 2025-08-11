@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Dashboard - Task Planning & Management System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+
+</head>
+<body data-theme="dark">
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">PM</div>
+  <a href="#" class="nav-item active" data-page="dashboard">
+    <i class="fas fa-th-large"></i>
+    <span>Dashboard</span>
+  </a>
+  <a href="#" class="nav-item" data-page="tasks">
+    <i class="fas fa-tasks"></i>
+    <span>Team Tasks</span>
+  </a>
+  <a href="#" class="nav-item" data-page="assignments">
+    <i class="fas fa-users-cog"></i>
+    <span>Task Assignments</span>
+  </a>
+  <div class="nav-divider"></div>
+  <a href="#" class="nav-item" data-page="reports">
+    <i class="fas fa-chart-line"></i>
+    <span>Reports & Analytics</span>
+  </a>
+  <a href="#" class="nav-item" data-page="non-compliant">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span>Non-Compliant Users</span>
+  </a>
+  <div class="nav-divider"></div>
+  <a href="#" class="nav-item" data-page="communication">
+    <i class="fas fa-comments"></i>
+    <span>Team Communication</span>
+  </a>
+  <a href="#" class="nav-item" data-page="deliverables">
+    <i class="fas fa-file-alt"></i>
+    <span>Deliverables</span>
+  </a>
+  <a th:href="@{/auth/login}" id="logout-link" class="nav-item" style="margin-top: auto;">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+  </a>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <!-- Include Top Bar Fragment -->
+  <div th:replace="~{fragments/pmfragmentTB :: topbar}"></div>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+
+    <!-- Team Communication Page -->
+    <div class="page-content" id="communication">
+      <div class="section-header">
+        <h2 class="section-title">Team Communication</h2>
+        <button class="btn btn-primary" onclick="openModal('send-message-modal')">
+          <i class="fas fa-plus"></i> Send Message
+        </button>
+      </div>
+
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">Recent Messages</h3>
+        </div>
+
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Recipient</th>
+            <th>Message</th>
+            <th>Sent At</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td>Jane Smith</td>
+            <td>Please review the latest design mockups</td>
+            <td>1 hour ago</td>
+            <td>
+              <button class="btn btn-secondary" style="padding: 8px 12px;">
+                <i class="fas fa-eye"></i>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Send Message Modal -->
+<div class="modal" id="send-message-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Send Message</h3>
+      <button class="close-btn">×</button>
+    </div>
+    <form id="send-message-form">
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="message-recipient">Recipient</label>
+          <select id="message-recipient" name="recipient" required>
+            <option value="">Select Team Member</option>
+            <option value="jane-smith">Jane Smith</option>
+            <option value="john-doe">John Doe</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="message-content">Message</label>
+          <textarea id="message-content" name="message" placeholder="Enter your message" required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary close-btn">Cancel</button>
+        <button type="submit" class="btn btn-primary">Send Message</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script th:src="@{/js/script.js}"></script>
+</body>
+</html>

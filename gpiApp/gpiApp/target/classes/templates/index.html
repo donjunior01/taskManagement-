@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Planning & Management System - Welcome</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <style>
+    :root {
+      /* Dark Mode Colors */
+      --primary-dark: #4361ee;
+      --primary-light-dark: #4895ef;
+      --secondary-dark: #2d3436;
+      --bg-dark: #121212;
+      --card-dark: #1e1e1e;
+      --topbar-dark: #0a0a0a;
+      --text-light-dark: #f8f9fa;
+      --text-secondary-dark: #adb5bd;
+      --border-radius: 12px;
+      --danger-dark: #e63946;
+      --success-dark: #2a9d8f;
+      --warning-dark: #f4a261;
+      --info-dark: #56cfe1;
+      --box-shadow-dark: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+      /* Light Mode Colors */
+      --primary-light: #f4a261;
+      --primary-light-hover: #f48c42;
+      --secondary-light: #ffffff;
+      --bg-light: #f5f5f5;
+      --card-light: #ffffff;
+      --topbar-light: #e0e0e0;
+      --text-light-light: #333333;
+      --text-secondary-light: #666666;
+      --danger-light: #d32f2f;
+      --success-light: #388e3c;
+      --warning-light: #f57c00;
+      --info-light: #0288d1;
+      --box-shadow-light: 0 4px 6px rgba(0, 0, 0, 0.05);
+
+      /* Default to Dark Mode */
+      --primary: var(--primary-dark);
+      --primary-light: var(--primary-light-dark);
+      --secondary: var(--secondary-dark);
+      --bg: var(--bg-dark);
+      --card: var(--card-dark);
+      --topbar: var(--topbar-dark);
+      --text: var(--text-light-dark);
+      --text-secondary: var(--text-secondary-dark);
+      --danger: var(--danger-dark);
+      --success: var(--success-dark);
+      --warning: var(--warning-dark);
+      --info: var(--info-dark);
+      --box-shadow: var(--box-shadow-dark);
+    }
+
+    [data-theme="light"] {
+      --primary: var(--primary-light);
+      --primary-light: var(--primary-light-hover);
+      --secondary: var(--secondary-light);
+      --bg: var(--bg-light);
+      --card: var(--card-light);
+      --topbar: var(--topbar-light);
+      --text: var(--text-light-light);
+      --text-secondary: var(--text-secondary-light);
+      --danger: var(--danger-light);
+      --success: var(--success-light);
+      --warning: var(--warning-light);
+      --info: var(--info-light);
+      --box-shadow: var(--box-shadow-light);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Bar Styles */
+    .top-bar {
+      background-color: var(--topbar);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--box-shadow);
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background-color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-light-dark);
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .nav-items {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      border-radius: 6px;
+    }
+
+    .nav-item:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+      color: var(--primary);
+    }
+
+    .nav-item i {
+      font-size: 16px;
+      margin-right: 8px;
+    }
+
+    .nav-item.active {
+      background-color: rgba(67, 97, 238, 0.1);
+      color: var(--primary);
+    }
+
+    .theme-toggle {
+      background-color: var(--card);
+      border: none;
+      padding: 8px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      transition: background-color 0.2s;
+    }
+
+    .theme-toggle i {
+      font-size: 18px;
+      color: var(--text-secondary);
+    }
+
+    .theme-toggle:hover {
+      background-color: var(--primary-light);
+    }
+
+    .theme-toggle:hover i {
+      color: var(--text-light-dark);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      margin: 0;
+    }
+
+    /* Header Section */
+    .header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      padding: 60px 30px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--border-radius);
+    }
+
+    .header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .header p {
+      font-size: 18px;
+      margin-bottom: 30px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .btn {
+      padding: 12px 20px;
+      border-radius: var(--border-radius);
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      border: none;
+      box-shadow: var(--box-shadow);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--secondary);
+      color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--text-light-dark);
+      color: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: white;
+      border: 2px solid white;
+    }
+
+    .btn-secondary:hover {
+      background-color: white;
+      color: var(--primary);
+    }
+
+    /* Features Section */
+    .features {
+      padding: 60px 30px;
+      background-color: var(--bg);
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background-color: var(--card);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      box-shadow: var(--box-shadow);
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .feature-card i {
+      font-size: 36px;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+
+    .feature-card h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    .feature-card p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    /* Footer */
+    .footer {
+      background-color: var(--topbar);
+      padding: 20px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+      margin: 0 10px;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .top-bar {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .nav-items {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .header {
+        padding: 40px 15px;
+      }
+
+      .header h1 {
+        font-size: 28px;
+      }
+
+      .header p {
+        font-size: 16px;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .features {
+        padding: 40px 15px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+<!-- Top Bar -->
+<nav class="top-bar">
+  <div class="logo">TP</div>
+  <div class="nav-items">
+    <a th:href="@{/auth/login}" class="nav-item">
+      <i class="fas fa-sign-in-alt"></i> Login
+    </a>
+    <!-- <a th:href="@{/api/auth/register}" class="nav-item">
+        <i class="fas fa-user-plus"></i> Register
+    </a> -->
+    <a href="#features" class="nav-item">
+      <i class="fas fa-star"></i> Features
+    </a>
+    <a href="#about" class="nav-item">
+      <i class="fas fa-info-circle"></i> About
+    </a>
+    <a href="#contact" class="nav-item">
+      <i class="fas fa-envelope"></i> Contact
+    </a>
+    <button class="theme-toggle" id="theme-toggle">
+      <i class="fas fa-moon"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content">
+  <!-- Header -->
+  <header class="header">
+    <h1>Welcome to Task Planning & Management System</h1>
+    <p>Streamline your projects, manage tasks efficiently, and boost team collaboration with our powerful platform.</p>
+    <div class="cta-buttons">
+      <a th:href="@{/auth/login}" class="btn btn-primary">
+        <i class="fas fa-sign-in-alt"></i> Login
+      </a>
+      <!-- <a th:href="@{/api/auth/register}" class="btn btn-secondary">
+          <i class="fas fa-user-plus"></i> Sign Up
+      </a> -->
+    </div>
+  </header>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <h2 class="section-title">Key Features</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <i class="fas fa-tasks"></i>
+        <h3>Task Management</h3>
+        <p>Create, assign, and track tasks with ease. Monitor progress and deadlines to keep projects on track.</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-users"></i>
+        <h3>Team Collaboration</h3>
+        <p>Foster teamwork with integrated communication tools and real-time task updates.</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-chart-line"></i>
+        <h3>Reporting & Analytics</h3>
+        <p>Gain insights with comprehensive reports on project progress and team performance.</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-shield-alt"></i>
+        <h3>Security & Permissions</h3>
+        <p>Ensure data safety with robust security features and customizable user roles.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section class="features" id="about">
+    <h2 class="section-title">About Us</h2>
+    <div class="feature-card" style="max-width: 600px; margin: 0 auto;">
+      <p>Our Task Planning & Management System is designed to empower teams to achieve their goals efficiently. With a user-friendly interface and powerful features, we help organizations of all sizes manage their projects and tasks seamlessly.</p>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section class="features" id="contact">
+    <h2 class="section-title">Contact Us</h2>
+    <div class="feature-card" style="max-width: 600px; margin: 0 auto;">
+      <p>Have questions or need support? Reach out to us at <a href="mailto:support@taskmanager.com">support@taskmanager.com</a> or visit our <a href="#support">Support Center</a>.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>© 2025 Task Planning & Management System. All rights reserved. | <a href="#privacy">Privacy Policy</a> | <a href="#terms">Terms of Service</a></p>
+  </footer>
+</div>
+
+<script>
+  // Theme toggle
+  const themeToggle = document.getElementById('theme-toggle');
+  const body = document.body;
+
+  // Check for saved theme preference or default to dark
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  body.setAttribute('data-theme', savedTheme);
+  updateThemeIcon(savedTheme);
+
+  themeToggle.addEventListener('click', () => {
+    const currentTheme = body.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    body.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateThemeIcon(newTheme);
+  });
+
+  function updateThemeIcon(theme) {
+    const icon = themeToggle.querySelector('i');
+    icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+  }
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('.nav-item[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href').substring(1);
+      const targetElement = document.getElementById(targetId);
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+</script>
+</body>
+</html>

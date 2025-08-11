@@ -9,11 +9,10 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "admins")
-@DiscriminatorValue("ADMIN")
+@DiscriminatorValue("SUPER_ADMIN")
 public class Admin extends allUsers {
     public Admin() {
         super();
-        this.setRole(Role.ADMIN);
+        this.setUserRole(UserRole.SUPER_ADMIN);
     }
 } 
