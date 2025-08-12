@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manager Dashboard - Task Planning & Management System</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <link rel="stylesheet" th:href="@{/css/style.css}">
 
 </head>
@@ -12,29 +13,29 @@
 <!-- Sidebar -->
 <div class="sidebar">
   <div class="logo">PM</div>
-  <a th:href="@{/project-manager/dashboard}" class="nav-item active" data-page="dashboard">
+  <a href="#" class="nav-item active" data-page="dashboard">
     <i class="fas fa-th-large"></i>
     <span>Dashboard</span>
   </a>
-  <a th:href="@{/project-manager/team-tasks}" class="nav-item" data-page="tasks">
+  <a th:href="@{/project-manager/teamTask}" class="nav-item" data-page="tasks">
     <i class="fas fa-tasks"></i>
     <span>Team Tasks</span>
   </a>
-  <a th:href="@{/project-manager/team-assignment}" class="nav-item" data-page="assignments">
+  <a th:href="@{/project-manager/teamAssignment}" class="nav-item" data-page="assignments">
     <i class="fas fa-users-cog"></i>
     <span>Task Assignments</span>
   </a>
   <div class="nav-divider"></div>
-  <a th:href="@{/project-manager/reports-analytics}" class="nav-item" data-page="reports">
+  <a th:href="@{/project-manager/reportsAndAnalytics}" class="nav-item" data-page="reports">
     <i class="fas fa-chart-line"></i>
     <span>Reports & Analytics</span>
   </a>
-  <a th:href="@{/project-manager/non-compliant-users}" class="nav-item" data-page="non-compliant">
+  <a th:href="@{/project-manager/nonCompliatUsers}" class="nav-item" data-page="non-compliant">
     <i class="fas fa-exclamation-triangle"></i>
     <span>Non-Compliant Users</span>
   </a>
   <div class="nav-divider"></div>
-  <a th:href="@{/project-manager/team-communication}" class="nav-item" data-page="communication">
+  <a th:href="@{/project-manager/teamCommunication}" class="nav-item" data-page="communication">
     <i class="fas fa-comments"></i>
     <span>Team Communication</span>
   </a>

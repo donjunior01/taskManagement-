@@ -9,32 +9,32 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/project-manager")
 public class ManagerPageController {
 
-    @GetMapping("/dashboard")
+    @GetMapping("/pmDashboard")
     public String managerDashboard() {
         return "project-manager/pmDashboard";
     }
 
-    @GetMapping("/create-project")
+    @GetMapping("/createProject")
     public String createProject() {
         return "project-manager/createProject";
     }
 
-    @GetMapping("/team-tasks")
+    @GetMapping("/teamTask")
     public String teamTasks() {
         return "project-manager/teamTask";
     }
 
-    @GetMapping("/team-communication")
+    @GetMapping("/teamCommunication")
     public String teamCommunication() {
         return "project-manager/teamCommunication";
     }
 
-    @GetMapping("/team-assignment")
+    @GetMapping("/teamAssignment")
     public String teamAssignment() {
         return "project-manager/teamAssignment";
     }
 
-    @GetMapping("/reports-analytics")
+    @GetMapping("/reportsAndAnalytics")
     public String reportsAnalytics() {
         return "project-manager/reportsAndAnalytics";
     }
@@ -44,7 +44,7 @@ public class ManagerPageController {
         return "project-manager/deliverable";
     }
 
-    @GetMapping("/non-compliant-users")
+    @GetMapping("/nonCompliatUsers")
     public String nonCompliantUsers() {
         return "project-manager/nonCompliatUsers";
     }

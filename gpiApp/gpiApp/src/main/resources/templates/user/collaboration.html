@@ -12,7 +12,7 @@
 <!-- Sidebar -->
 <div class="sidebar">
     <div class="logo">U</div>
-    <a th:href="@{/user/dashboard}" class="nav-item">
+    <a th:href="@{/user/userDashboard}" class="nav-item">
         <i class="fas fa-th-large"></i>
         <span>Dashboard</span>
     </a>
@@ -28,7 +28,7 @@
         <i class="fas fa-user"></i>
         <span>Profile</span>
     </a>
-    <a th:href="@{/user/collaboration}" class="nav-item active">
+    <a href="#" class="nav-item active">
         <i class="fas fa-comments"></i>
         <span>Collaboration</span>
     </a>
@@ -93,6 +93,8 @@
         </div>
     </div>
 </div>
-        <script th:src="@{/js/script.js}"></script>
+
+<script th:src="@{/js/dashboard.js}"></script>
+<script th:src="@{/js/script.js}"></script>
 </body>
 </html>

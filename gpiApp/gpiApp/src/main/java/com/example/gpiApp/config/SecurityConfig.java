@@ -39,8 +39,7 @@ public class SecurityConfig {
                     "/js/**",
                     "/images/**",
                     "/static/**",
-                    "/webjars/**",
-                    "/fragments/**"
+                    "/webjars/**"
                 ).permitAll()
                 .requestMatchers("/admin/**").hasAuthority("ROLE_SUPER_ADMIN")
                 .requestMatchers("/project-manager/**").hasAuthority("ROLE_MANAGER")

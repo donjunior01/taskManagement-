@@ -23,14 +23,14 @@ public class DashboardController {
     private final TaskService taskService;
     private final UserRepository userRepository;
 
-    @GetMapping("/admin/adminDashboard")
-    public String adminDashboardLegacy() { return "redirect:/admin/dashboard"; }
-
-    @GetMapping("/project-manager/pmDashboard")
-    public String projectManagerDashboardLegacy() { return "redirect:/project-manager/dashboard"; }
-
-    @GetMapping("/user/userDashboard")
-    public String userDashboardLegacy() { return "redirect:/user/dashboard"; }
+//    @GetMapping("/admin/adminDashboard")
+//    public String adminDashboardLegacy() { return "redirect:/admin/dashboard"; }
+//
+//    @GetMapping("/project-manager/pmDashboard")
+//    public String projectManagerDashboardLegacy() { return "redirect:/project-manager/dashboard"; }
+//
+//    @GetMapping("/user/userDashboard")
+//    public String userDashboardLegacy() { return "redirect:/user/dashboard"; }
     
     @GetMapping("/api/dashboard/statistics")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'SUPER_ADMIN')")

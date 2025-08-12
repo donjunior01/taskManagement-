@@ -4,15 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Notifications</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <link rel="stylesheet" th:href="@{/css/style.css}" />
 </head>
 <body data-theme="dark">
 <div class="sidebar">
   <div class="logo">U</div>
-  <a th:href="@{/user/dashboard}" class="nav-item"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
-  <a th:href="@{/user/notifications}" class="nav-item active"><i class="fas fa-bell"></i><span>Notifications</span></a>
-  <a th:href="@{/user/notification-settings}" class="nav-item"><i class="fas fa-cog"></i><span>Notification Settings</span></a>
-  <a th:href="@{/api/auth/logout-confirm}" class="nav-item" style="margin-top:auto;"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+  <a th:href="@{/user/userDashboard}" class="nav-item">
+    <i class="fas fa-th-large"></i>
+    <span>Dashboard</span>
+  </a>
+  <a href="#" class="nav-item active">
+    <i class="fas fa-bell"></i>
+    <span>Notifications</span>
+  </a>
+  <a th:href="@{/user/notification-settings}" class="nav-item">
+    <i class="fas fa-cog"></i>
+    <span>Notification Settings</span>
+  </a>
+  <a th:href="@{/api/auth/logout-confirm}" class="nav-item" style="margin-top:auto;">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+  </a>
 </div>
 <div class="main-content">
   <div th:replace="~{fragments/userfragmentTB :: topbar}"></div>
@@ -29,7 +43,10 @@
     </div>
   </div>
 </div>
+
 <script th:src="@{/js/script.js}"></script>
+<script th:src="@{/js/dashboard.js}"></script>
+
 </body>
 </html>
 

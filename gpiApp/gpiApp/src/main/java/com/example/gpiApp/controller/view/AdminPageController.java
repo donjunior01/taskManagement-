@@ -8,52 +8,52 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/admin")
 public class AdminPageController {
 
-    @GetMapping("/dashboard")
+    @GetMapping("/adminDashboard")
     public String adminDashboard() {
         return "admin/adminDashboard";
     }
 
-    @GetMapping("/user-management")
+    @GetMapping("/userManagement")
     public String userManagement() {
         return "admin/userManagement";
     }
 
-    @GetMapping("/create-user")
+    @GetMapping("/createUser")
     public String createUser() {
         return "admin/createUser";
     }
 
-    @GetMapping("/roles-permissions")
+    @GetMapping("/rolesAndPermissions")
     public String rolesPermissions() {
-        return "admin/rolesAndPermission";
+        return "admin/rolesAndPermissions";
     }
 
-    @GetMapping("/project-management")
+    @GetMapping("/projectManagement")
     public String projectManagement() {
         return "admin/projectManagement";
     }
 
-    @GetMapping("/global-tasks")
+    @GetMapping("/globalTasks")
     public String globalTasks() {
         return "admin/globalTasks";
     }
 
-    @GetMapping("/team-assignment")
+    @GetMapping("/teamAssignment")
     public String teamAssignment() {
         return "admin/teamAssignment";
     }
 
-    @GetMapping("/global-reports")
+    @GetMapping("/globalReports")
     public String globalReports() {
         return "admin/globalReports";
     }
 
-    @GetMapping("/activity-logs")
+    @GetMapping("/activityLogs")
     public String activityLogs() {
         return "admin/activityLogs";
     }
 
-    @GetMapping("/system-settings")
+    @GetMapping("/systemSettings")
     public String systemSettings() {
         return "admin/systemSettings";
     }
@@ -63,7 +63,7 @@ public class AdminPageController {
         return "admin/integration";
     }
 
-    @GetMapping("/security-backups")
+    @GetMapping("/securityAndBackups")
     public String securityBackups() {
         return "admin/securityAndBackups";
     }
@@ -74,72 +74,72 @@ public class AdminPageController {
     }
 
     // Additional admin pages to cover full requirements
-    @GetMapping("/email-integration")
+    @GetMapping("/emailIntegration")
     public String emailIntegration() {
         return "admin/emailIntegration";
     }
 
-    @GetMapping("/calendar-integration")
+    @GetMapping("/calendarIntegration")
     public String calendarIntegration() {
         return "admin/calendarIntegration";
     }
 
-    @GetMapping("/external-integrations")
+    @GetMapping("/externalIntegrations")
     public String externalIntegrations() {
         return "admin/externalIntegrations";
     }
 
-    @GetMapping("/system-health")
+    @GetMapping("/systemHealth")
     public String systemHealth() {
         return "admin/systemHealth";
     }
 
-    @GetMapping("/security-logs")
+    @GetMapping("/securityLogs")
     public String securityLogs() {
         return "admin/securityLogs";
     }
 
-    @GetMapping("/backup-configuration")
+    @GetMapping("/backupConfiguration")
     public String backupConfiguration() {
         return "admin/backupConfiguration";
     }
 
-    @GetMapping("/report-scheduling")
+    @GetMapping("/reportScheduling")
     public String reportScheduling() {
         return "admin/reportScheduling";
     }
 
-    @GetMapping("/team-performance")
+    @GetMapping("/teamPerformance")
     public String teamPerformance() {
         return "admin/teamPerformance";
     }
 
-    @GetMapping("/team-collaboration-monitor")
+    @GetMapping("/teamCollaborationMonitor")
     public String teamCollaborationMonitor() {
         return "admin/teamCollaborationMonitor";
     }
 
-    @GetMapping("/notification-templates")
+    @GetMapping("/notificationTemplates")
     public String notificationTemplates() {
         return "admin/notificationTemplates";
     }
 
-    @GetMapping("/global-task-categories")
+    @GetMapping("/globalTaskCategories")
     public String globalTaskCategories() {
         return "admin/globalTaskCategories";
     }
 
-    @GetMapping("/priority-levels")
+    @GetMapping("/priorityLevels")
     public String priorityLevels() {
         return "admin/priorityLevels";
     }
 
-    @GetMapping("/security-settings")
+    @GetMapping("/securitySettings")
     public String securitySettings() {
         return "admin/securitySettings";
     }
 
-    @GetMapping("/password-policies")
+    @GetMapping("/passwordPolicies")
     public String passwordPolicies() {
         return "admin/passwordPolicies";
     }

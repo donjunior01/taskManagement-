@@ -34,8 +34,8 @@
             <div class="admin-profile">
                 <img src="https://via.placeholder.com/40x40/4361ee/ffffff?text=SA" alt="Super Admin Avatar">
                 <div class="admin-details">
-                    <span class="username">Super Admin</span>
-                    <span class="role">System Administrator</span>
+                    <span class="username" th:text="${user.firstName + ' ' + user.lastName}">User Name</span>
+                    <span class="role" th:text="${user.userPost}">Role</span>
                 </div>
             </div>
         </div>
@@ -260,15 +260,15 @@
                 <div class="user-info">
                     <div class="user-info-item">
                         <label>Name</label>
-                        <span>Super Admin</span>
+                        <span th:text="${user.firstName + ' ' + user.lastName}">Project Manager</span>
                     </div>
                     <div class="user-info-item">
                         <label>Email</label>
-                        <span>admin@example.com</span>
+                        <span th:text="${user.email}">admin@example.com</span>
                     </div>
                     <div class="user-info-item">
                         <label>Role</label>
-                        <span>System Administrator</span>
+                        <span th:text="${user.userPost}">Team Manager</span>
                     </div>
                     <div class="user-info-item">
                         <label>Last Login</label>
