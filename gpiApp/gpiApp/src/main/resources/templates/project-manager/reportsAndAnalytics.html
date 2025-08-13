@@ -56,110 +56,98 @@
 
   <!-- Content Wrapper -->
   <div class="content-wrapper">
-
-    <!-- Reports & Analytics Page -->
-    <div class="page-content" id="reports">
+    <div class="page-content active" id="reportsAndAnalytics">
       <div class="section-header">
         <h2 class="section-title">Reports & Analytics</h2>
-        <button class="btn btn-primary">
-          <i class="fas fa-download"></i> Export Report
-        </button>
+        <button class="btn btn-primary" onclick="exportReport()">Export Report</button>
       </div>
 
+      <!-- Key Metrics -->
       <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card" id="total-tasks-card">
           <div class="stat-info">
-            <h3>45</h3>
+            <h3 id="total-tasks">0</h3>
             <p>Total Tasks</p>
           </div>
           <div class="stat-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
             <i class="fas fa-tasks"></i>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" id="completion-rate-card">
           <div class="stat-info">
-            <h3>85%</h3>
+            <h3 id="completion-rate">0%</h3>
             <p>Completion Rate</p>
           </div>
-          <div class="stat-icon" style="background-color: rgba(42, 157, 143, 0.1); color: var(--success);">
+          <div class="stat-icon" style="background-color: rgba(40, 167, 69, 0.1); color: var(--success);">
             <i class="fas fa-check-circle"></i>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" id="overdue-tasks-card">
           <div class="stat-info">
-            <h3>10</h3>
+            <h3 id="overdue-tasks">0</h3>
             <p>Overdue Tasks</p>
           </div>
-          <div class="stat-icon" style="background-color: rgba(230, 57, 70, 0.1); color: var(--danger);">
+          <div class="stat-icon" style="background-color: rgba(220, 53, 69, 0.1); color: var(--danger);">
             <i class="fas fa-exclamation-triangle"></i>
           </div>
         </div>
       </div>
 
-      <!-- Analytics Overview Chart -->
-      <div class="chart-container">
-        <div class="chart-header">
-          <h3 class="chart-title">Team Productivity Trends</h3>
-          <select class="chart-period-selector" onchange="pageManager.updateAnalyticsChart(this.value)">
-            <option value="7">Last 7 Days</option>
-            <option value="30" selected>Last 30 Days</option>
-            <option value="90">Last 90 Days</option>
-          </select>
+      <!-- Charts -->
+      <div class="charts-section">
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Team Productivity Trends</h3>
+            <select class="chart-period-selector" data-chart="productivity-trends-chart">
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+            </select>
+          </div>
+          <canvas id="productivity-trends-chart"></canvas>
         </div>
-        <div class="chart-wrapper">
-          <canvas id="analytics-overview-chart"></canvas>
-        </div>
-      </div>
-
-      <!-- Task Completion Chart -->
-      <div class="chart-container">
-        <div class="chart-header">
-          <h3 class="chart-title">Task Completion Overview</h3>
-        </div>
-        <div class="chart-wrapper">
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Task Completion Overview</h3>
+          </div>
           <canvas id="task-completion-chart"></canvas>
         </div>
-      </div>
-
-      <!-- Team Performance Chart -->
-      <div class="chart-container">
-        <div class="chart-header">
-          <h3 class="chart-title">Team Member Performance</h3>
-        </div>
-        <div class="chart-wrapper">
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Team Member Performance</h3>
+          </div>
           <canvas id="team-performance-chart"></canvas>
         </div>
       </div>
 
-      <!-- Analytics Table -->
-      <div class="table-container">
+      <!-- Detailed Analytics Table -->
+      <div class="data-table-card">
         <div class="table-header">
-          <h3 class="table-title">Detailed Analytics</h3>
-          <div style="display: flex; gap: 10px;">
-            <select id="analytics-filter" style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;" onchange="pageManager.filterAnalytics()">
+          <h3>Detailed Analytics</h3>
+          <div class="table-filters">
+            <select id="metrics-filter">
               <option value="">All Metrics</option>
-              <option value="productivity">Productivity</option>
-              <option value="completion">Completion Rate</option>
-              <option value="quality">Quality Score</option>
+              <option value="Productivity">Productivity</option>
+              <option value="Completion Rate">Completion Rate</option>
+              <option value="Quality Score">Quality Score</option>
             </select>
-            <input type="text" id="search-analytics" placeholder="Search analytics..." style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;" onkeyup="pageManager.searchAnalytics(this.value)">
+            <input type="text" id="analytics-search" placeholder="Search analytics...">
           </div>
         </div>
-
-        <table class="data-table">
+        <table id="analytics-table">
           <thead>
-            <tr>
-              <th>Team Member</th>
-              <th>Role</th>
-              <th>Tasks Completed</th>
-              <th>Productivity Score</th>
-              <th>Quality Score</th>
-              <th>On-Time Rate</th>
-              <th>Actions</th>
-            </tr>
+          <tr>
+            <th>Team Member</th>
+            <th>Role</th>
+            <th>Tasks Completed</th>
+            <th>Productivity Score</th>
+            <th>Quality Score</th>
+            <th>On-Time Rate</th>
+            <th>Actions</th>
+          </tr>
           </thead>
           <tbody id="analytics-table-body">
-            <!-- Dynamic content will be loaded here -->
+          <!-- Data will be populated dynamically -->
           </tbody>
         </table>
       </div>

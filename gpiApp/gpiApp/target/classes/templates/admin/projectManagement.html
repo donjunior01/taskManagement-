@@ -18,42 +18,23 @@
     <i class="fas fa-th-large"></i>
     <span>Dashboard</span>
   </a>
-
-  <!-- User Management -->
-  <a th:href="@{/admin/userManagement}" class="nav-item" data-page="users">
-    <i class="fas fa-users"></i>
-    <span>User Management</span>
-  </a>
-
-  <a th:href="@{/admin/rolesAndPermission}" class="nav-item" data-page="roles">
-    <i class="fas fa-user-shield"></i>
-    <span>Roles & Permissions</span>
-  </a>
-
-  <div class="nav-divider"></div>
-
   <!-- Project Management -->
+
   <a th:href="@{/admin/projectManagement}" class="nav-item active" data-page="projects">
     <i class="fas fa-folder-open"></i>
     <span>Project Management</span>
   </a>
 
-  <a th:href="@{/admin/globalTasks}" class="nav-item" data-page="tasks">
-    <i class="fas fa-tasks"></i>
-    <span>Global Tasks</span>
-  </a>
+  <div class="nav-divider"></div>
 
-  <a th:href="@{/admin/teamAssignment}" class="nav-item" data-page="teams">
-    <i class="fas fa-users-cog"></i>
+  <a th:href="@{/admin/teamAssignment}" class="nav-item " data-page="projects">
+    <i class="fas fa-folder-open"></i>
     <span>Team Assignments</span>
   </a>
 
-  <div class="nav-divider"></div>
-
-  <!-- Reports & Analytics -->
-  <a th:href="@{/admin/globalReports}" class="nav-item" data-page="reports">
-    <i class="fas fa-chart-line"></i>
-    <span>Global Reports</span>
+  <a th:href="@{/admin/teamCollaborationMonitor}" class="nav-item " data-page="projects">
+    <i class="fas fa-users"></i>
+    <span>Team Collaboration</span>
   </a>
 
   <a th:href="@{/admin/teamPerformance}" class="nav-item" data-page="performance">
@@ -61,35 +42,24 @@
     <span>Team Performance</span>
   </a>
 
-  <a th:href="@{/admin/activityLogs}" class="nav-item" data-page="activity">
-    <i class="fas fa-history"></i>
-    <span>Activity Logs</span>
+  <div class="nav-divider"></div>
+
+  <a th:href="@{/admin/reportScheduling}" class="nav-item " data-page="projects">
+    <i class="fas fa-folder-open"></i>
+    <span>Report Schedule</span>
   </a>
 
   <div class="nav-divider"></div>
 
-  <!-- Configuration -->
-  <a th:href="@{/admin/systemSettings}" class="nav-item" data-page="settings">
-    <i class="fas fa-cog"></i>
-    <span>System Settings</span>
+  <a th:href="@{/admin/emailIntegration}" class="nav-item " data-page="projects">
+    <i class="fas fa-folder-open"></i>
+    <span>Emails</span>
   </a>
+  <div class="nav-divider"></div>
 
   <a th:href="@{/admin/integrations}" class="nav-item" data-page="integrations">
     <i class="fas fa-plug"></i>
     <span>Integrations</span>
-  </a>
-
-  <a th:href="@{/admin/securityAndBackups}" class="nav-item" data-page="security">
-    <i class="fas fa-shield-alt"></i>
-    <span>Security & Backup</span>
-  </a>
-
-  <div class="nav-divider"></div>
-
-  <!-- Support -->
-  <a th:href="@{/admin/support}" class="nav-item" data-page="support">
-    <i class="fas fa-life-ring"></i>
-    <span>Support Center</span>
   </a>
 
   <a th:href="@{/api/auth/logout-confirm}" id="logout-link" class="nav-item" style="margin-top: auto;">
@@ -100,116 +70,109 @@
 
 <!-- Main Content -->
 <div class="main-content">
-  <!-- Include Top Bar Fragment -->
+  <!-- Top Bar -->
   <div th:replace="~{fragments/adminfragmentTB :: topbar}"></div>
+
 
   <!-- Content Wrapper -->
   <div class="content-wrapper">
-    <!-- Project Management Page -->
-    <div class="page-content" id="projects">
+    <div class="page-content active" id="projectManagement">
       <div class="section-header">
         <h2 class="section-title">Project Management</h2>
-        <div style="display: flex; gap: 10px;">
-          <button class="btn btn-secondary" onclick="pageManager.refreshPageData()">
-            <i class="fas fa-sync-alt"></i> Refresh
-          </button>
-          <button class="btn btn-primary" onclick="openModal('create-project-modal')">
-            <i class="fas fa-plus"></i> Create New Project
-          </button>
+        <div class="header-actions">
+          <button class="btn btn-secondary" onclick="pageManager.loadProjectManagementData()">Refresh</button>
+          <button class="btn btn-primary" onclick="openModal('create-project-modal')">Create New Project</button>
         </div>
       </div>
 
-      <!-- Project Statistics -->
+      <!-- Key Metrics -->
       <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card" id="total-projects-card">
           <div class="stat-info">
-            <h3 data-stat="totalProjects">0</h3>
+            <h3 id="total-projects">0</h3>
             <p>Total Projects</p>
           </div>
           <div class="stat-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
-            <i class="fas fa-folder-open"></i>
+            <i class="fas fa-project-diagram"></i>
           </div>
         </div>
-
-        <div class="stat-card">
+        <div class="stat-card" id="active-projects-card">
           <div class="stat-info">
-            <h3 data-stat="activeProjects">0</h3>
+            <h3 id="active-projects">0</h3>
             <p>Active Projects</p>
           </div>
           <div class="stat-icon" style="background-color: rgba(42, 157, 143, 0.1); color: var(--success);">
-            <i class="fas fa-play-circle"></i>
+            <i class="fas fa-spinner"></i>
           </div>
         </div>
-
-        <div class="stat-card">
+        <div class="stat-card" id="completed-projects-card">
           <div class="stat-info">
-            <h3 data-stat="completedProjects">0</h3>
+            <h3 id="completed-projects">0</h3>
             <p>Completed Projects</p>
           </div>
-          <div class="stat-icon" style="background-color: rgba(244, 162, 97, 0.1); color: var(--warning);">
+          <div class="stat-icon" style="background-color: rgba(40, 167, 69, 0.1); color: var(--success);">
             <i class="fas fa-check-circle"></i>
           </div>
         </div>
-
-        <div class="stat-card">
+        <div class="stat-card" id="on-hold-projects-card">
           <div class="stat-info">
-            <h3 data-stat="onHoldProjects">0</h3>
+            <h3 id="on-hold-projects">0</h3>
             <p>On Hold</p>
           </div>
-          <div class="stat-icon" style="background-color: rgba(230, 57, 70, 0.1); color: var(--danger);">
+          <div class="stat-icon" style="background-color: rgba(244, 162, 97, 0.1); color: var(--warning);">
             <i class="fas fa-pause-circle"></i>
           </div>
         </div>
       </div>
 
-      <!-- Project Progress Chart -->
-      <div class="chart-container">
-        <div class="chart-header">
-          <h3>Project Progress Overview</h3>
-          <select class="chart-period-selector" onchange="pageManager.updateProjectProgressChart(this.value)">
-            <option value="7">Last 7 Days</option>
-            <option value="30" selected>Last 30 Days</option>
-            <option value="90">Last 90 Days</option>
-          </select>
+      <!-- Charts Section -->
+      <div class="charts-section">
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Project Progress Overview</h3>
+            <select class="chart-period-selector" data-chart="project-progress-chart">
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+            </select>
+          </div>
+          <canvas id="project-progress-chart" height="300"></canvas>
         </div>
-        <div class="chart-wrapper">
-          <canvas id="project-progress-chart"></canvas>
-        </div>
-      </div>
-
-      <!-- Project Status Distribution -->
-      <div class="chart-container">
-        <div class="chart-header">
-          <h3>Project Status Distribution</h3>
-        </div>
-        <div class="chart-wrapper">
-          <canvas id="project-status-chart"></canvas>
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Project Status Distribution</h3>
+            <select class="chart-period-selector" data-chart="project-status-chart">
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+            </select>
+          </div>
+          <canvas id="project-status-chart" height="300"></canvas>
         </div>
       </div>
 
       <!-- Projects Table -->
-      <div class="table-container">
+      <div class="data-table-card">
         <div class="table-header">
-          <h3 class="table-title">All Projects</h3>
-          <div style="display: flex; gap: 10px;">
-            <select id="status-filter" style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;" onchange="pageManager.filterProjects()">
-              <option value="">All Status</option>
-              <option value="ACTIVE">Active</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="ON_HOLD">On Hold</option>
-              <option value="CANCELLED">Cancelled</option>
+          <h3>All Projects</h3>
+          <div class="table-filters">
+            <select id="status-filter">
+              <option>All Status</option>
+              <option>Active</option>
+              <option>Completed</option>
+              <option>On Hold</option>
+              <option>Cancelled</option>
             </select>
-            <select id="priority-filter" style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;" onchange="pageManager.filterProjects()">
-              <option value="">All Priorities</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
+            <select id="priority-filter">
+              <option>All Priorities</option>
+              <option>High</option>
+              <option>Medium</option>
+              <option>Low</option>
             </select>
-            <input type="text" id="search-projects" placeholder="Search projects..." style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;" onkeyup="pageManager.searchProjects(this.value)">
+            <input type="text" id="project-search" placeholder="Search projects...">
           </div>
         </div>
-
-        <table class="data-table">
+        <table id="projects-table">
           <thead>
           <tr>
             <th>Project Name</th>
@@ -221,9 +184,7 @@
             <th>Actions</th>
           </tr>
           </thead>
-          <tbody id="projects-table-body">
-            <!-- Dynamic content will be loaded here -->
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
     </div>
@@ -235,7 +196,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <h3 class="modal-title">Create New Project</h3>
-      <button class="close-btn" onclick="closeModal('create-project-modal')">&times;</button>
+      <button class="close-btn" onclick="closeModal('create-project-modal')">×</button>
     </div>
     <form id="create-project-form">
       <div class="modal-body">
@@ -245,29 +206,27 @@
         </div>
         <div class="form-group">
           <label for="project-description">Description</label>
-          <textarea id="project-description" name="description" placeholder="Enter project description" required></textarea>
+          <textarea id="project-description" name="description" placeholder="Enter project description"></textarea>
         </div>
         <div class="form-group">
           <label for="project-manager">Project Manager</label>
           <select id="project-manager" name="managerId" required>
             <option value="">Select Project Manager</option>
-            <!-- Dynamic options will be loaded -->
           </select>
         </div>
         <div class="form-group">
           <label for="project-team">Team</label>
           <select id="project-team" name="teamId" required>
             <option value="">Select Team</option>
-            <!-- Dynamic options will be loaded -->
           </select>
         </div>
         <div class="form-group">
           <label for="project-priority">Priority</label>
           <select id="project-priority" name="priority" required>
             <option value="">Select Priority</option>
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
           </select>
         </div>
         <div class="form-group">
@@ -276,7 +235,7 @@
         </div>
         <div class="form-group">
           <label for="project-budget">Budget</label>
-          <input type="number" id="project-budget" name="budget" placeholder="Enter project budget" min="0" step="0.01">
+          <input type="number" id="project-budget" name="budget" placeholder="Enter budget">
         </div>
       </div>
       <div class="modal-footer">
@@ -292,10 +251,9 @@
   <div class="modal-content">
     <div class="modal-header">
       <h3 class="modal-title">Edit Project</h3>
-      <button class="close-btn" onclick="closeModal('edit-project-modal')">&times;</button>
+      <button class="close-btn" onclick="closeModal('edit-project-modal')">×</button>
     </div>
     <form id="edit-project-form">
-      <input type="hidden" id="edit-project-id" name="id">
       <div class="modal-body">
         <div class="form-group">
           <label for="edit-project-name">Project Name</label>
@@ -303,52 +261,50 @@
         </div>
         <div class="form-group">
           <label for="edit-project-description">Description</label>
-          <textarea id="edit-project-description" name="description" required></textarea>
+          <textarea id="edit-project-description" name="description"></textarea>
         </div>
         <div class="form-group">
           <label for="edit-project-manager">Project Manager</label>
           <select id="edit-project-manager" name="managerId" required>
             <option value="">Select Project Manager</option>
-            <!-- Dynamic options will be loaded -->
           </select>
         </div>
         <div class="form-group">
           <label for="edit-project-team">Team</label>
           <select id="edit-project-team" name="teamId" required>
             <option value="">Select Team</option>
-            <!-- Dynamic options will be loaded -->
           </select>
         </div>
         <div class="form-group">
           <label for="edit-project-priority">Priority</label>
           <select id="edit-project-priority" name="priority" required>
             <option value="">Select Priority</option>
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
           </select>
         </div>
         <div class="form-group">
           <label for="edit-project-deadline">Deadline</label>
-          <input type="date" id="edit-project-deadline" name="deadline" required>
+          <input type="date" id="edit-project-deadline" name="deadline">
         </div>
         <div class="form-group">
           <label for="edit-project-budget">Budget</label>
-          <input type="number" id="edit-project-budget" name="budget" min="0" step="0.01">
+          <input type="number" id="edit-project-budget" name="budget">
         </div>
         <div class="form-group">
           <label for="edit-project-progress">Progress (%)</label>
-          <input type="range" id="edit-project-progress" name="progress" min="0" max="100" value="0" oninput="document.getElementById('edit-progress-value').textContent = this.value + '%'">
-          <span id="edit-progress-value">0%</span>
+          <input type="range" id="edit-project-progress" name="progress" min="0" max="100" value="0">
+          <span id="progress-value">0%</span>
         </div>
         <div class="form-group">
           <label for="edit-project-status">Status</label>
           <select id="edit-project-status" name="status" required>
-            <option value="PLANNING">Planning</option>
-            <option value="ACTIVE">Active</option>
-            <option value="ON_HOLD">On Hold</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
+            <option value="Planning">Planning</option>
+            <option value="Active">Active</option>
+            <option value="On Hold">On Hold</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
           </select>
         </div>
       </div>
@@ -364,16 +320,15 @@
 <div class="modal" id="delete-confirmation-modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3 class="modal-title">Confirm Deletion</h3>
-      <button class="close-btn" onclick="closeModal('delete-confirmation-modal')">&times;</button>
+      <h3 class="modal-title">Confirm Delete</h3>
+      <button class="close-btn" onclick="closeModal('delete-confirmation-modal')">×</button>
     </div>
     <div class="modal-body">
       <p>Are you sure you want to delete this project? This action cannot be undone.</p>
-      <input type="hidden" id="delete-project-id">
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" onclick="closeModal('delete-confirmation-modal')">Cancel</button>
-      <button type="button" class="btn btn-danger" onclick="pageManager.confirmDeleteProject()">Delete Project</button>
+      <button type="button" class="btn btn-danger" id="confirm-delete">Delete</button>
     </div>
   </div>
 </div>
@@ -383,42 +338,43 @@
   <div class="modal-content">
     <div class="modal-header">
       <h3 class="modal-title">Project Details</h3>
-      <button class="close-btn" onclick="closeModal('project-details-modal')">&times;</button>
+      <button class="close-btn" onclick="closeModal('project-details-modal')">×</button>
     </div>
     <div class="modal-body">
-      <div class="project-details">
-        <div class="project-header">
-          <h4 id="project-detail-name"></h4>
-          <p id="project-detail-description"></p>
+      <div class="project-details-grid">
+        <div class="project-info">
+          <h3 id="project-name">-</h3>
+          <p id="project-description">-</p>
         </div>
         <div class="project-stats">
           <div class="stat-item">
-            <span class="stat-label">Manager</span>
-            <span class="stat-value" id="project-detail-manager">-</span>
+            <label>Manager</label>
+            <p id="project-manager">-</p>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Team</span>
-            <span class="stat-value" id="project-detail-team">-</span>
+            <label>Team</label>
+            <p id="project-team">-</p>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Progress</span>
-            <span class="stat-value" id="project-detail-progress">0%</span>
+            <label>Progress</label>
+            <p id="project-progress">0%</p>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Status</span>
-            <span class="stat-value" id="project-detail-status">-</span>
+            <label>Status</label>
+            <p id="project-status">-</p>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Deadline</span>
-            <span class="stat-value" id="project-detail-deadline">-</span>
+            <label>Deadline</label>
+            <p id="project-deadline">-</p>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Budget</span>
-            <span class="stat-value" id="project-detail-budget">-</span>
+            <label>Budget</label>
+            <p id="project-budget">-</p>
           </div>
         </div>
-        <div class="project-tasks" id="project-tasks-list">
-          <!-- Dynamic project tasks will be loaded here -->
+        <div class="project-tasks">
+          <h4>Associated Tasks</h4>
+          <div id="project-tasks-list"></div>
         </div>
       </div>
     </div>

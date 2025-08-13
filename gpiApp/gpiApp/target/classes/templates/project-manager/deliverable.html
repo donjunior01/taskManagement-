@@ -56,30 +56,27 @@
 
   <!-- Content Wrapper -->
   <div class="content-wrapper">
-
-    <!-- Deliverables Page -->
-    <div class="page-content" id="deliverables">
+    <div class="page-content active" id="deliverables">
       <div class="section-header">
         <h2 class="section-title">Deliverables</h2>
-        <button class="btn btn-primary" onclick="openModal('review-deliverable-modal')">
-          <i class="fas fa-eye"></i> Review Deliverables
-        </button>
+        <button class="btn btn-primary" onclick="openModal('review-deliverable-modal')">Review Deliverables</button>
       </div>
 
-      <div class="table-container">
+      <!-- Deliverables Table -->
+      <div class="data-table-card">
         <div class="table-header">
-          <h3 class="table-title">Submitted Deliverables</h3>
-          <div style="display: flex; gap: 10px;">
-            <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
-              <option>All Status</option>
-              <option>Pending</option>
-              <option>Approved</option>
-              <option>Rejected</option>
+          <h3>Submitted Deliverables</h3>
+          <div class="table-filters">
+            <select id="status-filter">
+              <option value="">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
             </select>
+            <input type="text" id="deliverable-search" placeholder="Search deliverables...">
           </div>
         </div>
-
-        <table class="data-table">
+        <table id="deliverables-table">
           <thead>
           <tr>
             <th>Task</th>
@@ -89,18 +86,8 @@
             <th>Actions</th>
           </tr>
           </thead>
-          <tbody>
-          <tr>
-            <td>Design Landing Page</td>
-            <td>Jane Smith</td>
-            <td>design_mockup.pdf</td>
-            <td><span class="status-badge pending">Pending</span></td>
-            <td>
-              <button class="btn btn-secondary review-deliverable-btn" style="padding: 8px 12px; margin-right: 5px;" data-deliverable-id="1">
-                <i class="fas fa-eye"></i>
-              </button>
-            </td>
-          </tr>
+          <tbody id="deliverables-table-body">
+          <!-- Data will be populated dynamically -->
           </tbody>
         </table>
       </div>
@@ -113,38 +100,37 @@
   <div class="modal-content">
     <div class="modal-header">
       <h3 class="modal-title">Review Deliverable</h3>
-      <button class="close-btn">×</button>
+      <button class="close-btn" onclick="closeModal('review-deliverable-modal')">×</button>
     </div>
     <form id="review-deliverable-form">
       <div class="modal-body">
-        <input type="hidden" id="deliverable-id" name="deliverable-id">
         <div class="form-group">
-          <label>Task</label>
-          <p id="deliverable-task">Design Landing Page</p>
+          <label for="deliverable-task">Task</label>
+          <input type="text" id="deliverable-task" name="task" readonly>
         </div>
         <div class="form-group">
-          <label>Submitted By</label>
-          <p id="deliverable-submitted-by">Jane Smith</p>
+          <label for="deliverable-submitted-by">Submitted By</label>
+          <input type="text" id="deliverable-submitted-by" name="submittedBy" readonly>
         </div>
         <div class="form-group">
-          <label>File</label>
-          <p><a href="#" id="deliverable-file" style="color: var(--primary);">design_mockup.pdf</a></p>
+          <label for="deliverable-file">File</label>
+          <input type="text" id="deliverable-file" name="file" readonly>
         </div>
         <div class="form-group">
           <label for="deliverable-status">Status</label>
           <select id="deliverable-status" name="status" required>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
           </select>
         </div>
         <div class="form-group">
           <label for="deliverable-comments">Comments/Observations</label>
-          <textarea id="deliverable-comments" name="comments" placeholder="Add your comments or observations"></textarea>
+          <textarea id="deliverable-comments" name="comments" placeholder="Enter comments or observations"></textarea>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary close-btn">Cancel</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('review-deliverable-modal')">Cancel</button>
         <button type="submit" class="btn btn-primary">Submit Review</button>
       </div>
     </form>

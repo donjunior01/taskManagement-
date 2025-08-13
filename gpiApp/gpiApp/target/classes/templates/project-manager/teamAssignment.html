@@ -56,29 +56,25 @@
 
   <!-- Content Wrapper -->
   <div class="content-wrapper">
-
-    <!-- Task Assignments Page -->
-    <div class="page-content" id="assignments">
+    <div class="page-content active" id="teamAssignments">
       <div class="section-header">
         <h2 class="section-title">Task Assignments</h2>
-        <button class="btn btn-primary" onclick="openModal('create-task-modal')">
-          <i class="fas fa-plus"></i> Assign Task
-        </button>
+        <button class="btn btn-primary" onclick="openModal('assign-task-modal')">Assign Task</button>
       </div>
 
-      <div class="table-container">
+      <!-- Team Assignments Table -->
+      <div class="data-table-card">
         <div class="table-header">
-          <h3 class="table-title">Team Assignments</h3>
-          <div style="display: flex; gap: 10px;">
-            <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
-              <option>All Team Members</option>
-              <option>Jane Smith</option>
-              <option>John Doe</option>
+          <h3>Team Assignments</h3>
+          <div class="table-filters">
+            <select id="team-member-filter">
+              <option value="">All Team Members</option>
+              <!-- Options populated dynamically -->
             </select>
+            <input type="text" id="assignment-search" placeholder="Search assignments...">
           </div>
         </div>
-
-        <table class="data-table">
+        <table id="assignments-table">
           <thead>
           <tr>
             <th>Team Member</th>
@@ -88,22 +84,48 @@
             <th>Actions</th>
           </tr>
           </thead>
-          <tbody>
-          <tr>
-            <td>Jane Smith</td>
-            <td>5</td>
-            <td>3</td>
-            <td>2</td>
-            <td>
-              <button class="btn btn-secondary" style="padding: 8px 12px; margin-right: 5px;" onclick="openModal('create-task-modal')">
-                <i class="fas fa-plus"></i>
-              </button>
-            </td>
-          </tr>
+          <tbody id="assignments-table-body">
+          <!-- Data will be populated dynamically -->
           </tbody>
         </table>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Assign Task Modal -->
+<div class="modal" id="assign-task-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Assign Task</h3>
+      <button class="close-btn" onclick="closeModal('assign-task-modal')">×</button>
+    </div>
+    <form id="assign-task-form">
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="assign-task-name">Task Name</label>
+          <input type="text" id="assign-task-name" name="name" placeholder="Enter task name" required>
+        </div>
+        <div class="form-group">
+          <label for="assign-team-member">Team Member</label>
+          <select id="assign-team-member" name="teamMember" required>
+            <option value="">Select Team Member</option>
+            <!-- Options populated dynamically -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="assign-project">Project</label>
+          <select id="assign-project" name="project" required>
+            <option value="">Select Project</option>
+            <!-- Options populated dynamically -->
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('assign-task-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Assign Task</button>
+      </div>
+    </form>
   </div>
 </div>
 

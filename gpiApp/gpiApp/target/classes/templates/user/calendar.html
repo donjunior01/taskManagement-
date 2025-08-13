@@ -58,101 +58,157 @@
 
     <!-- Content Wrapper -->
     <div class="content-wrapper">
-        <!-- Calendar Page -->
-        <div class="page-content" id="calendar">
+        <div class="page-content active" id="calendar">
             <div class="section-header">
                 <h2 class="section-title">Calendar</h2>
-                <button class="btn btn-primary" onclick="openModal('create-task-modal')">
-                    <i class="fas fa-plus"></i> Schedule Task
-                </button>
+                <button class="btn btn-primary" onclick="openModal('schedule-task-modal')">Schedule Task</button>
             </div>
 
-            <!-- Calendar Navigation -->
-            <div class="calendar-navigation">
-                <button class="btn btn-secondary" onclick="pageManager.previousMonth()">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <h3 id="current-month">January 2024</h3>
-                <button class="btn btn-secondary" onclick="pageManager.nextMonth()">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+            <!-- Calendar Header -->
+            <div class="calendar-header">
+                <button class="calendar-nav prev"><i class="fas fa-chevron-left"></i></button>
+                <h3 id="calendar-month">January 2024</h3>
+                <button class="calendar-nav next"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="calendar-view-tabs">
+                <button class="tab active" data-view="month">Month</button>
+                <button class="tab" data-view="week">Week</button>
+                <button class="tab" data-view="day">Day</button>
             </div>
 
-            <!-- Calendar View Selector -->
-            <div class="calendar-view-selector">
-                <button class="view-btn active" onclick="pageManager.setCalendarView('month')">Month</button>
-                <button class="view-btn" onclick="pageManager.setCalendarView('week')">Week</button>
-                <button class="view-btn" onclick="pageManager.setCalendarView('day')">Day</button>
+            <!-- Calendar Grid -->
+            <div class="calendar-grid" id="calendar-grid">
+                <div class="calendar-day-header">Sun</div>
+                <div class="calendar-day-header">Mon</div>
+                <div class="calendar-day-header">Tue</div>
+                <div class="calendar-day-header">Wed</div>
+                <div class="calendar-day-header">Thu</div>
+                <div class="calendar-day-header">Fri</div>
+                <div class="calendar-day-header">Sat</div>
+                <!-- Calendar days populated dynamically -->
             </div>
 
-            <!-- Calendar Container -->
-            <div class="calendar-container">
-                <div class="calendar-header">
-                    <div class="calendar-days">
-                        <div class="calendar-day-header">Sun</div>
-                        <div class="calendar-day-header">Mon</div>
-                        <div class="calendar-day-header">Tue</div>
-                        <div class="calendar-day-header">Wed</div>
-                        <div class="calendar-day-header">Thu</div>
-                        <div class="calendar-day-header">Fri</div>
-                        <div class="calendar-day-header">Sat</div>
+            <!-- Task Metrics -->
+            <div class="stats-grid">
+                <div class="stat-card" id="completed-tasks-card">
+                    <div class="stat-info">
+                        <h3 id="completed-tasks">0</h3>
+                        <p>Completed Tasks</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(40, 167, 69, 0.1); color: var(--success);">
+                        <i class="fas fa-check-circle"></i>
                     </div>
                 </div>
-                <div class="calendar-grid" id="calendar-grid">
-                    <!-- Calendar days will be generated here -->
-                </div>
-            </div>
-
-            <!-- Calendar Legend -->
-            <div class="calendar-legend">
-                <div class="legend-item">
-                    <div class="legend-color" style="background-color: #28a745;"></div>
-                    <span>Completed Tasks</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background-color: #ffc107;"></div>
-                    <span>In Progress</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background-color: #17a2b8;"></div>
-                    <span>Pending</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background-color: #dc3545;"></div>
-                    <span>Overdue</span>
-                </div>
-            </div>
-
-            <!-- Task Summary -->
-            <div class="task-summary">
-                <div class="summary-card">
-                    <h4>This Week</h4>
-                    <div class="summary-stats">
-                        <div class="summary-stat">
-                            <span class="stat-number" id="week-tasks">8</span>
-                            <span class="stat-label">Tasks</span>
-                        </div>
-                        <div class="summary-stat">
-                            <span class="stat-number" id="week-completed">5</span>
-                            <span class="stat-label">Completed</span>
-                        </div>
+                <div class="stat-card" id="in-progress-tasks-card">
+                    <div class="stat-info">
+                        <h3 id="in-progress-tasks">0</h3>
+                        <p>In Progress</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(244, 162, 97, 0.1); color: var(--warning);">
+                        <i class="fas fa-spinner"></i>
                     </div>
                 </div>
-                <div class="summary-card">
-                    <h4>This Month</h4>
-                    <div class="summary-stats">
-                        <div class="summary-stat">
-                            <span class="stat-number" id="month-tasks">32</span>
-                            <span class="stat-label">Tasks</span>
-                        </div>
-                        <div class="summary-stat">
-                            <span class="stat-number" id="month-completed">28</span>
-                            <span class="stat-label">Completed</span>
-                        </div>
+                <div class="stat-card" id="pending-tasks-card">
+                    <div class="stat-info">
+                        <h3 id="pending-tasks">0</h3>
+                        <p>Pending</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(108, 117, 125, 0.1); color: var(--secondary);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div class="stat-card" id="overdue-tasks-card">
+                    <div class="stat-info">
+                        <h3 id="overdue-tasks">0</h3>
+                        <p>Overdue</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(220, 53, 69, 0.1); color: var(--danger);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly and Monthly Metrics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="week-tasks">0</h3>
+                        <p>This Week Tasks</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="week-completed">0</h3>
+                        <p>This Week Completed</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(40, 167, 69, 0.1); color: var(--success);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="month-tasks">0</h3>
+                        <p>This Month Tasks</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="month-completed">0</h3>
+                        <p>This Month Completed</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(40, 167, 69, 0.1); color: var(--success);">
+                        <i class="fas fa-check-circle"></i>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Schedule Task Modal -->
+<div class="modal" id="schedule-task-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Schedule Task</h3>
+            <button class="close-btn" onclick="closeModal('schedule-task-modal')">×</button>
+        </div>
+        <form id="schedule-task-form">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="schedule-task">Select Task</label>
+                    <select id="schedule-task" name="task" required>
+                        <option value="">Choose a task...</option>
+                        <!-- Options populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="schedule-date">Schedule Date</label>
+                    <input type="date" id="schedule-date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="schedule-start-time">Start Time</label>
+                    <input type="time" id="schedule-start-time" name="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="schedule-end-time">End Time</label>
+                    <input type="time" id="schedule-end-time" name="endTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="schedule-duration">Estimated Duration (minutes)</label>
+                    <input type="number" id="schedule-duration" name="duration" min="1" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('schedule-task-modal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Schedule Task</button>
+            </div>
+        </form>
     </div>
 </div>
 

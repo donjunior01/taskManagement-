@@ -99,264 +99,171 @@
 
         <!-- Content Wrapper -->
         <div class="content-wrapper">
-            <!-- Backup Configuration Page -->
-            <div class="page-content active" id="backup-configuration">
+            <div class="page-content active" id="backupConfiguration">
                 <div class="section-header">
                     <h2 class="section-title">Backup Configuration</h2>
                     <div class="header-actions">
-                        <button class="btn btn-success">
-                            <i class="fas fa-play"></i> Start Backup
-                        </button>
-                        <button class="btn btn-primary">
-                            <i class="fas fa-save"></i> Save Configuration
-                        </button>
+                        <button class="btn btn-primary" onclick="startBackup()">Start Backup</button>
+                        <button class="btn btn-primary" onclick="saveConfiguration()">Save Configuration</button>
                     </div>
                 </div>
 
-                <!-- Backup Status -->
+                <!-- Key Metrics -->
                 <div class="stats-grid">
-                    <div class="stat-card">
+                    <div class="stat-card" id="last-backup-card">
                         <div class="stat-info">
-                            <h3>Daily</h3>
+                            <h3 id="last-backup">-</h3>
                             <p>Last Backup</p>
                         </div>
-                        <div class="stat-icon" style="background-color: rgba(40, 167, 69, 0.1); color: var(--success);">
-                            <i class="fas fa-check-circle"></i>
+                        <div class="stat-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
+                            <i class="fas fa-clock"></i>
                         </div>
                     </div>
-
-                    <div class="stat-card">
+                    <div class="stat-card" id="backup-size-card">
                         <div class="stat-info">
-                            <h3>2.3 GB</h3>
+                            <h3 id="backup-size">0 GB</h3>
                             <p>Backup Size</p>
                         </div>
-                        <div class="stat-icon" style="background-color: rgba(23, 162, 184, 0.1); color: var(--info);">
-                            <i class="fas fa-database"></i>
+                        <div class="stat-icon" style="background-color: rgba(42, 157, 143, 0.1); color: var(--success);">
+                            <i class="fas fa-hdd"></i>
                         </div>
                     </div>
-
-                    <div class="stat-card">
+                    <div class="stat-card" id="retention-days-card">
                         <div class="stat-info">
-                            <h3>30</h3>
+                            <h3 id="retention-days">0</h3>
                             <p>Retention Days</p>
                         </div>
-                        <div class="stat-icon" style="background-color: rgba(255, 193, 7, 0.1); color: var(--warning);">
+                        <div class="stat-icon" style="background-color: rgba(244, 162, 97, 0.1); color: var(--warning);">
                             <i class="fas fa-calendar"></i>
                         </div>
                     </div>
-
-                    <div class="stat-card">
+                    <div class="stat-card" id="storage-location-card">
                         <div class="stat-info">
-                            <h3>Cloud</h3>
+                            <h3 id="storage-location">-</h3>
                             <p>Storage Location</p>
                         </div>
-                        <div class="stat-icon" style="background-color: rgba(108, 117, 125, 0.1); color: var(--secondary);">
+                        <div class="stat-icon" style="background-color: rgba(86, 207, 225, 0.1); color: var(--info);">
                             <i class="fas fa-cloud"></i>
                         </div>
                     </div>
                 </div>
 
                 <!-- Backup Schedule -->
-                <div class="card">
-                    <div class="card-header">
+                <div class="data-table-card">
+                    <div class="table-header">
                         <h3>Backup Schedule</h3>
                     </div>
-                    <div class="card-body">
-                        <form class="form-grid">
-                            <div class="form-group">
-                                <label for="backup-frequency">Backup Frequency</label>
-                                <select id="backup-frequency" class="form-control">
-                                    <option value="daily" selected>Daily</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
-                                    <option value="custom">Custom</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="backup-time">Backup Time</label>
-                                <input type="time" id="backup-time" class="form-control" value="02:00">
-                            </div>
-                            <div class="form-group">
-                                <label for="retention-days">Retention Period (Days)</label>
-                                <input type="number" id="retention-days" class="form-control" value="30" min="1" max="365">
-                            </div>
-                            <div class="form-group">
-                                <label for="backup-type">Backup Type</label>
-                                <select id="backup-type" class="form-control">
-                                    <option value="full">Full Backup</option>
-                                    <option value="incremental">Incremental</option>
-                                    <option value="differential">Differential</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="compress-backup" checked>
-                                    <span>Compress backup files</span>
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="encrypt-backup" checked>
-                                    <span>Encrypt backup files</span>
-                                </label>
-                            </div>
-                        </form>
-                    </div>
+                    <form id="backup-schedule-form">
+                        <div class="form-group">
+                            <label for="backup-frequency">Backup Frequency</label>
+                            <select id="backup-frequency" name="frequency">
+                                <option value="Daily">Daily</option>
+                                <option value="Weekly">Weekly</option>
+                                <option value="Monthly">Monthly</option>
+                                <option value="Custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="backup-time">Backup Time</label>
+                            <input type="time" id="backup-time" name="time">
+                        </div>
+                        <div class="form-group">
+                            <label for="retention-period">Retention Period (Days)</label>
+                            <input type="number" id="retention-period" name="retentionPeriod">
+                        </div>
+                        <div class="form-group">
+                            <label for="backup-type">Backup Type</label>
+                            <select id="backup-type" name="type">
+                                <option value="Full Backup">Full Backup</option>
+                                <option value="Incremental">Incremental</option>
+                                <option value="Differential">Differential</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="compress"> Compress backup files</label>
+                            <label><input type="checkbox" name="encrypt"> Encrypt backup files</label>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Save Schedule</button>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- Storage Configuration -->
-                <div class="card">
-                    <div class="card-header">
+                <div class="data-table-card">
+                    <div class="table-header">
                         <h3>Storage Configuration</h3>
                     </div>
-                    <div class="card-body">
-                        <div class="storage-options">
-                            <div class="storage-option">
-                                <div class="storage-info">
-                                    <h4>Local Storage</h4>
-                                    <p>Backup to local server storage</p>
-                                    <span class="storage-path">/var/backups/taskmanager/</span>
-                                </div>
-                                <div class="storage-status">
-                                    <span class="status-badge success">Active</span>
-                                    <span class="storage-usage">45% used (2.3 GB / 5.0 GB)</span>
-                                </div>
-                                <div class="storage-actions">
-                                    <button class="btn btn-sm btn-secondary">Configure</button>
-                                    <button class="btn btn-sm btn-danger">Disable</button>
-                                </div>
-                            </div>
-
-                            <div class="storage-option">
-                                <div class="storage-info">
-                                    <h4>Cloud Storage (AWS S3)</h4>
-                                    <p>Backup to Amazon S3 bucket</p>
-                                    <span class="storage-path">s3://taskmanager-backups/</span>
-                                </div>
-                                <div class="storage-status">
-                                    <span class="status-badge success">Active</span>
-                                    <span class="storage-usage">12% used (2.3 GB / 20.0 GB)</span>
-                                </div>
-                                <div class="storage-actions">
-                                    <button class="btn btn-sm btn-secondary">Configure</button>
-                                    <button class="btn btn-sm btn-danger">Disable</button>
-                                </div>
-                            </div>
-
-                            <div class="storage-option">
-                                <div class="storage-info">
-                                    <h4>FTP Server</h4>
-                                    <p>Backup to remote FTP server</p>
-                                    <span class="storage-path">ftp://backup.company.com/</span>
-                                </div>
-                                <div class="storage-status">
-                                    <span class="status-badge secondary">Inactive</span>
-                                    <span class="storage-usage">Not configured</span>
-                                </div>
-                                <div class="storage-actions">
-                                    <button class="btn btn-sm btn-primary">Configure</button>
-                                </div>
-                            </div>
+                    <div class="storage-config">
+                        <div class="storage-item">
+                            <h4>Local Storage</h4>
+                            <p>Backup to local server storage: /var/backups/taskmanager/</p>
+                            <p>Status: <span id="local-storage-status">Active</span></p>
+                            <p>Usage: <span id="local-storage-usage">45% used (2.3 GB / 5.0 GB)</span></p>
+                            <button class="btn btn-secondary" onclick="configureStorage('local')">Configure</button>
+                            <button class="btn btn-danger" onclick="disableStorage('local')">Disable</button>
+                        </div>
+                        <div class="storage-item">
+                            <h4>Cloud Storage (AWS S3)</h4>
+                            <p>Backup to Amazon S3 bucket: s3://taskmanager-backups/</p>
+                            <p>Status: <span id="cloud-storage-status">Active</span></p>
+                            <p>Usage: <span id="cloud-storage-usage">12% used (2.3 GB / 20.0 GB)</span></p>
+                            <button class="btn btn-secondary" onclick="configureStorage('cloud')">Configure</button>
+                            <button class="btn btn-danger" onclick="disableStorage('cloud')">Disable</button>
+                        </div>
+                        <div class="storage-item">
+                            <h4>FTP Server</h4>
+                            <p>Backup to remote FTP server: ftp://backup.company.com/</p>
+                            <p>Status: <span id="ftp-storage-status">Inactive</span></p>
+                            <p>Usage: <span id="ftp-storage-usage">Not configured</span></p>
+                            <button class="btn btn-secondary" onclick="configureStorage('ftp')">Configure</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Backup History -->
-                <div class="card">
-                    <div class="card-header">
+                <div class="data-table-card">
+                    <div class="table-header">
                         <h3>Backup History</h3>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Type</th>
-                                        <th>Size</th>
-                                        <th>Duration</th>
-                                        <th>Status</th>
-                                        <th>Location</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>2024-01-15 02:00:00</td>
-                                        <td>Full</td>
-                                        <td>2.3 GB</td>
-                                        <td>15 min</td>
-                                        <td><span class="status-badge success">Completed</span></td>
-                                        <td>Local + Cloud</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-secondary">Download</button>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>2024-01-14 02:00:00</td>
-                                        <td>Full</td>
-                                        <td>2.2 GB</td>
-                                        <td>14 min</td>
-                                        <td><span class="status-badge success">Completed</span></td>
-                                        <td>Local + Cloud</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-secondary">Download</button>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>2024-01-13 02:00:00</td>
-                                        <td>Full</td>
-                                        <td>2.1 GB</td>
-                                        <td>13 min</td>
-                                        <td><span class="status-badge success">Completed</span></td>
-                                        <td>Local + Cloud</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-secondary">Download</button>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>2024-01-12 02:00:00</td>
-                                        <td>Full</td>
-                                        <td>2.0 GB</td>
-                                        <td>12 min</td>
-                                        <td><span class="status-badge warning">Partial</span></td>
-                                        <td>Local only</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-secondary">Download</button>
-                                            <button class="btn btn-sm btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <table id="backup-history-table">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="backup-history-table-body">
+                        <!-- Data will be populated dynamically -->
+                        </tbody>
+                    </table>
                 </div>
 
                 <!-- Restore Options -->
-                <div class="card">
-                    <div class="card-header">
+                <div class="data-table-card">
+                    <div class="table-header">
                         <h3>Restore Options</h3>
                     </div>
-                    <div class="card-body">
-                        <div class="restore-options">
-                            <div class="restore-option">
-                                <h4>Point-in-Time Restore</h4>
-                                <p>Restore the system to a specific backup point</p>
-                                <button class="btn btn-warning">Restore System</button>
-                            </div>
-                            <div class="restore-option">
-                                <h4>Selective Restore</h4>
-                                <p>Restore specific data or users from backup</p>
-                                <button class="btn btn-secondary">Selective Restore</button>
-                            </div>
-                            <div class="restore-option">
-                                <h4>Test Restore</h4>
-                                <p>Test restore to verify backup integrity</p>
-                                <button class="btn btn-info">Test Restore</button>
-                            </div>
+                    <div class="restore-options">
+                        <div class="restore-item">
+                            <h4>Point-in-Time Restore</h4>
+                            <p>Restore the system to a specific backup point</p>
+                            <button class="btn btn-primary" onclick="restoreSystem()">Restore System</button>
+                        </div>
+                        <div class="restore-item">
+                            <h4>Selective Restore</h4>
+                            <p>Restore specific data or users from backup</p>
+                            <button class="btn btn-primary" onclick="selectiveRestore()">Selective Restore</button>
+                        </div>
+                        <div class="restore-item">
+                            <h4>Test Restore</h4>
+                            <p>Test restore to verify backup integrity</p>
+                            <button class="btn btn-primary" onclick="testRestore()">Test Restore</button>
                         </div>
                     </div>
                 </div>
@@ -365,5 +272,7 @@
     </div>
 
     <script th:src="@{/js/script.js}"></script>
+    <script th:src="@{/js/dashboard-utils.js}"></script>
+    <script th:src="@{/js/page-manager.js}"></script>
 </body>
 </html>

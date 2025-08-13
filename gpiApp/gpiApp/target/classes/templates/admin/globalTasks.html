@@ -19,73 +19,16 @@
     <span>Dashboard</span>
   </a>
 
-  <!-- User Management -->
-  <a th:href="@{/admin/userManagement}" class="nav-item" data-page="users">
-    <i class="fas fa-users"></i>
-    <span>User Management</span>
-  </a>
-
-  <a th:href="@{/admin/rolesAndPermissions}" class="nav-item" data-page="roles">
-    <i class="fas fa-user-shield"></i>
-    <span>Roles & Permissions</span>
-  </a>
-
-  <div class="nav-divider"></div>
-
-  <!-- Project Management -->
-  <a th:href="@{/admin/projectManagement}" class="nav-item" data-page="projects">
-    <i class="fas fa-folder-open"></i>
-    <span>Project Management</span>
-  </a>
-
   <a th:href="@{/admin/globalTasks}" class="nav-item active" data-page="tasks">
     <i class="fas fa-tasks"></i>
     <span>Global Tasks</span>
   </a>
 
-  <a th:href="@{/admin/teamAssignment}" class="nav-item" data-page="teams">
-    <i class="fas fa-users-cog"></i>
-    <span>Team Assignments</span>
+  <a th:href="@{/admin/globalTaskCategories}" class="nav-item active" data-page="tasks">
+    <i class="fas fa-tasks"></i>
+    <span>Global Tasks Categories</span>
   </a>
 
-  <div class="nav-divider"></div>
-
-  <!-- Reports & Analytics -->
-  <a th:href="@{/admin/globalReports}" class="nav-item" data-page="reports">
-    <i class="fas fa-chart-line"></i>
-    <span>Global Reports</span>
-  </a>
-
-  <a th:href="@{/admin/activityLogs}" class="nav-item" data-page="activity">
-    <i class="fas fa-history"></i>
-    <span>Activity Logs</span>
-  </a>
-
-  <div class="nav-divider"></div>
-
-  <!-- Configuration -->
-  <a th:href="@{/admin/systemSettings}" class="nav-item" data-page="settings">
-    <i class="fas fa-cog"></i>
-    <span>System Settings</span>
-  </a>
-
-  <a th:href="@{/admin/integrations}" class="nav-item" data-page="integrations">
-    <i class="fas fa-plug"></i>
-    <span>Integrations</span>
-  </a>
-
-  <a th:href="@{/admin/securityAndBackups}" class="nav-item" data-page="security">
-    <i class="fas fa-shield-alt"></i>
-    <span>Security & Backup</span>
-  </a>
-
-  <div class="nav-divider"></div>
-
-  <!-- Support -->
-  <a th:href="@{/admin/support}" class="nav-item" data-page="support">
-    <i class="fas fa-life-ring"></i>
-    <span>Support Center</span>
-  </a>
 
   <a th:href="@{/api/auth/logout-confirm}" id="logout-link" class="nav-item" style="margin-top: auto;">
     <i class="fas fa-sign-out-alt"></i>

@@ -56,22 +56,21 @@
 
   <!-- Content Wrapper -->
   <div class="content-wrapper">
-
-    <!-- Non-Compliant Users Page -->
-    <div class="page-content" id="non-compliant">
+    <div class="page-content active" id="nonCompliantUsers">
       <div class="section-header">
         <h2 class="section-title">Non-Compliant Users</h2>
-        <button class="btn btn-primary" onclick="openModal('send-message-modal')">
-          <i class="fas fa-envelope"></i> Send Reminder
-        </button>
+        <button class="btn btn-primary" onclick="sendReminder()">Send Reminder</button>
       </div>
 
-      <div class="table-container">
+      <!-- Non-Compliant Users Table -->
+      <div class="data-table-card">
         <div class="table-header">
-          <h3 class="table-title">Non-Compliant Users</h3>
+          <h3>Non-Compliant Users</h3>
+          <div class="table-filters">
+            <input type="text" id="user-search" placeholder="Search users...">
+          </div>
         </div>
-
-        <table class="data-table">
+        <table id="non-compliant-users-table">
           <thead>
           <tr>
             <th>User</th>
@@ -80,17 +79,8 @@
             <th>Actions</th>
           </tr>
           </thead>
-          <tbody>
-          <tr>
-            <td>John Doe</td>
-            <td>2</td>
-            <td>2 days ago</td>
-            <td>
-              <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="openModal('send-message-modal')">
-                <i class="fas fa-envelope"></i>
-              </button>
-            </td>
-          </tr>
+          <tbody id="non-compliant-users-table-body">
+          <!-- Data will be populated dynamically -->
           </tbody>
         </table>
       </div>

@@ -56,22 +56,21 @@
 
   <!-- Content Wrapper -->
   <div class="content-wrapper">
-
-    <!-- Team Communication Page -->
-    <div class="page-content" id="communication">
+    <div class="page-content active" id="teamCommunication">
       <div class="section-header">
         <h2 class="section-title">Team Communication</h2>
-        <button class="btn btn-primary" onclick="openModal('send-message-modal')">
-          <i class="fas fa-plus"></i> Send Message
-        </button>
+        <button class="btn btn-primary" onclick="openModal('send-message-modal')">Send Message</button>
       </div>
 
-      <div class="table-container">
+      <!-- Messages Table -->
+      <div class="data-table-card">
         <div class="table-header">
-          <h3 class="table-title">Recent Messages</h3>
+          <h3>Recent Messages</h3>
+          <div class="table-filters">
+            <input type="text" id="message-search" placeholder="Search messages...">
+          </div>
         </div>
-
-        <table class="data-table">
+        <table id="messages-table">
           <thead>
           <tr>
             <th>Recipient</th>
@@ -80,17 +79,8 @@
             <th>Actions</th>
           </tr>
           </thead>
-          <tbody>
-          <tr>
-            <td>Jane Smith</td>
-            <td>Please review the latest design mockups</td>
-            <td>1 hour ago</td>
-            <td>
-              <button class="btn btn-secondary" style="padding: 8px 12px;">
-                <i class="fas fa-eye"></i>
-              </button>
-            </td>
-          </tr>
+          <tbody id="messages-table-body">
+          <!-- Data will be populated dynamically -->
           </tbody>
         </table>
       </div>
@@ -103,7 +93,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <h3 class="modal-title">Send Message</h3>
-      <button class="close-btn">×</button>
+      <button class="close-btn" onclick="closeModal('send-message-modal')">×</button>
     </div>
     <form id="send-message-form">
       <div class="modal-body">
@@ -111,17 +101,16 @@
           <label for="message-recipient">Recipient</label>
           <select id="message-recipient" name="recipient" required>
             <option value="">Select Team Member</option>
-            <option value="jane-smith">Jane Smith</option>
-            <option value="john-doe">John Doe</option>
+            <!-- Options populated dynamically -->
           </select>
         </div>
         <div class="form-group">
           <label for="message-content">Message</label>
-          <textarea id="message-content" name="message" placeholder="Enter your message" required></textarea>
+          <textarea id="message-content" name="content" placeholder="Enter your message" required></textarea>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary close-btn">Cancel</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('send-message-modal')">Cancel</button>
         <button type="submit" class="btn btn-primary">Send Message</button>
       </div>
     </form>

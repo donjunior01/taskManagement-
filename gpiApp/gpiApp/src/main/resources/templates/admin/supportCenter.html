@@ -99,29 +99,67 @@
 
   <!-- Content Wrapper -->
   <div class="content-wrapper">
-    <!-- Support Center Page -->
-    <div class="page-content" id="support">
+    <div class="page-content active" id="supportCenter">
       <div class="section-header">
         <h2 class="section-title">Support Center</h2>
-        <button class="btn btn-primary">
-          <i class="fas fa-plus"></i> Create Support Ticket
-        </button>
+        <button class="btn btn-primary" onclick="openModal('create-ticket-modal')">Create Support Ticket</button>
       </div>
 
-      <div class="table-container">
-        <div class="table-header">
-          <h3 class="table-title">Support Tickets</h3>
-          <div style="display: flex; gap: 10px;">
-            <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
-              <option>All Status</option>
-              <option>Open</option>
-              <option>Resolved</option>
-              <option>Pending</option>
-            </select>
+      <!-- Key Metrics -->
+      <div class="stats-grid">
+        <div class="stat-card" id="total-tickets-card">
+          <div class="stat-info">
+            <h3 id="total-tickets">0</h3>
+            <p>Total Tickets</p>
+          </div>
+          <div class="stat-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
+            <i class="fas fa-ticket-alt"></i>
           </div>
         </div>
+        <div class="stat-card" id="open-tickets-card">
+          <div class="stat-info">
+            <h3 id="open-tickets">0</h3>
+            <p>Open Tickets</p>
+          </div>
+          <div class="stat-icon" style="background-color: rgba(244, 162, 97, 0.1); color: var(--warning);">
+            <i class="fas fa-exclamation-circle"></i>
+          </div>
+        </div>
+        <div class="stat-card" id="resolved-tickets-card">
+          <div class="stat-info">
+            <h3 id="resolved-tickets">0</h3>
+            <p>Resolved Tickets</p>
+          </div>
+          <div class="stat-icon" style="background-color: rgba(40, 167, 69, 0.1); color: var(--success);">
+            <i class="fas fa-check-circle"></i>
+          </div>
+        </div>
+        <div class="stat-card" id="pending-tickets-card">
+          <div class="stat-info">
+            <h3 id="pending-tickets">0</h3>
+            <p>Pending Tickets</p>
+          </div>
+          <div class="stat-icon" style="background-color: rgba(86, 207, 225, 0.1); color: var(--info);">
+            <i class="fas fa-hourglass-half"></i>
+          </div>
+        </div>
+      </div>
 
-        <table class="data-table">
+      <!-- Support Tickets Table -->
+      <div class="data-table-card">
+        <div class="table-header">
+          <h3>Support Tickets</h3>
+          <div class="table-filters">
+            <select id="status-filter">
+              <option value="">All Status</option>
+              <option value="Open">Open</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Pending">Pending</option>
+            </select>
+            <input type="text" id="ticket-search" placeholder="Search tickets...">
+          </div>
+        </div>
+        <table id="tickets-table">
           <thead>
           <tr>
             <th>Ticket ID</th>
@@ -131,21 +169,8 @@
             <th>Actions</th>
           </tr>
           </thead>
-          <tbody>
-          <tr>
-            <td>#12345</td>
-            <td>Jane Smith</td>
-            <td>Unable to access task dashboard</td>
-            <td><span class="status-badge pending">Pending</span></td>
-            <td>
-              <button class="btn btn-secondary" style="padding: 8px 12px; margin-right: 5px;">
-                <i class="fas fa-eye"></i>
-              </button>
-              <button class="btn btn-primary" style="padding: 8px 12px;">
-                <i class="fas fa-comment"></i>
-              </button>
-            </td>
-          </tr>
+          <tbody id="tickets-table-body">
+          <!-- Data will be populated dynamically -->
           </tbody>
         </table>
       </div>
@@ -153,6 +178,109 @@
   </div>
 </div>
 
+<!-- Create Ticket Modal -->
+<div class="modal" id="create-ticket-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Create Support Ticket</h3>
+      <button class="close-btn" onclick="closeModal('create-ticket-modal')">×</button>
+    </div>
+    <form id="create-ticket-form">
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="ticket-user">User</label>
+          <select id="ticket-user" name="user" required>
+            <option value="">Select User</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="ticket-issue">Issue Description</label>
+          <textarea id="ticket-issue" name="issue" placeholder="Describe the issue" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="ticket-priority">Priority</label>
+          <select id="ticket-priority" name="priority" required>
+            <option value="">Select Priority</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('create-ticket-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Ticket</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Ticket Modal -->
+<div class="modal" id="edit-ticket-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Support Ticket</h3>
+      <button class="close-btn" onclick="closeModal('edit-ticket-modal')">×</button>
+    </div>
+    <form id="edit-ticket-form">
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="edit-ticket-user">User</label>
+          <select id="edit-ticket-user" name="user" required>
+            <option value="">Select User</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="edit-ticket-issue">Issue Description</label>
+          <textarea id="edit-ticket-issue" name="issue" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="edit-ticket-status">Status</label>
+          <select id="edit-ticket-status" name="status" required>
+            <option value="Open">Open</option>
+            <option value="Resolved">Resolved</option>
+            <option value="Pending">Pending</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="edit-ticket-priority">Priority</label>
+          <select id="edit-ticket-priority" name="priority" required>
+            <option value="">Select Priority</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('edit-ticket-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="delete-confirmation-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Confirm Delete</h3>
+      <button class="close-btn" onclick="closeModal('delete-confirmation-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete this ticket? This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('delete-confirmation-modal')">Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirm-delete">Delete</button>
+    </div>
+  </div>
+</div>
+
 <script th:src="@{/js/script.js}"></script>
+<script th:src="@{/js/dashboard-utils.js}"></script>
+<script th:src="@{/js/page-manager.js}"></script>
 </body>
 </html>

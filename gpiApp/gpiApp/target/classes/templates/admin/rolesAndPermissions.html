@@ -18,73 +18,22 @@
     <span>Dashboard</span>
   </a>
 
-  <!-- User Management -->
-  <a th:href="@{/admin/userManagement}" class="nav-item" data-page="users">
-    <i class="fas fa-users"></i>
-    <span>User Management</span>
-  </a>
-
   <a th:href="@{/admin/rolesAndPermissions}" class="nav-item" data-page="roles">
     <i class="fas fa-user-shield"></i>
     <span>Roles & Permissions</span>
   </a>
 
-  <div class="nav-divider"></div>
-
-  <!-- Project Management -->
-  <a th:href="@{/admin/projectManagement}" class="nav-item" data-page="projects">
-    <i class="fas fa-folder-open"></i>
-    <span>Project Management</span>
+  <a th:href="@{/admin/passwordPolicies}" class="nav-item" data-page="roles">
+    <i class="fas fa-password"></i>
+    <span>Roles & Permissions</span>
   </a>
 
-  <a th:href="@{/admin/globalTasks}" class="nav-item" data-page="tasks">
-    <i class="fas fa-tasks"></i>
-    <span>Global Tasks</span>
-  </a>
-
-  <a th:href="@{/admin/teamAssignment}" class="nav-item" data-page="teams">
-    <i class="fas fa-users-cog"></i>
-    <span>Team Assignments</span>
+  <a th:href="@{/admin/priorityLevels}" class="nav-item" data-page="roles">
+    <i class="fas fa-settings"></i>
+    <span>Roles & Permissions</span>
   </a>
 
   <div class="nav-divider"></div>
-
-  <!-- Reports & Analytics -->
-  <a th:href="@{/admin/globalReports}" class="nav-item" data-page="reports">
-    <i class="fas fa-chart-line"></i>
-    <span>Global Reports</span>
-  </a>
-
-  <a th:href="@{/admin/activityLogs}" class="nav-item" data-page="activity">
-    <i class="fas fa-history"></i>
-    <span>Activity Logs</span>
-  </a>
-
-  <div class="nav-divider"></div>
-
-  <!-- Configuration -->
-  <a th:href="@{/admin/systemSettings}" class="nav-item" data-page="settings">
-    <i class="fas fa-cog"></i>
-    <span>System Settings</span>
-  </a>
-
-  <a th:href="@{/admin/}" class="nav-item" data-page="integrations">
-    <i class="fas fa-plug"></i>
-    <span>Integrations</span>
-  </a>
-
-  <a th:href="@{/admin/securityAndBackups}" class="nav-item" data-page="security">
-    <i class="fas fa-shield-alt"></i>
-    <span>Security & Backup</span>
-  </a>
-
-  <div class="nav-divider"></div>
-
-  <!-- Support -->
-  <a th:href="@{/admin/support}" class="nav-item" data-page="support">
-    <i class="fas fa-life-ring"></i>
-    <span>Support Center</span>
-  </a>
 
   <a th:href="@{/auth/login}" id="logout-link" class="nav-item" style="margin-top: auto;">
     <i class="fas fa-sign-out-alt"></i>
@@ -99,29 +48,58 @@
 
   <!-- Content Wrapper -->
   <div class="content-wrapper">
-    <!-- Roles & Permissions Page -->
-    <div class="page-content" id="roles">
+    <div class="page-content active" id="rolesAndPermissions">
       <div class="section-header">
         <h2 class="section-title">Roles & Permissions</h2>
-        <button class="btn btn-primary">
-          <i class="fas fa-plus"></i> Add New Role
-        </button>
+        <button class="btn btn-primary" onclick="openModal('create-role-modal')">Add New Role</button>
       </div>
 
-      <div class="table-container">
-        <div class="table-header">
-          <h3 class="table-title">Role Management</h3>
-          <div style="display: flex; gap: 10px;">
-            <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
-              <option>All Roles</option>
-              <option>Super Admin</option>
-              <option>Manager</option>
-              <option>Employee</option>
-            </select>
+      <!-- Key Metrics -->
+      <div class="stats-grid">
+        <div class="stat-card" id="total-roles-card">
+          <div class="stat-info">
+            <h3 id="total-roles">0</h3>
+            <p>Total Roles</p>
+          </div>
+          <div class="stat-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
+            <i class="fas fa-user-shield"></i>
           </div>
         </div>
+        <div class="stat-card" id="users-assigned-card">
+          <div class="stat-info">
+            <h3 id="users-assigned">0</h3>
+            <p>Users Assigned</p>
+          </div>
+          <div class="stat-icon" style="background-color: rgba(42, 157, 143, 0.1); color: var(--success);">
+            <i class="fas fa-users"></i>
+          </div>
+        </div>
+        <div class="stat-card" id="permissions-assigned-card">
+          <div class="stat-info">
+            <h3 id="permissions-assigned">0</h3>
+            <p>Permissions Assigned</p>
+          </div>
+          <div class="stat-icon" style="background-color: rgba(244, 162, 97, 0.1); color: var(--warning);">
+            <i class="fas fa-key"></i>
+          </div>
+        </div>
+      </div>
 
-        <table class="data-table">
+      <!-- Roles Table -->
+      <div class="data-table-card">
+        <div class="table-header">
+          <h3>All Roles</h3>
+          <div class="table-filters">
+            <select id="role-filter">
+              <option value="">All Roles</option>
+              <option value="Super Admin">Super Admin</option>
+              <option value="Manager">Manager</option>
+              <option value="Employee">Employee</option>
+            </select>
+            <input type="text" id="role-search" placeholder="Search roles...">
+          </div>
+        </div>
+        <table id="roles-table">
           <thead>
           <tr>
             <th>Role</th>
@@ -130,46 +108,8 @@
             <th>Actions</th>
           </tr>
           </thead>
-          <tbody>
-          <tr>
-            <td>Super Admin</td>
-            <td>All Permissions</td>
-            <td>5</td>
-            <td>
-              <button class="btn btn-secondary" style="padding: 8px 12px; margin-right: 5px;">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn btn-danger" style="padding: 8px 12px;">
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>Manager</td>
-            <td>Team Management, Task Assignment</td>
-            <td>25</td>
-            <td>
-              <button class="btn btn-secondary" style="padding: 8px 12px; margin-right: 5px;">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn btn-danger" style="padding: 8px 12px;">
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>Employee</td>
-            <td>Task Management, Profile Editing</td>
-            <td>1,224</td>
-            <td>
-              <button class="btn btn-secondary" style="padding: 8px 12px; margin-right: 5px;">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn btn-danger" style="padding: 8px 12px;">
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-          </tr>
+          <tbody id="roles-table-body">
+          <!-- Data will be populated dynamically -->
           </tbody>
         </table>
       </div>
@@ -177,6 +117,97 @@
   </div>
 </div>
 
+<!-- Create Role Modal -->
+<div class="modal" id="create-role-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Create New Role</h3>
+      <button class="close-btn" onclick="closeModal('create-role-modal')">×</button>
+    </div>
+    <form id="create-role-form">
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="role-name">Role Name</label>
+          <input type="text" id="role-name" name="name" placeholder="Enter role name" required>
+        </div>
+        <div class="form-group">
+          <label for="role-description">Description</label>
+          <textarea id="role-description" name="description" placeholder="Enter role description"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Permissions</label>
+          <div class="permissions-list">
+            <label><input type="checkbox" name="permissions" value="ALL"> All Permissions</label>
+            <label><input type="checkbox" name="permissions" value="TEAM_MANAGEMENT"> Team Management</label>
+            <label><input type="checkbox" name="permissions" value="TASK_ASSIGNMENT"> Task Assignment</label>
+            <label><input type="checkbox" name="permissions" value="TASK_MANAGEMENT"> Task Management</label>
+            <label><input type="checkbox" name="permissions" value="PROFILE_EDITING"> Profile Editing</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('create-role-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Role</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Role Modal -->
+<div class="modal" id="edit-role-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Role</h3>
+      <button class="close-btn" onclick="closeModal('edit-role-modal')">×</button>
+    </div>
+    <form id="edit-role-form">
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="edit-role-name">Role Name</label>
+          <input type="text" id="edit-role-name" name="name" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-role-description">Description</label>
+          <textarea id="edit-role-description" name="description"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Permissions</label>
+          <div class="permissions-list">
+            <label><input type="checkbox" name="permissions" value="ALL"> All Permissions</label>
+            <label><input type="checkbox" name="permissions" value="TEAM_MANAGEMENT"> Team Management</label>
+            <label><input type="checkbox" name="permissions" value="TASK_ASSIGNMENT"> Task Assignment</label>
+            <label><input type="checkbox" name="permissions" value="TASK_MANAGEMENT"> Task Management</label>
+            <label><input type="checkbox" name="permissions" value="PROFILE_EDITING"> Profile Editing</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('edit-role-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="delete-confirmation-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Confirm Delete</h3>
+      <button class="close-btn" onclick="closeModal('delete-confirmation-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete this role? This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('delete-confirmation-modal')">Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirm-delete">Delete</button>
+    </div>
+  </div>
+</div>
+
 <script th:src="@{/js/script.js}"></script>
+<script th:src="@{/js/dashboard-utils.js}"></script>
+<script th:src="@{/js/page-manager.js}"></script>
 </body>
 </html>

@@ -1,7 +1,108 @@
+
+// Populate team select options
+async function populateTeamSelect(selectId) {
+    try {
+        const teams = await fetchData('/api/teams');
+        const select = document.getElementById(selectId);
+        select.innerHTML = '<option value="">Select Team</option>';
+        teams.forEach(team => {
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = team.name;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        showError('Failed to load teams');
+    }
+}
+
+// Populate project select options
+async function populateProjectSelect(selectId) {
+    try {
+        const projects = await fetchData('/api/projects');
+        const select = document.getElementById(selectId);
+        select.innerHTML = '<option value="">Select Project</option>';
+        projects.forEach(project => {
+            const option = document.createElement('option');
+            option.value = project.id;
+            option.textContent = project.name;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        showError('Failed to load projects');
+    }
+}
+
+// Populate tasks table
+async function populateTasksTable() {
+    try {
+        showLoading();
+        const tasks = await fetchData('/api/tasks');
+        const tbody = document.getElementById('tasks-table-body');
+        tbody.innerHTML = '';
+        tasks.forEach(task => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${task.name}</td>
+                <td>${task.assignee}</td>
+                <td>${task.priority}</td>
+                <td>${task.progress}%</td>
+                <td>${task.status}</td>
+                <td>
+                    <button class="btn btn-secondary btn-sm" onclick="editTask('${task.id}')">Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteTask('${task.id}')">Delete</button>
+                    <button class="btn btn-info btn-sm" onclick="viewMemberDetails('${task.assigneeId}')">Details</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        hideLoading();
+    } catch (error) {
+        showError('Failed to load tasks');
+    }
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', () => {
+    const page = window.location.pathname.split('/').pop().replace('.html', '');
+    switch (page) {
+        case 'createProject':
+            populateTeamSelect('project-team');
+            break;
+        case 'teamTask':
+            populateTasksTable();
+            populateTeamSelect('task-assignee');
+            populateProjectSelect('task-project');
+            populateTeamSelect('edit-task-assignee');
+            populateProjectSelect('edit-task-project');
+            initCharts(); // Initialize team-performance-chart and task-status-chart
+            break;
+        case 'teamCommunication':
+            populateMessagesTable();
+            populateTeamSelect('message-recipient');
+            break;
+        case 'reportsAndAnalytics':
+            populateAnalyticsTable();
+            initCharts(); // Initialize productivity-trends-chart, task-completion-chart, team-performance-chart
+            break;
+        case 'nonCompliatUsers':
+            populateNonCompliantUsersTable();
+            break;
+        case 'teamAssignment':
+            populateAssignmentsTable();
+            populateTeamSelect('assign-team-member');
+            populateProjectSelect('assign-project');
+            break;
+        case 'deliverable':
+            populateDeliverablesTable();
+            break;
+    }
+});
 document.addEventListener('DOMContentLoaded', () => {
     // Theme toggle functionality
     const themeToggle = document.getElementById('theme-toggle');
     const currentTheme = localStorage.getItem('theme') || 'dark';
+
 
     // Apply saved theme on load
     document.documentElement.setAttribute('data-theme', currentTheme);
@@ -303,3 +404,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 });
+

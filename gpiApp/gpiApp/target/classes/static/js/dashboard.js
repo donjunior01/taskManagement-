@@ -981,4 +981,261 @@ window.closeModal = function(modalId) {
     if (modal) {
         modal.classList.remove('active');
     }
-}; 
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Mock data for charts
+    const projectProgressData = {
+        labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+        datasets: [{
+            label: 'Project Progress',
+            data: [10, 20, 25, 40, 50, 60, 70],
+            backgroundColor: 'rgba(67, 97, 238, 0.2)',
+            borderColor: 'rgba(67, 97, 238, 1)',
+            borderWidth: 1,
+            fill: true
+        }]
+    };
+
+    const projectStatusData = {
+        labels: ['Active', 'Completed', 'On Hold', 'Cancelled'],
+        datasets: [{
+            label: 'Project Status',
+            data: [50, 30, 15, 5],
+            backgroundColor: [
+                'rgba(67, 97, 238, 0.6)',
+                'rgba(40, 167, 69, 0.6)',
+                'rgba(244, 162, 97, 0.6)',
+                'rgba(220, 53, 69, 0.6)'
+            ],
+            borderColor: [
+                'rgba(67, 97, 238, 1)',
+                'rgba(40, 167, 69, 1)',
+                'rgba(244, 162, 97, 1)',
+                'rgba(220, 53, 69, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    const userActivityData = {
+        labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+        datasets: [{
+            label: 'User Activity',
+            data: [30, 45, 60, 50, 70, 65, 80],
+            backgroundColor: 'rgba(86, 207, 225, 0.2)',
+            borderColor: 'rgba(86, 207, 225, 1)',
+            borderWidth: 1,
+            fill: true
+        }]
+    };
+
+    const userRoleData = {
+        labels: ['Super Admin', 'Manager', 'Employee'],
+        datasets: [{
+            label: 'User Roles',
+            data: [10, 30, 60],
+            backgroundColor: [
+                'rgba(67, 97, 238, 0.6)',
+                'rgba(42, 157, 143, 0.6)',
+                'rgba(244, 162, 97, 0.6)'
+            ],
+            borderColor: [
+                'rgba(67, 97, 238, 1)',
+                'rgba(42, 157, 143, 1)',
+                'rgba(244, 162, 97, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    const taskStatusData = {
+        labels: ['To Do', 'In Progress', 'Completed', 'Overdue'],
+        datasets: [{
+            label: 'Task Status',
+            data: [40, 30, 20, 10],
+            backgroundColor: [
+                'rgba(67, 97, 238, 0.6)',
+                'rgba(244, 162, 97, 0.6)',
+                'rgba(40, 167, 69, 0.6)',
+                'rgba(220, 53, 69, 0.6)'
+            ],
+            borderColor: [
+                'rgba(67, 97, 238, 1)',
+                'rgba(244, 162, 97, 1)',
+                'rgba(40, 167, 69, 1)',
+                'rgba(220, 53, 69, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    // Chart configurations
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: {
+                    color: 'var(--text)',
+                    font: {
+                        size: 14
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    color: 'var(--text-secondary)',
+                    font: {
+                        size: 12
+                    }
+                },
+                grid: {
+                    color: 'var(--border-color)'
+                }
+            },
+            x: {
+                ticks: {
+                    color: 'var(--text-secondary)',
+                    font: {
+                        size: 12
+                    }
+                },
+                grid: {
+                    color: 'var(--border-color)'
+                }
+            }
+        }
+    };
+
+    // Initialize charts
+    const projectProgressChart = new Chart(document.getElementById('project-progress-chart'), {
+        type: 'line',
+        data: projectProgressData,
+        options: chartOptions
+    });
+
+    const projectStatusChart = new Chart(document.getElementById('project-status-chart'), {
+        type: 'pie',
+        data: projectStatusData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: 'var(--text)',
+                        font: {
+                            size: 14
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const userActivityChart = new Chart(document.getElementById('user-activity-chart'), {
+        type: 'line',
+        data: userActivityData,
+        options: chartOptions
+    });
+
+    const userRoleChart = new Chart(document.getElementById('user-role-chart'), {
+        type: 'pie',
+        data: userRoleData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: 'var(--text)',
+                        font: {
+                            size: 14
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const taskStatusChart = new Chart(document.getElementById('task-status-chart'), {
+        type: 'pie',
+        data: taskStatusData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: 'var(--text)',
+                        font: {
+                            size: 14
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Update charts based on period selector
+    document.querySelectorAll('.chart-period-selector').forEach(selector => {
+        selector.addEventListener('change', function() {
+            const chartId = this.getAttribute('data-chart');
+            const period = this.value;
+            // Mock data update based on period
+            const newData = {
+                'project-progress-chart': {
+                    labels: period === '7' ? ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'] :
+                        period === '30' ? ['Week 1', 'Week 2', 'Week 3', 'Week 4'] :
+                            ['Month 1', 'Month 2', 'Month 3'],
+                    datasets: [{
+                        label: 'Project Progress',
+                        data: period === '7' ? [10, 20, 25, 40, 50, 60, 70] :
+                            period === '30' ? [30, 50, 70, 90] :
+                                [60, 80, 100],
+                        backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                        borderColor: 'rgba(67, 97, 238, 1)',
+                        borderWidth: 1,
+                        fill: true
+                    }]
+                },
+                'project-status-chart': projectStatusData,
+                'user-activity-chart': {
+                    labels: period === '7' ? ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'] :
+                        period === '30' ? ['Week 1', 'Week 2', 'Week 3', 'Week 4'] :
+                            ['Month 1', 'Month 2', 'Month 3'],
+                    datasets: [{
+                        label: 'User Activity',
+                        data: period === '7' ? [30, 45, 60, 50, 70, 65, 80] :
+                            period === '30' ? [100, 150, 200, 250] :
+                                [300, 400, 500],
+                        backgroundColor: 'rgba(86, 207, 225, 0.2)',
+                        borderColor: 'rgba(86, 207, 225, 1)',
+                        borderWidth: 1,
+                        fill: true
+                    }]
+                },
+                'user-role-chart': userRoleData,
+                'task-status-chart': taskStatusData
+            };
+
+            const chartMap = {
+                'project-progress-chart': projectProgressChart,
+                'project-status-chart': projectStatusChart,
+                'user-activity-chart': userActivityChart,
+                'user-role-chart': userRoleChart,
+                'task-status-chart': taskStatusChart
+            };
+
+            chartMap[chartId].data = newData[chartId];
+            chartMap[chartId].update();
+        });
+    });
+});
