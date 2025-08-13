@@ -96,25 +96,80 @@
         </div>
       </div>
 
+      <!-- Analytics Overview Chart -->
       <div class="chart-container">
         <div class="chart-header">
           <h3 class="chart-title">Team Productivity Trends</h3>
-          <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
-            <option>Last 7 Days</option>
-            <option>Last 30 Days</option>
-            <option>Last 90 Days</option>
+          <select class="chart-period-selector" onchange="pageManager.updateAnalyticsChart(this.value)">
+            <option value="7">Last 7 Days</option>
+            <option value="30" selected>Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
           </select>
         </div>
-        <div style="height: 300px; display: flex; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.02); border-radius: 8px;">
-          <p style="color: var(--text-secondary);">Productivity Chart Placeholder</p>
+        <div class="chart-wrapper">
+          <canvas id="analytics-overview-chart"></canvas>
         </div>
+      </div>
+
+      <!-- Task Completion Chart -->
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3 class="chart-title">Task Completion Overview</h3>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="task-completion-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Team Performance Chart -->
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3 class="chart-title">Team Member Performance</h3>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="team-performance-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Analytics Table -->
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">Detailed Analytics</h3>
+          <div style="display: flex; gap: 10px;">
+            <select id="analytics-filter" style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;" onchange="pageManager.filterAnalytics()">
+              <option value="">All Metrics</option>
+              <option value="productivity">Productivity</option>
+              <option value="completion">Completion Rate</option>
+              <option value="quality">Quality Score</option>
+            </select>
+            <input type="text" id="search-analytics" placeholder="Search analytics..." style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;" onkeyup="pageManager.searchAnalytics(this.value)">
+          </div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Team Member</th>
+              <th>Role</th>
+              <th>Tasks Completed</th>
+              <th>Productivity Score</th>
+              <th>Quality Score</th>
+              <th>On-Time Rate</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="analytics-table-body">
+            <!-- Dynamic content will be loaded here -->
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 </div>
 
 <script th:src="@{/js/script.js}"></script>
-<script th:src="@{/js/dashboard.js}"></script>
+<script th:src="@{/js/dashboard-utils.js}"></script>
+<script th:src="@{/js/page-manager.js}"></script>
 
 </body>
 </html>

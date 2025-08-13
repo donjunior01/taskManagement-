@@ -67,34 +67,156 @@
                 </button>
             </div>
 
-            <div class="table-container">
-                <div class="table-header">
-                    <h3 class="table-title">Task Comments</h3>
+            <!-- Collaboration Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="total-comments">24</h3>
+                        <p>Total Comments</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
+                        <i class="fas fa-comments"></i>
+                    </div>
                 </div>
-                <table class="data-table">
-                    <thead>
-                    <tr>
-                        <th>Task</th>
-                        <th>Comment</th>
-                        <th>Posted By</th>
-                        <th>Date</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>Update Website Content</td>
-                        <td>Need clarification on the content requirements</td>
-                        <td>Jane Smith</td>
-                        <td>2025-07-15</td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="active-discussions">8</h3>
+                        <p>Active Discussions</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(42, 157, 143, 0.1); color: var(--success);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="team-members">12</h3>
+                        <p>Team Members</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(244, 162, 97, 0.1); color: var(--warning);">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="response-time">2.5h</h3>
+                        <p>Avg Response Time</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(230, 57, 70, 0.1); color: var(--danger);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collaboration Tabs -->
+            <div class="collaboration-tabs">
+                <button class="tab-btn active" onclick="pageManager.switchCollaborationTab('comments')">Comments</button>
+                <button class="tab-btn" onclick="pageManager.switchCollaborationTab('discussions')">Discussions</button>
+                <button class="tab-btn" onclick="pageManager.switchCollaborationTab('team')">Team</button>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="tab-content active" id="comments-tab">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">Task Comments</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="task-filter-comments" style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;" onchange="pageManager.filterComments()">
+                                <option value="">All Tasks</option>
+                                <option value="development">Development</option>
+                                <option value="design">Design</option>
+                                <option value="testing">Testing</option>
+                            </select>
+                            <input type="text" id="search-comments" placeholder="Search comments..." style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;" onkeyup="pageManager.searchComments(this.value)">
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Comment</th>
+                                <th>Posted By</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comments-table-body">
+                            <!-- Dynamic content will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Discussions Section -->
+            <div class="tab-content" id="discussions-tab">
+                <div class="discussions-container">
+                    <div class="discussion-item">
+                        <div class="discussion-header">
+                            <h4>Website Redesign Discussion</h4>
+                            <span class="discussion-status active">Active</span>
+                        </div>
+                        <p class="discussion-preview">Discussion about the new website design requirements and implementation approach...</p>
+                        <div class="discussion-meta">
+                            <span><i class="fas fa-users"></i> 8 participants</span>
+                            <span><i class="fas fa-comments"></i> 15 replies</span>
+                            <span><i class="fas fa-clock"></i> 2 hours ago</span>
+                        </div>
+                    </div>
+                    <div class="discussion-item">
+                        <div class="discussion-header">
+                            <h4>API Integration Planning</h4>
+                            <span class="discussion-status pending">Pending</span>
+                        </div>
+                        <p class="discussion-preview">Planning session for integrating third-party APIs into the system...</p>
+                        <div class="discussion-meta">
+                            <span><i class="fas fa-users"></i> 5 participants</span>
+                            <span><i class="fas fa-comments"></i> 8 replies</span>
+                            <span><i class="fas fa-clock"></i> 1 day ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Section -->
+            <div class="tab-content" id="team-tab">
+                <div class="team-grid">
+                    <div class="team-member-card">
+                        <div class="member-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="member-info">
+                            <h4>Alice Developer</h4>
+                            <p>Senior Developer</p>
+                            <span class="member-status online">Online</span>
+                        </div>
+                    </div>
+                    <div class="team-member-card">
+                        <div class="member-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="member-info">
+                            <h4>Bob Designer</h4>
+                            <p>UI/UX Designer</p>
+                            <span class="member-status busy">Busy</span>
+                        </div>
+                    </div>
+                    <div class="team-member-card">
+                        <div class="member-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="member-info">
+                            <h4>Emma Tester</h4>
+                            <p>QA Engineer</p>
+                            <span class="member-status offline">Offline</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<script th:src="@{/js/dashboard.js}"></script>
 <script th:src="@{/js/script.js}"></script>
+<script th:src="@{/js/dashboard-utils.js}"></script>
+<script th:src="@{/js/page-manager.js}"></script>
 </body>
 </html>

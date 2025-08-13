@@ -1,6 +1,10 @@
 package com.example.gpiApp.controller.view;
 
+import com.example.gpiApp.dto.AdminDashboardStatsDTO;
+import com.example.gpiApp.service.AdminDashboardService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -8,8 +12,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/admin")
 public class AdminPageController {
 
+    @Autowired
+    private AdminDashboardService adminDashboardService;
+
     @GetMapping("/adminDashboard")
-    public String adminDashboard() {
+    public String adminDashboard(Model model) {
+        try {
+            AdminDashboardStatsDTO stats = adminDashboardService.getDashboardStats();
+            model.addAttribute("dashboardStats", stats);
+        } catch (Exception e) {
+            // If there's an error, create default stats
+            AdminDashboardStatsDTO defaultStats = AdminDashboardStatsDTO.builder()
+                    .totalUsers(0L)
+                    .totalProjects(0L)
+                    .totalTasks(0L)
+                    .activeTasks(0L)
+                    .completedTasks(0L)
+                    .overdueTasks(0L)
+                    .systemUptime(0.0)
+                    .build();
+            model.addAttribute("dashboardStats", defaultStats);
+        }
         return "admin/adminDashboard";
     }
 

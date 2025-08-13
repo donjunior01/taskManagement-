@@ -1,6 +1,7 @@
 package com.example.gpiApp.controller;
 
 import com.example.gpiApp.dto.DashboardStatsDTO;
+import com.example.gpiApp.dto.AdminDashboardStatsDTO;
 import com.example.gpiApp.dto.TaskDTO;
 import com.example.gpiApp.dto.ProjectDTO;
 import com.example.gpiApp.dto.UserDTO;
@@ -45,6 +46,9 @@ public class DashboardDataController {
     @Autowired
     private CollaborationService collaborationService;
 
+    @Autowired
+    private AdminDashboardService adminDashboardService;
+
     // Get current user
     @GetMapping("/auth/current-user")
     public ResponseEntity<?> getCurrentUser() {
@@ -61,23 +65,9 @@ public class DashboardDataController {
 
     // Admin Dashboard Stats
     @GetMapping("/admin/dashboard-stats")
-    public ResponseEntity<DashboardStatsDTO> getAdminDashboardStats() {
+    public ResponseEntity<AdminDashboardStatsDTO> getAdminDashboardStats() {
         try {
-            DashboardStatsDTO stats = new DashboardStatsDTO();
-            stats.setTotalTasks(taskService.getTotalTasksCount());
-            stats.setActiveTasks(taskService.getActiveTasksCount());
-            stats.setCompletedTasks(taskService.getCompletedTasksCount());
-            stats.setOverdueTasks(taskService.getOverdueTasksCount());
-            stats.setTotalUsers(userService.getTotalUsersCount());
-            stats.setTotalProjects(projectService.getTotalProjectsCount());
-            
-            // Add chart data
-            Map<String, Object> chartData = new HashMap<>();
-            chartData.put("taskStatusDistribution", taskService.getTaskStatusDistribution());
-            chartData.put("projectProgress", projectService.getProjectProgressData());
-            chartData.put("userActivity", userService.getUserActivityData());
-            stats.setChartData(chartData);
-            
+            AdminDashboardStatsDTO stats = adminDashboardService.getDashboardStats();
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();

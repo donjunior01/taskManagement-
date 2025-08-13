@@ -67,17 +67,89 @@
                 </button>
             </div>
 
+            <!-- Calendar Navigation -->
+            <div class="calendar-navigation">
+                <button class="btn btn-secondary" onclick="pageManager.previousMonth()">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <h3 id="current-month">January 2024</h3>
+                <button class="btn btn-secondary" onclick="pageManager.nextMonth()">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Calendar View Selector -->
+            <div class="calendar-view-selector">
+                <button class="view-btn active" onclick="pageManager.setCalendarView('month')">Month</button>
+                <button class="view-btn" onclick="pageManager.setCalendarView('week')">Week</button>
+                <button class="view-btn" onclick="pageManager.setCalendarView('day')">Day</button>
+            </div>
+
+            <!-- Calendar Container -->
             <div class="calendar-container">
                 <div class="calendar-header">
-                    <h3 class="calendar-title">Task Calendar</h3>
-                    <select style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
-                        <option>Month</option>
-                        <option>Week</option>
-                        <option>Day</option>
-                    </select>
+                    <div class="calendar-days">
+                        <div class="calendar-day-header">Sun</div>
+                        <div class="calendar-day-header">Mon</div>
+                        <div class="calendar-day-header">Tue</div>
+                        <div class="calendar-day-header">Wed</div>
+                        <div class="calendar-day-header">Thu</div>
+                        <div class="calendar-day-header">Fri</div>
+                        <div class="calendar-day-header">Sat</div>
+                    </div>
                 </div>
-                <div class="calendar-view">
-                    <p style="color: var(--text-secondary);">Interactive Calendar Placeholder (Drag & Drop Tasks)</p>
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- Calendar days will be generated here -->
+                </div>
+            </div>
+
+            <!-- Calendar Legend -->
+            <div class="calendar-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #28a745;"></div>
+                    <span>Completed Tasks</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #ffc107;"></div>
+                    <span>In Progress</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #17a2b8;"></div>
+                    <span>Pending</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #dc3545;"></div>
+                    <span>Overdue</span>
+                </div>
+            </div>
+
+            <!-- Task Summary -->
+            <div class="task-summary">
+                <div class="summary-card">
+                    <h4>This Week</h4>
+                    <div class="summary-stats">
+                        <div class="summary-stat">
+                            <span class="stat-number" id="week-tasks">8</span>
+                            <span class="stat-label">Tasks</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="stat-number" id="week-completed">5</span>
+                            <span class="stat-label">Completed</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <h4>This Month</h4>
+                    <div class="summary-stats">
+                        <div class="summary-stat">
+                            <span class="stat-number" id="month-tasks">32</span>
+                            <span class="stat-label">Tasks</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="stat-number" id="month-completed">28</span>
+                            <span class="stat-label">Completed</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -85,7 +157,8 @@
 </div>
 
 <script th:src="@{/js/script.js}"></script>
-<script th:src="@{/js/dashboard.js}"></script>
+<script th:src="@{/js/dashboard-utils.js}"></script>
+<script th:src="@{/js/page-manager.js}"></script>
 
 </body>
 </html>

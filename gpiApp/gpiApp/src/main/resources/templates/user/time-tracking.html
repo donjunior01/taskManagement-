@@ -67,24 +67,88 @@
                 </button>
             </div>
 
+            <!-- Time Tracking Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="total-hours">32.5</h3>
+                        <p>Total Hours This Week</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="avg-daily">6.5</h3>
+                        <p>Average Daily Hours</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(42, 157, 143, 0.1); color: var(--success);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="tasks-tracked">8</h3>
+                        <p>Tasks Tracked</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(244, 162, 97, 0.1); color: var(--warning);">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 id="productivity">87%</h3>
+                        <p>Productivity Score</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(230, 57, 70, 0.1); color: var(--danger);">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Tracking Charts -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Weekly Time Distribution</h3>
+                    <select class="chart-period-selector" onchange="pageManager.updateTimeTrackingChart(this.value)">
+                        <option value="7">Last 7 Days</option>
+                        <option value="14">Last 14 Days</option>
+                        <option value="30">Last 30 Days</option>
+                    </select>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="time-tracking-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Time Logs Table -->
             <div class="table-container">
                 <div class="table-header">
                     <h3 class="table-title">Time Logs</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="task-filter" style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;" onchange="pageManager.filterTimeLogs()">
+                            <option value="">All Tasks</option>
+                            <option value="development">Development</option>
+                            <option value="design">Design</option>
+                            <option value="testing">Testing</option>
+                        </select>
+                        <input type="text" id="search-time-logs" placeholder="Search time logs..." style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;" onkeyup="pageManager.searchTimeLogs(this.value)">
+                    </div>
                 </div>
                 <table class="data-table">
                     <thead>
-                    <tr>
-                        <th>Task</th>
-                        <th>Time Spent</th>
-                        <th>Date</th>
-                    </tr>
+                        <tr>
+                            <th>Task</th>
+                            <th>Project</th>
+                            <th>Time Spent</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
-                    <tbody>
-                    <tr>
-                        <td>Update Website Content</td>
-                        <td>2 hours</td>
-                        <td>2025-07-15</td>
-                    </tr>
+                    <tbody id="time-logs-table-body">
+                        <!-- Dynamic content will be loaded here -->
                     </tbody>
                 </table>
             </div>
@@ -94,7 +158,8 @@
 
 
 <script th:src="@{/js/script.js}"></script>
-<script th:src="@{/js/dashboard.js}"></script>
+<script th:src="@{/js/dashboard-utils.js}"></script>
+<script th:src="@{/js/page-manager.js}"></script>
 
 </body>
 </html>

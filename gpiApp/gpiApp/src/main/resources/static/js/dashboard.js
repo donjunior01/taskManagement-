@@ -1,9 +1,11 @@
-// Dashboard Data Management System
-class DashboardDataManager {
+// Enhanced Dashboard Data Management System with Charts and Modals
+class EnhancedDashboardManager {
     constructor() {
         this.currentUser = null;
         this.currentRole = null;
         this.apiBaseUrl = '/api';
+        this.charts = {};
+        this.modals = {};
         this.init();
     }
 
@@ -11,6 +13,7 @@ class DashboardDataManager {
         this.loadCurrentUser();
         this.setupEventListeners();
         this.loadPageData();
+        this.initializeCharts();
     }
 
     // Load current user information
@@ -32,13 +35,11 @@ class DashboardDataManager {
     // Update UI based on user role
     updateUserInterface() {
         if (this.currentUser) {
-            // Update user name in top bar
             const userNameElement = document.querySelector('.user-name');
             if (userNameElement) {
                 userNameElement.textContent = this.currentUser.name || this.currentUser.username;
             }
 
-            // Update user avatar
             const userAvatar = document.querySelector('.user-avatar');
             if (userAvatar) {
                 userAvatar.src = this.currentUser.avatar || '/images/default-avatar.png';
@@ -48,7 +49,14 @@ class DashboardDataManager {
 
     // Setup event listeners
     setupEventListeners() {
-        // Navigation event listeners
+        this.setupNavigationListeners();
+        this.setupModalEventListeners();
+        this.setupFormEventListeners();
+        this.setupChartEventListeners();
+    }
+
+    // Setup navigation event listeners
+    setupNavigationListeners() {
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -58,22 +66,16 @@ class DashboardDataManager {
                 }
             });
         });
-
-        // Modal event listeners
-        this.setupModalEventListeners();
-        
-        // Form submission listeners
-        this.setupFormEventListeners();
     }
 
     // Setup modal event listeners
     setupModalEventListeners() {
         // Close modal buttons
-        document.querySelectorAll('.modal-close, .btn-close').forEach(button => {
+        document.querySelectorAll('.modal-close, .btn-close, .close-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const modal = button.closest('.modal');
                 if (modal) {
-                    modal.classList.remove('active');
+                    this.closeModal(modal.id);
                 }
             });
         });
@@ -82,7 +84,7 @@ class DashboardDataManager {
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
-                    modal.classList.remove('active');
+                    this.closeModal(modal.id);
                 }
             });
         });
@@ -108,32 +110,36 @@ class DashboardDataManager {
 
     // Setup form event listeners
     setupFormEventListeners() {
-        // Create task form
-        const createTaskForm = document.getElementById('create-task-form');
-        if (createTaskForm) {
-            createTaskForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.submitCreateTask();
-            });
-        }
+        const forms = [
+            'create-task-form',
+            'edit-task-form',
+            'create-project-form',
+            'edit-project-form',
+            'create-user-form',
+            'edit-user-form'
+        ];
 
-        // Edit task form
-        const editTaskForm = document.getElementById('edit-task-form');
-        if (editTaskForm) {
-            editTaskForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.submitEditTask();
-            });
-        }
+        forms.forEach(formId => {
+            const form = document.getElementById(formId);
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleFormSubmission(formId);
+                });
+            }
+        });
+    }
 
-        // Create project form
-        const createProjectForm = document.getElementById('create-project-form');
-        if (createProjectForm) {
-            createProjectForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.submitCreateProject();
+    // Setup chart event listeners
+    setupChartEventListeners() {
+        // Chart period selectors
+        document.querySelectorAll('.chart-period-selector').forEach(selector => {
+            selector.addEventListener('change', (e) => {
+                const chartId = e.target.getAttribute('data-chart');
+                const period = e.target.value;
+                this.updateChartPeriod(chartId, period);
             });
-        }
+        });
     }
 
     // Load page-specific data
@@ -168,6 +174,9 @@ class DashboardDataManager {
             case 'collaboration':
                 await this.loadCollaborationData();
                 break;
+            case 'weekly-planning':
+                await this.loadWeeklyPlanningData();
+                break;
             default:
                 console.log('No specific data loading for page:', currentPage);
         }
@@ -180,18 +189,99 @@ class DashboardDataManager {
         return segments[segments.length - 1] || 'dashboard';
     }
 
+    // Initialize charts
+    initializeCharts() {
+        // Initialize Chart.js if available
+        if (typeof Chart !== 'undefined') {
+            this.initializeDashboardCharts();
+        } else {
+            console.warn('Chart.js not loaded. Charts will not be displayed.');
+        }
+    }
+
+    // Initialize dashboard charts
+    initializeDashboardCharts() {
+        // Task Status Distribution Chart
+        const taskStatusCtx = document.getElementById('task-status-chart');
+        if (taskStatusCtx) {
+            this.charts.taskStatus = new Chart(taskStatusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'In Progress', 'Pending', 'Overdue'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#28a745', '#007bff', '#ffc107', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // Project Progress Chart
+        const projectProgressCtx = document.getElementById('project-progress-chart');
+        if (projectProgressCtx) {
+            this.charts.projectProgress = new Chart(projectProgressCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Progress %',
+                        data: [],
+                        backgroundColor: '#007bff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // User Activity Chart
+        const userActivityCtx = document.getElementById('user-activity-chart');
+        if (userActivityCtx) {
+            this.charts.userActivity = new Chart(userActivityCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Tasks Completed',
+                        data: [],
+                        borderColor: '#28a745',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+    }
+
     // Load dashboard data based on user role
     async loadDashboardData() {
         try {
             let endpoint = '';
             switch (this.currentRole) {
                 case 'ADMIN':
+                case 'SUPER_ADMIN':
                     endpoint = `${this.apiBaseUrl}/admin/dashboard-stats`;
                     break;
                 case 'MANAGER':
                     endpoint = `${this.apiBaseUrl}/manager/dashboard-stats`;
                     break;
                 case 'USER':
+                case 'EMPLOYEE':
                     endpoint = `${this.apiBaseUrl}/user/dashboard-stats`;
                     break;
             }
@@ -203,10 +293,66 @@ class DashboardDataManager {
                 if (response.ok) {
                     const data = await response.json();
                     this.updateDashboardStats(data);
+                    this.updateDashboardCharts(data);
                 }
             }
         } catch (error) {
             console.error('Error loading dashboard data:', error);
+        }
+    }
+
+    // Update dashboard statistics
+    updateDashboardStats(data) {
+        // Update stat cards with data attributes
+        const statCards = {
+            'total-tasks': data.totalTasks,
+            'active-tasks': data.activeTasks,
+            'completed-tasks': data.completedTasks,
+            'overdue-tasks': data.overdueTasks,
+            'total-users': data.totalUsers,
+            'total-projects': data.totalProjects
+        };
+
+        Object.keys(statCards).forEach(statKey => {
+            if (statCards[statKey] !== undefined) {
+                const statElement = document.querySelector(`[data-stat="${statKey}"] .stat-info h3`);
+                if (statElement) {
+                    statElement.textContent = statCards[statKey];
+                }
+            }
+        });
+    }
+
+    // Update dashboard charts
+    updateDashboardCharts(chartData) {
+        if (!chartData) return;
+
+        // Update Task Status Chart
+        if (this.charts.taskStatus && chartData.taskStatusDistribution) {
+            const taskData = chartData.taskStatusDistribution;
+            this.charts.taskStatus.data.datasets[0].data = [
+                taskData.COMPLETED || 0,
+                taskData.IN_PROGRESS || 0,
+                taskData.ASSIGNED || 0,
+                taskData.DRAFT || 0
+            ];
+            this.charts.taskStatus.update();
+        }
+
+        // Update Project Progress Chart
+        if (this.charts.projectProgress && chartData.projectProgress) {
+            const projectData = chartData.projectProgress;
+            this.charts.projectProgress.data.labels = projectData.map(p => p.name);
+            this.charts.projectProgress.data.datasets[0].data = projectData.map(p => p.progress);
+            this.charts.projectProgress.update();
+        }
+
+        // Update User Activity Chart
+        if (this.charts.userActivity && chartData.userActivity) {
+            const activityData = chartData.userActivity;
+            this.charts.userActivity.data.labels = activityData.map(a => a.date);
+            this.charts.userActivity.data.datasets[0].data = activityData.map(a => a.tasksCompleted);
+            this.charts.userActivity.update();
         }
     }
 
@@ -222,150 +368,6 @@ class DashboardDataManager {
             }
         } catch (error) {
             console.error('Error loading tasks:', error);
-        }
-    }
-
-    // Load projects data
-    async loadProjectsData() {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/projects`, {
-                credentials: 'include'
-            });
-            if (response.ok) {
-                const projects = await response.json();
-                this.updateProjectsList(projects);
-            }
-        } catch (error) {
-            console.error('Error loading projects:', error);
-        }
-    }
-
-    // Load users data (admin only)
-    async loadUsersData() {
-        if (this.currentRole !== 'ADMIN') return;
-        
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/admin/users`, {
-                credentials: 'include'
-            });
-            if (response.ok) {
-                const users = await response.json();
-                this.updateUsersList(users);
-            }
-        } catch (error) {
-            console.error('Error loading users:', error);
-        }
-    }
-
-    // Load reports data
-    async loadReportsData() {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/reports`, {
-                credentials: 'include'
-            });
-            if (response.ok) {
-                const reports = await response.json();
-                this.updateReportsList(reports);
-            }
-        } catch (error) {
-            console.error('Error loading reports:', error);
-        }
-    }
-
-    // Load notifications data
-    async loadNotificationsData() {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/notifications`, {
-                credentials: 'include'
-            });
-            if (response.ok) {
-                const notifications = await response.json();
-                this.updateNotificationsList(notifications);
-            }
-        } catch (error) {
-            console.error('Error loading notifications:', error);
-        }
-    }
-
-    // Load calendar data
-    async loadCalendarData() {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/calendar/events`, {
-                credentials: 'include'
-            });
-            if (response.ok) {
-                const events = await response.json();
-                this.updateCalendarEvents(events);
-            }
-        } catch (error) {
-            console.error('Error loading calendar events:', error);
-        }
-    }
-
-    // Load time tracking data
-    async loadTimeTrackingData() {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/time-tracking`, {
-                credentials: 'include'
-            });
-            if (response.ok) {
-                const timeData = await response.json();
-                this.updateTimeTrackingData(timeData);
-            }
-        } catch (error) {
-            console.error('Error loading time tracking data:', error);
-        }
-    }
-
-    // Load collaboration data
-    async loadCollaborationData() {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/collaboration`, {
-                credentials: 'include'
-            });
-            if (response.ok) {
-                const collaborationData = await response.json();
-                this.updateCollaborationData(collaborationData);
-            }
-        } catch (error) {
-            console.error('Error loading collaboration data:', error);
-        }
-    }
-
-    // Update dashboard statistics
-    updateDashboardStats(data) {
-        // Update stat cards
-        if (data.totalTasks !== undefined) {
-            const totalTasksElement = document.querySelector('.stat-card[data-stat="total-tasks"] .stat-info h3');
-            if (totalTasksElement) {
-                totalTasksElement.textContent = data.totalTasks;
-            }
-        }
-
-        if (data.activeTasks !== undefined) {
-            const activeTasksElement = document.querySelector('.stat-card[data-stat="active-tasks"] .stat-info h3');
-            if (activeTasksElement) {
-                activeTasksElement.textContent = data.activeTasks;
-            }
-        }
-
-        if (data.completedTasks !== undefined) {
-            const completedTasksElement = document.querySelector('.stat-card[data-stat="completed-tasks"] .stat-info h3');
-            if (completedTasksElement) {
-                completedTasksElement.textContent = data.completedTasks;
-            }
-        }
-
-        if (data.overdueTasks !== undefined) {
-            const overdueTasksElement = document.querySelector('.stat-card[data-stat="overdue-tasks"] .stat-info h3');
-            if (overdueTasksElement) {
-                overdueTasksElement.textContent = data.overdueTasks;
-            }
-        }
-
-        // Update charts if they exist
-        if (data.chartData) {
-            this.updateCharts(data.chartData);
         }
     }
 
@@ -390,13 +392,13 @@ class DashboardDataManager {
         taskDiv.innerHTML = `
             <div class="task-header">
                 <h4>${task.title}</h4>
-                <span class="task-priority ${task.priority.toLowerCase()}">${task.priority}</span>
+                <span class="task-priority ${task.priority?.toLowerCase()}">${task.priority}</span>
             </div>
             <p class="task-description">${task.description}</p>
             <div class="task-meta">
                 <span class="task-assignee">${task.assignee}</span>
                 <span class="task-deadline">${new Date(task.deadline).toLocaleDateString()}</span>
-                <span class="task-status ${task.status.toLowerCase()}">${task.status}</span>
+                <span class="task-status ${task.status?.toLowerCase()}">${task.status}</span>
             </div>
             <div class="task-actions">
                 <button class="btn btn-sm btn-secondary btn-edit" data-id="${task.id}" data-type="task">Edit</button>
@@ -405,6 +407,21 @@ class DashboardDataManager {
         `;
 
         return taskDiv;
+    }
+
+    // Load projects data
+    async loadProjectsData() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/projects`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const projects = await response.json();
+                this.updateProjectsList(projects);
+            }
+        } catch (error) {
+            console.error('Error loading projects:', error);
+        }
     }
 
     // Update projects list
@@ -428,7 +445,7 @@ class DashboardDataManager {
         projectDiv.innerHTML = `
             <div class="project-header">
                 <h4>${project.name}</h4>
-                <span class="project-status ${project.status.toLowerCase()}">${project.status}</span>
+                <span class="project-status ${project.status?.toLowerCase()}">${project.status}</span>
             </div>
             <p class="project-description">${project.description}</p>
             <div class="project-meta">
@@ -445,7 +462,24 @@ class DashboardDataManager {
         return projectDiv;
     }
 
-    // Update users list (admin only)
+    // Load users data (admin only)
+    async loadUsersData() {
+        if (this.currentRole !== 'ADMIN') return;
+        
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/admin/users`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const users = await response.json();
+                this.updateUsersList(users);
+            }
+        } catch (error) {
+            console.error('Error loading users:', error);
+        }
+    }
+
+    // Update users list
     updateUsersList(users) {
         const usersContainer = document.querySelector('.users-list');
         if (!usersContainer) return;
@@ -473,7 +507,7 @@ class DashboardDataManager {
             </div>
             <div class="user-meta">
                 <span class="user-email">${user.email}</span>
-                <span class="user-status ${user.status.toLowerCase()}">${user.status}</span>
+                <span class="user-status ${user.status?.toLowerCase()}">${user.status}</span>
             </div>
             <div class="user-actions">
                 <button class="btn btn-sm btn-secondary btn-edit" data-id="${user.id}" data-type="user">Edit</button>
@@ -484,238 +518,153 @@ class DashboardDataManager {
         return userDiv;
     }
 
-    // Update notifications list
-    updateNotificationsList(notifications) {
-        const notificationsContainer = document.querySelector('.notifications-list');
-        if (!notificationsContainer) return;
+    // Load weekly planning data
+    async loadWeeklyPlanningData() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/weekly-plannings`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const weeklyPlans = await response.json();
+                this.updateWeeklyPlanningList(weeklyPlans);
+            }
+        } catch (error) {
+            console.error('Error loading weekly planning data:', error);
+        }
+    }
 
-        notificationsContainer.innerHTML = '';
-        notifications.forEach(notification => {
-            const notificationElement = this.createNotificationElement(notification);
-            notificationsContainer.appendChild(notificationElement);
+    // Update weekly planning list
+    updateWeeklyPlanningList(weeklyPlans) {
+        const planningContainer = document.querySelector('.weekly-planning-list');
+        if (!planningContainer) return;
+
+        planningContainer.innerHTML = '';
+        weeklyPlans.forEach(plan => {
+            const planElement = this.createWeeklyPlanningElement(plan);
+            planningContainer.appendChild(planElement);
         });
     }
 
-    // Create notification element
-    createNotificationElement(notification) {
-        const notificationDiv = document.createElement('div');
-        notificationDiv.className = `notification-item ${notification.read ? 'read' : 'unread'}`;
-        notificationDiv.setAttribute('data-notification-id', notification.id);
+    // Create weekly planning element
+    createWeeklyPlanningElement(plan) {
+        const planDiv = document.createElement('div');
+        planDiv.className = 'weekly-plan-item';
+        planDiv.setAttribute('data-plan-id', plan.id);
         
-        notificationDiv.innerHTML = `
-            <div class="notification-icon">
-                <i class="fas ${this.getNotificationIcon(notification.type)}"></i>
+        planDiv.innerHTML = `
+            <div class="plan-header">
+                <h4>Week ${plan.weekNumber}, ${plan.year}</h4>
+                <span class="plan-status ${plan.status?.toLowerCase()}">${plan.status}</span>
             </div>
-            <div class="notification-content">
-                <h5>${notification.title}</h5>
-                <p>${notification.message}</p>
-                <span class="notification-time">${new Date(notification.createdAt).toLocaleString()}</span>
+            <div class="plan-content">
+                <p><strong>Goals:</strong> ${plan.goals}</p>
+                <p><strong>Priorities:</strong> ${plan.priorities}</p>
             </div>
-            <div class="notification-actions">
-                <button class="btn btn-sm btn-secondary mark-read" data-id="${notification.id}">Mark Read</button>
-                <button class="btn btn-sm btn-danger btn-delete" data-id="${notification.id}" data-type="notification">Delete</button>
+            <div class="plan-meta">
+                <span class="plan-user">${plan.userName}</span>
+                <span class="plan-date">${new Date(plan.createdAt).toLocaleDateString()}</span>
+            </div>
+            <div class="plan-actions">
+                <button class="btn btn-sm btn-secondary btn-edit" data-id="${plan.id}" data-type="weekly-planning">Edit</button>
+                <button class="btn btn-sm btn-danger btn-delete" data-id="${plan.id}" data-type="weekly-planning">Delete</button>
             </div>
         `;
 
-        return notificationDiv;
+        return planDiv;
     }
 
-    // Get notification icon based on type
-    getNotificationIcon(type) {
-        const icons = {
-            'task': 'fa-tasks',
-            'project': 'fa-project-diagram',
-            'message': 'fa-envelope',
-            'reminder': 'fa-bell',
-            'system': 'fa-cog'
-        };
-        return icons[type] || 'fa-info-circle';
-    }
-
-    // Update calendar events
-    updateCalendarEvents(events) {
-        const calendarContainer = document.querySelector('.calendar-events');
-        if (!calendarContainer) return;
-
-        calendarContainer.innerHTML = '';
-        events.forEach(event => {
-            const eventElement = this.createCalendarEventElement(event);
-            calendarContainer.appendChild(eventElement);
-        });
-    }
-
-    // Create calendar event element
-    createCalendarEventElement(event) {
-        const eventDiv = document.createElement('div');
-        eventDiv.className = 'calendar-event';
-        eventDiv.setAttribute('data-event-id', event.id);
-        
-        eventDiv.innerHTML = `
-            <div class="event-header">
-                <h5>${event.title}</h5>
-                <span class="event-time">${new Date(event.startTime).toLocaleTimeString()}</span>
-            </div>
-            <p class="event-description">${event.description}</p>
-            <div class="event-meta">
-                <span class="event-type">${event.type}</span>
-                <span class="event-location">${event.location}</span>
-            </div>
-        `;
-
-        return eventDiv;
-    }
-
-    // Update time tracking data
-    updateTimeTrackingData(timeData) {
-        const timeContainer = document.querySelector('.time-tracking-data');
-        if (!timeContainer) return;
-
-        timeContainer.innerHTML = '';
-        
-        // Create time tracking summary
-        const summaryDiv = document.createElement('div');
-        summaryDiv.className = 'time-summary';
-        summaryDiv.innerHTML = `
-            <h4>Time Summary</h4>
-            <div class="time-stats">
-                <div class="time-stat">
-                    <span class="time-label">Today:</span>
-                    <span class="time-value">${timeData.todayHours || 0}h</span>
-                </div>
-                <div class="time-stat">
-                    <span class="time-label">This Week:</span>
-                    <span class="time-value">${timeData.weekHours || 0}h</span>
-                </div>
-                <div class="time-stat">
-                    <span class="time-label">This Month:</span>
-                    <span class="time-value">${timeData.monthHours || 0}h</span>
-                </div>
-            </div>
-        `;
-        timeContainer.appendChild(summaryDiv);
-
-        // Create time entries list
-        if (timeData.entries && timeData.entries.length > 0) {
-            const entriesDiv = document.createElement('div');
-            entriesDiv.className = 'time-entries';
-            entriesDiv.innerHTML = '<h4>Recent Time Entries</h4>';
-            
-            timeData.entries.forEach(entry => {
-                const entryElement = this.createTimeEntryElement(entry);
-                entriesDiv.appendChild(entryElement);
+    // Load other data types
+    async loadReportsData() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/reports`, {
+                credentials: 'include'
             });
-            
-            timeContainer.appendChild(entriesDiv);
+            if (response.ok) {
+                const reports = await response.json();
+                this.updateReportsList(reports);
+            }
+        } catch (error) {
+            console.error('Error loading reports:', error);
         }
     }
 
-    // Create time entry element
-    createTimeEntryElement(entry) {
-        const entryDiv = document.createElement('div');
-        entryDiv.className = 'time-entry';
-        entryDiv.setAttribute('data-entry-id', entry.id);
-        
-        entryDiv.innerHTML = `
-            <div class="entry-header">
-                <h5>${entry.taskName}</h5>
-                <span class="entry-duration">${entry.duration}h</span>
-            </div>
-            <p class="entry-description">${entry.description}</p>
-            <div class="entry-meta">
-                <span class="entry-date">${new Date(entry.date).toLocaleDateString()}</span>
-                <span class="entry-project">${entry.projectName}</span>
-            </div>
-        `;
-
-        return entryDiv;
-    }
-
-    // Update collaboration data
-    updateCollaborationData(collaborationData) {
-        const collaborationContainer = document.querySelector('.collaboration-data');
-        if (!collaborationContainer) return;
-
-        collaborationContainer.innerHTML = '';
-        
-        // Create team members list
-        if (collaborationData.teamMembers) {
-            const teamDiv = document.createElement('div');
-            teamDiv.className = 'team-members';
-            teamDiv.innerHTML = '<h4>Team Members</h4>';
-            
-            collaborationData.teamMembers.forEach(member => {
-                const memberElement = this.createTeamMemberElement(member);
-                teamDiv.appendChild(memberElement);
+    async loadNotificationsData() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/notifications`, {
+                credentials: 'include'
             });
-            
-            collaborationContainer.appendChild(teamDiv);
-        }
-
-        // Create recent messages list
-        if (collaborationData.messages) {
-            const messagesDiv = document.createElement('div');
-            messagesDiv.className = 'recent-messages';
-            messagesDiv.innerHTML = '<h4>Recent Messages</h4>';
-            
-            collaborationData.messages.forEach(message => {
-                const messageElement = this.createMessageElement(message);
-                messagesDiv.appendChild(messageElement);
-            });
-            
-            collaborationContainer.appendChild(messagesDiv);
+            if (response.ok) {
+                const notifications = await response.json();
+                this.updateNotificationsList(notifications);
+            }
+        } catch (error) {
+            console.error('Error loading notifications:', error);
         }
     }
 
-    // Create team member element
-    createTeamMemberElement(member) {
-        const memberDiv = document.createElement('div');
-        memberDiv.className = 'team-member';
-        memberDiv.setAttribute('data-member-id', member.id);
-        
-        memberDiv.innerHTML = `
-            <div class="member-header">
-                <img src="${member.avatar || '/images/default-avatar.png'}" alt="${member.name}" class="member-avatar">
-                <div class="member-info">
-                    <h5>${member.name}</h5>
-                    <span class="member-role">${member.role}</span>
-                </div>
-            </div>
-            <div class="member-status">
-                <span class="status-indicator ${member.status.toLowerCase()}"></span>
-                <span class="status-text">${member.status}</span>
-            </div>
-        `;
-
-        return memberDiv;
+    async loadCalendarData() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/calendar/events`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const events = await response.json();
+                this.updateCalendarEvents(events);
+            }
+        } catch (error) {
+            console.error('Error loading calendar events:', error);
+        }
     }
 
-    // Create message element
-    createMessageElement(message) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message-item';
-        messageDiv.setAttribute('data-message-id', message.id);
-        
-        messageDiv.innerHTML = `
-            <div class="message-header">
-                <span class="message-author">${message.author}</span>
-                <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
-            </div>
-            <p class="message-content">${message.content}</p>
-        `;
-
-        return messageDiv;
+    async loadTimeTrackingData() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/time-tracking`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const timeData = await response.json();
+                this.updateTimeTrackingData(timeData);
+            }
+        } catch (error) {
+            console.error('Error loading time tracking data:', error);
+        }
     }
 
-    // Navigate to page
-    navigateToPage(href) {
-        window.location.href = href;
+    async loadCollaborationData() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/collaboration`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const collaborationData = await response.json();
+                this.updateCollaborationData(collaborationData);
+            }
+        } catch (error) {
+            console.error('Error loading collaboration data:', error);
+        }
+    }
+
+    // Modal management
+    openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('active');
+            this.modals[modalId] = modal;
+        }
+    }
+
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+            delete this.modals[modalId];
+        }
     }
 
     // Open edit modal
     openEditModal(type, id) {
         const modal = document.getElementById(`edit-${type}-modal`);
         if (modal) {
-            // Load item data for editing
             this.loadItemForEdit(type, id);
             modal.classList.add('active');
         }
@@ -751,106 +700,53 @@ class DashboardDataManager {
         const form = document.getElementById(`edit-${type}-form`);
         if (!form) return;
 
-        // Clear previous values
         form.reset();
-
-        // Populate form fields
         Object.keys(item).forEach(key => {
             const field = form.querySelector(`[name="${key}"]`);
             if (field) {
                 field.value = item[key];
             }
         });
-
-        // Set form action
         form.setAttribute('data-item-id', item.id);
     }
 
-    // Submit create task
-    async submitCreateTask() {
-        const form = document.getElementById('create-task-form');
+    // Handle form submission
+    async handleFormSubmission(formId) {
+        const form = document.getElementById(formId);
         const formData = new FormData(form);
-        const taskData = Object.fromEntries(formData.entries());
+        const data = Object.fromEntries(formData.entries());
 
         try {
-            const response = await fetch(`${this.apiBaseUrl}/tasks`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(taskData),
-                credentials: 'include'
-            });
+            let response;
+            if (formId.includes('edit')) {
+                const itemId = form.getAttribute('data-item-id');
+                const type = formId.replace('edit-', '').replace('-form', '');
+                response = await fetch(`${this.apiBaseUrl}/${type}/${itemId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    credentials: 'include'
+                });
+            } else {
+                const type = formId.replace('create-', '').replace('-form', '');
+                response = await fetch(`${this.apiBaseUrl}/${type}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    credentials: 'include'
+                });
+            }
 
             if (response.ok) {
-                alert('Task created successfully!');
-                form.closest('.modal').classList.remove('active');
-                this.loadTasksData(); // Reload tasks list
+                alert(formId.includes('edit') ? 'Item updated successfully!' : 'Item created successfully!');
+                this.closeModal(form.closest('.modal').id);
+                this.loadPageData(); // Reload data
             } else {
-                alert('Error creating task');
+                alert('Error processing request');
             }
         } catch (error) {
-            console.error('Error creating task:', error);
-            alert('Error creating task');
-        }
-    }
-
-    // Submit edit task
-    async submitEditTask() {
-        const form = document.getElementById('edit-task-form');
-        const taskId = form.getAttribute('data-item-id');
-        const formData = new FormData(form);
-        const taskData = Object.fromEntries(formData.entries());
-
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/tasks/${taskId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(taskData),
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                alert('Task updated successfully!');
-                form.closest('.modal').classList.remove('active');
-                this.loadTasksData(); // Reload tasks list
-            } else {
-                alert('Error updating task');
-            }
-        } catch (error) {
-            console.error('Error updating task:', error);
-            alert('Error updating task');
-        }
-    }
-
-    // Submit create project
-    async submitCreateProject() {
-        const form = document.getElementById('create-project-form');
-        const formData = new FormData(form);
-        const projectData = Object.fromEntries(formData.entries());
-
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/projects`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(projectData),
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                alert('Project created successfully!');
-                form.closest('.modal').classList.remove('active');
-                this.loadProjectsData(); // Reload projects list
-            } else {
-                alert('Error creating project');
-            }
-        } catch (error) {
-            console.error('Error creating project:', error);
-            alert('Error creating project');
+            console.error('Error processing form:', error);
+            alert('Error processing request');
         }
     }
 
@@ -864,23 +760,8 @@ class DashboardDataManager {
 
             if (response.ok) {
                 alert(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully!`);
-                document.getElementById('delete-confirmation-modal').classList.remove('active');
-                
-                // Reload appropriate data
-                switch (type) {
-                    case 'task':
-                        this.loadTasksData();
-                        break;
-                    case 'project':
-                        this.loadProjectsData();
-                        break;
-                    case 'user':
-                        this.loadUsersData();
-                        break;
-                    case 'notification':
-                        this.loadNotificationsData();
-                        break;
-                }
+                this.closeModal('delete-confirmation-modal');
+                this.loadPageData(); // Reload data
             } else {
                 alert(`Error deleting ${type}`);
             }
@@ -890,15 +771,214 @@ class DashboardDataManager {
         }
     }
 
-    // Update charts
-    updateCharts(chartData) {
-        // This would integrate with a charting library like Chart.js
-        // For now, we'll just log the data
-        console.log('Chart data:', chartData);
+    // Update chart period
+    updateChartPeriod(chartId, period) {
+        // This would fetch new data based on the selected period
+        console.log(`Updating chart ${chartId} for period: ${period}`);
+        // Implementation would depend on your backend API
+    }
+
+    // Navigate to page
+    navigateToPage(href) {
+        window.location.href = href;
+    }
+
+    // Update other data displays
+    updateReportsList(reports) {
+        const reportsContainer = document.querySelector('.reports-list');
+        if (!reportsContainer) return;
+
+        reportsContainer.innerHTML = '';
+        if (reports.systemReports) {
+            reports.systemReports.forEach(report => {
+                const reportElement = this.createReportElement(report);
+                reportsContainer.appendChild(reportElement);
+            });
+        }
+    }
+
+    updateNotificationsList(notifications) {
+        const notificationsContainer = document.querySelector('.notifications-list');
+        if (!notificationsContainer) return;
+
+        notificationsContainer.innerHTML = '';
+        notifications.forEach(notification => {
+            const notificationElement = this.createNotificationElement(notification);
+            notificationsContainer.appendChild(notificationElement);
+        });
+    }
+
+    updateCalendarEvents(events) {
+        const calendarContainer = document.querySelector('.calendar-events');
+        if (!calendarContainer) return;
+
+        calendarContainer.innerHTML = '';
+        events.forEach(event => {
+            const eventElement = this.createCalendarEventElement(event);
+            calendarContainer.appendChild(eventElement);
+        });
+    }
+
+    updateTimeTrackingData(timeData) {
+        const timeContainer = document.querySelector('.time-tracking-data');
+        if (!timeContainer) return;
+
+        timeContainer.innerHTML = '';
+        
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'time-summary';
+        summaryDiv.innerHTML = `
+            <h4>Time Summary</h4>
+            <div class="time-stats">
+                <div class="time-stat">
+                    <span class="time-label">Today:</span>
+                    <span class="time-value">${timeData.todayHours || 0}h</span>
+                </div>
+                <div class="time-stat">
+                    <span class="time-label">This Week:</span>
+                    <span class="time-value">${timeData.weekHours || 0}h</span>
+                </div>
+                <div class="time-stat">
+                    <span class="time-label">This Month:</span>
+                    <span class="time-value">${timeData.monthHours || 0}h</span>
+                </div>
+            </div>
+        `;
+        timeContainer.appendChild(summaryDiv);
+
+        if (timeData.entries && timeData.entries.length > 0) {
+            const entriesDiv = document.createElement('div');
+            entriesDiv.className = 'time-entries';
+            entriesDiv.innerHTML = '<h4>Recent Time Entries</h4>';
+            
+            timeData.entries.forEach(entry => {
+                const entryElement = this.createTimeEntryElement(entry);
+                entriesDiv.appendChild(entryElement);
+            });
+            
+            timeContainer.appendChild(entriesDiv);
+        }
+    }
+
+    updateCollaborationData(collaborationData) {
+        const collaborationContainer = document.querySelector('.collaboration-data');
+        if (!collaborationContainer) return;
+
+        collaborationContainer.innerHTML = '';
+        
+        if (collaborationData.teamMembers) {
+            const teamDiv = document.createElement('div');
+            teamDiv.className = 'team-members';
+            teamDiv.innerHTML = '<h4>Team Members</h4>';
+            
+            collaborationData.teamMembers.forEach(member => {
+                const memberElement = this.createTeamMemberElement(member);
+                teamDiv.appendChild(memberElement);
+            });
+            
+            collaborationContainer.appendChild(teamDiv);
+        }
+
+        if (collaborationData.messages) {
+            const messagesDiv = document.createElement('div');
+            messagesDiv.className = 'recent-messages';
+            messagesDiv.innerHTML = '<h4>Recent Messages</h4>';
+            
+            collaborationData.messages.forEach(message => {
+                const messageElement = this.createMessageElement(message);
+                messagesDiv.appendChild(messageElement);
+            });
+            
+            collaborationContainer.appendChild(messagesDiv);
+        }
+    }
+
+    // Create other elements
+    createReportElement(report) {
+        const reportDiv = document.createElement('div');
+        reportDiv.className = 'report-item';
+        reportDiv.innerHTML = `
+            <h4>${report.title}</h4>
+            <p>${report.description}</p>
+            <span class="report-date">${new Date(report.createdAt).toLocaleDateString()}</span>
+        `;
+        return reportDiv;
+    }
+
+    createNotificationElement(notification) {
+        const notificationDiv = document.createElement('div');
+        notificationDiv.className = `notification-item ${notification.read ? 'read' : 'unread'}`;
+        notificationDiv.innerHTML = `
+            <div class="notification-content">
+                <h5>${notification.title}</h5>
+                <p>${notification.message}</p>
+                <span class="notification-time">${new Date(notification.createdAt).toLocaleString()}</span>
+            </div>
+        `;
+        return notificationDiv;
+    }
+
+    createCalendarEventElement(event) {
+        const eventDiv = document.createElement('div');
+        eventDiv.className = 'calendar-event';
+        eventDiv.innerHTML = `
+            <h5>${event.title}</h5>
+            <p>${event.description}</p>
+            <span class="event-time">${new Date(event.startTime).toLocaleString()}</span>
+        `;
+        return eventDiv;
+    }
+
+    createTimeEntryElement(entry) {
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'time-entry';
+        entryDiv.innerHTML = `
+            <h5>${entry.taskName}</h5>
+            <p>${entry.description}</p>
+            <span class="entry-duration">${entry.duration}h</span>
+        `;
+        return entryDiv;
+    }
+
+    createTeamMemberElement(member) {
+        const memberDiv = document.createElement('div');
+        memberDiv.className = 'team-member';
+        memberDiv.innerHTML = `
+            <h5>${member.name}</h5>
+            <span class="member-role">${member.role}</span>
+            <span class="member-status ${member.status}">${member.status}</span>
+        `;
+        return memberDiv;
+    }
+
+    createMessageElement(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message-item';
+        messageDiv.innerHTML = `
+            <span class="message-author">${message.author}</span>
+            <p>${message.content}</p>
+            <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
+        `;
+        return messageDiv;
     }
 }
 
-// Initialize the dashboard data manager when the page loads
+// Initialize the enhanced dashboard manager when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    new DashboardDataManager();
-}); 
+    new EnhancedDashboardManager();
+});
+
+// Global modal functions for HTML onclick attributes
+window.openModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+    }
+};
+
+window.closeModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}; 

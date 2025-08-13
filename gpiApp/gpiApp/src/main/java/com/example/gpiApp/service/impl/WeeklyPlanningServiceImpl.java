@@ -6,6 +6,7 @@ import com.example.gpiApp.entity.allUsers;
 import com.example.gpiApp.repository.WeeklyPlanningRepository;
 import com.example.gpiApp.repository.UserRepository;
 import com.example.gpiApp.service.WeeklyPlanningService;
+import com.example.gpiApp.service.DailyTaskScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     
     private final WeeklyPlanningRepository weeklyPlanningRepository;
     private final UserRepository userRepository;
+    private final DailyTaskScheduleService dailyTaskScheduleService;
     
     @Override
     public WeeklyPlanningDTO createWeeklyPlanning(WeeklyPlanningDTO weeklyPlanningDTO) {
@@ -227,9 +229,14 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     }
     
     private WeeklyPlanningDTO convertToDTO(WeeklyPlanning planning) {
+        // Calculate completed and pending tasks using the service
+        long completedTasks = dailyTaskScheduleService.countCompletedTasksByPlanningId(planning.getPlanningId());
+        long pendingTasks = dailyTaskScheduleService.countPendingTasksByPlanningId(planning.getPlanningId());
+        
         return WeeklyPlanningDTO.builder()
                 .planningId(planning.getPlanningId())
                 .userId(planning.getUser().getUserId())
+                .userName(planning.getUser().getFirstName() != null ? planning.getUser().getLastName() : planning.getUser().getUsername())
                 .weekNumber(planning.getWeekNumber())
                 .year(planning.getYear())
                 .weekStartDate(planning.getWeekStartDate())
@@ -239,9 +246,13 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
                 .submittedAt(planning.getSubmittedAt())
                 .isApproved(planning.getIsApproved())
                 .approvedById(planning.getApprovedBy() != null ? planning.getApprovedBy().getUserId() : null)
+                .approvedByName(planning.getApprovedBy() != null ? 
+                    (planning.getApprovedBy().getFirstName() != null ? planning.getApprovedBy().getLastName() : planning.getApprovedBy().getUsername()) : null)
                 .approvedAt(planning.getApprovedAt())
                 .createdAt(planning.getCreatedAt())
                 .updatedAt(planning.getUpdatedAt())
+                .completedTasksCount((int) completedTasks)
+                .pendingTasksCount((int) pendingTasks)
                 .build();
     }
 } 

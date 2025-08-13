@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Weekly Planning</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
   <link rel="stylesheet" th:href="@{/css/style.css}" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body data-theme="dark">
 <div class="sidebar">
@@ -20,9 +20,8 @@
     <span>My Tasks</span>
   </a>
   <a href="#" class="nav-item active">
-    <i class="fas fa-calendar-week">
-
-    </i><span>Weekly Planning</span>
+    <i class="fas fa-calendar-week"></i>
+    <span>Weekly Planning</span>
   </a>
   <a th:href="@{/user/calendar}" class="nav-item">
     <i class="fas fa-calendar-alt"></i>
@@ -33,21 +32,268 @@
     <span>Logout</span>
   </a>
 </div>
+
 <div class="main-content">
   <div th:replace="~{fragments/userfragmentTB :: topbar}"></div>
+  
   <div class="content-wrapper">
     <div class="section-header">
       <h2 class="section-title">Weekly Planning</h2>
+      <div class="section-actions">
+        <button class="btn btn-primary" onclick="openModal('create-weekly-planning-modal')">
+          <i class="fas fa-plus"></i> Create New Plan
+        </button>
+        <button class="btn btn-secondary" onclick="refreshWeeklyPlanningData()">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+      </div>
     </div>
+
+    <!-- Weekly Planning Statistics -->
+    <div class="stats-grid">
+      <div class="stat-card" data-stat="total-plans">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-week"></i>
+        </div>
+        <div class="stat-info">
+          <h3>0</h3>
+          <p>Total Plans</p>
+        </div>
+      </div>
+      
+      <div class="stat-card" data-stat="completed-tasks">
+        <div class="stat-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+          <h3>0</h3>
+          <p>Completed Tasks</p>
+        </div>
+      </div>
+      
+      <div class="stat-card" data-stat="pending-tasks">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+          <h3>0</h3>
+          <p>Pending Tasks</p>
+        </div>
+      </div>
+      
+      <div class="stat-card" data-stat="compliance-rate">
+        <div class="stat-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-info">
+          <h3>0%</h3>
+          <p>Compliance Rate</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Planning Charts -->
+    <div class="charts-container">
+      <div class="chart-card">
+        <h3>Weekly Task Distribution</h3>
+        <canvas id="weekly-task-distribution-chart"></canvas>
+      </div>
+      
+      <div class="chart-card">
+        <h3>Task Completion Trend</h3>
+        <canvas id="task-completion-trend-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Weekly Planning List -->
     <div class="table-container">
-      <div class="table-header"><h3 class="table-title">Drag tasks into your week</h3></div>
-      <p style="color: var(--text-secondary);">Placeholder for drag-and-drop weekly planning interface.</p>
+      <div class="table-header">
+        <h3 class="table-title">Weekly Plans</h3>
+        <div class="table-filters">
+          <select id="week-filter" onchange="filterWeeklyPlans()">
+            <option value="">All Weeks</option>
+            <option value="1">Week 1</option>
+            <option value="2">Week 2</option>
+            <option value="3">Week 3</option>
+            <option value="4">Week 4</option>
+          </select>
+          <select id="status-filter" onchange="filterWeeklyPlans()">
+            <option value="">All Statuses</option>
+            <option value="COMPLIANT">Compliant</option>
+            <option value="PARTIALLY_COMPLIANT">Partially Compliant</option>
+            <option value="NON_COMPLIANT">Non-Compliant</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="weekly-planning-list" id="weekly-planning-list">
+        <!-- Weekly planning items will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Current Week Planning Interface -->
+    <div class="current-week-container">
+      <h3>Current Week Planning</h3>
+      <div class="week-grid" id="week-grid">
+        <!-- Days of the week will be populated here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Weekly Planning Modal -->
+<div class="modal" id="create-weekly-planning-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Create Weekly Plan</h3>
+      <button class="modal-close" onclick="closeModal('create-weekly-planning-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="create-weekly-planning-form">
+        <div class="form-group">
+          <label for="week-number">Week Number</label>
+          <input type="number" id="week-number" name="weekNumber" min="1" max="53" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="year">Year</label>
+          <input type="number" id="year" name="year" min="2024" max="2030" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="week-start-date">Week Start Date</label>
+          <input type="date" id="week-start-date" name="weekStartDate" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="week-end-date">Week End Date</label>
+          <input type="date" id="week-end-date" name="weekEndDate" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="total-tasks-planned">Total Tasks Planned</label>
+          <input type="number" id="total-tasks-planned" name="totalTasksPlanned" min="0" required>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('create-weekly-planning-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Plan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Weekly Planning Modal -->
+<div class="modal" id="edit-weekly-planning-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Edit Weekly Plan</h3>
+      <button class="modal-close" onclick="closeModal('edit-weekly-planning-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="edit-weekly-planning-form">
+        <input type="hidden" id="edit-planning-id" name="planningId">
+        
+        <div class="form-group">
+          <label for="edit-week-number">Week Number</label>
+          <input type="number" id="edit-week-number" name="weekNumber" min="1" max="53" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="edit-year">Year</label>
+          <input type="number" id="edit-year" name="year" min="2024" max="2030" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="edit-week-start-date">Week Start Date</label>
+          <input type="date" id="edit-week-start-date" name="weekStartDate" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="edit-week-end-date">Week End Date</label>
+          <input type="date" id="edit-week-end-date" name="weekEndDate" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="edit-total-tasks-planned">Total Tasks Planned</label>
+          <input type="number" id="edit-total-tasks-planned" name="totalTasksPlanned" min="0" required>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('edit-weekly-planning-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Plan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="delete-confirmation-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Confirm Delete</h3>
+      <button class="modal-close" onclick="closeModal('delete-confirmation-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete this weekly plan? This action cannot be undone.</p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('delete-confirmation-modal')">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirm-delete">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Task Schedule Modal -->
+<div class="modal" id="task-schedule-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Schedule Task</h3>
+      <button class="modal-close" onclick="closeModal('task-schedule-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="task-schedule-form">
+        <div class="form-group">
+          <label for="schedule-task">Select Task</label>
+          <select id="schedule-task" name="taskId" required>
+            <option value="">Choose a task...</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="schedule-date">Schedule Date</label>
+          <input type="date" id="schedule-date" name="scheduledDate" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="start-time">Start Time</label>
+          <input type="time" id="start-time" name="startTime" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="end-time">End Time</label>
+          <input type="time" id="end-time" name="endTime" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="estimated-duration">Estimated Duration (minutes)</label>
+          <input type="number" id="estimated-duration" name="estimatedDurationMinutes" min="15" step="15" required>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('task-schedule-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Schedule Task</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
 <script th:src="@{/js/script.js}"></script>
 <script th:src="@{/js/dashboard.js}"></script>
+<script th:src="@{/js/weekly-planning.js}"></script>
 
 </body>
 </html>
