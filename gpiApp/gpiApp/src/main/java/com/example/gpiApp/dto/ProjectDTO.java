@@ -1,5 +1,6 @@
 package com.example.gpiApp.dto;
 
+import com.example.gpiApp.entity.Project;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -8,7 +9,7 @@ public class ProjectDTO {
     private Long id;
     private String name;
     private String description;
-    private String status;
+    private Project.ProjectStatus status;
     private String manager;
     private String createdBy;
     private LocalDateTime deadline;

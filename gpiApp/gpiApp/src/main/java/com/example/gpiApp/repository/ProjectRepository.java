@@ -31,4 +31,4 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     
     @Query("SELECT p FROM Project p WHERE p.endDate < :date AND p.status != 'COMPLETED'")
     List<Project> findOverdueProjects(@Param("date") LocalDate date);
-} 
+}

@@ -155,3 +155,5 @@ To test the dashboard:
 - API endpoints are protected by Spring Security
 - Error handling prevents sensitive data exposure
 - Input validation on all data retrieval methods
+
+
