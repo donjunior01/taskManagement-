@@ -32,7 +32,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     @Override
     public AdminDashboardStatsDTO getDashboardStats() {
         // Get basic counts
-        Long totalUsers = userRepository.countByIsActiveTrue();
+        Long totalUsers = userRepository.count();
         Long totalProjects = projectRepository.count();
         Long totalTasks = taskRepository.count();
         

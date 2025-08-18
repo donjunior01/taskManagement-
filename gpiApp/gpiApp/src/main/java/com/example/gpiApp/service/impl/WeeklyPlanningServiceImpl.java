@@ -28,6 +28,52 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
     private final UserRepository userRepository;
     private final DailyTaskScheduleService dailyTaskScheduleService;
     
+    /**
+     * Internal utility class to manage user identification and username generation
+     */
+    private static class UserManager {
+        
+        /**
+         * Generate a username from first and last name
+         */
+        public static String generateUsername(String firstName, String lastName) {
+            if (firstName == null || lastName == null) {
+                return null;
+            }
+            return (firstName.toLowerCase() + "." + lastName.toLowerCase()).replaceAll("\\s+", "");
+        }
+        
+        /**
+         * Find user by generated username (first.last format)
+         */
+        public static allUsers findUserByGeneratedUsername(List<allUsers> allUsers, String generatedUsername) {
+            return allUsers.stream()
+                    .filter(user -> generatedUsername.equals(generateUsername(user.getFirstName(), user.getLastName())))
+                    .findFirst()
+                    .orElse(null);
+        }
+        
+        /**
+         * Find user by email (since email is unique and serves as username in the entity)
+         */
+        public static allUsers findUserByEmail(List<allUsers> allUsers, String email) {
+            return allUsers.stream()
+                    .filter(user -> email.equals(user.getEmail()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        
+        /**
+         * Find user by first and last name combination
+         */
+        public static allUsers findUserByName(List<allUsers> allUsers, String firstName, String lastName) {
+            return allUsers.stream()
+                    .filter(user -> firstName.equals(user.getFirstName()) && lastName.equals(user.getLastName()))
+                    .findFirst()
+                    .orElse(null);
+        }
+    }
+    
     @Override
     public WeeklyPlanningDTO createWeeklyPlanning(WeeklyPlanningDTO weeklyPlanningDTO) {
         allUsers user = userRepository.findById(weeklyPlanningDTO.getUserId())
@@ -236,7 +282,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
         return WeeklyPlanningDTO.builder()
                 .planningId(planning.getPlanningId())
                 .userId(planning.getUser().getUserId())
-                .userName(planning.getUser().getFirstName() != null ? planning.getUser().getLastName() : planning.getUser().getUsername())
+                .userName(UserManager.generateUsername(planning.getUser().getFirstName(), planning.getUser().getLastName()))
                 .weekNumber(planning.getWeekNumber())
                 .year(planning.getYear())
                 .weekStartDate(planning.getWeekStartDate())
@@ -247,7 +293,7 @@ public class WeeklyPlanningServiceImpl implements WeeklyPlanningService {
                 .isApproved(planning.getIsApproved())
                 .approvedById(planning.getApprovedBy() != null ? planning.getApprovedBy().getUserId() : null)
                 .approvedByName(planning.getApprovedBy() != null ? 
-                    (planning.getApprovedBy().getFirstName() != null ? planning.getApprovedBy().getLastName() : planning.getApprovedBy().getUsername()) : null)
+                    UserManager.generateUsername(planning.getApprovedBy().getFirstName(), planning.getApprovedBy().getLastName()) : null)
                 .approvedAt(planning.getApprovedAt())
                 .createdAt(planning.getCreatedAt())
                 .updatedAt(planning.getUpdatedAt())

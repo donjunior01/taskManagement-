@@ -105,7 +105,10 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public Map<String, Object> getUserActivityData() {
         long totalUsers = userRepository.count();
-        long activeUsers = userRepository.countByIsActiveTrue();
+        // Since countByIsActiveTrue doesn't exist, we'll filter from all users
+        long activeUsers = userRepository.findAll().stream()
+                .filter(allUsers::getIsActive)
+                .count();
         long inactiveUsers = totalUsers - activeUsers;
         
         Map<String, Object> activity = new HashMap<>();
@@ -120,7 +123,10 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public Map<String, Object> getUserReports() {
         long totalUsers = userRepository.count();
-        long activeUsers = userRepository.countByIsActiveTrue();
+        // Since countByIsActiveTrue doesn't exist, we'll filter from all users
+        long activeUsers = userRepository.findAll().stream()
+                .filter(allUsers::getIsActive)
+                .count();
         long inactiveUsers = totalUsers - activeUsers;
         
         Map<String, Object> reports = new HashMap<>();

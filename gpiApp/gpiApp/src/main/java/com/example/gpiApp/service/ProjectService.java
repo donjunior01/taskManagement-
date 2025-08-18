@@ -24,4 +24,8 @@ public interface ProjectService {
     // Reports
     Map<String, Object> getProjectReports();
     Map<String, Object> getProjectReportsByManager(String managerUsername);
-} 
+
+    Long getActiveProjectsCount();
+
+    Long getCompletedProjectsCount();
+}
