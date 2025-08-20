@@ -6,8 +6,8 @@ import java.util.List;
 @Data
 public class CollaborationDTO {
     private List<TeamMemberDTO> teamMembers;
-    private List<MessageDTO> messages;
-    
+    private List<MessageDTO> messages; // Use global MessageDTO
+
     @Data
     public static class TeamMemberDTO {
         private Long id;
@@ -16,12 +16,5 @@ public class CollaborationDTO {
         private String status;
         private String avatar;
     }
-    
-    @Data
-    public static class MessageDTO {
-        private Long id;
-        private String author;
-        private String content;
-        private String timestamp;
-    }
 }
+ 

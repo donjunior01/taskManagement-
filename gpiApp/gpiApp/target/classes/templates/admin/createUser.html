@@ -17,7 +17,7 @@
                 </a>
             </div>
 
-            <form th:action="@{/api/users}" method="post" class="user-form">
+            <form th:action="@{/api/users/form}" method="post" class="user-form">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="firstName">First Name *</label>
@@ -56,24 +56,10 @@
                             <option value="">Select Post</option>
                             <option value="DEVELOPER">Developer</option>
                             <option value="DESIGNER">Designer</option>
+                            <option value="TESTER">Tester</option>
                             <option value="ANALYST">Analyst</option>
-                            <option value="PROJECT_MANAGER">Project Manager</option>
-                            <option value="TEAM_LEAD">Team Lead</option>
-                            <option value="ARCHITECT">Architect</option>
-                            <option value="QA_ENGINEER">QA Engineer</option>
-                            <option value="DEVOPS">DevOps</option>
-                            <option value="PRODUCT_OWNER">Product Owner</option>
-                            <option value="SCRUM_MASTER">Scrum Master</option>
-                            <option value="BUSINESS_ANALYST">Business Analyst</option>
-                            <option value="UI_UX_DESIGNER">UI/UX Designer</option>
-                            <option value="DATA_SCIENTIST">Data Scientist</option>
-                            <option value="MARKETING_SPECIALIST">Marketing Specialist</option>
-                            <option value="HR_SPECIALIST">HR Specialist</option>
-                            <option value="FINANCE_OFFICER">Finance Officer</option>
-                            <option value="OPERATIONS_MANAGER">Operations Manager</option>
-                            <option value="SALES_REPRESENTATIVE">Sales Representative</option>
-                            <option value="CUSTOMER_SUPPORT">Customer Support</option>
-                            <option value="INTERN">Intern</option>
+                            <option value="MANAGER">Manager</option>
+                            <option value="ADMIN">Admin</option>
                         </select>
                     </div>
                 </div>

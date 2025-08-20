@@ -1,10 +1,4 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-</head>
-<body>
-<div th:fragment="topbar">
+<div th:fragment="pmfragmentTB">
     <!-- Top Bar -->
     <div class="top-bar">
         <button class="mobile-menu-toggle" id="mobile-menu-toggle">
@@ -34,8 +28,8 @@
             <div class="admin-profile">
                 <img src="https://via.placeholder.com/40x40/4361ee/ffffff?text=SA" alt="Project Manager Avatar">
                 <div class="admin-details">
-                    <span class="username" th:text="${user.firstName + ' ' + user.lastName}">Project Manager</span>
-                    <span class="role" th:text="${user.userPost}">Team Manager</span>
+                    <span class="username" th:text="${user != null ? user.name : 'Project Manager'}">Project Manager</span>
+                    <span class="role" th:text="${user != null && user.position != null ? user.position : 'Team Manager'}">Team Manager</span>
                 </div>
             </div>
         </div>
@@ -55,7 +49,7 @@
 
     <!-- Secondary Sidebar -->
     <div class="secondary-sidebar" id="secondary-sidebar">
-        <!-- Notifications Content -->
+        <!-- Notifications Content -->      
         <div class="sidebar-content" id="notifications-content">
             <div class="sidebar-header">
                 <h3>Notifications</h3>
@@ -68,35 +62,15 @@
                     </button>
                 </div>
             </div>
-            <div class="message-item unread" data-id="1">
+            <div th:each="n : ${notifications}" class="message-item" th:classappend="${n.read} ? '' : ' unread'" th:attr="data-id=${n.id}">
                 <input type="checkbox" class="message-checkbox">
                 <div class="message-body">
-                    <div class="message-title">User Created</div>
-                    <div class="message-preview">Super Admin created user Jane Smith</div>
-                    <div class="message-time">2025-08-07 17:42:00</div>
-                    <div class="message-content">A new user, Jane Smith, was created with Manager role. The user has been assigned to the Marketing Campaign Q2 project with full access permissions.</div>
+                    <div class="message-title" th:text="${n.title}">Notification</div>
+                    <div class="message-preview" th:text="${n.message}">Preview</div>
+                    <div class="message-time" th:text="${n.createdAt}">Time</div>
+                    <div class="message-content" th:text="${n.message}">Content</div>
                 </div>
-                <button class="btn btn-danger delete-message" data-id="1"><i class="fas fa-trash"></i></button>
-            </div>
-            <div class="message-item unread" data-id="2">
-                <input type="checkbox" class="message-checkbox">
-                <div class="message-body">
-                    <div class="message-title">System Settings Updated</div>
-                    <div class="message-preview">Notification settings modified</div>
-                    <div class="message-time">2025-08-07 16:44:00</div>
-                    <div class="message-content">Notification settings were modified by Super Admin. Email notifications are now enabled for all critical system events and user activities.</div>
-                </div>
-                <button class="btn btn-danger delete-message" data-id="2"><i class="fas fa-trash"></i></button>
-            </div>
-            <div class="message-item" data-id="3">
-                <input type="checkbox" class="message-checkbox">
-                <div class="message-body">
-                    <div class="message-title">Security Alert</div>
-                    <div class="message-preview">Multiple failed login attempts detected</div>
-                    <div class="message-time">2025-08-07 14:44:00</div>
-                    <div class="message-content">Multiple failed login attempts detected from IP 192.168.1.1. Please review the security settings and consider enabling additional authentication measures.</div>
-                </div>
-                <button class="btn btn-danger delete-message" data-id="3"><i class="fas fa-trash"></i></button>
+                <button class="btn btn-danger delete-message" th:attr="data-id=${n.id}"><i class="fas fa-trash"></i></button>
             </div>
         </div>
 
@@ -113,35 +87,15 @@
                     </button>
                 </div>
             </div>
-            <div class="message-item" data-id="1">
+            <div th:each="m : ${messages}" class="message-item" th:classappend="${m.unread} ? ' unread' : ''" th:attr="data-id=${m.id}">
                 <input type="checkbox" class="message-checkbox">
                 <div class="message-body">
-                    <div class="message-title">Task Deadline Reminder</div>
-                    <div class="message-preview">Design Landing Page due soon</div>
-                    <div class="message-time">2025-08-07 17:55:00</div>
-                    <div class="message-content">The Design Landing Page task for Marketing Campaign Q2 is due tomorrow at 5:00 PM. Please ensure all deliverables are ready.</div>
+                    <div class="message-title" th:text="${m.title}">Message</div>
+                    <div class="message-preview" th:text="${m.preview}">Preview</div>
+                    <div class="message-time" th:text="${m.time}">Time</div>
+                    <div class="message-content" th:text="${m.content}">Content</div>
                 </div>
-                <button class="btn btn-danger delete-message" data-id="1"><i class="fas fa-trash"></i></button>
-            </div>
-            <div class="message-item unread" data-id="2">
-                <input type="checkbox" class="message-checkbox">
-                <div class="message-body">
-                    <div class="message-title">Project Update</div>
-                    <div class="message-preview">Marketing Campaign Q2 needs review</div>
-                    <div class="message-time">2025-08-07 17:30:00</div>
-                    <div class="message-content">The Marketing Campaign Q2 project requires your review for the latest deliverables. Please check the attached documents and provide feedback by end of day.</div>
-                </div>
-                <button class="btn btn-danger delete-message" data-id="2"><i class="fas fa-trash"></i></button>
-            </div>
-            <div class="message-item unread" data-id="3">
-                <input type="checkbox" class="message-checkbox">
-                <div class="message-body">
-                    <div class="message-title">System Maintenance</div>
-                    <div class="message-preview">Scheduled maintenance tomorrow</div>
-                    <div class="message-time">2025-08-07 17:15:00</div>
-                    <div class="message-content">System maintenance is scheduled for tomorrow at 2:00 AM. The system will be down for approximately 2 hours. Please ensure all critical tasks are completed before the maintenance window.</div>
-                </div>
-                <button class="btn btn-danger delete-message" data-id="3"><i class="fas fa-trash"></i></button>
+                <button class="btn btn-danger delete-message" th:attr="data-id=${m.id}"><i class="fas fa-trash"></i></button>
             </div>
             <div class="message-item unread" data-id="4">
                 <input type="checkbox" class="message-checkbox">
@@ -272,15 +226,15 @@
                 <div class="user-info">
                     <div class="user-info-item">
                         <label>Name</label>
-                        <span th:text="${user.firstName + ' ' + user.lastName}">Project Manager</span>
+                        <span th:text="${user != null ? user.name : 'Project Manager'}">Project Manager</span>
                     </div>
                     <div class="user-info-item">
                         <label>Email</label>
-                        <span th:text="${user.email}">admin@example.com</span>
+                        <span th:text="${user != null ? user.email : 'admin@example.com'}">admin@example.com</span>
                     </div>
                     <div class="user-info-item">
                         <label>Role</label>
-                        <span th:text="${user.userPost}">Team Manager</span>
+                        <span th:text="${user != null && user.position != null ? user.position : 'Team Manager'}">Team Manager</span>
                     </div>
                     <div class="user-info-item">
                         <label>Last Login</label>
@@ -306,5 +260,3 @@
         </div>
     </div>
 </div>
-</body>
-</html>

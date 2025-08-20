@@ -6,6 +6,8 @@ import com.example.gpiApp.dto.TaskDTO;
 import com.example.gpiApp.dto.ProjectDTO;
 import com.example.gpiApp.dto.UserDTO;
 import com.example.gpiApp.dto.NotificationDTO;
+import com.example.gpiApp.dto.MessageDTO;
+import com.example.gpiApp.dto.TaskAssignmentDTO;
 import com.example.gpiApp.dto.CalendarEventDTO;
 import com.example.gpiApp.dto.TimeTrackingDTO;
 import com.example.gpiApp.dto.CollaborationDTO;
@@ -125,204 +127,11 @@ public class DashboardDataController {
         }
     }
 
-    // Tasks API - Removed duplicate endpoints (handled by TaskController)
-    // @GetMapping("/tasks") - REMOVED
-    // @GetMapping("/tasks/{id}") - REMOVED
-    // @PostMapping("/tasks") - REMOVED
-    // @PutMapping("/tasks/{id}") - REMOVED
-    // @DeleteMapping("/tasks/{id}") - REMOVED
+    // Tasks API - do not duplicate (handled by TaskController)
 
-    // Projects API (Admin only)
-    @GetMapping("/admin/projects")
-    public ResponseEntity<List<ProjectDTO>> getAllProjects() {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String role = userService.getUserRole(auth.getName());
-            
-            if (!"ADMIN".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            
-            List<ProjectDTO> projects = projectService.getAllProjects();
-            return ResponseEntity.ok(projects);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
+    // Projects API - removed to avoid conflict with ProjectController
 
-    @GetMapping("/admin/projects/{id}")
-    public ResponseEntity<ProjectDTO> getProjectById(@PathVariable Long id) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String role = userService.getUserRole(auth.getName());
-            
-            if (!"ADMIN".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            
-            ProjectDTO project = projectService.getProjectById(id);
-            if (project != null) {
-                return ResponseEntity.ok(project);
-            }
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PostMapping("/admin/projects")
-    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectDTO projectDTO) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String role = userService.getUserRole(auth.getName());
-            
-            if (!"ADMIN".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            
-            ProjectDTO createdProject = projectService.createProject(projectDTO);
-            return ResponseEntity.ok(createdProject);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PutMapping("/admin/projects/{id}")
-    public ResponseEntity<ProjectDTO> updateProject(@PathVariable Long id, @RequestBody ProjectDTO projectDTO) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String role = userService.getUserRole(auth.getName());
-            
-            if (!"ADMIN".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            
-            projectDTO.setId(id);
-            ProjectDTO updatedProject = projectService.updateProject(projectDTO);
-            if (updatedProject != null) {
-                return ResponseEntity.ok(updatedProject);
-            }
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @DeleteMapping("/admin/projects/{id}")
-    public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String role = userService.getUserRole(auth.getName());
-            
-            if (!"ADMIN".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            
-            boolean deleted = projectService.deleteProject(id);
-            if (deleted) {
-                return ResponseEntity.ok().build();
-            }
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    // Users API (Admin only)
-    @GetMapping("/admin/users")
-    public ResponseEntity<List<UserDTO>> getAllUsers() {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String role = userService.getUserRole(auth.getName());
-            
-            if (!"ADMIN".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            
-            List<UserDTO> users = userService.getAllUsers();
-            return ResponseEntity.ok(users);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @GetMapping("/admin/users/{id}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String role = userService.getUserRole(auth.getName());
-            
-            if (!"ADMIN".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            
-            UserDTO user = userService.getUserById(id);
-            if (user != null) {
-                return ResponseEntity.ok(user);
-            }
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PostMapping("/admin/users")
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String role = userService.getUserRole(auth.getName());
-            
-            if (!"ADMIN".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            
-            UserDTO createdUser = userService.createUser(userDTO);
-            return ResponseEntity.ok(createdUser);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PutMapping("/admin/users/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String role = userService.getUserRole(auth.getName());
-            
-            if (!"ADMIN".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            
-            userDTO.setId(id);
-            UserDTO updatedUser = userService.updateUser(userDTO);
-            if (updatedUser != null) {
-                return ResponseEntity.ok(updatedUser);
-            }
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @DeleteMapping("/admin/users/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String role = userService.getUserRole(auth.getName());
-            
-            if (!"ADMIN".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            
-            boolean deleted = userService.deleteUser(id);
-            if (deleted) {
-                return ResponseEntity.ok().build();
-            }
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
+    // Users API - removed to avoid conflict with UserController
 
     // Notifications API
     @GetMapping("/notifications")
@@ -354,19 +163,9 @@ public class DashboardDataController {
         }
     }
 
-    // Calendar Events API
-    @GetMapping("/calendar/events")
-    public ResponseEntity<List<CalendarEventDTO>> getCalendarEvents() {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String username = auth.getName();
-            
-            List<CalendarEventDTO> events = calendarService.getEventsByUser(username);
-            return ResponseEntity.ok(events);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
+    // Messages/Assignments/Teams/Deliverables APIs removed to avoid duplicates
+
+    // Calendar Events API - removed to avoid conflict with CalendarController
 
     // Time Tracking API
     @GetMapping("/time-tracking")

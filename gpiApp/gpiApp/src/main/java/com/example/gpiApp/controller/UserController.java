@@ -1,6 +1,7 @@
 package com.example.gpiApp.controller;
 
 import com.example.gpiApp.dto.UserDTO;
+import com.example.gpiApp.dto.UserRequestDTO;
 import com.example.gpiApp.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,26 @@ public class UserController {
         return ResponseEntity.ok(userService.createUser(userDTO));
     }
 
+    @PostMapping("/form")
+    public ResponseEntity<UserDTO> createUserFromForm(@ModelAttribute UserRequestDTO userRequest) {
+        try {
+            // Convert UserRequestDTO to UserDTO
+            UserDTO userDTO = UserDTO.builder()
+                    .name(userRequest.getFirstName() + " " + userRequest.getLastName())
+                    .email(userRequest.getEmail())
+                    .role(userRequest.getUserRole() != null ? userRequest.getUserRole().name() : "EMPLOYEE")
+                    .department(userRequest.getUserPost() != null ? userRequest.getUserPost().name() : "DEVELOPER")
+                    .avatar(userRequest.getProfilePictureUrl())
+                    .status("ACTIVE")
+                    .build();
+            
+            UserDTO createdUser = userService.createUser(userDTO);
+            return ResponseEntity.ok(createdUser);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(
             @PathVariable Long id,
@@ -53,5 +74,23 @@ public class UserController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/role/{role}")
+    public ResponseEntity<List<UserDTO>> getUsersByRole(@PathVariable String role) {
+        List<UserDTO> users = userService.getUsersByRole(role);
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/managers")
+    public ResponseEntity<List<UserDTO>> getManagers() {
+        List<UserDTO> managers = userService.getManagers();
+        return ResponseEntity.ok(managers);
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<UserDTO>> getActiveUsers() {
+        List<UserDTO> activeUsers = userService.getActiveUsers();
+        return ResponseEntity.ok(activeUsers);
     }
 } 

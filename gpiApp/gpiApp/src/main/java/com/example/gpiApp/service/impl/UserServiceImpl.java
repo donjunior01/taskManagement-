@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -45,37 +46,48 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO createUser(UserDTO userDTO) {
-        allUsers user = allUsers.builder()
-                .email(userDTO.getEmail())
-                .firstName(userDTO.getName().split(" ")[0])
-                .lastName(userDTO.getName().split(" ").length > 1 ? userDTO.getName().split(" ")[1] : "")
-                .userRole(allUsers.UserRole.valueOf(userDTO.getRole()))
-                .userPost(allUsers.UserPost.valueOf(userDTO.getDepartment()))
-                .profilePictureUrl(userDTO.getAvatar())
-                .isActive("ACTIVE".equals(userDTO.getStatus()))
-                .build();
-        
-        allUsers savedUser = userRepository.save(user);
-        return convertToDTO(savedUser);
+        try {
+            allUsers user = allUsers.builder()
+                    .email(userDTO.getEmail())
+                    .firstName(userDTO.getName() != null ? userDTO.getName().split(" ")[0] : "")
+                    .lastName(userDTO.getName() != null && userDTO.getName().split(" ").length > 1 ? userDTO.getName().split(" ")[1] : "")
+                    .userRole(allUsers.UserRole.valueOf(userDTO.getRole() != null ? userDTO.getRole() : "EMPLOYEE"))
+                    .userPost(allUsers.UserPost.valueOf(userDTO.getDepartment() != null ? userDTO.getDepartment() : "DEVELOPER"))
+                    .profilePictureUrl(userDTO.getAvatar())
+                    .isActive(true)
+                    .passwordHash("defaultPassword123") // Set a default password
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            
+            allUsers savedUser = userRepository.save(user);
+            return convertToDTO(savedUser);
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating user: " + e.getMessage(), e);
+        }
     }
 
     @Override
     public UserDTO updateUser(UserDTO userDTO) {
-        return userRepository.findById(userDTO.getId())
-                .map(user -> {
-                    user.setEmail(userDTO.getEmail());
-                    user.setFirstName(userDTO.getName().split(" ")[0]);
-                    user.setLastName(userDTO.getName().split(" ").length > 1 ? userDTO.getName().split(" ")[1] : "");
-                    user.setUserRole(allUsers.UserRole.valueOf(userDTO.getRole()));
-                    user.setUserPost(allUsers.UserPost.valueOf(userDTO.getDepartment()));
-                    user.setProfilePictureUrl(userDTO.getAvatar());
-                    user.setIsActive("ACTIVE".equals(userDTO.getStatus()));
-                    user.setUpdatedAt(LocalDateTime.now());
-                    
-                    allUsers updatedUser = userRepository.save(user);
-                    return convertToDTO(updatedUser);
-                })
-                .orElse(null);
+        try {
+            return userRepository.findById(userDTO.getId())
+                    .map(user -> {
+                        user.setEmail(userDTO.getEmail());
+                        user.setFirstName(userDTO.getName() != null ? userDTO.getName().split(" ")[0] : "");
+                        user.setLastName(userDTO.getName() != null && userDTO.getName().split(" ").length > 1 ? userDTO.getName().split(" ")[1] : "");
+                        user.setUserRole(allUsers.UserRole.valueOf(userDTO.getRole() != null ? userDTO.getRole() : "EMPLOYEE"));
+                        user.setUserPost(allUsers.UserPost.valueOf(userDTO.getDepartment() != null ? userDTO.getDepartment() : "DEVELOPER"));
+                        user.setProfilePictureUrl(userDTO.getAvatar());
+                        user.setIsActive(true);
+                        user.setUpdatedAt(LocalDateTime.now());
+                        
+                        allUsers updatedUser = userRepository.save(user);
+                        return convertToDTO(updatedUser);
+                    })
+                    .orElse(null);
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating user: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -129,6 +141,35 @@ public class UserServiceImpl implements UserService {
         reports.put("inactiveUsers", inactiveUsers);
         reports.put("newUsersThisMonth", 8); // This would need a date-based query
         return reports;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserDTO> getUsersByRole(String role) {
+        try {
+            allUsers.UserRole userRole = allUsers.UserRole.valueOf(role.toUpperCase());
+            return userRepository.findByUserRole(userRole).stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserDTO> getActiveUsers() {
+        return userRepository.findByIsActiveTrue().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserDTO> getManagers() {
+        return userRepository.findByUserRole(allUsers.UserRole.MANAGER).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     private UserDTO convertToDTO(allUsers user) {

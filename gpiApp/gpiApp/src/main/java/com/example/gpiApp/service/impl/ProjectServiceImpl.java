@@ -1,139 +1,147 @@
 package com.example.gpiApp.service.impl;
 
 import com.example.gpiApp.dto.ProjectDTO;
+import com.example.gpiApp.entity.Project;
+import com.example.gpiApp.entity.Team;
+import com.example.gpiApp.entity.allUsers;
+import com.example.gpiApp.repository.ProjectRepository;
+import com.example.gpiApp.repository.TeamRepository;
+import com.example.gpiApp.repository.UserRepository;
 import com.example.gpiApp.service.ProjectService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class ProjectServiceImpl implements ProjectService {
 
+    private final ProjectRepository projectRepository;
+    private final TeamRepository teamRepository;
+    private final UserRepository userRepository;
+
+    public ProjectServiceImpl(ProjectRepository projectRepository,
+                              TeamRepository teamRepository,
+                              UserRepository userRepository) {
+        this.projectRepository = projectRepository;
+        this.teamRepository = teamRepository;
+        this.userRepository = userRepository;
+    }
+
     @Override
+    @Transactional(readOnly = true)
     public List<ProjectDTO> getAllProjects() {
-        List<ProjectDTO> projects = new ArrayList<>();
-        
-        ProjectDTO project1 = new ProjectDTO();
-        project1.setId(1L);
-        project1.setName("Website Redesign");
-        project1.setDescription("Complete redesign of the company website");
-        project1.setStatus("IN_PROGRESS");
-        project1.setManager("jane.smith");
-        project1.setCreatedBy("admin");
-        project1.setDeadline(LocalDateTime.now().plusDays(30));
-        project1.setCreatedAt(LocalDateTime.now().minusDays(15));
-        project1.setUpdatedAt(LocalDateTime.now());
-        project1.setProgress(65);
-        project1.setPriority("HIGH");
-        project1.setCategory("Web Development");
-        projects.add(project1);
-        
-        ProjectDTO project2 = new ProjectDTO();
-        project2.setId(2L);
-        project2.setName("System Optimization");
-        project2.setDescription("Optimize system performance and database");
-        project2.setStatus("COMPLETED");
-        project2.setManager("jane.smith");
-        project2.setCreatedBy("admin");
-        project2.setDeadline(LocalDateTime.now().minusDays(5));
-        project2.setCreatedAt(LocalDateTime.now().minusDays(25));
-        project2.setUpdatedAt(LocalDateTime.now().minusDays(5));
-        project2.setProgress(100);
-        project2.setPriority("CRITICAL");
-        project2.setCategory("System Administration");
-        projects.add(project2);
-        
-        return projects;
+        return projectRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProjectDTO> getProjectsByManager(String managerUsername) {
-        return getAllProjects().stream()
-                .filter(project -> managerUsername.equals(project.getManager()))
-                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-    }
-
-    @Override
-    public List<ProjectDTO> getProjectsByUser(String username) {
-        // For now, return all projects
+        // Simplification: return all for now unless team/manager mapping exists
         return getAllProjects();
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ProjectDTO> getProjectsByUser(String username) {
+        // Simplification: return all for now
+        return getAllProjects();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ProjectDTO getProjectById(Long id) {
-        return getAllProjects().stream()
-                .filter(project -> id.equals(project.getId()))
-                .findFirst()
-                .orElse(null);
+        return projectRepository.findById(id).map(this::toDTO).orElse(null);
     }
 
     @Override
     public ProjectDTO createProject(ProjectDTO projectDTO) {
-        projectDTO.setId(System.currentTimeMillis());
-        projectDTO.setCreatedAt(LocalDateTime.now());
-        projectDTO.setUpdatedAt(LocalDateTime.now());
-        return projectDTO;
+        Project project = new Project();
+        project.setProjectName(projectDTO.getName());
+        project.setDescription(projectDTO.getDescription());
+        project.setStatus(Project.ProjectStatus.ACTIVE);
+
+        Project saved = projectRepository.save(project);
+        return toDTO(saved);
     }
 
     @Override
     public ProjectDTO updateProject(ProjectDTO projectDTO) {
-        projectDTO.setUpdatedAt(LocalDateTime.now());
-        return projectDTO;
+        if (projectDTO.getId() == null) return null;
+        Optional<Project> opt = projectRepository.findById(projectDTO.getId());
+        if (opt.isEmpty()) return null;
+        Project project = opt.get();
+        if (projectDTO.getName() != null) project.setProjectName(projectDTO.getName());
+        if (projectDTO.getDescription() != null) project.setDescription(projectDTO.getDescription());
+        Project saved = projectRepository.save(project);
+        return toDTO(saved);
     }
 
     @Override
     public boolean deleteProject(Long id) {
+        if (!projectRepository.existsById(id)) return false;
+        projectRepository.deleteById(id);
         return true;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Long getTotalProjectsCount() {
-        return 12L;
+        return projectRepository.count();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Long getProjectsCountByManager(String managerUsername) {
-        return 5L;
+        return projectRepository.count();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, Object> getProjectProgressData() {
         Map<String, Object> progress = new HashMap<>();
-        progress.put("completed", 4);
-        progress.put("inProgress", 6);
-        progress.put("pending", 2);
-        progress.put("averageProgress", 68.5);
-        return progress;
-    }
-
-    @Override
-    public Map<String, Object> getProjectProgressByManager(String managerUsername) {
-        Map<String, Object> progress = new HashMap<>();
-        progress.put("completed", 2);
-        progress.put("inProgress", 3);
+        progress.put("completed", 0);
+        progress.put("inProgress", 0);
         progress.put("pending", 0);
-        progress.put("averageProgress", 72.3);
+        progress.put("averageProgress", 0);
         return progress;
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getProjectProgressByManager(String managerUsername) {
+        return getProjectProgressData();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Map<String, Object> getProjectReports() {
         Map<String, Object> reports = new HashMap<>();
-        reports.put("totalProjects", 12);
-        reports.put("completedProjects", 4);
-        reports.put("inProgressProjects", 6);
-        reports.put("overdueProjects", 2);
+        reports.put("totalProjects", projectRepository.count());
         return reports;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, Object> getProjectReportsByManager(String managerUsername) {
-        Map<String, Object> reports = new HashMap<>();
-        reports.put("totalProjects", 5);
-        reports.put("completedProjects", 2);
-        reports.put("inProgressProjects", 3);
-        reports.put("overdueProjects", 0);
-        return reports;
+        return getProjectReports();
     }
-} 
+
+    private ProjectDTO toDTO(Project project) {
+        ProjectDTO dto = new ProjectDTO();
+        dto.setId(project.getProjectId());
+        dto.setName(project.getProjectName());
+        dto.setDescription(project.getDescription());
+        dto.setStatus(project.getStatus() != null ? project.getStatus().name() : null);
+
+        dto.setCreatedAt(project.getCreatedAt());
+        dto.setUpdatedAt(project.getUpdatedAt());
+        return dto;
+    }
+}

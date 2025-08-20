@@ -210,9 +210,9 @@ class PageManager {
     async loadAdminDashboardData() {
         try {
             const [statsResponse, tasksResponse, usersResponse] = await Promise.all([
-                fetch('/api/dashboard/admin/stats'),
-                fetch('/api/dashboard/admin/tasks'),
-                fetch('/api/dashboard/admin/users')
+                fetch('/api/admin/dashboard-stats'),
+                fetch('/api/tasks'),
+                fetch('/api/users')
             ]);
 
             if (statsResponse.ok) {
@@ -236,7 +236,7 @@ class PageManager {
 
     async loadUserManagementData() {
         try {
-            const response = await fetch('/api/dashboard/admin/users');
+            const response = await fetch('/api/users');
             if (response.ok) {
                 const users = await response.json();
                 this.updateUserManagementTable(users);
@@ -248,7 +248,7 @@ class PageManager {
 
     async loadGlobalTasksData() {
         try {
-            const response = await fetch('/api/dashboard/admin/tasks');
+            const response = await fetch('/api/tasks');
             if (response.ok) {
                 const tasks = await response.json();
                 this.updateGlobalTasksTable(tasks);
@@ -260,7 +260,7 @@ class PageManager {
 
     async loadGlobalReportsData() {
         try {
-            const response = await fetch('/api/dashboard/admin/reports');
+            const response = await fetch('/api/reports');
             if (response.ok) {
                 const reports = await response.json();
                 this.dataCache.reports = reports; // Cache data for filtering/searching
@@ -274,7 +274,7 @@ class PageManager {
 
     async loadTeamPerformanceData() {
         try {
-            const response = await fetch('/api/dashboard/admin/team-performance');
+            const response = await fetch('/api/reports');
             if (response.ok) {
                 const performance = await response.json();
                 this.dataCache.teamPerformance = performance; // Cache data for filtering/searching
@@ -288,7 +288,7 @@ class PageManager {
 
     async loadProjectManagementData() {
         try {
-            const response = await fetch('/api/dashboard/admin/projects');
+            const response = await fetch('/api/projects');
             if (response.ok) {
                 const projects = await response.json();
                 this.dataCache.projects = projects; // Cache data for filtering/searching
@@ -303,9 +303,9 @@ class PageManager {
     async loadPMDashboardData() {
         try {
             const [statsResponse, tasksResponse, teamResponse] = await Promise.all([
-                fetch('/api/dashboard/manager/stats'),
-                fetch('/api/dashboard/manager/tasks'),
-                fetch('/api/dashboard/manager/team')
+                fetch('/api/manager/dashboard-stats'),
+                fetch('/api/tasks'),
+                fetch('/api/pm/employees')
             ]);
 
             if (statsResponse.ok) {
@@ -329,7 +329,7 @@ class PageManager {
 
     async loadTeamTaskData() {
         try {
-            const response = await fetch('/api/dashboard/manager/team-tasks');
+            const response = await fetch('/api/tasks');
             if (response.ok) {
                 const tasks = await response.json();
                 this.updateTeamTaskTable(tasks);
@@ -341,7 +341,7 @@ class PageManager {
 
     async loadReportsAndAnalyticsData() {
         try {
-            const response = await fetch('/api/dashboard/manager/analytics');
+            const response = await fetch('/api/reports');
             if (response.ok) {
                 const analytics = await response.json();
                 this.updateReportsAndAnalytics(analytics);

@@ -1,60 +1,83 @@
 package com.example.gpiApp.service.impl;
 
 import com.example.gpiApp.dto.CollaborationDTO;
+import com.example.gpiApp.dto.MessageDTO;
+import com.example.gpiApp.entity.Comment;
+import com.example.gpiApp.entity.allUsers;
+import com.example.gpiApp.repository.CommentRepository;
+import com.example.gpiApp.repository.UserRepository;
 import com.example.gpiApp.service.CollaborationService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class CollaborationServiceImpl implements CollaborationService {
 
+    private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
+
+    public CollaborationServiceImpl(UserRepository userRepository,
+                                   CommentRepository commentRepository) {
+        this.userRepository = userRepository;
+        this.commentRepository = commentRepository;
+    }
+
     @Override
+    @Transactional(readOnly = true)
     public CollaborationDTO getCollaborationDataByUser(String username) {
         CollaborationDTO collaborationData = new CollaborationDTO();
         
-        // Team members
-        List<CollaborationDTO.TeamMemberDTO> teamMembers = new ArrayList<>();
-        
-        CollaborationDTO.TeamMemberDTO member1 = new CollaborationDTO.TeamMemberDTO();
-        member1.setId(1L);
-        member1.setName("John Doe");
-        member1.setRole("Developer");
-        member1.setStatus("online");
-        member1.setAvatar("/images/john-avatar.png");
-        teamMembers.add(member1);
-        
-        CollaborationDTO.TeamMemberDTO member2 = new CollaborationDTO.TeamMemberDTO();
-        member2.setId(2L);
-        member2.setName("Jane Smith");
-        member2.setRole("Manager");
-        member2.setStatus("away");
-        member2.setAvatar("/images/jane-avatar.png");
-        teamMembers.add(member2);
+        // Get team members (all active users)
+        List<CollaborationDTO.TeamMemberDTO> teamMembers = userRepository.findActiveUsers().stream()
+                .map(this::toTeamMemberDTO)
+                .collect(Collectors.toList());
         
         collaborationData.setTeamMembers(teamMembers);
         
-        // Messages
-        List<CollaborationDTO.MessageDTO> messages = new ArrayList<>();
-        
-        CollaborationDTO.MessageDTO message1 = new CollaborationDTO.MessageDTO();
-        message1.setId(1L);
-        message1.setAuthor("John Doe");
-        message1.setContent("Has anyone reviewed the latest design mockups?");
-        message1.setTimestamp(LocalDateTime.now().minusHours(2).toString());
-        messages.add(message1);
-        
-        CollaborationDTO.MessageDTO message2 = new CollaborationDTO.MessageDTO();
-        message2.setId(2L);
-        message2.setAuthor("Jane Smith");
-        message2.setContent("I'll review them by end of day");
-        message2.setTimestamp(LocalDateTime.now().minusHours(1).toString());
-        messages.add(message2);
-        
+        // Get messages from comments -> map to global MessageDTO
+        List<MessageDTO> messages = commentRepository.findAll().stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .limit(10)
+                .map(this::toMessageDTO)
+                .collect(Collectors.toList());
         collaborationData.setMessages(messages);
         
         return collaborationData;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MessageDTO> getMessagesByUser(String username) {
+        return commentRepository.findAll().stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .limit(20)
+                .map(this::toMessageDTO)
+                .collect(Collectors.toList());
+    }
+
+    private CollaborationDTO.TeamMemberDTO toTeamMemberDTO(allUsers user) {
+        CollaborationDTO.TeamMemberDTO dto = new CollaborationDTO.TeamMemberDTO();
+        dto.setId(user.getUserId());
+        dto.setName(user.getFirstName() + " " + user.getLastName());
+        dto.setRole(user.getUserPost() != null ? String.valueOf(user.getUserPost()) : "Employee");
+        dto.setStatus(Boolean.TRUE.equals(user.getIsActive()) ? "online" : "offline");
+        dto.setAvatar("/images/default-avatar.png");
+        return dto;
+    }
+
+    private MessageDTO toMessageDTO(Comment comment) {
+        return MessageDTO.builder()
+                .id(comment.getCommentId())
+                .title("Task Comment")
+                .preview(comment.getTask() != null ? comment.getTask().getTitle() : "")
+                .content(comment.getCommentText())
+                .time(comment.getCreatedAt() != null ? comment.getCreatedAt().toString() : "")
+                .unread(Boolean.TRUE)
+                .build();
     }
 }

@@ -17,4 +17,9 @@ public interface UserService {
     Long getTotalUsersCount();
     Map<String, Object> getUserActivityData();
     Map<String, Object> getUserReports();
+    
+    // Additional methods for dropdowns and filtering
+    List<UserDTO> getUsersByRole(String role);
+    List<UserDTO> getActiveUsers();
+    List<UserDTO> getManagers();
 } 
