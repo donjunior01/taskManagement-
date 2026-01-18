@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Task Management System</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <div class="login-container">
+        <div class="login-form">
+            <h2>Welcome Back</h2>
+            <p class="subtitle">Please enter your details to sign in</p>
+
+            <!-- Error Message -->
+            <div th:if="${param.error}" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i>
+                Invalid email or password. Please try again.
+            </div>
+
+            <!-- Success Message -->
+            <div th:if="${param.logout}" class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                You have been logged out successfully.
+            </div>
+
+            <form th:action="@{/api/auth/login}" method="post">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember-me">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In
+                </button>
+
+                <div class="divider">
+                    <span>or</span>
+                </div>
+
+                <p style="text-align: center; color: var(--text-light);">
+                    Don't have an account? 
+                    <a th:href="@{/api/auth/register}" style="color: var(--primary); text-decoration: none; font-weight: 500;">Sign up here</a>
+                </p>
+            </form>
+        </div>
+        <div class="login-image">
+            <div class="login-image-content">
+                <i class="fas fa-tasks" style="font-size: 80px; margin-bottom: 30px; opacity: 0.9;"></i>
+                <h3>Task Management System</h3>
+                <p>Streamline your projects, manage your team, and track progress all in one place.</p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

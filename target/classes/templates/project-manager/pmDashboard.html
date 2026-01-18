@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="pm_dashboard_title">Project Manager Dashboard - Task Planning & Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js from cdnjs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* Calendar custom styles */
+        .fc { font-family: inherit; }
+        .fc .fc-toolbar-title { color: var(--text); font-size: 1.5rem; }
+        .fc .fc-button { background-color: var(--primary); border-color: var(--primary); }
+        .fc .fc-button:hover { background-color: var(--primary-dark); }
+        .fc .fc-daygrid-day { background-color: var(--card-bg); }
+        .fc .fc-daygrid-day:hover { background-color: rgba(67, 97, 238, 0.1); }
+        .fc .fc-daygrid-day-number { color: var(--text); }
+        .fc .fc-col-header-cell-cushion { color: var(--text); }
+        .fc .fc-event { cursor: pointer; border-radius: 4px; padding: 2px 4px; font-size: 0.85rem; }
+        .fc .fc-day-today { background-color: rgba(67, 97, 238, 0.05) !important; }
+        .fc-theme-standard td, .fc-theme-standard th { border-color: rgba(0, 0, 0, 0.1); }
+        [data-theme="dark"] .fc-theme-standard td, [data-theme="dark"] .fc-theme-standard th { border-color: rgba(255, 255, 255, 0.1); }
+        .header-actions { display: flex; gap: 10px; }
+        .form-row { display: flex; gap: 16px; }
+        .form-row .form-group { flex: 1; }
+    </style>
+</head>
+<body data-theme="dark">
+<!-- Store user data for JavaScript -->
+<script th:inline="javascript">
+    window.currentUser = {
+        id: [[${currentUser.id}]],
+        username: [[${currentUser.username}]],
+        email: [[${currentUser.email}]],
+        firstName: [[${currentUser.firstName}]],
+        lastName: [[${currentUser.lastName}]],
+        role: [[${currentUser.role}]],
+        fullName: [[${userName}]],
+        initials: [[${userInitials}]]
+    };
+    window.dashboardStats = {
+        totalTasks: [[${totalTasks}]],
+        activeTasks: [[${activeTasks}]],
+        completedTasks: [[${completedTasks}]],
+        overdueTasks: [[${overdueTasks}]],
+        taskCompletionRate: [[${taskCompletionRate}]],
+        teamMembers: [[${teamMembers}]]
+    };
+</script>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="logo" th:text="${userInitials}">PM</div>
+
+    <!-- Main Navigation -->
+    <a href="#" class="nav-item active" data-page="dashboard">
+        <i class="fas fa-th-large"></i>
+        <span data-i18n="nav_dashboard">Dashboard</span>
+    </a>
+
+    <a href="#" class="nav-item" data-page="projects">
+        <i class="fas fa-folder-open"></i>
+        <span data-i18n="nav_projects">My Projects</span>
+    </a>
+
+    <a href="#" class="nav-item" data-page="tasks">
+        <i class="fas fa-tasks"></i>
+        <span data-i18n="nav_tasks">Team Tasks</span>
+    </a>
+
+    <a href="#" class="nav-item" data-page="assignments">
+        <i class="fas fa-users-cog"></i>
+        <span data-i18n="nav_assignments">Task Assignments</span>
+    </a>
+
+    <a href="#" class="nav-item" data-page="calendar">
+        <i class="fas fa-calendar-alt"></i>
+        <span data-i18n="nav_calendar">Calendar</span>
+    </a>
+
+    <a href="#" class="nav-item" data-page="messages">
+        <i class="fas fa-comments"></i>
+        <span data-i18n="nav_messages">Team Messages</span>
+    </a>
+
+    <div class="nav-divider"></div>
+
+    <!-- Reports & Analytics -->
+    <a href="#" class="nav-item" data-page="reports">
+        <i class="fas fa-chart-line"></i>
+        <span data-i18n="nav_reports">Reports & Analytics</span>
+    </a>
+
+    <a href="#" class="nav-item" data-page="deliverables">
+        <i class="fas fa-file-alt"></i>
+        <span data-i18n="nav_deliverables">Deliverables</span>
+    </a>
+
+    <div class="nav-divider"></div>
+
+    <!-- Profile -->
+    <a href="#" class="nav-item" data-page="profile">
+        <i class="fas fa-user"></i>
+        <span data-i18n="nav_profile">Profile</span>
+    </a>
+
+    <!-- Settings -->
+    <a href="#" class="nav-item" data-page="settings">
+        <i class="fas fa-cog"></i>
+        <span data-i18n="nav_settings">Settings</span>
+    </a>
+
+    <a href="#" id="logout-link" class="nav-item" style="margin-top: auto;">
+        <i class="fas fa-sign-out-alt"></i>
+        <span data-i18n="nav_logout">Logout</span>
+    </a>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search tasks, team members..." id="global-search" data-i18n-placeholder="search_placeholder">
+        </div>
+        <div class="admin-info">
+            <div class="notification-icons">
+                <div class="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge" id="notification-count">0</span>
+                </div>
+                <i class="fas fa-envelope"></i>
+                <button class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+            <div class="admin-profile">
+                <div class="avatar" style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px;">
+                    <span th:text="${userInitials}">PM</span>
+                </div>
+                <div class="admin-details">
+                    <span class="username" th:text="${userName}">Project Manager</span>
+                    <span class="role" th:text="${userRole}">Project Manager</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+        <!-- Dashboard Page -->
+        <div class="page-content active" id="dashboard">
+            <div class="section-header">
+                <h2 class="section-title" data-i18n="team_overview">Team Overview</h2>
+                <button class="btn btn-primary" onclick="openModal('create-task-modal')">
+                    <i class="fas fa-plus"></i> <span data-i18n="create_task">Create Task</span>
+                </button>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 th:text="${teamMembers}">0</h3>
+                        <p data-i18n="team_members">Team Members</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 th:text="${activeTasks}">0</h3>
+                        <p data-i18n="active_tasks">Active Tasks</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(42, 157, 143, 0.1); color: var(--success);">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 th:text="${overdueTasks}">0</h3>
+                        <p data-i18n="overdue_tasks">Overdue Tasks</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(230, 57, 70, 0.1); color: var(--danger);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3><span th:text="${taskCompletionRate}">0</span>%</h3>
+                        <p data-i18n="completion_rate">Completion Rate</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(86, 207, 225, 0.1); color: var(--info);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px;">
+                <div class="chart-container" style="background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: var(--shadow);">
+                    <h3 class="chart-title" style="margin-bottom: 20px;" data-i18n="task_status">Task Status Distribution</h3>
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="pmTaskStatusChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container" style="background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: var(--shadow);">
+                    <h3 class="chart-title" style="margin-bottom: 20px;" data-i18n="team_performance">Team Performance</h3>
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="pmTeamPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Tasks -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title" data-i18n="recent_tasks">Recent Tasks</h3>
+                    <a href="#" onclick="navigateToPage('tasks')" style="color: var(--primary);" data-i18n="view_all">View All</a>
+                </div>
+                <table class="data-table" id="recent-tasks-table">
+                    <thead>
+                    <tr>
+                        <th data-i18n="task_name">Task Name</th>
+                        <th data-i18n="assigned_to">Assigned To</th>
+                        <th data-i18n="priority">Priority</th>
+                        <th data-i18n="status">Status</th>
+                        <th data-i18n="deadline">Deadline</th>
+                    </tr>
+                    </thead>
+                    <tbody id="recent-tasks-body">
+                    <tr>
+                        <td colspan="5" style="text-align: center;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading...
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- My Projects Page -->
+        <div class="page-content" id="projects">
+            <div class="section-header">
+                <h2 class="section-title" data-i18n="my_projects">My Projects</h2>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title" data-i18n="projects_managed">Projects I Manage</h3>
+                </div>
+                <table class="data-table" id="pm-projects-table">
+                    <thead>
+                    <tr>
+                        <th data-i18n="project_name">Project Name</th>
+                        <th data-i18n="status">Status</th>
+                        <th data-i18n="progress">Progress</th>
+                        <th data-i18n="team_size">Team Size</th>
+                        <th data-i18n="deadline">Deadline</th>
+                        <th data-i18n="actions">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="pm-projects-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading projects...
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Team Tasks Page -->
+        <div class="page-content" id="tasks">
+            <div class="section-header">
+                <h2 class="section-title" data-i18n="team_tasks">Team Tasks</h2>
+                <button class="btn btn-primary" onclick="openModal('create-task-modal')">
+                    <i class="fas fa-plus"></i> <span data-i18n="create_task">Create Task</span>
+                </button>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title" data-i18n="all_team_tasks">All Team Tasks</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="filter-task-status" style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
+                            <option value="" data-i18n="all_status">All Status</option>
+                            <option value="TODO">To Do</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="COMPLETED">Completed</option>
+                        </select>
+                        <select id="filter-task-priority" style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
+                            <option value="" data-i18n="all_priorities">All Priorities</option>
+                            <option value="CRITICAL">Critical</option>
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <table class="data-table" id="tasks-table">
+                    <thead>
+                    <tr>
+                        <th data-i18n="task_name">Task Name</th>
+                        <th data-i18n="assigned_to">Assigned To</th>
+                        <th data-i18n="priority">Priority</th>
+                        <th data-i18n="progress">Progress</th>
+                        <th data-i18n="status">Status</th>
+                        <th data-i18n="deadline">Deadline</th>
+                        <th data-i18n="actions">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tasks-table-body">
+                    <tr>
+                        <td colspan="7" style="text-align: center;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading tasks...
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Task Assignments Page -->
+        <div class="page-content" id="assignments">
+            <div class="section-header">
+                <h2 class="section-title" data-i18n="task_assignments">Task Assignments</h2>
+                <button class="btn btn-primary" onclick="openModal('create-task-modal')">
+                    <i class="fas fa-plus"></i> <span data-i18n="assign_task">Assign Task</span>
+                </button>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title" data-i18n="team_member_assignments">Team Member Assignments</h3>
+                </div>
+
+                <table class="data-table" id="assignments-table">
+                    <thead>
+                    <tr>
+                        <th data-i18n="team_member">Team Member</th>
+                        <th data-i18n="total_tasks">Total Tasks</th>
+                        <th data-i18n="in_progress">In Progress</th>
+                        <th data-i18n="completed">Completed</th>
+                        <th data-i18n="overdue">Overdue</th>
+                        <th data-i18n="actions">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="assignments-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading assignments...
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Calendar Page -->
+        <div class="page-content" id="calendar">
+            <div class="section-header">
+                <h2 class="section-title" data-i18n="project_calendar">Project Calendar</h2>
+                <button class="btn btn-primary" onclick="openModal('create-event-modal')">
+                    <i class="fas fa-plus"></i> <span data-i18n="add_event">Add Event</span>
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px;">
+                <div class="calendar-container" style="background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: var(--shadow);">
+                    <div id="pm-calendar"></div>
+                </div>
+
+                <div class="upcoming-events" style="background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: var(--shadow);">
+                    <h3 style="margin-bottom: 20px;" data-i18n="upcoming_events">Upcoming Events</h3>
+                    <div id="pm-upcoming-events">
+                        <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                            <i class="fas fa-calendar-day" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                            <p data-i18n="no_upcoming_events">No upcoming events</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Messages Page -->
+        <div class="page-content" id="messages">
+            <div class="section-header">
+                <h2 class="section-title" data-i18n="team_messages">Team Messages</h2>
+                <button class="btn btn-primary" onclick="openModal('compose-message-modal')">
+                    <i class="fas fa-pen"></i> <span data-i18n="compose_message">Compose Message</span>
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 24px; height: calc(100vh - 200px);">
+                <!-- Project/Conversation List -->
+                <div class="message-sidebar" style="background: var(--card-bg); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); overflow-y: auto;">
+                    <div style="margin-bottom: 16px;">
+                        <input type="text" id="message-search" placeholder="Search messages..." style="width: 100%;" oninput="searchMessages(this.value)">
+                    </div>
+                    <h4 style="margin-bottom: 12px; color: var(--text-secondary);" data-i18n="project_conversations">Project Conversations</h4>
+                    <div id="project-conversations-list" class="conversation-list">
+                        <div class="loading-placeholder" style="text-align: center; padding: 20px;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading projects...
+                        </div>
+                    </div>
+                    <h4 style="margin: 16px 0 12px; color: var(--text-secondary);" data-i18n="direct_messages">Direct Messages</h4>
+                    <div id="direct-messages-list" class="conversation-list">
+                        <div class="loading-placeholder" style="text-align: center; padding: 20px;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading conversations...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message Thread -->
+                <div class="message-area" style="display: flex; flex-direction: column; background: var(--card-bg); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden;">
+                    <!-- Message Header -->
+                    <div id="message-header" style="padding: 16px; border-bottom: 1px solid var(--border-color); display: none;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div id="message-header-avatar" style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                P
+                            </div>
+                            <div>
+                                <h4 id="message-header-title" style="margin: 0;">Select a conversation</h4>
+                                <p id="message-header-subtitle" style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">Choose a project or user to message</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages Container -->
+                    <div id="messages-container" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                        <div id="no-conversation-selected" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
+                            <i class="fas fa-comments" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                            <h3 data-i18n="no_conversation_selected">No conversation selected</h3>
+                            <p data-i18n="choose_conversation">Choose a project or team member to start messaging</p>
+                        </div>
+                        <div id="messages-list" style="display: none; flex-direction: column; gap: 16px;">
+                            <!-- Messages will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Message Input -->
+                    <div id="message-input-area" style="padding: 16px; border-top: 1px solid var(--border-color); display: none;">
+                        <form id="send-message-form" style="display: flex; gap: 12px;">
+                            <input type="hidden" id="message-project-id">
+                            <input type="hidden" id="message-recipient-id">
+                            <div style="flex: 1; display: flex; gap: 8px;">
+                                <button type="button" class="btn btn-secondary" style="padding: 10px;" onclick="attachFile()">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <input type="text" id="message-input" placeholder="Type your message..." style="flex: 1;">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> <span data-i18n="send">Send</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports & Analytics Page -->
+        <div class="page-content" id="reports">
+            <div class="section-header">
+                <h2 class="section-title" data-i18n="reports_analytics">Reports & Analytics</h2>
+                <button class="btn btn-primary" onclick="exportReport()">
+                    <i class="fas fa-download"></i> <span data-i18n="export_report">Export Report</span>
+                </button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 th:text="${totalTasks}">0</h3>
+                        <p data-i18n="total_tasks">Total Tasks</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary);">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3><span th:text="${taskCompletionRate}">0</span>%</h3>
+                        <p data-i18n="completion_rate">Completion Rate</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(42, 157, 143, 0.1); color: var(--success);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 th:text="${overdueTasks}">0</h3>
+                        <p data-i18n="overdue_tasks">Overdue Tasks</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(230, 57, 70, 0.1); color: var(--danger);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 th:text="${teamMembers}">0</h3>
+                        <p data-i18n="team_members">Team Members</p>
+                    </div>
+                    <div class="stat-icon" style="background-color: rgba(244, 162, 97, 0.1); color: var(--warning);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 24px;">
+                <div class="chart-container" style="background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: var(--shadow);">
+                    <h3 class="chart-title" style="margin-bottom: 20px;" data-i18n="task_trends">Task Completion Trends</h3>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="pmTaskTrendsChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container" style="background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: var(--shadow);">
+                    <h3 class="chart-title" style="margin-bottom: 20px;" data-i18n="priority_breakdown">Tasks by Priority</h3>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="pmTaskPriorityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Performance Table -->
+            <div class="table-container" style="margin-top: 24px;">
+                <div class="table-header">
+                    <h3 class="table-title" data-i18n="team_performance_summary">Team Performance Summary</h3>
+                </div>
+                <table class="data-table" id="pm-team-performance-table">
+                    <thead>
+                    <tr>
+                        <th data-i18n="team_member">Team Member</th>
+                        <th data-i18n="tasks_assigned">Tasks Assigned</th>
+                        <th data-i18n="completed">Completed</th>
+                        <th data-i18n="in_progress">In Progress</th>
+                        <th data-i18n="completion_rate">Completion Rate</th>
+                    </tr>
+                    </thead>
+                    <tbody id="pm-team-performance-body">
+                    <tr>
+                        <td colspan="5" style="text-align: center;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading performance data...
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Deliverables Page -->
+        <div class="page-content" id="deliverables">
+            <div class="section-header">
+                <h2 class="section-title" data-i18n="deliverables">Deliverables</h2>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title" data-i18n="submitted_deliverables">Submitted Deliverables</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="filter-deliverable-status" style="background-color: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,0.1); padding: 8px; border-radius: 6px;">
+                            <option value="" data-i18n="all_status">All Status</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="APPROVED">Approved</option>
+                            <option value="REJECTED">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+
+                <table class="data-table" id="deliverables-table">
+                    <thead>
+                    <tr>
+                        <th data-i18n="task">Task</th>
+                        <th data-i18n="submitted_by">Submitted By</th>
+                        <th data-i18n="file">File</th>
+                        <th data-i18n="status">Status</th>
+                        <th data-i18n="submitted_at">Submitted At</th>
+                        <th data-i18n="actions">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="deliverables-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading deliverables...
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div class="page-content" id="settings">
+            <div class="section-header">
+                <h2 class="section-title" data-i18n="settings">Settings</h2>
+                <button class="btn btn-primary" onclick="saveAllSettings()">
+                    <i class="fas fa-save"></i> <span data-i18n="save_changes">Save Changes</span>
+                </button>
+            </div>
+
+            <!-- General Settings -->
+            <div class="settings-section" style="background: var(--card-bg); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow);">
+                <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-cog" style="color: var(--primary);"></i> <span data-i18n="general_settings">General Settings</span>
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                    <div class="form-group">
+                        <label data-i18n="language">Language</label>
+                        <select id="setting-language" style="width: 100%;" onchange="changeLanguage(this.value)">
+                            <option value="en">English</option>
+                            <option value="fr">Français</option>
+                            <option value="es">Español</option>
+                            <option value="de">Deutsch</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="timezone">Timezone</label>
+                        <select id="setting-timezone" style="width: 100%;">
+                            <option value="UTC">UTC</option>
+                            <option value="Europe/Paris" selected>Europe/Paris (CET)</option>
+                            <option value="America/New_York">America/New York (EST)</option>
+                            <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="date_format">Date Format</label>
+                        <select id="setting-date-format" style="width: 100%;">
+                            <option value="DD/MM/YYYY" selected>DD/MM/YYYY</option>
+                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="time_format">Time Format</label>
+                        <select id="setting-time-format" style="width: 100%;">
+                            <option value="24h" selected>24 Hour</option>
+                            <option value="12h">12 Hour (AM/PM)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Settings -->
+            <div class="settings-section" style="background: var(--card-bg); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow);">
+                <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-bell" style="color: var(--warning);"></i> <span data-i18n="notification_settings">Notification Settings</span>
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                    <div class="setting-toggle" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg); border-radius: 8px;">
+                        <div>
+                            <strong data-i18n="email_notifications">Email Notifications</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;" data-i18n="email_notif_desc">Receive task updates via email</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-email-notif" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-toggle" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg); border-radius: 8px;">
+                        <div>
+                            <strong data-i18n="task_reminders">Task Reminders</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;" data-i18n="task_reminder_desc">Get reminders for upcoming deadlines</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-task-reminder" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-toggle" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg); border-radius: 8px;">
+                        <div>
+                            <strong data-i18n="team_messages">Team Messages</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;" data-i18n="team_messages_desc">Alert for new team messages</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-team-messages" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-toggle" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg); border-radius: 8px;">
+                        <div>
+                            <strong data-i18n="deliverable_alerts">Deliverable Alerts</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;" data-i18n="deliverable_alerts_desc">Notifications for new deliverables</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-deliverable-alerts" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appearance Settings -->
+            <div class="settings-section" style="background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: var(--shadow);">
+                <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-palette" style="color: var(--primary);"></i> <span data-i18n="appearance_settings">Appearance Settings</span>
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                    <div class="theme-option" onclick="setTheme('light')" style="padding: 20px; background: #f8f9fa; border-radius: 12px; cursor: pointer; text-align: center; border: 2px solid transparent;" id="theme-light">
+                        <i class="fas fa-sun" style="font-size: 2rem; color: #f59e0b; margin-bottom: 10px;"></i>
+                        <p style="font-weight: 500; color: #1f2937;" data-i18n="light_mode">Light Mode</p>
+                    </div>
+                    <div class="theme-option" onclick="setTheme('dark')" style="padding: 20px; background: #1f2937; border-radius: 12px; cursor: pointer; text-align: center; border: 2px solid var(--primary);" id="theme-dark">
+                        <i class="fas fa-moon" style="font-size: 2rem; color: #8b5cf6; margin-bottom: 10px;"></i>
+                        <p style="font-weight: 500; color: #f8f9fa;" data-i18n="dark_mode">Dark Mode</p>
+                    </div>
+                    <div class="theme-option" onclick="setTheme('auto')" style="padding: 20px; background: linear-gradient(135deg, #f8f9fa 50%, #1f2937 50%); border-radius: 12px; cursor: pointer; text-align: center; border: 2px solid transparent;" id="theme-auto">
+                        <i class="fas fa-adjust" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
+                        <p style="font-weight: 500;" data-i18n="auto_mode">Auto (System)</p>
+                    </div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="form-group">
+                        <label data-i18n="primary_color">Primary Color</label>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <div onclick="setPrimaryColor('#4361ee')" style="width: 40px; height: 40px; background: #4361ee; border-radius: 8px; cursor: pointer; border: 3px solid var(--primary);"></div>
+                            <div onclick="setPrimaryColor('#7c3aed')" style="width: 40px; height: 40px; background: #7c3aed; border-radius: 8px; cursor: pointer;"></div>
+                            <div onclick="setPrimaryColor('#2563eb')" style="width: 40px; height: 40px; background: #2563eb; border-radius: 8px; cursor: pointer;"></div>
+                            <div onclick="setPrimaryColor('#059669')" style="width: 40px; height: 40px; background: #059669; border-radius: 8px; cursor: pointer;"></div>
+                            <div onclick="setPrimaryColor('#dc2626')" style="width: 40px; height: 40px; background: #dc2626; border-radius: 8px; cursor: pointer;"></div>
+                            <div onclick="setPrimaryColor('#d97706')" style="width: 40px; height: 40px; background: #d97706; border-radius: 8px; cursor: pointer;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div class="page-content" id="profile">
+            <div class="section-header">
+                <h2 class="section-title" data-i18n="profile">Profile</h2>
+                <button class="btn btn-primary" onclick="openModal('edit-profile-modal')">
+                    <i class="fas fa-edit"></i> <span data-i18n="edit_profile">Edit Profile</span>
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 24px;">
+                <!-- Profile Card -->
+                <div style="background: var(--card-bg); border-radius: 12px; padding: 24px; text-align: center; box-shadow: var(--shadow);">
+                    <div class="avatar" style="width: 120px; height: 120px; background: var(--primary); border-radius: 50%; margin: 0 auto 20px auto; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 40px; border: 4px solid var(--primary-dark, var(--primary));">
+                        <span th:text="${userInitials}">PM</span>
+                    </div>
+                    <h3 style="margin-bottom: 8px;" th:text="${userName}">Project Manager</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 16px;" th:text="${userRole}">Project Manager</p>
+                    <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" style="padding: 8px 16px;" onclick="openModal('change-password-modal')">
+                            <i class="fas fa-key"></i> <span data-i18n="change_password">Change Password</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Profile Details -->
+                <div style="background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: var(--shadow);">
+                    <h3 style="margin-bottom: 20px;" data-i18n="profile_information">Profile Information</h3>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                        <div>
+                            <label style="color: var(--text-secondary); font-size: 0.9rem;" data-i18n="first_name">First Name</label>
+                            <p style="font-weight: 500; margin-top: 4px;" th:text="${currentUser?.firstName}">-</p>
+                        </div>
+                        <div>
+                            <label style="color: var(--text-secondary); font-size: 0.9rem;" data-i18n="last_name">Last Name</label>
+                            <p style="font-weight: 500; margin-top: 4px;" th:text="${currentUser?.lastName}">-</p>
+                        </div>
+                        <div>
+                            <label style="color: var(--text-secondary); font-size: 0.9rem;" data-i18n="email">Email</label>
+                            <p style="font-weight: 500; margin-top: 4px;" th:text="${currentUser?.email}">-</p>
+                        </div>
+                        <div>
+                            <label style="color: var(--text-secondary); font-size: 0.9rem;" data-i18n="username">Username</label>
+                            <p style="font-weight: 500; margin-top: 4px;" th:text="${currentUser?.username}">-</p>
+                        </div>
+                        <div>
+                            <label style="color: var(--text-secondary); font-size: 0.9rem;" data-i18n="role">Role</label>
+                            <p style="font-weight: 500; margin-top: 4px;" th:text="${currentUser?.role}">-</p>
+                        </div>
+                        <div>
+                            <label style="color: var(--text-secondary); font-size: 0.9rem;" data-i18n="member_since">Member Since</label>
+                            <p style="font-weight: 500; margin-top: 4px;">Active Member</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Card -->
+            <div style="background: var(--card-bg); border-radius: 12px; padding: 24px; margin-top: 24px; box-shadow: var(--shadow);">
+                <h3 style="margin-bottom: 20px;" data-i18n="my_statistics">My Statistics</h3>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                    <div style="text-align: center; padding: 20px; background: var(--bg); border-radius: 8px;">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);" id="stat-managed-projects">0</div>
+                        <p style="color: var(--text-secondary); margin-top: 8px;" data-i18n="projects_managed">Projects Managed</p>
+                    </div>
+                    <div style="text-align: center; padding: 20px; background: var(--bg); border-radius: 8px;">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--success);" id="stat-tasks-created">0</div>
+                        <p style="color: var(--text-secondary); margin-top: 8px;" data-i18n="tasks_created">Tasks Created</p>
+                    </div>
+                    <div style="text-align: center; padding: 20px; background: var(--bg); border-radius: 8px;">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--warning);" id="stat-team-members">0</div>
+                        <p style="color: var(--text-secondary); margin-top: 8px;" data-i18n="team_members">Team Members</p>
+                    </div>
+                    <div style="text-align: center; padding: 20px; background: var(--bg); border-radius: 8px;">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--info);" id="stat-deliverables-reviewed">0</div>
+                        <p style="color: var(--text-secondary); margin-top: 8px;" data-i18n="deliverables_reviewed">Deliverables Reviewed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal" id="edit-profile-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" data-i18n="edit_profile">Edit Profile</h3>
+            <button class="close-btn" onclick="closeModal('edit-profile-modal')">×</button>
+        </div>
+        <form id="edit-profile-form">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="profile-firstname" data-i18n="first_name">First Name</label>
+                    <input type="text" id="profile-firstname" name="firstName" th:value="${currentUser?.firstName}" required>
+                </div>
+                <div class="form-group">
+                    <label for="profile-lastname" data-i18n="last_name">Last Name</label>
+                    <input type="text" id="profile-lastname" name="lastName" th:value="${currentUser?.lastName}" required>
+                </div>
+                <div class="form-group">
+                    <label for="profile-email" data-i18n="email">Email</label>
+                    <input type="email" id="profile-email" name="email" th:value="${currentUser?.email}" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('edit-profile-modal')" data-i18n="cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" data-i18n="save_changes">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal" id="change-password-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" data-i18n="change_password">Change Password</h3>
+            <button class="close-btn" onclick="closeModal('change-password-modal')">×</button>
+        </div>
+        <form id="change-password-form">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="current-password" data-i18n="current_password">Current Password</label>
+                    <input type="password" id="current-password" name="currentPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password" data-i18n="new_password">New Password</label>
+                    <input type="password" id="new-password" name="newPassword" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password" data-i18n="confirm_password">Confirm New Password</label>
+                    <input type="password" id="confirm-password" name="confirmPassword" required minlength="6">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('change-password-modal')" data-i18n="cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" data-i18n="change_password">Change Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Create Task Modal -->
+<div class="modal" id="create-task-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" data-i18n="create_new_task">Create New Task</h3>
+            <button class="close-btn" onclick="closeModal('create-task-modal')">×</button>
+        </div>
+        <form id="create-task-form">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="task-name" data-i18n="task_name">Task Name</label>
+                    <input type="text" id="task-name" name="name" placeholder="Enter task name" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-description" data-i18n="description">Description</label>
+                    <textarea id="task-description" name="description" placeholder="Enter task description"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="task-assignee" data-i18n="assign_to">Assign To</label>
+                        <select id="task-assignee" name="assignedToId">
+                            <option value="">Select Team Member</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-project" data-i18n="project">Project</label>
+                        <select id="task-project" name="projectId">
+                            <option value="">Select Project</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="task-priority" data-i18n="priority">Priority</label>
+                        <select id="task-priority" name="priority">
+                            <option value="CRITICAL">Critical</option>
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-difficulty" data-i18n="difficulty">Difficulty</label>
+                        <select id="task-difficulty" name="difficulty">
+                            <option value="EASY">Easy</option>
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="HARD">Hard</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="task-deadline" data-i18n="deadline">Deadline</label>
+                    <input type="date" id="task-deadline" name="deadline" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('create-task-modal')" data-i18n="cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" data-i18n="create_task">Create Task</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div class="modal" id="edit-task-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" data-i18n="edit_task">Edit Task</h3>
+            <button class="close-btn" onclick="closeModal('edit-task-modal')">×</button>
+        </div>
+        <form id="edit-task-form">
+            <div class="modal-body">
+                <input type="hidden" id="edit-task-id" name="id">
+                <div class="form-group">
+                    <label for="edit-task-name" data-i18n="task_name">Task Name</label>
+                    <input type="text" id="edit-task-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-task-description" data-i18n="description">Description</label>
+                    <textarea id="edit-task-description" name="description"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-task-assignee" data-i18n="assign_to">Assign To</label>
+                        <select id="edit-task-assignee" name="assignedToId">
+                            <option value="">Select Team Member</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-task-status" data-i18n="status">Status</label>
+                        <select id="edit-task-status" name="status">
+                            <option value="TODO">To Do</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="IN_REVIEW">In Review</option>
+                            <option value="COMPLETED">Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-task-priority" data-i18n="priority">Priority</label>
+                        <select id="edit-task-priority" name="priority">
+                            <option value="CRITICAL">Critical</option>
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-task-progress" data-i18n="progress">Progress (%)</label>
+                        <input type="number" id="edit-task-progress" name="progress" min="0" max="100" value="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-task-deadline" data-i18n="deadline">Deadline</label>
+                    <input type="date" id="edit-task-deadline" name="deadline">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('edit-task-modal')" data-i18n="cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" data-i18n="save_changes">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Compose Message Modal -->
+<div class="modal" id="compose-message-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" data-i18n="compose_message">Compose Message</h3>
+            <button class="close-btn" onclick="closeModal('compose-message-modal')">×</button>
+        </div>
+        <form id="compose-message-form">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="compose-recipient-type" data-i18n="send_to">Send To</label>
+                    <select id="compose-recipient-type" name="recipientType" onchange="updateRecipientOptions()" required>
+                        <option value="project">Project Team</option>
+                        <option value="user">Individual User</option>
+                    </select>
+                </div>
+                <div class="form-group" id="compose-project-group">
+                    <label for="compose-project-select" data-i18n="select_project">Select Project</label>
+                    <select id="compose-project-select" name="projectId">
+                        <option value="">Loading projects...</option>
+                    </select>
+                </div>
+                <div class="form-group" id="compose-user-group" style="display: none;">
+                    <label for="compose-user-select" data-i18n="select_user">Select User</label>
+                    <select id="compose-user-select" name="recipientId">
+                        <option value="">Loading users...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="compose-message" data-i18n="message">Message *</label>
+                    <textarea id="compose-message" name="content" placeholder="Type your message here..." rows="6" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('compose-message-modal')" data-i18n="cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> <span data-i18n="send_message">Send Message</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Create Event Modal -->
+<div class="modal" id="create-event-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" data-i18n="create_event">Create Event</h3>
+            <button class="close-btn" onclick="closeModal('create-event-modal')">×</button>
+        </div>
+        <form id="create-event-form">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="event-title" data-i18n="event_title">Event Title *</label>
+                    <input type="text" id="event-title" name="title" placeholder="Enter event title" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-description" data-i18n="description">Description</label>
+                    <textarea id="event-description" name="description" placeholder="Enter event description"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="event-start" data-i18n="start_date">Start Date & Time *</label>
+                        <input type="datetime-local" id="event-start" name="startTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-end" data-i18n="end_date">End Date & Time *</label>
+                        <input type="datetime-local" id="event-end" name="endTime" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="event-type" data-i18n="event_type">Event Type</label>
+                        <select id="event-type" name="eventType">
+                            <option value="MEETING">Meeting</option>
+                            <option value="TASK_DEADLINE">Task Deadline</option>
+                            <option value="DELIVERABLE_DUE">Deliverable Due</option>
+                            <option value="REVIEW">Review</option>
+                            <option value="CUSTOM">Custom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-color" data-i18n="color">Color</label>
+                        <select id="event-color" name="color">
+                            <option value="#4361ee">Blue</option>
+                            <option value="#2a9d8f">Green</option>
+                            <option value="#e63946">Red</option>
+                            <option value="#f4a261">Orange</option>
+                            <option value="#9b59b6">Purple</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('create-event-modal')" data-i18n="cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" data-i18n="create_event">Create Event</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Review Deliverable Modal -->
+<div class="modal" id="review-deliverable-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" data-i18n="review_deliverable">Review Deliverable</h3>
+            <button class="close-btn" onclick="closeModal('review-deliverable-modal')">×</button>
+        </div>
+        <form id="review-deliverable-form">
+            <div class="modal-body">
+                <input type="hidden" id="deliverable-id" name="deliverable-id">
+                <div class="form-group">
+                    <label data-i18n="task">Task</label>
+                    <p id="deliverable-task">-</p>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="submitted_by">Submitted By</label>
+                    <p id="deliverable-submitted-by">-</p>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="file">File</label>
+                    <p><a href="#" id="deliverable-file" style="color: var(--primary);">-</a></p>
+                </div>
+                <div class="form-group">
+                    <label for="deliverable-status" data-i18n="status">Status</label>
+                    <select id="deliverable-status" name="status" required>
+                        <option value="PENDING">Pending</option>
+                        <option value="APPROVED">Approved</option>
+                        <option value="REJECTED">Rejected</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="deliverable-comments" data-i18n="comments">Comments/Observations</label>
+                    <textarea id="deliverable-comments" name="comments" placeholder="Add your comments or observations"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('review-deliverable-modal')" data-i18n="cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" data-i18n="submit_review">Submit Review</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- FullCalendar JS -->
+<!-- FullCalendar JS (v6 has CSS bundled in JS) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.10/index.global.min.js"></script>
+<script th:src="@{/js/script.js}"></script>
+<script th:src="@{/js/i18n.js}"></script>
+<script th:src="@{/js/push-notifications.js}"></script>
+<script th:src="@{/js/pm-dashboard.js}"></script>
+</body>
+</html>
