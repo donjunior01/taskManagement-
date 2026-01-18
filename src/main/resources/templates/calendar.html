@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar - Task Planning & Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .calendar-container {
+            display: flex;
+            height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        .calendar-sidebar {
+            width: 300px;
+            background: var(--card-bg);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        .calendar-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+        }
+        
+        .calendar-header {
+            background: var(--card-bg);
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .calendar-view-options {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .view-btn {
+            padding: 8px 16px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .view-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .view-btn:hover {
+            background: rgba(67, 97, 238, 0.1);
+        }
+        
+        .calendar-content {
+            flex: 1;
+            overflow: auto;
+        }
+        
+        .fc {
+            height: 100%;
+            font-family: inherit;
+        }
+        
+        .fc .fc-button-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .fc .fc-button-primary:hover,
+        .fc .fc-button-primary:focus {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .fc .fc-daygrid-day {
+            background: var(--card-bg);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .fc .fc-daygrid-day:hover {
+            background: rgba(67, 97, 238, 0.05);
+        }
+        
+        .fc .fc-day-today {
+            background: rgba(67, 97, 238, 0.1) !important;
+        }
+        
+        .fc .fc-event {
+            background: var(--primary);
+            border-color: var(--primary);
+            border-radius: 4px;
+            padding: 2px 4px;
+        }
+        
+        .fc .fc-event:hover {
+            box-shadow: 0 2px 8px rgba(67, 97, 238, 0.3);
+        }
+        
+        .sidebar-section {
+            margin-bottom: 32px;
+        }
+        
+        .sidebar-title {
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 12px;
+            padding: 0 0 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .mini-calendar {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .mini-calendar table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        .mini-calendar th {
+            text-align: center;
+            padding: 8px 0;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .mini-calendar td {
+            text-align: center;
+            padding: 6px 0;
+            cursor: pointer;
+        }
+        
+        .mini-calendar td:hover {
+            background: rgba(67, 97, 238, 0.1);
+            border-radius: 4px;
+        }
+        
+        .mini-calendar td.today {
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-weight: 600;
+        }
+        
+        .upcoming-events {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 12px 0;
+        }
+        
+        .event-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(67, 97, 238, 0.05);
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .event-item:hover {
+            background: rgba(67, 97, 238, 0.1);
+            transform: translateX(4px);
+        }
+        
+        .event-item-title {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        
+        .event-item-time {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        
+        .event-item-task {
+            font-size: 11px;
+            color: var(--primary);
+            margin-top: 4px;
+        }
+        
+        .create-event-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 16px;
+        }
+        
+        .create-event-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+        
+        [data-theme="dark"] .sidebar-section,
+        [data-theme="dark"] .mini-calendar,
+        [data-theme="dark"] .upcoming-events {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Event modal */
+        .event-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .event-modal-content {
+            background: var(--card-bg);
+            margin: 5% auto;
+            padding: 24px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        
+        textarea.form-control {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--text);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="calendar-container">
+        <!-- Sidebar -->
+        <div class="calendar-sidebar">
+            <button class="create-event-btn" onclick="openCreateEventModal()">
+                <i class="fas fa-plus"></i> Create Event
+            </button>
+            
+            <!-- Mini Calendar -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Calendar</div>
+                <div class="mini-calendar" id="mini-calendar"></div>
+            </div>
+            
+            <!-- Upcoming Events -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Upcoming Events</div>
+                <div class="upcoming-events" id="upcoming-events">
+                    <!-- Events will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Calendar Settings -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Calendars</div>
+                <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
+                    <input type="checkbox" id="show-tasks" checked style="margin-right: 8px;">
+                    <span style="font-size: 14px;">Show Tasks</span>
+                </label>
+                <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
+                    <input type="checkbox" id="show-events" checked style="margin-right: 8px;">
+                    <span style="font-size: 14px;">Show Events</span>
+                </label>
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="show-deadlines" checked style="margin-right: 8px;">
+                    <span style="font-size: 14px;">Show Deadlines</span>
+                </label>
+            </div>
+        </div>
+        
+        <!-- Main Calendar -->
+        <div class="calendar-main">
+            <!-- Header -->
+            <div class="calendar-header">
+                <h1 style="margin: 0; font-size: 24px; font-weight: 600;">Calendar</h1>
+                <div class="calendar-view-options">
+                    <button class="view-btn active" onclick="switchView('month')">Month</button>
+                    <button class="view-btn" onclick="switchView('week')">Week</button>
+                    <button class="view-btn" onclick="switchView('day')">Day</button>
+                    <button class="view-btn" onclick="switchView('agenda')">Agenda</button>
+                </div>
+            </div>
+            
+            <!-- Calendar -->
+            <div class="calendar-content">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Event Modal -->
+    <div id="eventModal" class="event-modal">
+        <div class="event-modal-content">
+            <div class="modal-header">
+                <h2>Create Event</h2>
+                <button class="close-btn" onclick="closeEventModal()">&times;</button>
+            </div>
+            <form id="eventForm" onsubmit="saveEvent(event)">
+                <div class="form-group">
+                    <label for="event-title">Event Title</label>
+                    <input type="text" id="event-title" class="form-control" required placeholder="Enter event title">
+                </div>
+                
+                <div class="form-group">
+                    <label for="event-start">Start Date & Time</label>
+                    <input type="datetime-local" id="event-start" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="event-end">End Date & Time</label>
+                    <input type="datetime-local" id="event-end" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="event-description">Description</label>
+                    <textarea id="event-description" class="form-control" placeholder="Add event description..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="event-task">Link to Task (Optional)</label>
+                    <select id="event-task" class="form-control">
+                        <option value="">Select a task...</option>
+                    </select>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Create Event</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEventModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script th:inline="javascript">
+        let calendar;
+        let currentView = 'month';
+        
+        // Initialize calendar on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCalendar();
+            loadUpcomingEvents();
+            generateMiniCalendar();
+            loadTasks();
+        });
+        
+        // Initialize FullCalendar
+        function initializeCalendar() {
+            var calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: ''
+                },
+                events: function(info, successCallback, failureCallback) {
+                    fetchCalendarEvents(successCallback, failureCallback);
+                },
+                eventClick: function(info) {
+                    showEventDetail(info.event);
+                },
+                select: function(info) {
+                    document.getElementById('event-start').value = info.start.toISOString().slice(0, 16);
+                    document.getElementById('event-end').value = new Date(info.end - 1).toISOString().slice(0, 16);
+                    openCreateEventModal();
+                },
+                selectable: true,
+                height: 'auto'
+            });
+            
+            calendar.render();
+        }
+        
+        // Fetch calendar events
+        async function fetchCalendarEvents(successCallback, failureCallback) {
+            try {
+                const response = await fetch('/api/calendar-events');
+                const data = await response.json();
+                
+                const events = data.map(event => ({
+                    id: event.id,
+                    title: event.title,
+                    start: event.startTime,
+                    end: event.endTime,
+                    description: event.description,
+                    extendedProps: {
+                        taskId: event.taskId,
+                        description: event.description
+                    }
+                }));
+                
+                successCallback(events);
+            } catch (error) {
+                console.error('Error loading events:', error);
+                failureCallback(error);
+            }
+        }
+        
+        // Load upcoming events for sidebar
+        async function loadUpcomingEvents() {
+            try {
+                const response = await fetch('/api/calendar-events/upcoming?limit=5');
+                const data = await response.json();
+                
+                const container = document.getElementById('upcoming-events');
+                container.innerHTML = '';
+                
+                data.forEach(event => {
+                    const eventDiv = document.createElement('div');
+                    eventDiv.className = 'event-item';
+                    eventDiv.innerHTML = `
+                        <div class="event-item-title">${event.title}</div>
+                        <div class="event-item-time">
+                            ${new Date(event.startTime).toLocaleString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}
+                        </div>
+                        ${event.taskName ? `<div class="event-item-task">${event.taskName}</div>` : ''}
+                    `;
+                    eventDiv.onclick = () => {
+                        calendar.gotoDate(event.startTime);
+                    };
+                    container.appendChild(eventDiv);
+                });
+            } catch (error) {
+                console.error('Error loading upcoming events:', error);
+            }
+        }
+        
+        // Generate mini calendar
+        function generateMiniCalendar() {
+            // Implementation for mini calendar
+            // This is a simplified version - can be enhanced with actual date selection
+            const today = new Date();
+            const miniCalendarDiv = document.getElementById('mini-calendar');
+            const html = `
+                <div style="text-align: center;">
+                    <div style="font-weight: 600; margin-bottom: 12px;">
+                        ${today.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 12px;">
+                        ${Array.from({length: 35}, (_, i) => {
+                            const d = new Date(today.getFullYear(), today.getMonth(), i - new Date(today.getFullYear(), today.getMonth(), 1).getDay() + 1);
+                            const isCurrMonth = d.getMonth() === today.getMonth();
+                            const isToday = d.toDateString() === today.toDateString();
+                            return `
+                                <div style="${isToday ? 'background: var(--primary); color: white; border-radius: 50%; font-weight: 600;' : ''} padding: 6px; cursor: pointer;"
+                                     onclick="calendar.gotoDate('${d.toISOString().split('T')[0]}')">
+                                    ${isCurrMonth ? d.getDate() : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+            miniCalendarDiv.innerHTML = html;
+        }
+        
+        // Load tasks for dropdown
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/tasks/my-tasks?size=100');
+                const data = await response.json();
+                
+                const select = document.getElementById('event-task');
+                data.content.forEach(task => {
+                    const option = document.createElement('option');
+                    option.value = task.id;
+                    option.textContent = task.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+            }
+        }
+        
+        // Open create event modal
+        function openCreateEventModal() {
+            document.getElementById('eventModal').style.display = 'block';
+        }
+        
+        // Close event modal
+        function closeEventModal() {
+            document.getElementById('eventModal').style.display = 'none';
+            document.getElementById('eventForm').reset();
+        }
+        
+        // Save event
+        async function saveEvent(e) {
+            e.preventDefault();
+            
+            const eventData = {
+                title: document.getElementById('event-title').value,
+                startTime: document.getElementById('event-start').value,
+                endTime: document.getElementById('event-end').value,
+                description: document.getElementById('event-description').value,
+                taskId: document.getElementById('event-task').value || null
+            };
+            
+            try {
+                const response = await fetch('/api/calendar-events', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(eventData)
+                });
+                
+                if (response.ok) {
+                    closeEventModal();
+                    calendar.refetchEvents();
+                    loadUpcomingEvents();
+                }
+            } catch (error) {
+                console.error('Error saving event:', error);
+            }
+        }
+        
+        // Show event detail
+        function showEventDetail(event) {
+            alert(`Event: ${event.title}\n${event.start}`);
+        }
+        
+        // Switch calendar view
+        function switchView(view) {
+            const buttons = document.querySelectorAll('.view-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const viewMap = {
+                'month': 'dayGridMonth',
+                'week': 'timeGridWeek',
+                'day': 'timeGridDay',
+                'agenda': 'listMonth'
+            };
+            
+            calendar.changeView(viewMap[view]);
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('eventModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Refresh events every 5 minutes
+        setInterval(() => {
+            calendar.refetchEvents();
+            loadUpcomingEvents();
+        }, 300000);
+    </script>
+</body>
+</html>

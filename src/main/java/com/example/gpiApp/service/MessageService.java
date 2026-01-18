@@ -49,48 +49,65 @@ public class MessageService {
     
     @Transactional
     public ApiResponse<MessageDTO> sendMessage(MessageRequestDTO request, Long senderId) {
-        Message message = new Message();
-        message.setContent(request.getContent());
-        message.setSubject(request.getSubject());
-        message.setIsRead(false);
-        
-        userRepository.findById(senderId)
-                .ifPresent(message::setSender);
-        
-        // Handle project messages
-        if (request.getProjectId() != null) {
-            projectRepository.findById(request.getProjectId())
-                    .ifPresent(message::setProject);
-        }
-        
-        // Handle direct messages
-        if (request.getRecipientId() != null) {
-            userRepository.findById(request.getRecipientId())
-                    .ifPresent(message::setRecipient);
-        }
-        
-        Message savedMessage = messageRepository.save(message);
-        
-        // Log activity
-        userRepository.findById(senderId).ifPresent(user -> 
-            activityLogService.logActivity(
-                ActivityLog.ActivityType.MESSAGE_SENT,
-                request.getProjectId() != null ? 
-                    "Message sent to project team" : "Message sent to user",
-                user,
-                "MESSAGE",
-                savedMessage.getId(),
+        try {
+            Message message = new Message();
+            message.setContent(request.getContent());
+            message.setSubject(request.getSubject());
+            message.setIsRead(false);
+            
+            userRepository.findById(senderId)
+                    .ifPresent(message::setSender);
+            
+            // Handle project messages
+            if (request.getProjectId() != null) {
+                projectRepository.findById(request.getProjectId())
+                        .ifPresent(message::setProject);
+            }
+            
+            // Handle direct messages
+            if (request.getRecipientId() != null) {
+                userRepository.findById(request.getRecipientId())
+                        .ifPresent(message::setRecipient);
+            }
+            
+            Message savedMessage = messageRepository.save(message);
+            
+            // Log activity
+            userRepository.findById(senderId).ifPresent(user -> 
+                activityLogService.logActivity(
+                    ActivityLog.ActivityType.MESSAGE_SENT,
+                    request.getProjectId() != null ? 
+                        "Message sent to project team" : "Message sent to user",
+                    user,
+                    "MESSAGE",
+                    savedMessage.getId(),
+                    null
+                )
+            );
+            
+            // Send notification to recipient
+            if (request.getRecipientId() != null && message.getSender() != null) {
+                try {
+                    String senderName = message.getSender().getFirstName() + " " + message.getSender().getLastName();
+                    notificationService.notifyNewMessage(request.getRecipientId(), senderId, senderName, savedMessage.getId());
+                } catch (Exception e) {
+                    // Log error but don't fail the message sending
+                    activityLogService.logSecurityAlert(
+                        "Error sending notification for message: " + e.getMessage(),
+                        null
+                    );
+                }
+            }
+            
+            return ApiResponse.success("Message sent successfully", convertToDTO(savedMessage));
+        } catch (Exception e) {
+            // Log the error with security alert
+            activityLogService.logSecurityAlert(
+                "Internal server error while sending message: " + e.getMessage(),
                 null
-            )
-        );
-        
-        // Send notification to recipient
-        if (request.getRecipientId() != null && message.getSender() != null) {
-            String senderName = message.getSender().getFirstName() + " " + message.getSender().getLastName();
-            notificationService.notifyNewMessage(request.getRecipientId(), senderId, senderName, savedMessage.getId());
+            );
+            return ApiResponse.error("An error occurred while sending the message. Please try again later.");
         }
-        
-        return ApiResponse.success("Message sent successfully", convertToDTO(savedMessage));
     }
     
     @Transactional(readOnly = true)

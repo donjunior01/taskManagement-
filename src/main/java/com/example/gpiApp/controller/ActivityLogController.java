@@ -1,6 +1,7 @@
 package com.example.gpiApp.controller;
 
 import com.example.gpiApp.dto.ActivityLogDTO;
+import com.example.gpiApp.dto.ApiResponse;
 import com.example.gpiApp.dto.PagedResponse;
 import com.example.gpiApp.entity.ActivityLog;
 import com.example.gpiApp.service.ActivityLogService;
@@ -56,6 +57,18 @@ public class ActivityLogController {
             @PathVariable String entityType,
             @PathVariable Long entityId) {
         return ResponseEntity.ok(activityLogService.getActivityLogsByEntity(entityType, entityId));
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<String>> deleteActivityLog(@PathVariable Long id) {
+        activityLogService.deleteActivityLog(id);
+        return ResponseEntity.ok(ApiResponse.success("Activity log deleted successfully"));
+    }
+    
+    @DeleteMapping("/all")
+    public ResponseEntity<ApiResponse<String>> deleteAllActivityLogs() {
+        activityLogService.deleteAllActivityLogs();
+        return ResponseEntity.ok(ApiResponse.success("All activity logs deleted successfully"));
     }
 }
 

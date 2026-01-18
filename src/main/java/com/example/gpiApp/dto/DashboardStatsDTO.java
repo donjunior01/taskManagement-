@@ -32,5 +32,23 @@ public class DashboardStatsDTO {
     // Team statistics
     private Long totalTeams;
     private Long teamMembers;
+    
+    // Security & Login statistics
+    private Long dailyLoginAttempts;
+    private Long failedLoginAttempts;
+    private Long activeSessionsCount;
+    private Long securityAlertsCount;
+    private Long unresolvedAlertsCount;
+    
+    // Deliverable statistics
+    private Long totalDeliverables;
+    private Long pendingDeliverables;
+    private Long approvedDeliverables;
+    private Long rejectedDeliverables;
+    
+    // System performance (for charts)
+    private Double cpuUsage;
+    private Double memoryUsage;
+    private Double diskUsage;
 }
 

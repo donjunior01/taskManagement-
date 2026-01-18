@@ -49,6 +49,11 @@ public class AuthController {
     public String showRegisterPage() {
         return "auth/register";
     }
+    
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordPage() {
+        return "auth/forgot-password";
+    }
 
     @PostMapping("/register")
     public String register(@ModelAttribute RegisterRequest registerRequest, Model model) {
@@ -116,5 +121,13 @@ public class AuthController {
 
         // Redirect to login page with logout parameter
         return "redirect:/api/auth/login?logout=true";
+    }
+    
+    /**
+     * Show calendar page (Google Calendar redesign)
+     */
+    @GetMapping("/calendar")
+    public String showCalendarPage() {
+        return "calendar";
     }
 }

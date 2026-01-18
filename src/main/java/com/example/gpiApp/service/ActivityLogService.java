@@ -112,6 +112,16 @@ public class ActivityLogService {
         activityLogRepository.save(activityLog);
     }
     
+    @Transactional
+    public void deleteActivityLog(Long logId) {
+        activityLogRepository.deleteById(logId);
+    }
+    
+    @Transactional
+    public void deleteAllActivityLogs() {
+        activityLogRepository.deleteAll();
+    }
+    
     private ActivityLogDTO convertToDTO(ActivityLog activityLog) {
         return ActivityLogDTO.builder()
                 .id(activityLog.getId())

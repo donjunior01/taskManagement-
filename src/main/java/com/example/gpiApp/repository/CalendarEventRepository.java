@@ -1,6 +1,7 @@
 package com.example.gpiApp.repository;
 
 import com.example.gpiApp.entity.CalendarEvent;
+import com.example.gpiApp.entity.allUsers;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -45,5 +46,15 @@ public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Lo
     List<CalendarEvent> findUpcomingEventsByUserId(@Param("userId") Long userId, @Param("now") LocalDateTime now);
 
     void deleteByEntityTypeAndEntityId(String entityType, Long entityId);
+    
+    // New methods for calendar redesign
+    List<CalendarEvent> findByUserOrderByStartTimeAsc(allUsers user);
+    
+    Page<CalendarEvent> findByUserAndStartTimeGreaterThanOrderByStartTimeAsc(allUsers user, LocalDateTime startTime, Pageable pageable);
+    
+    List<CalendarEvent> findByUserAndStartTimeGreaterThanEqualAndEndTimeLessThanEqualOrderByStartTimeAsc(
+            allUsers user, LocalDateTime startTime, LocalDateTime endTime);
+    
+    List<CalendarEvent> findByUserAndTitleContainingIgnoreCase(allUsers user, String title);
 }
 

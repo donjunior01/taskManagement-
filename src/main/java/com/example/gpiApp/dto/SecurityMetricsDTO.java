@@ -1,0 +1,17 @@
+package com.example.gpiApp.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class SecurityMetricsDTO {
+    private Long dailyLoginAttempts;
+    private Long failedLoginAttempts;
+    private Long activeSessionsCount;
+    private Long unresolvedAlertsCount;
+}

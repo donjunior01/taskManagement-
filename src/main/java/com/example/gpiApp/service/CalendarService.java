@@ -505,5 +505,75 @@ public class CalendarService {
                 .end(endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
                 .build();
     }
+    
+    // ===========================
+    // NEW CALENDAR REDESIGN METHODS (Google Calendar-like)
+    // ===========================
+    
+    /**
+     * Create new event (enhanced for Google Calendar redesign)
+     */
+    @Transactional
+    public CalendarEventDTO createEventEnhanced(CalendarEventDTO dto, allUsers user) {
+        CalendarEvent event = CalendarEvent.builder()
+                .title(dto.getTitle())
+                .description(dto.getDescription())
+                .startTime(dto.getStartTime())
+                .endTime(dto.getEndTime())
+                .location(dto.getLocation())
+                .color(dto.getColor() != null ? dto.getColor() : "#4361EE")
+                .allDay(dto.getAllDay() != null ? dto.getAllDay() : false)
+                .reminderMinutes(dto.getReminderMinutes() != null ? dto.getReminderMinutes() : 30)
+                .user(user)
+                .eventType(CalendarEvent.EventType.CUSTOM)
+                .build();
+        
+        CalendarEvent saved = calendarEventRepository.save(event);
+        log.info("Calendar event created: {} for user: {}", saved.getId(), user.getUsername());
+        
+        return convertToDTO(saved);
+    }
+    
+    /**
+     * Get events for current user (used by redesigned calendar)
+     */
+    @Transactional(readOnly = true)
+    public List<CalendarEventDTO> getUserEventsEnhanced(allUsers user) {
+        List<CalendarEvent> events = calendarEventRepository.findByUserOrderByStartTimeAsc(user);
+        return events.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Get upcoming events with limit
+     */
+    @Transactional(readOnly = true)
+    public List<CalendarEventDTO> getUpcomingEventsEnhanced(allUsers user, int limit) {
+        LocalDateTime now = LocalDateTime.now();
+        List<CalendarEvent> events = calendarEventRepository
+                .findByUserAndStartTimeGreaterThanOrderByStartTimeAsc(user, now, 
+                    org.springframework.data.domain.PageRequest.of(0, limit))
+                .getContent();
+        return events.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Delete event (enhanced for Google Calendar redesign)
+     */
+    @Transactional
+    public void deleteEventEnhanced(Long id, allUsers user) {
+        CalendarEvent event = calendarEventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        
+        if (!event.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized to delete this event");
+        }
+        
+        calendarEventRepository.delete(event);
+        log.info("Calendar event deleted: {} by user: {}", id, user.getUsername());
+    }
 }
 
