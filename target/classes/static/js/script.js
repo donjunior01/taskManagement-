@@ -3252,6 +3252,14 @@ function navigateToPage(pageId) {
     }
 }
 
+// Alias for navigateTo (used in HTML onclick handlers)
+function navigateTo(pageId) {
+    navigateToPage(pageId);
+}
+
+// Make it globally available
+window.navigateTo = navigateTo;
+
 // Note: Duplicate messaging code removed - functions defined earlier
 
 // ===========================
@@ -3908,7 +3916,21 @@ function stopNotificationPolling() {
     }
 }
 
+// Toggle notification dropdown
+function toggleNotificationDropdown() {
+    const dropdown = document.getElementById('notification-dropdown');
+    if (!dropdown) return;
+    
+    if (dropdown.style.display === 'none' || !dropdown.style.display) {
+        dropdown.style.display = 'block';
+        loadNotifications(); // Refresh notifications when opening
+    } else {
+        dropdown.style.display = 'none';
+    }
+}
+
 // Make functions global
+window.toggleNotificationDropdown = toggleNotificationDropdown;
 window.markAllNotificationsAsRead = markAllNotificationsAsRead;
 window.handleNotificationClick = handleNotificationClick;
 

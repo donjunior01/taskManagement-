@@ -44,10 +44,18 @@ public class NotificationService {
     }
 
     public List<NotificationDTO> getUnreadNotifications(Long userId) {
-        return notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId)
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        try {
+            if (userId == null) {
+                return List.of();
+            }
+            return notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId)
+                    .stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
+        }
     }
 
     public long getUnreadCount(Long userId) {

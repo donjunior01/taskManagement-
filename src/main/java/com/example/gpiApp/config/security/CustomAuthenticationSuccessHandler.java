@@ -1,8 +1,12 @@
 package com.example.gpiApp.config.security;
 
+import com.example.gpiApp.entity.allUsers;
+import com.example.gpiApp.repository.UserRepository;
+import com.example.gpiApp.service.LoginAttemptService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -13,8 +17,12 @@ import java.util.Collection;
 import java.util.logging.Logger;
 
 @Component
+@RequiredArgsConstructor
 public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private static final Logger logger = Logger.getLogger(CustomAuthenticationSuccessHandler.class.getName());
+    
+    private final LoginAttemptService loginAttemptService;
+    private final UserRepository userRepository;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, 
@@ -46,7 +54,39 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         logger.info("Final redirect URL: " + redirectUrl);
         logger.info("=== End Authentication Success Handler ===");
         
+        // Log successful login attempt
+        try {
+            String email = authentication.getName();
+            allUsers user = userRepository.findByEmail(email).orElse(null);
+            String ipAddress = getClientIpAddress(request);
+            String userAgent = request.getHeader("User-Agent");
+            
+            loginAttemptService.logLoginAttempt(
+                user != null ? user.getUsername() : email,
+                email,
+                com.example.gpiApp.entity.LoginAttempt.LoginStatus.SUCCESS,
+                ipAddress,
+                userAgent,
+                null,
+                user != null ? user.getId() : null
+            );
+        } catch (Exception e) {
+            logger.warning("Failed to log login attempt: " + e.getMessage());
+        }
+        
         response.sendRedirect(redirectUrl);
+    }
+    
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty()) {
+            return xRealIp;
+        }
+        return request.getRemoteAddr();
     }
 
     private String determineRedirectUrl(Collection<? extends GrantedAuthority> authorities) {

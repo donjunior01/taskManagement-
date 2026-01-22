@@ -49,32 +49,45 @@ public class TimeLogService {
     
     @Transactional
     public ApiResponse<TimeLogDTO> createTimeLog(TimeLogRequestDTO request, Long userId) {
-        TimeLog timeLog = new TimeLog();
-        timeLog.setHoursSpent(request.getHoursSpent());
-        timeLog.setLogDate(request.getLogDate());
-        timeLog.setDescription(request.getDescription());
-        
-        taskRepository.findById(request.getTaskId())
-                .ifPresent(timeLog::setTask);
-        
-        userRepository.findById(userId)
-                .ifPresent(timeLog::setUser);
-        
-        TimeLog savedTimeLog = timeLogRepository.save(timeLog);
-        
-        // Log activity
-        userRepository.findById(userId).ifPresent(user -> 
+        try {
+            if (request.getTaskId() == null) {
+                return ApiResponse.error("Task ID is required");
+            }
+            if (userId == null) {
+                return ApiResponse.error("User ID is required");
+            }
+            
+            var task = taskRepository.findById(request.getTaskId())
+                    .orElseThrow(() -> new RuntimeException("Task not found with ID: " + request.getTaskId()));
+            
+            var user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+            
+            TimeLog timeLog = TimeLog.builder()
+                    .hoursSpent(request.getHoursSpent())
+                    .logDate(request.getLogDate())
+                    .description(request.getDescription())
+                    .task(task)
+                    .user(user)
+                    .build();
+            
+            TimeLog savedTimeLog = timeLogRepository.save(timeLog);
+            
+            // Log activity
             activityLogService.logActivity(
                 ActivityLog.ActivityType.TIME_LOGGED,
-                "Logged " + request.getHoursSpent() + " hours for task",
+                "Logged " + request.getHoursSpent() + " hours for task '" + task.getName() + "'",
                 user,
                 "TIMELOG",
                 savedTimeLog.getId(),
                 null
-            )
-        );
-        
-        return ApiResponse.success("Time log created successfully", convertToDTO(savedTimeLog));
+            );
+            
+            return ApiResponse.success("Time log created successfully", convertToDTO(savedTimeLog));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.error("Failed to create time log: " + e.getMessage());
+        }
     }
     
     @Transactional

@@ -30,17 +30,16 @@ public class DeliverableService {
     public PagedResponse<DeliverableDTO> getAllDeliverables(int page, int size) {
         try {
             PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-            Page<Deliverable> deliverablePage = deliverableRepository.findAll(pageable);
+            Page<Deliverable> deliverablePage = deliverableRepository.findAllWithDetails(pageable);
             
             List<DeliverableDTO> deliverableDTOs = deliverablePage.getContent().stream()
-                    .map(this::convertToDTO)
+                    .map(this::convertToDTOSafe)
                     .collect(Collectors.toList());
             
             return PagedResponse.of(deliverableDTOs, deliverablePage.getNumber(), deliverablePage.getSize(),
                     deliverablePage.getTotalElements(), deliverablePage.getTotalPages(),
                     deliverablePage.isFirst(), deliverablePage.isLast());
         } catch (Exception e) {
-            // Log the error and return empty response
             e.printStackTrace();
             return PagedResponse.of(List.of(), page, size, 0, 0, true, true);
         }
@@ -55,33 +54,46 @@ public class DeliverableService {
     
     @Transactional
     public ApiResponse<DeliverableDTO> createDeliverable(DeliverableRequestDTO request, Long userId) {
-        Deliverable deliverable = new Deliverable();
-        deliverable.setFileName(request.getFileName());
-        deliverable.setFileUrl(request.getFileUrl());
-        deliverable.setFileSize(request.getFileSize());
-        deliverable.setStatus(Deliverable.DeliverableStatus.PENDING);
-        
-        taskRepository.findById(request.getTaskId())
-                .ifPresent(deliverable::setTask);
-        
-        userRepository.findById(userId)
-                .ifPresent(deliverable::setSubmittedBy);
-        
-        Deliverable savedDeliverable = deliverableRepository.save(deliverable);
-        
-        // Log activity
-        userRepository.findById(userId).ifPresent(user -> 
+        try {
+            if (request.getTaskId() == null) {
+                return ApiResponse.error("Task ID is required");
+            }
+            if (userId == null) {
+                return ApiResponse.error("User ID is required");
+            }
+            
+            var task = taskRepository.findById(request.getTaskId())
+                    .orElseThrow(() -> new RuntimeException("Task not found with ID: " + request.getTaskId()));
+            
+            var user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+            
+            Deliverable deliverable = Deliverable.builder()
+                    .fileName(request.getFileName())
+                    .fileUrl(request.getFileUrl())
+                    .fileSize(request.getFileSize())
+                    .status(Deliverable.DeliverableStatus.PENDING)
+                    .task(task)
+                    .submittedBy(user)
+                    .build();
+            
+            Deliverable savedDeliverable = deliverableRepository.save(deliverable);
+            
+            // Log activity
             activityLogService.logActivity(
                 ActivityLog.ActivityType.DELIVERABLE_SUBMITTED,
-                "Deliverable '" + savedDeliverable.getFileName() + "' was submitted",
+                "Deliverable '" + savedDeliverable.getFileName() + "' was submitted for task '" + task.getName() + "'",
                 user,
                 "DELIVERABLE",
                 savedDeliverable.getId(),
                 null
-            )
-        );
-        
-        return ApiResponse.success("Deliverable submitted successfully", convertToDTO(savedDeliverable));
+            );
+            
+            return ApiResponse.success("Deliverable submitted successfully", convertToDTOSafe(savedDeliverable));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.error("Failed to create deliverable: " + e.getMessage());
+        }
     }
     
     @Transactional
@@ -141,18 +153,21 @@ public class DeliverableService {
     @Transactional(readOnly = true)
     public PagedResponse<DeliverableDTO> getDeliverablesByUser(Long userId, int page, int size) {
         try {
+            if (userId == null) {
+                return PagedResponse.of(List.of(), page, size, 0, 0, true, true);
+            }
+            
             PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             Page<Deliverable> deliverablePage = deliverableRepository.findBySubmittedById(userId, pageable);
             
             List<DeliverableDTO> deliverableDTOs = deliverablePage.getContent().stream()
-                    .map(this::convertToDTO)
+                    .map(this::convertToDTOSafe)
                     .collect(Collectors.toList());
             
             return PagedResponse.of(deliverableDTOs, deliverablePage.getNumber(), deliverablePage.getSize(),
                     deliverablePage.getTotalElements(), deliverablePage.getTotalPages(),
                     deliverablePage.isFirst(), deliverablePage.isLast());
         } catch (Exception e) {
-            // Log the error and return empty response
             e.printStackTrace();
             return PagedResponse.of(List.of(), page, size, 0, 0, true, true);
         }
@@ -188,87 +203,41 @@ public class DeliverableService {
     }
     
     private DeliverableDTO convertToDTO(Deliverable deliverable) {
+        return DeliverableDTO.builder()
+                .id(deliverable.getId())
+                .taskId(deliverable.getTask() != null ? deliverable.getTask().getId() : null)
+                .taskName(deliverable.getTask() != null ? deliverable.getTask().getName() : null)
+                .submittedById(deliverable.getSubmittedBy() != null ? deliverable.getSubmittedBy().getId() : null)
+                .submittedByName(deliverable.getSubmittedBy() != null ? 
+                    deliverable.getSubmittedBy().getFirstName() + " " + deliverable.getSubmittedBy().getLastName() : null)
+                .fileName(deliverable.getFileName())
+                .fileUrl(deliverable.getFileUrl())
+                .fileSize(deliverable.getFileSize())
+                .status(deliverable.getStatus())
+                .comments(deliverable.getComments())
+                .reviewedById(deliverable.getReviewedBy() != null ? deliverable.getReviewedBy().getId() : null)
+                .reviewedByName(deliverable.getReviewedBy() != null ? 
+                    deliverable.getReviewedBy().getFirstName() + " " + deliverable.getReviewedBy().getLastName() : null)
+                .reviewedAt(deliverable.getReviewedAt())
+                .createdAt(deliverable.getCreatedAt())
+                .updatedAt(deliverable.getUpdatedAt())
+                .build();
+    }
+    
+    private DeliverableDTO convertToDTOSafe(Deliverable deliverable) {
         try {
+            return convertToDTO(deliverable);
+        } catch (Exception e) {
             return DeliverableDTO.builder()
                     .id(deliverable.getId())
-                    .taskId(getTaskId(deliverable))
-                    .taskName(getTaskName(deliverable))
-                    .submittedById(getSubmittedById(deliverable))
-                    .submittedByName(getSubmittedByName(deliverable))
                     .fileName(deliverable.getFileName())
                     .fileUrl(deliverable.getFileUrl())
                     .fileSize(deliverable.getFileSize())
                     .status(deliverable.getStatus())
                     .comments(deliverable.getComments())
-                    .reviewedById(getReviewedById(deliverable))
-                    .reviewedByName(getReviewedByName(deliverable))
-                    .reviewedAt(deliverable.getReviewedAt())
                     .createdAt(deliverable.getCreatedAt())
                     .updatedAt(deliverable.getUpdatedAt())
                     .build();
-        } catch (Exception e) {
-            // Return a minimal DTO if there's an issue with lazy loading
-            return DeliverableDTO.builder()
-                    .id(deliverable.getId())
-                    .fileName(deliverable.getFileName())
-                    .fileUrl(deliverable.getFileUrl())
-                    .status(deliverable.getStatus())
-                    .createdAt(deliverable.getCreatedAt())
-                    .build();
-        }
-    }
-    
-    private Long getTaskId(Deliverable deliverable) {
-        try {
-            return deliverable.getTask() != null ? deliverable.getTask().getId() : null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-    
-    private String getTaskName(Deliverable deliverable) {
-        try {
-            return deliverable.getTask() != null ? deliverable.getTask().getName() : null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-    
-    private Long getSubmittedById(Deliverable deliverable) {
-        try {
-            return deliverable.getSubmittedBy() != null ? deliverable.getSubmittedBy().getId() : null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-    
-    private String getSubmittedByName(Deliverable deliverable) {
-        try {
-            if (deliverable.getSubmittedBy() != null) {
-                return deliverable.getSubmittedBy().getFirstName() + " " + deliverable.getSubmittedBy().getLastName();
-            }
-            return null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-    
-    private Long getReviewedById(Deliverable deliverable) {
-        try {
-            return deliverable.getReviewedBy() != null ? deliverable.getReviewedBy().getId() : null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-    
-    private String getReviewedByName(Deliverable deliverable) {
-        try {
-            if (deliverable.getReviewedBy() != null) {
-                return deliverable.getReviewedBy().getFirstName() + " " + deliverable.getReviewedBy().getLastName();
-            }
-            return null;
-        } catch (Exception e) {
-            return null;
         }
     }
 }
