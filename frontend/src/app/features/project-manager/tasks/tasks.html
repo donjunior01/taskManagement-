@@ -1,0 +1,524 @@
+<div class="tasks-container animate-fade-in-up">
+  <!-- Governance Greeting Area -->
+  <div class="tasks-header">
+    <div class="header-text">
+      <h2>Task Delegation Board</h2>
+      <p>Delegate deliverables, supervise execution tracks, and transition tasks dynamically across workspace swimlanes.</p>
+    </div>
+  </div>
+
+  <!-- Advanced Filters Toolbar -->
+  <div class="glass-panel filter-toolbar">
+    <div class="filters-left">
+      <!-- Search Input -->
+      <div class="search-input-wrapper">
+        <div class="search-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <input 
+          type="text" 
+          placeholder="Search tasks..." 
+          [(ngModel)]="searchTerm" 
+          (ngModelChange)="onFilterChange()"
+        />
+      </div>
+
+      <!-- Project Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="projectFilter" (change)="onFilterChange()">
+          <option value="">All Projects</option>
+          <option *ngFor="let proj of projectsList" [value]="proj.id">{{ proj.name }}</option>
+        </select>
+      </div>
+
+      <!-- Assignee Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="assigneeFilter" (change)="onFilterChange()">
+          <option value="">All Developers</option>
+          <option *ngFor="let dev of developersList" [value]="dev.id">{{ dev.firstName }} {{ dev.lastName }}</option>
+        </select>
+      </div>
+
+      <!-- Priority Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
+          <option value="">All Priorities</option>
+          <option value="CRITICAL">Critical</option>
+          <option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="LOW">Low</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Action button: Delegate -->
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>Delegate Task</span>
+    </button>
+  </div>
+
+  <!-- Loading indicator -->
+  <div class="spinner-wrapper" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Decrypting active task indices...</span>
+  </div>
+
+  <!-- Kanban Grid Swimlanes (Visible when loaded) -->
+  <div class="kanban-board" *ngIf="!loading">
+    
+    <!-- SWIMLANE: PLANNED -->
+    <div class="kanban-column column-planned">
+      <div class="column-header">
+        <span class="column-dot dot-planned"></span>
+        <h3>Planned</h3>
+        <span class="column-count">{{ plannedTasks.length }}</span>
+      </div>
+
+      <div class="column-cards-area">
+        <div class="empty-column-msg" *ngIf="plannedTasks.length === 0">No tasks planned</div>
+        
+        <div class="task-card animate-scale-in" *ngFor="let task of plannedTasks" (click)="openEditModal(task)">
+          <div class="card-pills-row">
+            <span class="priority-pill" [ngClass]="task.priority?.toLowerCase() || 'medium'">{{ task.priority }}</span>
+            <span class="difficulty-pill">{{ task.difficulty }}</span>
+          </div>
+
+          <h4 class="task-name">{{ task.name }}</h4>
+          <p class="task-desc" *ngIf="task.description">{{ task.description }}</p>
+          <span class="project-tag">{{ task.projectName }}</span>
+
+          <div class="card-footer">
+            <div class="assignee-block">
+              <div class="avatar-bubble-sm" title="{{ task.assignedToName }}">
+                {{ getAssigneeInitials(task.assignedToName) }}
+              </div>
+              <span class="deadline-lbl">Due: {{ task.deadline }}</span>
+            </div>
+
+            <!-- Quick move action -->
+            <button class="quick-move-btn btn-start" (click)="quickMoveTask(task, 'IN_PROGRESS'); $event.stopPropagation()" title="Start Task">
+              <span>Start</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SWIMLANE: IN PROGRESS -->
+    <div class="kanban-column column-progress">
+      <div class="column-header">
+        <span class="column-dot dot-progress"></span>
+        <h3>In Progress</h3>
+        <span class="column-count">{{ inProgressTasks.length }}</span>
+      </div>
+
+      <div class="column-cards-area">
+        <div class="empty-column-msg" *ngIf="inProgressTasks.length === 0">No tasks in execution</div>
+        
+        <div class="task-card animate-scale-in" *ngFor="let task of inProgressTasks" (click)="openEditModal(task)">
+          <div class="card-pills-row">
+            <span class="priority-pill" [ngClass]="task.priority?.toLowerCase() || 'medium'">{{ task.priority }}</span>
+            <span class="difficulty-pill">{{ task.difficulty }}</span>
+          </div>
+
+          <h4 class="task-name">{{ task.name }}</h4>
+          <p class="task-desc" *ngIf="task.description">{{ task.description }}</p>
+          <span class="project-tag">{{ task.projectName }}</span>
+
+          <!-- Individual Progress bar -->
+          <div class="progress-section">
+            <div class="progress-info">
+              <span>Task Progress</span>
+              <strong>{{ task.progress || 0 }}%</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-bar" [style.width.%]="task.progress || 0"></div>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="assignee-block">
+              <div class="avatar-bubble-sm" title="{{ task.assignedToName }}">
+                {{ getAssigneeInitials(task.assignedToName) }}
+              </div>
+              <span class="deadline-lbl">Due: {{ task.deadline }}</span>
+            </div>
+
+            <!-- Quick move action group -->
+            <div class="quick-move-group">
+              <button class="quick-move-btn btn-hold" (click)="quickMoveTask(task, 'ON_HOLD'); $event.stopPropagation()" title="Suspend Task">
+                <span>Hold</span>
+              </button>
+              <button class="quick-move-btn btn-finish" (click)="quickMoveTask(task, 'COMPLETED'); $event.stopPropagation()" title="Complete Task">
+                <span>Finish</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SWIMLANE: ON HOLD -->
+    <div class="kanban-column column-hold">
+      <div class="column-header">
+        <span class="column-dot dot-hold"></span>
+        <h3>On Hold</h3>
+        <span class="column-count">{{ onHoldTasks.length }}</span>
+      </div>
+
+      <div class="column-cards-area">
+        <div class="empty-column-msg" *ngIf="onHoldTasks.length === 0">No suspended tasks</div>
+        
+        <div class="task-card animate-scale-in" *ngFor="let task of onHoldTasks" (click)="openEditModal(task)">
+          <div class="card-pills-row">
+            <span class="priority-pill" [ngClass]="task.priority?.toLowerCase() || 'medium'">{{ task.priority }}</span>
+            <span class="difficulty-pill">{{ task.difficulty }}</span>
+          </div>
+
+          <h4 class="task-name">{{ task.name }}</h4>
+          <p class="task-desc" *ngIf="task.description">{{ task.description }}</p>
+          <span class="project-tag">{{ task.projectName }}</span>
+
+          <div class="card-footer">
+            <div class="assignee-block">
+              <div class="avatar-bubble-sm" title="{{ task.assignedToName }}">
+                {{ getAssigneeInitials(task.assignedToName) }}
+              </div>
+              <span class="deadline-lbl">Due: {{ task.deadline }}</span>
+            </div>
+
+            <!-- Quick move action -->
+            <button class="quick-move-btn btn-resume" (click)="quickMoveTask(task, 'IN_PROGRESS'); $event.stopPropagation()" title="Resume Task">
+              <span>Resume</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SWIMLANE: COMPLETED -->
+    <div class="kanban-column column-completed">
+      <div class="column-header">
+        <span class="column-dot dot-completed"></span>
+        <h3>Completed</h3>
+        <span class="column-count">{{ completedTasks.length }}</span>
+      </div>
+
+      <div class="column-cards-area">
+        <div class="empty-column-msg" *ngIf="completedTasks.length === 0">No completed tasks</div>
+        
+        <div class="task-card card-finished animate-scale-in" *ngFor="let task of completedTasks" (click)="openEditModal(task)">
+          <div class="card-pills-row">
+            <span class="priority-pill" [ngClass]="task.priority?.toLowerCase() || 'medium'">{{ task.priority }}</span>
+            <span class="difficulty-pill">{{ task.difficulty }}</span>
+          </div>
+
+          <h4 class="task-name">{{ task.name }}</h4>
+          <p class="task-desc" *ngIf="task.description">{{ task.description }}</p>
+          <span class="project-tag">{{ task.projectName }}</span>
+
+          <div class="card-footer">
+            <div class="assignee-block">
+              <div class="avatar-bubble-sm" title="{{ task.assignedToName }}">
+                {{ getAssigneeInitials(task.assignedToName) }}
+              </div>
+              <span class="deadline-lbl">Due: {{ task.deadline }}</span>
+            </div>
+
+            <!-- Quick move action -->
+            <button class="quick-move-btn btn-reopen" (click)="quickMoveTask(task, 'IN_PROGRESS'); $event.stopPropagation()" title="Reopen Task">
+              <span>Reopen</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= PM DELEGATE NEW TASK MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showCreateModal" (click)="closeCreateModal()">
+  <div class="glass-panel modal-card delegate-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Deliverable Allocator</span>
+        <h3>Delegate New Deliverable</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeCreateModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitCreateTask()" #createFormObj="ngForm">
+      <div class="modal-body">
+        
+        <!-- Task Name -->
+        <div class="form-group">
+          <label for="taskName">Deliverable Title Name</label>
+          <input 
+            type="text" 
+            id="taskName" 
+            name="taskName" 
+            [(ngModel)]="createForm.name" 
+            placeholder="e.g. Write Terraform Scripts"
+            required
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="taskDesc">Deliverable Task Description</label>
+          <textarea 
+            id="taskDesc" 
+            name="taskDesc" 
+            rows="3" 
+            [(ngModel)]="createForm.description"
+            placeholder="Provide task delivery criteria, context, or checklist targets..."
+          ></textarea>
+        </div>
+
+        <div class="form-row-2">
+          <!-- Project Selection -->
+          <div class="form-group">
+            <label for="taskProject">Workspace Project Scope</label>
+            <div class="select-wrapper">
+              <select id="taskProject" name="taskProject" [(ngModel)]="createForm.projectId" required>
+                <option *ngFor="let proj of projectsList" [value]="proj.id">{{ proj.name }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Assignee Selection -->
+          <div class="form-group">
+            <label for="taskAssignee">Assignee Developer</label>
+            <div class="select-wrapper">
+              <select id="taskAssignee" name="taskAssignee" [(ngModel)]="createForm.assignedToId" required>
+                <option *ngFor="let dev of developersList" [value]="dev.id">{{ dev.firstName }} {{ dev.lastName }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <!-- Priority select -->
+          <div class="form-group">
+            <label for="taskPriority">Priority Rank</label>
+            <div class="select-wrapper">
+              <select id="taskPriority" name="taskPriority" [(ngModel)]="createForm.priority" required>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Difficulty select -->
+          <div class="form-group">
+            <label for="taskDifficulty">Difficulty Scope</label>
+            <div class="select-wrapper">
+              <select id="taskDifficulty" name="taskDifficulty" [(ngModel)]="createForm.difficulty" required>
+                <option value="HARD">Hard</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="EASY">Easy</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Deadline -->
+          <div class="form-group">
+            <label for="taskDeadline">Target Deadline</label>
+            <input 
+              type="date" 
+              id="taskDeadline" 
+              name="taskDeadline" 
+              [(ngModel)]="createForm.deadline" 
+              required
+            />
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submittingCreate || !createFormObj.form.valid">
+          <svg *ngIf="submittingCreate" class="spinner" viewBox="0 0 24 24">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submittingCreate ? 'Allocating Task...' : 'Delegate Deliverable' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= PM EDIT / UPDATE TASK SPECIFICATIONS MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="glass-panel modal-card edit-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Deliverable Specifications Editor</span>
+        <h3>Update Task Details: {{ selectedTask?.name }}</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeEditModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitEditTask()" #editFormObj="ngForm">
+      <div class="modal-body">
+        
+        <!-- Task Name -->
+        <div class="form-group">
+          <label for="editTaskName">Deliverable Title Name</label>
+          <input 
+            type="text" 
+            id="editTaskName" 
+            name="editTaskName" 
+            [(ngModel)]="editForm.name" 
+            required
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="editTaskDesc">Deliverable Task Description</label>
+          <textarea 
+            id="editTaskDesc" 
+            name="editTaskDesc" 
+            rows="3" 
+            [(ngModel)]="editForm.description"
+          ></textarea>
+        </div>
+
+        <!-- Dynamic Progress Slider Control -->
+        <div class="form-group slider-group">
+          <div class="slider-header">
+            <label for="taskProgressSlider">Task Completion Progress</label>
+            <span class="progress-val-bubble">{{ editForm.progress || 0 }}%</span>
+          </div>
+          <div class="slider-range-track">
+            <input 
+              type="range" 
+              id="taskProgressSlider" 
+              name="taskProgressSlider" 
+              min="0" 
+              max="100" 
+              step="5"
+              [(ngModel)]="editForm.progress"
+            />
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <!-- Project Selection -->
+          <div class="form-group">
+            <label for="editTaskProject">Workspace Project Scope</label>
+            <div class="select-wrapper">
+              <select id="editTaskProject" name="editTaskProject" [(ngModel)]="editForm.projectId" required>
+                <option *ngFor="let proj of projectsList" [value]="proj.id">{{ proj.name }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Assignee Selection -->
+          <div class="form-group">
+            <label for="editTaskAssignee">Assignee Developer</label>
+            <div class="select-wrapper">
+              <select id="editTaskAssignee" name="editTaskAssignee" [(ngModel)]="editForm.assignedToId" required>
+                <option *ngFor="let dev of developersList" [value]="dev.id">{{ dev.firstName }} {{ dev.lastName }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <!-- Priority select -->
+          <div class="form-group">
+            <label for="editTaskPriority">Priority Rank</label>
+            <div class="select-wrapper">
+              <select id="editTaskPriority" name="editTaskPriority" [(ngModel)]="editForm.priority" required>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Status select -->
+          <div class="form-group">
+            <label for="editTaskStatus">Task Active Status</label>
+            <div class="select-wrapper">
+              <select id="editTaskStatus" name="editTaskStatus" [(ngModel)]="editForm.status" required>
+                <option value="PLANNED">Planned Task</option>
+                <option value="IN_PROGRESS">Active In Progress</option>
+                <option value="ON_HOLD">Suspended On Hold</option>
+                <option value="COMPLETED">Completed Task</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Deadline -->
+          <div class="form-group">
+            <label for="editTaskDeadline">Target Deadline</label>
+            <input 
+              type="date" 
+              id="editTaskDeadline" 
+              name="editTaskDeadline" 
+              [(ngModel)]="editForm.deadline" 
+              required
+            />
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submittingEdit || !editFormObj.form.valid">
+          <svg *ngIf="submittingEdit" class="spinner" viewBox="0 0 24 24">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submittingEdit ? 'Saving Specifications...' : 'Save Specifications' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= FLOATING NOTIFICATION TOAST ================= -->
+<div class="toast-overlay" *ngIf="showToast" [ngClass]="toastType">
+  <div class="toast-card">
+    <div class="toast-icon">
+      <!-- Success Icon -->
+      <svg *ngIf="toastType === 'success'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <!-- Error Icon -->
+      <svg *ngIf="toastType === 'error'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

@@ -84,11 +84,36 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getProjectsByManager(managerId, page, size));
     }
     
+    @Operation(summary = "Get active projects assigned to current user", description = "Retrieve list of all active projects assigned to the current user")
+    @GetMapping("/my-active")
+    public ResponseEntity<ApiResponse<java.util.List<ProjectDTO>>> getMyActiveProjects(Authentication authentication) {
+        Long userId = getCurrentUserId(authentication);
+        if (userId == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("User not authenticated"));
+        }
+        return ResponseEntity.ok(projectService.getActiveProjectsForUser(userId));
+    }
+    
+    @Operation(summary = "Get project members", description = "Retrieve all unique team members assigned to this project")
+    @GetMapping("/{id}/members")
+    public ResponseEntity<ApiResponse<java.util.List<UserDTO>>> getProjectMembers(@PathVariable Long id) {
+        return ResponseEntity.ok(projectService.getProjectMembers(id));
+    }
+    
     private Long getCurrentUserId(Authentication authentication) {
-        if (authentication != null) {
-            return userRepository.findByEmail(authentication.getName())
-                    .map(allUsers::getId)
-                    .orElse(null);
+        if (authentication != null && authentication.getName() != null) {
+            String name = authentication.getName();
+            try {
+                return Long.parseLong(name);
+            } catch (NumberFormatException e) {
+                return userRepository.findByEmail(name)
+                        .map(allUsers::getId)
+                        .orElseGet(() -> 
+                            userRepository.findByUsername(name)
+                                    .map(allUsers::getId)
+                                    .orElse(null)
+                        );
+            }
         }
         return null;
     }

@@ -21,7 +21,5 @@ public class DeliverableRequestDTO {
     
     @NotBlank(message = "File URL is required")
     private String fileUrl;
-    
-    private Long fileSize;
 }
 

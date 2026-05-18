@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -209,6 +210,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public UserResponseDTO toggleUserStatus(Long id) {
+        Optional<allUsers> userOptional = userRepository.findById(id);
+        if (userOptional.isEmpty()) {
+            return new UserResponseDTO(false, "User not found", null);
+        }
+        allUsers user = userOptional.get();
+        boolean newStatus = !user.isActive();
+        
+        // Execute clean modifying update to prevent entity merge lockups
+        userRepository.updateUserStatus(id, newStatus);
+        
+        // Retrieve fresh state
+        allUsers updatedUser = userRepository.findById(id).orElse(user);
+        
+        String status = updatedUser.isActive() ? "activated" : "suspended";
+        return new UserResponseDTO(true, "User account " + status + " successfully", convertToDTO(updatedUser));
+    }
+
+    @Override
     public void changePassword(String email, String currentPassword, String newPassword) {
         allUsers user = userRepository.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("User not found"));
@@ -231,6 +252,7 @@ public class UserServiceImpl implements UserService {
         userDTO.setLastName(allUsers.getLastName());
         userDTO.setRole(allUsers.getRole());
         userDTO.setFullName(allUsers.getFirstName() + " " + allUsers.getLastName());
+        userDTO.setActive(allUsers.isActive());
         return userDTO;
     }
 

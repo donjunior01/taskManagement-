@@ -1,0 +1,428 @@
+<div class="my-tasks-container animate-fade-in-up">
+  <!-- Governance Greeting Area -->
+  <div class="tasks-header">
+    <div class="header-text">
+      <h2>My Assigned Deliverables</h2>
+      <p>Track your workspace tasks, log development hours, and upload submissions for lead manager reviews.</p>
+    </div>
+  </div>
+
+  <!-- Advanced Toolbar Filters -->
+  <div class="glass-panel filter-toolbar">
+    <div class="search-input-wrapper">
+      <div class="search-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <input 
+        type="text" 
+        placeholder="Search assigned tasks..." 
+        [(ngModel)]="searchTerm" 
+        (ngModelChange)="onFilterChange()"
+      />
+    </div>
+
+    <div class="filter-controls">
+      <!-- Status Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
+          <option value="">All Statuses</option>
+          <option value="IN_PROGRESS">Active In Progress</option>
+          <option value="PLANNED">Planned Deliverables</option>
+          <option value="ON_HOLD">Suspended On Hold</option>
+          <option value="COMPLETED">Completed Tasks</option>
+        </select>
+      </div>
+
+      <!-- Priority Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
+          <option value="">All Priorities</option>
+          <option value="CRITICAL">Critical Priority</option>
+          <option value="HIGH">High Priority</option>
+          <option value="MEDIUM">Medium Priority</option>
+          <option value="LOW">Low Priority</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State Spinner -->
+  <div class="spinner-wrapper" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Decrypting assigned deliverables...</span>
+  </div>
+
+  <!-- Deliverables Accordion List -->
+  <div class="tasks-accordion-list" *ngIf="!loading && filteredTasks.length > 0">
+    <div class="glass-panel task-item animate-scale-in" *ngFor="let task of filteredTasks" [ngClass]="{ expanded: task.expanded }">
+      
+      <!-- Accordion Header -->
+      <div class="task-trigger" (click)="toggleAccordion(task)">
+        <div class="trigger-left">
+          <span class="priority-badge" [ngClass]="task.priority?.toLowerCase() || 'medium'">{{ task.priority }}</span>
+          <span class="status-badge" [ngClass]="task.status?.toLowerCase() || 'planned'">
+            {{ task.status === 'IN_PROGRESS' ? 'Active' : (task.status === 'COMPLETED' ? 'Completed' : (task.status === 'ON_HOLD' ? 'On Hold' : 'Planned')) }}
+          </span>
+          <div class="title-meta">
+            <h4>{{ task.name }}</h4>
+            <span class="project-tag">Scope: {{ task.projectName }}</span>
+          </div>
+        </div>
+
+        <!-- Task individual Progress -->
+        <div class="trigger-middle">
+          <div class="progress-details">
+            <span class="lbl">Task Progress</span>
+            <span class="val">{{ task.progress || 0 }}%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar" [style.width.%]="task.progress || 0"></div>
+          </div>
+        </div>
+
+        <!-- Quick actions buttons -->
+        <div class="trigger-right">
+          <!-- Log Hours (stops propagation) -->
+          <button class="btn-action-trigger btn-log" (click)="openLogModal(task, $event)" title="Log execution hours">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>Log Time</span>
+          </button>
+
+          <!-- Upload deliverable (stops propagation, disabled if completed) -->
+          <button class="btn-action-trigger btn-submit" [disabled]="task.status === 'COMPLETED'" (click)="openSubmissionModal(task, $event)" title="Upload deliverable submission">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Submit</span>
+          </button>
+
+          <div class="chevron-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accordion Content Block -->
+      <div class="task-content animate-slide-down" *ngIf="task.expanded">
+        <div class="content-inner">
+          
+          <!-- Detailed Description & Timelines row -->
+          <div class="details-top-row">
+            <div class="description-block">
+              <h5>Deliverable Scope / Requirements</h5>
+              <p>{{ task.description || 'No descriptive specifications outline set for this deliverable.' }}</p>
+            </div>
+
+            <div class="meta-timeline-block">
+              <h5>Workspace Timeline</h5>
+              <div class="meta-vitals">
+                <div class="vital-item">
+                  <span class="label">Target Deadline</span>
+                  <strong class="text-danger">{{ task.deadline || 'No target date' }}</strong>
+                </div>
+                <div class="vital-item">
+                  <span class="label">Hours Logged</span>
+                  <strong>{{ task.totalHoursLogged || 0 }} hrs</strong>
+                </div>
+                <div class="vital-item">
+                  <span class="label">Difficulty Scope</span>
+                  <strong class="text-primary">{{ task.difficulty || 'MEDIUM' }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="progress-update-block" style="flex: 1; min-width: 200px; padding: 12px; background: rgba(99, 102, 241, 0.03); border: 1px solid rgba(99, 102, 241, 0.08); border-radius: var(--border-radius-md);">
+              <h5 style="margin-top: 0; margin-bottom: 12px; font-size: 13px; font-weight: 800; color: var(--text-primary);">Update Progress & Status</h5>
+              
+              <div class="progress-slider-wrapper" style="margin-bottom: 14px;">
+                <label style="font-size: 11px; color: var(--text-secondary); display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 6px;">
+                  <span>Task Progress</span>
+                  <strong style="color: var(--primary);">{{ task.progress || 0 }}%</strong>
+                </label>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  step="5" 
+                  [(ngModel)]="task.progress" 
+                  (change)="updateTaskProgressAndStatus(task, task.progress || 0, task.status || 'PLANNED')"
+                  style="width: 100%; accent-color: var(--primary); cursor: pointer;"
+                />
+              </div>
+
+              <div class="status-dropdown-wrapper">
+                <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 6px; font-weight: 700;">Task Status</label>
+                <div class="select-wrapper" style="margin: 0; width: 100%;">
+                  <select 
+                    [(ngModel)]="task.status" 
+                    (change)="updateTaskProgressAndStatus(task, task.progress || 0, task.status || 'PLANNED')"
+                    style="width: 100%; padding: 8px 12px; border-radius: var(--border-radius-sm); border: 1px solid var(--panel-border); background: white; font-weight: 600; font-size: 12px; color: var(--text-primary); cursor: pointer;"
+                  >
+                    <option value="PLANNED">Planned Deliverable</option>
+                    <option value="IN_PROGRESS">Active In Progress</option>
+                    <option value="ON_HOLD">Suspended On Hold</option>
+                    <option value="COMPLETED">Completed Task</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Triple breakdown logs grids -->
+          <div class="breakdown-dashboard-tabs">
+            
+            <!-- Tab 1: Submissions History -->
+            <div class="tab-panel-widget">
+              <h5>Submissions History</h5>
+              <div class="empty-tab-msg" *ngIf="!task.submissions || task.submissions.length === 0">
+                No deliverable files submitted yet.
+              </div>
+              <div class="submission-list" *ngIf="task.submissions && task.submissions.length > 0">
+                <div class="submission-file-row" *ngFor="let file of task.submissions">
+                  <div class="file-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                  </div>
+                  <div class="file-details">
+                    <span class="file-name">{{ file.fileName }}</span>
+                    <span class="file-size-date">Size: {{ file.size }} • Submitted: {{ file.date }}</span>
+                  </div>
+                  <span class="sub-status-badge" [ngClass]="file.status.toLowerCase()">
+                    {{ file.status }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 2: Logged Hours Sheets -->
+            <div class="tab-panel-widget">
+              <h5>Logged Hours Sheets</h5>
+              <div class="empty-tab-msg" *ngIf="!task.timeLogs || task.timeLogs.length === 0">
+                No development hours logged yet.
+              </div>
+              <div class="logs-list" *ngIf="task.timeLogs && task.timeLogs.length > 0">
+                <div class="log-sheet-row" *ngFor="let log of task.timeLogs">
+                  <div class="log-left">
+                    <strong>{{ log.hours }} hours</strong>
+                    <span class="log-notes">{{ log.notes }}</span>
+                  </div>
+                  <span class="log-date">{{ log.date }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 3: Comments & Revisions thread -->
+            <div class="tab-panel-widget comments-widget">
+              <h5>Comments & Revisions thread</h5>
+              
+              <div class="comments-thread-container">
+                <div class="empty-tab-msg" *ngIf="!task.comments || task.comments.length === 0">
+                  No comment logs register. Connect with Lead Project Managers!
+                </div>
+                
+                <div class="comments-list" *ngIf="task.comments && task.comments.length > 0">
+                  <div class="comment-bubble-wrapper" *ngFor="let comment of task.comments" [ngClass]="{ manager: comment.isManager }">
+                    <div class="comment-header">
+                      <strong>{{ comment.sender }}</strong>
+                      <span class="time">{{ comment.date }}</span>
+                    </div>
+                    <p class="comment-message">{{ comment.message }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Write a comment input form -->
+              <div class="comment-input-area">
+                <input 
+                  type="text" 
+                  placeholder="Ask for revision specifics, outline milestones..." 
+                  [(ngModel)]="activeCommentText[task.id || 0]"
+                  (keyup.enter)="submitComment(task)"
+                />
+                <button class="btn-send-comment" (click)="submitComment(task)">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Search Empty State -->
+  <div class="glass-panel empty-state" *ngIf="!loading && filteredTasks.length === 0">
+    <div class="empty-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+    </div>
+    <h3>No Deliverables Mapped</h3>
+    <p>We couldn't retrieve any active deliverable tasks matching your filter queries.</p>
+  </div>
+</div>
+
+<!-- ================= DEVELOPER LOG WORK HOURS MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showLogModal" (click)="closeLogModal()">
+  <div class="glass-panel modal-card log-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Time Sheet Entry</span>
+        <h3>Log Execution Hours: {{ selectedTaskForLog?.name }}</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeLogModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitLogHours()" #logFormObj="ngForm">
+      <div class="modal-body">
+        
+        <!-- Hours input -->
+        <div class="form-group">
+          <label for="logHours">Hours Spent</label>
+          <input 
+            type="number" 
+            id="logHours" 
+            name="logHours" 
+            min="1" 
+            max="16" 
+            [(ngModel)]="logForm.hours" 
+            required
+          />
+          <span class="help-text">Specify execution hours worked on this deliverable milestone today.</span>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label for="logNotes">Execution Checklist Description</label>
+          <textarea 
+            id="logNotes" 
+            name="logNotes" 
+            rows="3" 
+            [(ngModel)]="logForm.notes" 
+            placeholder="Outline what features, handshakes, or security configs were implemented..."
+            required
+          ></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeLogModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submittingLog || !logFormObj.form.valid">
+          <svg *ngIf="submittingLog" class="spinner" viewBox="0 0 24 24">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submittingLog ? 'Logging hours...' : 'Register Log Entry' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= DEVELOPER UPLOAD DELIVERABLE MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showSubmissionModal" (click)="closeSubmissionModal()">
+  <div class="glass-panel modal-card submission-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Deliverable submission</span>
+        <h3>Submit Workspace Milestone: {{ selectedTaskForSubmission?.name }}</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeSubmissionModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitDeliverable()" #subFormObj="ngForm">
+      <div class="modal-body">
+        
+        <!-- File Selection -->
+        <div class="form-group">
+          <label for="subFileName">File Selection</label>
+          <input 
+            type="file" 
+            id="subFileName" 
+            name="subFileName" 
+            (change)="onFileSelected($event)"
+            required
+          />
+          <div *ngIf="submissionForm.fileName" class="selected-file-info mt-2">
+            <strong>Selected: </strong> {{ submissionForm.fileName }} ({{ submissionForm.fileSize }})
+          </div>
+          <span class="help-text mt-1 d-block">Select the file representing your deliverable package (compressed zip, docs, or PDFs).</span>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label for="subNotes">Lead PM Review Notes</label>
+          <textarea 
+            id="subNotes" 
+            name="subNotes" 
+            rows="3" 
+            [(ngModel)]="submissionForm.notes" 
+            placeholder="Provide setup indices, deployment coordinates, or links to git branches..."
+            required
+          ></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeSubmissionModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submittingDeliverable || !subFormObj.form.valid">
+          <svg *ngIf="submittingDeliverable" class="spinner" viewBox="0 0 24 24">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submittingDeliverable ? 'Uploading deliverables...' : 'Submit Deliverable' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= FLOATING NOTIFICATION TOAST ================= -->
+<div class="toast-overlay" *ngIf="showToast" [ngClass]="toastType">
+  <div class="toast-card">
+    <div class="toast-icon">
+      <!-- Success Icon -->
+      <svg *ngIf="toastType === 'success'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <!-- Error Icon -->
+      <svg *ngIf="toastType === 'error'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

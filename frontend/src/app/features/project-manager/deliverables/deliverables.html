@@ -1,0 +1,570 @@
+<div class="deliverables-container animate-fade-in-up">
+  <!-- Greeting and Project Selection Header -->
+  <div class="deliverables-header-wrapper">
+    <div class="greeting-text">
+      <h2>Project Deliverables</h2>
+      <p>Configure project milestones, assign developers, and track execution deadlines.</p>
+    </div>
+    
+    <div class="project-selector-wrapper">
+      <label for="pmProjectSelect">Active Project Scope</label>
+      <div class="select-wrapper">
+        <select id="pmProjectSelect" [(ngModel)]="selectedProjectId" (change)="onProjectChange()">
+          <option *ngFor="let proj of projectsList" [value]="proj.id">{{ proj.name }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State Spinner -->
+  <div class="spinner-wrapper" *ngIf="loading || loadingTasks">
+    <div class="spinner"></div>
+    <span>Decrypting deliverable registries...</span>
+  </div>
+
+  <div class="deliverables-dashboard-content" *ngIf="!loading && !loadingTasks">
+    
+    <!-- STATISTICS GRID CARD LEDGER -->
+    <div class="stats-grid animate-scale-in">
+      <!-- Total Deliverables -->
+      <div class="glass-panel stat-card total">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+        </div>
+        <div class="stat-details">
+          <h3>Total Milestones</h3>
+          <span class="stat-number">{{ totalCount }}</span>
+        </div>
+      </div>
+
+      <!-- In Progress -->
+      <div class="glass-panel stat-card in-progress">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 12h8"/>
+            <path d="M12 8v8"/>
+          </svg>
+        </div>
+        <div class="stat-details">
+          <h3>In Progress</h3>
+          <span class="stat-number">{{ inProgressCount }}</span>
+        </div>
+      </div>
+
+      <!-- Completed -->
+      <div class="glass-panel stat-card completed">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div class="stat-details">
+          <h3>Completed</h3>
+          <span class="stat-number text-success">{{ completedCount }}</span>
+        </div>
+      </div>
+
+      <!-- Overdue -->
+      <div class="glass-panel stat-card overdue">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="stat-details">
+          <h3>Overdue Milestones</h3>
+          <span class="stat-number text-danger">{{ overdueCount }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN DELIVERABLES REGISTRY -->
+    <div class="glass-panel registry-table-card animate-scale-in">
+      <div class="registry-header">
+        <div class="header-titles">
+          <h3>Active Deliverables Ledger</h3>
+          <span>Registry records for selected project scope</span>
+        </div>
+        <button class="btn btn-primary" (click)="openAddModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Register Milestone</span>
+        </button>
+      </div>
+
+      <div class="empty-registry-state" *ngIf="deliverablesList.length === 0">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <p>No deliverables or milestone tasks registered for this project scope.</p>
+        <button class="btn btn-secondary" (click)="openAddModal()">Create First Deliverable</button>
+      </div>
+
+      <div class="table-responsive" *ngIf="deliverablesList.length > 0">
+        <table class="registry-table">
+          <thead>
+            <tr>
+              <th>Milestone Deliverable</th>
+              <th>Assigned Resource</th>
+              <th>Priority</th>
+              <th>Difficulty</th>
+              <th>Progress Gauge</th>
+              <th>Deadline</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let del of deliverablesList" class="registry-tr">
+              <td class="td-details">
+                <div class="deliverable-info">
+                  <span class="deliverable-name">{{ del.name }}</span>
+                  <p class="deliverable-desc" *ngIf="del.description">{{ del.description }}</p>
+                </div>
+              </td>
+              <td>
+                <div class="assignee-badge">
+                  <div class="assignee-avatar">
+                    {{ del.assignedToName ? del.assignedToName.charAt(0).toUpperCase() : 'U' }}
+                  </div>
+                  <span class="assignee-name">{{ del.assignedToName || 'Unassigned' }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="priority-badge" [ngClass]="del.priority?.toLowerCase() || 'medium'">
+                  {{ del.priority || 'MEDIUM' }}
+                </span>
+              </td>
+              <td>
+                <span class="difficulty-badge" [ngClass]="del.difficulty?.toLowerCase() || 'medium'">
+                  {{ del.difficulty || 'MEDIUM' }}
+                </span>
+              </td>
+              <td>
+                <div class="progress-bar-container">
+                  <div class="progress-info-row">
+                    <span class="progress-val">{{ del.progress || 0 }}%</span>
+                    <span class="status-val" [ngClass]="del.status?.toLowerCase()">{{ del.status?.replace('_', ' ') || 'PLANNED' }}</span>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill" [style.width.%]="del.progress || 0" [ngClass]="del.status?.toLowerCase()"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="deadline-wrapper">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="deadline-icon">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span class="deadline-date">{{ del.deadline || 'No Date Set' }}</span>
+                </div>
+              </td>
+              <td class="text-right td-actions">
+                <button class="action-btn edit" (click)="openEditModal(del)" title="Configure Specifications">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button class="action-btn review" (click)="openReviewModal(del)" title="Review Submissions">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <path d="M16 13l-4 4-2-2"></path>
+                  </svg>
+                </button>
+                <button class="action-btn delete" (click)="deleteDeliverable(del)" title="Terminate Deliverable">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    <line x1="10" y1="11" x2="10" y2="17"/>
+                    <line x1="14" y1="11" x2="14" y2="17"/>
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SCHEDULER ENTRY MODALS ================= -->
+
+<!-- ADD DELIVERABLE MODAL -->
+<div class="modal-backdrop" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="glass-panel modal-card add-deliverable-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Milestone Specification</span>
+        <h3>Register New Deliverable</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeAddModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="saveDeliverable()" #deliverableForm="ngForm">
+      <div class="modal-body">
+        <!-- Milestone Name -->
+        <div class="form-group">
+          <label for="delName">Milestone Name / Title</label>
+          <input 
+            type="text" 
+            id="delName" 
+            name="delName" 
+            [(ngModel)]="newEvent.name" 
+            placeholder="e.g. Design Translucent Cards"
+            required
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="delDesc">Scope Description</label>
+          <textarea 
+            id="delDesc" 
+            name="delDesc" 
+            rows="3" 
+            [(ngModel)]="newEvent.description" 
+            placeholder="Outline task details, milestones, and deliverable targets..."
+          ></textarea>
+        </div>
+
+        <!-- Assignee & Project Selector Row -->
+        <div class="modal-row-grid">
+          <!-- Active Project -->
+          <div class="form-group">
+            <label for="delProject">Scope Project</label>
+            <div class="select-wrapper">
+              <select id="delProject" name="delProject" [(ngModel)]="newEvent.projectId" required>
+                <option *ngFor="let proj of projectsList" [value]="proj.id">{{ proj.name }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Assigned Developer -->
+          <div class="form-group">
+            <label for="delDeveloper">Assigned Resource</label>
+            <div class="select-wrapper">
+              <select id="delDeveloper" name="delDeveloper" [(ngModel)]="newEvent.assignedToId">
+                <option [value]="0">Unassigned</option>
+                <option *ngFor="let dev of developersList" [value]="dev.id">{{ dev.firstName }} {{ dev.lastName }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Priority and Difficulty Ranks -->
+        <div class="modal-row-grid">
+          <!-- Priority -->
+          <div class="form-group">
+            <label for="delPriority">Priority Rank</label>
+            <div class="select-wrapper">
+              <select id="delPriority" name="delPriority" [(ngModel)]="newEvent.priority">
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Difficulty -->
+          <div class="form-group">
+            <label for="delDifficulty">Difficulty Scale</label>
+            <div class="select-wrapper">
+              <select id="delDifficulty" name="delDifficulty" [(ngModel)]="newEvent.difficulty">
+                <option value="HARD">Hard</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="EASY">Easy</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deadline & Initial Status Row -->
+        <div class="modal-row-grid">
+          <!-- Deadline -->
+          <div class="form-group">
+            <label for="delDeadline">Target Deadline</label>
+            <input 
+              type="date" 
+              id="delDeadline" 
+              name="delDeadline" 
+              [(ngModel)]="newEvent.deadline" 
+              required
+            />
+          </div>
+
+          <!-- Status -->
+          <div class="form-group">
+            <label for="delStatus">Initial Status</label>
+            <div class="select-wrapper">
+              <select id="delStatus" name="delStatus" [(ngModel)]="newEvent.status">
+                <option value="PLANNED">Planned</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="ON_HOLD">On Hold</option>
+                <option value="COMPLETED">Completed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting || !deliverableForm.form.valid">
+          <svg *ngIf="submitting" class="spinner" viewBox="0 0 24 24">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submitting ? 'Registering deliverable...' : 'Register Deliverable' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT DELIVERABLE MODAL -->
+<div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="glass-panel modal-card edit-deliverable-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Milestone Configuration</span>
+        <h3>Configure Specifications</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeEditModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="updateDeliverable()" #editDeliverableForm="ngForm">
+      <div class="modal-body">
+        <!-- Milestone Name -->
+        <div class="form-group">
+          <label for="editDelName">Milestone Name / Title</label>
+          <input 
+            type="text" 
+            id="editDelName" 
+            name="editDelName" 
+            [(ngModel)]="newEvent.name" 
+            required
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="editDelDesc">Scope Description</label>
+          <textarea 
+            id="editDelDesc" 
+            name="editDelDesc" 
+            rows="3" 
+            [(ngModel)]="newEvent.description"
+          ></textarea>
+        </div>
+
+        <!-- Assignee Selection -->
+        <div class="form-group">
+          <label for="editDelDeveloper">Assigned Resource</label>
+          <div class="select-wrapper">
+            <select id="editDelDeveloper" name="editDelDeveloper" [(ngModel)]="newEvent.assignedToId">
+              <option [value]="0">Unassigned</option>
+              <option *ngFor="let dev of developersList" [value]="dev.id">{{ dev.firstName }} {{ dev.lastName }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Priority and Difficulty Ranks -->
+        <div class="modal-row-grid">
+          <!-- Priority -->
+          <div class="form-group">
+            <label for="editDelPriority">Priority Rank</label>
+            <div class="select-wrapper">
+              <select id="editDelPriority" name="editDelPriority" [(ngModel)]="newEvent.priority">
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Difficulty -->
+          <div class="form-group">
+            <label for="editDelDifficulty">Difficulty Scale</label>
+            <div class="select-wrapper">
+              <select id="editDelDifficulty" name="editDelDifficulty" [(ngModel)]="newEvent.difficulty">
+                <option value="HARD">Hard</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="EASY">Easy</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status & Target Deadline Row -->
+        <div class="modal-row-grid">
+          <!-- Status -->
+          <div class="form-group">
+            <label for="editDelStatus">Milestone Status</label>
+            <div class="select-wrapper">
+              <select id="editDelStatus" name="editDelStatus" [(ngModel)]="newEvent.status">
+                <option value="PLANNED">Planned</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="ON_HOLD">On Hold</option>
+                <option value="COMPLETED">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Deadline -->
+          <div class="form-group">
+            <label for="editDelDeadline">Target Deadline</label>
+            <input 
+              type="date" 
+              id="editDelDeadline" 
+              name="editDelDeadline" 
+              [(ngModel)]="newEvent.deadline" 
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Progress Slider -->
+        <div class="form-group">
+          <div class="slider-header-row">
+            <label for="editDelProgress">Milestone Execution Progress</label>
+            <span class="slider-percentage">{{ newEvent.progress || 0 }}%</span>
+          </div>
+          <input 
+            type="range" 
+            id="editDelProgress" 
+            name="editDelProgress" 
+            min="0" 
+            max="100" 
+            step="5"
+            [(ngModel)]="newEvent.progress" 
+          />
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting || !editDeliverableForm.form.valid">
+          <svg *ngIf="submitting" class="spinner" viewBox="0 0 24 24">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submitting ? 'Saving changes...' : 'Save Specifications' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- REVIEW SUBMISSIONS MODAL -->
+<div class="modal-backdrop" *ngIf="showReviewModal" (click)="closeReviewModal()">
+  <div class="glass-panel modal-card review-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Submission Review</span>
+        <h3>Review Deliverables: {{ selectedDeliverable?.name }}</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeReviewModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="loadingSubmissions" class="spinner-wrapper" style="margin: 2rem 0;">
+        <div class="spinner"></div>
+      </div>
+      <div *ngIf="!loadingSubmissions && taskSubmissions.length === 0" class="empty-registry-state" style="padding: 2rem 0;">
+        <p>No submissions found for this deliverable milestone.</p>
+      </div>
+      <div class="table-responsive" *ngIf="!loadingSubmissions && taskSubmissions.length > 0">
+        <table class="registry-table" style="margin-top: 0;">
+          <thead>
+            <tr>
+              <th>File Submission</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sub of taskSubmissions" class="registry-tr">
+              <td><strong>{{ sub.title }}</strong><br/><small *ngIf="sub.description">{{ sub.description }}</small></td>
+              <td>
+                <span class="status-badge" [ngClass]="sub.status.toLowerCase()">{{ sub.status }}</span>
+              </td>
+              <td>{{ sub.dueDate | date:'shortDate' }}</td>
+              <td class="text-right td-actions">
+                <button class="action-btn text-success" style="margin-right:0.5rem;" (click)="reviewSubmission(sub.id, 'APPROVED')" [disabled]="submitting" title="Approve">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </button>
+                <button class="action-btn text-danger" (click)="reviewSubmission(sub.id, 'REJECTED')" [disabled]="submitting" title="Reject">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeReviewModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= FLOATING NOTIFICATION TOAST ================= -->
+<div class="toast-overlay" *ngIf="showToast" [ngClass]="toastType">
+  <div class="toast-card animate-scale-in">
+    <div class="toast-icon">
+      <svg *ngIf="toastType === 'success'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <svg *ngIf="toastType === 'error'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+      </svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

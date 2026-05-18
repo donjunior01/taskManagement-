@@ -76,7 +76,9 @@ public class Project {
         ACTIVE,
         COMPLETED,
         ON_HOLD,
-        CANCELLED
+        CANCELLED,
+        PLANNED,
+        IN_PROGRESS
     }
 }
 

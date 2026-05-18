@@ -179,7 +179,6 @@ public class TimeLogService {
                 .logDate(timeLog.getLogDate())
                 .description(timeLog.getDescription())
                 .createdAt(timeLog.getCreatedAt())
-                .updatedAt(timeLog.getUpdatedAt())
                 .build();
     }
 }

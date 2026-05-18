@@ -21,30 +21,6 @@ CREATE TABLE IF NOT EXISTS `allUsers` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Create admin_dashboards table
-CREATE TABLE IF NOT EXISTS `admin_dashboards` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT,
-    `user_id` BIGINT,
-    PRIMARY KEY (`id`),
-    FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Create project_manager_dashboards table
-CREATE TABLE IF NOT EXISTS `project_manager_dashboards` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT,
-    `user_id` BIGINT,
-    PRIMARY KEY (`id`),
-    FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Create user_dashboards table
-CREATE TABLE IF NOT EXISTS `user_dashboards` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT,
-    `user_id` BIGINT,
-    PRIMARY KEY (`id`),
-    FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 -- Create projects table
 CREATE TABLE IF NOT EXISTS `projects` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -129,6 +105,8 @@ CREATE TABLE IF NOT EXISTS `comments` (
     `content` TEXT NOT NULL,
     `task_id` BIGINT NOT NULL,
     `user_id` BIGINT NOT NULL,
+    `attachment_url` VARCHAR(500),
+    `attachment_name` VARCHAR(255),
     `created_at` DATETIME,
     PRIMARY KEY (`id`),
     FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON DELETE CASCADE,
@@ -244,4 +222,50 @@ CREATE TABLE IF NOT EXISTS `support_tickets` (
 -- Add subject column to messages table if not exists
 -- ALTER TABLE `messages` ADD COLUMN IF NOT EXISTS `subject` VARCHAR(255);
 
--- Indexes are handled by JPA/Hibernate based on entity annotations
+-- Add attachment columns to comments table if not exists
+ALTER TABLE `comments` ADD COLUMN IF NOT EXISTS `attachment_url` VARCHAR(500);
+ALTER TABLE `comments` ADD COLUMN IF NOT EXISTS `attachment_name` VARCHAR(255);
+
+-- Performance indexes for frequently queried columns
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_deadline ON tasks(deadline);
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to_id ON tasks(assigned_to_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id);
+
+CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
+CREATE INDEX IF NOT EXISTS idx_projects_manager_id ON projects(manager_id);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+
+CREATE INDEX IF NOT EXISTS idx_time_logs_task_id ON time_logs(task_id);
+CREATE INDEX IF NOT EXISTS idx_time_logs_user_id ON time_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_time_logs_log_date ON time_logs(log_date);
+
+CREATE INDEX IF NOT EXISTS idx_comments_task_id ON comments(task_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_calendar_events_user_id ON calendar_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_start_time ON calendar_events(start_time);
+
+CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at);
+
+-- User notification preferences table
+CREATE TABLE IF NOT EXISTS `user_notification_preferences` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `email_notifications` BOOLEAN NOT NULL DEFAULT TRUE,
+    `push_notifications` BOOLEAN NOT NULL DEFAULT TRUE,
+    `task_deadline_reminders` BOOLEAN NOT NULL DEFAULT TRUE,
+    `task_assignment_notifications` BOOLEAN NOT NULL DEFAULT TRUE,
+    `project_update_notifications` BOOLEAN NOT NULL DEFAULT TRUE,
+    `comment_notifications` BOOLEAN NOT NULL DEFAULT TRUE,
+    `message_notifications` BOOLEAN NOT NULL DEFAULT TRUE,
+    `deadline_reminder_hours` INT NOT NULL DEFAULT 24,
+    `created_at` DATETIME,
+    `updated_at` DATETIME,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

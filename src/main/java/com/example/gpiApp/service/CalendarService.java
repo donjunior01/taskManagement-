@@ -11,7 +11,6 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.EventReminder;
 import com.google.api.services.calendar.model.Events;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +33,7 @@ public class CalendarService {
     private final UserRepository userRepository;
     private final GoogleCalendarConfig googleCalendarConfig;
     private final Calendar googleCalendar;
-    
+
     public CalendarService(CalendarEventRepository calendarEventRepository,
                            ProjectRepository projectRepository,
                            TaskRepository taskRepository,
@@ -50,9 +49,6 @@ public class CalendarService {
         this.googleCalendarConfig = googleCalendarConfig;
         this.googleCalendar = googleCalendar;
     }
-
-    @Value("${google.calendar.id:primary}")
-    private String defaultCalendarId;
 
     private static final Map<CalendarEvent.EventType, String> EVENT_COLORS = Map.of(
             CalendarEvent.EventType.PROJECT_START, "#4361ee",
@@ -362,11 +358,11 @@ public class CalendarService {
         }
 
         Event createdEvent = googleCalendar.events()
-                .insert(defaultCalendarId, googleEvent)
+                .insert(googleCalendarConfig.getDefaultCalendarId(), googleEvent)
                 .execute();
 
         calendarEvent.setGoogleEventId(createdEvent.getId());
-        calendarEvent.setGoogleCalendarId(defaultCalendarId);
+        calendarEvent.setGoogleCalendarId(googleCalendarConfig.getDefaultCalendarId());
         calendarEvent.setIsSynced(true);
         calendarEventRepository.save(calendarEvent);
 
@@ -430,7 +426,7 @@ public class CalendarService {
         DateTime timeMax = new DateTime(end.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
 
         Events events = googleCalendar.events()
-                .list(defaultCalendarId)
+                .list(googleCalendarConfig.getDefaultCalendarId())
                 .setTimeMin(timeMin)
                 .setTimeMax(timeMax)
                 .setOrderBy("startTime")

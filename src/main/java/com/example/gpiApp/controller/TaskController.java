@@ -127,10 +127,19 @@ public class TaskController {
     }
     
     private Long getCurrentUserId(Authentication authentication) {
-        if (authentication != null) {
-            return userRepository.findByEmail(authentication.getName())
-                    .map(allUsers::getId)
-                    .orElse(null);
+        if (authentication != null && authentication.getName() != null) {
+            String name = authentication.getName();
+            try {
+                return Long.parseLong(name);
+            } catch (NumberFormatException e) {
+                return userRepository.findByEmail(name)
+                        .map(allUsers::getId)
+                        .orElseGet(() -> 
+                            userRepository.findByUsername(name)
+                                    .map(allUsers::getId)
+                                    .orElse(null)
+                        );
+            }
         }
         return null;
     }

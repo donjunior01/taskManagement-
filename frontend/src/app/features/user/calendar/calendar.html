@@ -1,0 +1,272 @@
+<div class="calendar-container animate-fade-in-up">
+  <!-- Loading State Spinner -->
+  <div class="spinner-wrapper" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Decrypting scheduler pipelines...</span>
+  </div>
+
+  <!-- Main Scheduler Dashboard -->
+  <div class="calendar-dashboard-layout" *ngIf="!loading">
+    
+    <!-- LEFT MAIN COLUMN: Month Calendar Grid -->
+    <div class="calendar-main-col">
+      <!-- Calendar Interactive Header -->
+      <div class="calendar-main-header">
+        <div class="header-left">
+          <h2>{{ getMonthYearLabel() }}</h2>
+          <div class="calendar-nav-buttons">
+            <button class="btn-nav" (click)="prevMonth()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="btn-today">Today</button>
+            <button class="btn-nav" (click)="nextMonth()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="view-switcher">
+            <button class="btn-switch active">Month</button>
+            <button class="btn-switch">Week</button>
+            <button class="btn-switch">Day</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar Main Grid Container -->
+      <div class="glass-panel calendar-grid-card">
+        <!-- Weekdays SUN to SAT -->
+        <div class="calendar-weekdays-row">
+          <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+        </div>
+
+        <!-- 42 Cells grid -->
+        <div class="calendar-grid-cells">
+          <div 
+            class="day-grid-cell"
+            *ngFor="let day of calendarDays"
+            [ngClass]="{
+              today: day.isToday,
+              inactive: !day.isCurrentMonth,
+              selected: selectedDay?.date?.toDateString() === day.date.toDateString()
+            }"
+            (click)="selectDay(day)"
+          >
+            <div class="day-cell-top">
+              <span class="day-number">{{ day.dayOfMonth }}</span>
+            </div>
+
+            <!-- List of events displayed directly on the day card -->
+            <div class="day-events-list">
+              <div 
+                *ngFor="let ev of day.events.slice(0, 3)" 
+                class="event-pill" 
+                [ngClass]="ev.priority.toLowerCase()"
+                [title]="ev.title + ' (' + ev.time + ')'"
+              >
+                <span class="event-time-tag">{{ ev.time }}</span>
+                <span class="event-title-tag">{{ ev.title }}</span>
+              </div>
+              <span class="more-events-indicator" *ngIf="day.events.length > 3">
+                +{{ day.events.length - 3 }} more
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Actions, Mini Calendar & Upcoming Widgets -->
+    <div class="calendar-sidebar-col">
+      <!-- Create Event Action Button -->
+      <button class="btn-create-event" (click)="openAddModal()">
+        + Create Event
+      </button>
+
+      <!-- Compact Mini Calendar widget -->
+      <div class="glass-panel mini-calendar-card">
+        <div class="mini-cal-header">
+          <h4>{{ getMonthYearLabel() }}</h4>
+          <div class="mini-cal-nav">
+            <button class="btn-cal-arrow" (click)="prevMonth()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button class="btn-cal-arrow" (click)="nextMonth()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+        <div class="mini-cal-days-header">
+          <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+        </div>
+        <div class="mini-cal-grid">
+          <span 
+            *ngFor="let day of calendarDays" 
+            class="mini-day-cell"
+            [ngClass]="{
+              inactive: !day.isCurrentMonth,
+              selected: selectedDay?.date?.toDateString() === day.date.toDateString(),
+              today: day.isToday
+            }"
+            (click)="selectDay(day)"
+          >
+            {{ day.dayOfMonth }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Upcoming Event ledger card -->
+      <div class="glass-panel upcoming-events-card">
+        <div class="upcoming-header">
+          <h3>Upcoming</h3>
+        </div>
+        <div class="upcoming-list">
+          <div class="upcoming-item-wrapper" *ngFor="let ev of eventsList.slice(0, 5)">
+            <div class="notif-date-bubble" [ngClass]="ev.priority.toLowerCase()">
+              <span class="day-label-bubble">
+                <!-- Highlight TDY or TMR or standard day number -->
+                {{ ev.title.includes('Daily') || ev.title.includes('Client') ? 'TDY' : (ev.title.includes('Spring') ? 'TMR' : '16') }}
+              </span>
+            </div>
+            <div class="upcoming-item-details">
+              <h4>{{ ev.title }}</h4>
+              <span class="upcoming-time-range">{{ ev.time }} - {{ ev.time.includes('09:00') ? '09:30 AM' : (ev.time.includes('02:00') ? '03:00 PM' : '11:30 AM') }}</span>
+            </div>
+          </div>
+
+          <div class="empty-upcoming" *ngIf="eventsList.length === 0">
+            <p>No upcoming schedules recorded.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= SCHEDULER EVENT ADD MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="glass-panel modal-card add-event-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Scheduler Entry</span>
+        <h3>Schedule Custom Event</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeAddModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="saveCustomEvent()" #eventForm="ngForm">
+      <div class="modal-body">
+        
+        <!-- Title -->
+        <div class="form-group">
+          <label for="eventTitle">Event Title / Name</label>
+          <input 
+            type="text" 
+            id="eventTitle" 
+            name="eventTitle" 
+            [(ngModel)]="newEvent.title" 
+            placeholder="e.g. Frontend Sync Review"
+            required
+          />
+        </div>
+
+        <!-- Project Scope selection -->
+        <div class="form-group">
+          <label for="eventProject">Project Scope</label>
+          <div class="select-wrapper">
+            <select id="eventProject" name="eventProject" [(ngModel)]="newEvent.projectName" required>
+              <option *ngFor="let proj of projectsList" [value]="proj">{{ proj }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Time and Priority row -->
+        <div class="modal-row-grid">
+          <!-- Time -->
+          <div class="form-group">
+            <label for="eventTime">Start Time</label>
+            <input 
+              type="text" 
+              id="eventTime" 
+              name="eventTime" 
+              [(ngModel)]="newEvent.time" 
+              placeholder="e.g. 02:00 PM"
+              required
+            />
+          </div>
+
+          <!-- Priority -->
+          <div class="form-group">
+            <label for="eventPriority">Priority Rank</label>
+            <div class="select-wrapper">
+              <select id="eventPriority" name="eventPriority" [(ngModel)]="newEvent.priority">
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Event Type -->
+        <div class="form-group">
+          <label for="eventType">Event Type</label>
+          <div class="select-wrapper">
+            <select id="eventType" name="eventType" [(ngModel)]="newEvent.type">
+              <option value="MEETING">Team Meeting</option>
+              <option value="MILESTONE">General Milestone</option>
+              <option value="DEADLINE">Milestone Deadline</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label for="eventNotes">Schedules / Description Notes</label>
+          <textarea 
+            id="eventNotes" 
+            name="eventNotes" 
+            rows="3" 
+            [(ngModel)]="newEvent.notes" 
+            placeholder="Outline agenda, setup targets, or attach invite pins..."
+          ></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="savingEvent || !eventForm.form.valid">
+          <svg *ngIf="savingEvent" class="spinner" viewBox="0 0 24 24">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ savingEvent ? 'Scheduling event...' : 'Schedule Event' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= FLOATING NOTIFICATION TOAST ================= -->
+<div class="toast-overlay" *ngIf="showToast" [ngClass]="toastType">
+  <div class="toast-card">
+    <div class="toast-icon">
+      <svg *ngIf="toastType === 'success'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

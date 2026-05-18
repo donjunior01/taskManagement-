@@ -19,7 +19,8 @@ public interface DeliverableRepository extends JpaRepository<Deliverable, Long> 
     @Query("SELECT d FROM Deliverable d LEFT JOIN FETCH d.task t LEFT JOIN FETCH d.submittedBy s LEFT JOIN FETCH d.reviewedBy r WHERE d.id = :id")
     Optional<Deliverable> findByIdWithDetails(@Param("id") Long id);
     
-    @Query("SELECT d FROM Deliverable d LEFT JOIN FETCH d.task t LEFT JOIN FETCH d.submittedBy s LEFT JOIN FETCH d.reviewedBy r ORDER BY d.createdAt DESC")
+    @Query(value = "SELECT d FROM Deliverable d LEFT JOIN FETCH d.task t LEFT JOIN FETCH d.submittedBy s LEFT JOIN FETCH d.reviewedBy r ORDER BY d.createdAt DESC",
+           countQuery = "SELECT COUNT(d) FROM Deliverable d")
     Page<Deliverable> findAllWithDetails(Pageable pageable);
     
     Page<Deliverable> findByTask(Task task, Pageable pageable);
@@ -32,19 +33,23 @@ public interface DeliverableRepository extends JpaRepository<Deliverable, Long> 
     
     Page<Deliverable> findByStatus(Deliverable.DeliverableStatus status, Pageable pageable);
     
-    @Query("SELECT d FROM Deliverable d LEFT JOIN FETCH d.task t LEFT JOIN FETCH d.submittedBy s LEFT JOIN FETCH d.reviewedBy r WHERE d.task.id = :taskId ORDER BY d.createdAt DESC")
+    @Query(value = "SELECT d FROM Deliverable d LEFT JOIN FETCH d.task t LEFT JOIN FETCH d.submittedBy s LEFT JOIN FETCH d.reviewedBy r WHERE d.task.id = :taskId ORDER BY d.createdAt DESC",
+           countQuery = "SELECT COUNT(d) FROM Deliverable d WHERE d.task.id = :taskId")
     Page<Deliverable> findByTaskId(@Param("taskId") Long taskId, Pageable pageable);
     
-    @Query("SELECT d FROM Deliverable d LEFT JOIN FETCH d.task t LEFT JOIN FETCH d.submittedBy s LEFT JOIN FETCH d.reviewedBy r WHERE d.submittedBy.id = :userId ORDER BY d.createdAt DESC")
+    @Query(value = "SELECT d FROM Deliverable d LEFT JOIN FETCH d.task t LEFT JOIN FETCH d.submittedBy s LEFT JOIN FETCH d.reviewedBy r WHERE d.submittedBy.id = :userId ORDER BY d.createdAt DESC",
+           countQuery = "SELECT COUNT(d) FROM Deliverable d WHERE d.submittedBy.id = :userId")
     Page<Deliverable> findBySubmittedById(@Param("userId") Long userId, Pageable pageable);
     
-    @Query("SELECT d FROM Deliverable d LEFT JOIN FETCH d.task t LEFT JOIN FETCH d.submittedBy s LEFT JOIN FETCH d.reviewedBy r WHERE d.status = :status ORDER BY d.createdAt DESC")
+    @Query(value = "SELECT d FROM Deliverable d LEFT JOIN FETCH d.task t LEFT JOIN FETCH d.submittedBy s LEFT JOIN FETCH d.reviewedBy r WHERE d.status = :status ORDER BY d.createdAt DESC",
+           countQuery = "SELECT COUNT(d) FROM Deliverable d WHERE d.status = :status")
     Page<Deliverable> findByStatusOrderByCreatedAtDesc(@Param("status") Deliverable.DeliverableStatus status, Pageable pageable);
     
     @Query("SELECT COUNT(d) FROM Deliverable d WHERE d.status = :status")
     Long countByStatus(@Param("status") Deliverable.DeliverableStatus status);
     
-    @Query("SELECT d FROM Deliverable d LEFT JOIN FETCH d.task t LEFT JOIN FETCH t.project p LEFT JOIN FETCH d.submittedBy s LEFT JOIN FETCH d.reviewedBy r WHERE p.manager.id = :managerId AND d.status = :status ORDER BY d.createdAt DESC")
+    @Query(value = "SELECT d FROM Deliverable d LEFT JOIN FETCH d.task t LEFT JOIN FETCH t.project p LEFT JOIN FETCH d.submittedBy s LEFT JOIN FETCH d.reviewedBy r WHERE p.manager.id = :managerId AND d.status = :status ORDER BY d.createdAt DESC",
+           countQuery = "SELECT COUNT(d) FROM Deliverable d LEFT JOIN d.task t LEFT JOIN t.project p WHERE p.manager.id = :managerId AND d.status = :status")
     Page<Deliverable> findByProjectManagerIdAndStatus(@Param("managerId") Long managerId, @Param("status") Deliverable.DeliverableStatus status, Pageable pageable);
 }
 

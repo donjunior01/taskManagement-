@@ -134,6 +134,18 @@ public class UserController {
         return ResponseEntity.ok(userService.deleteUser(id));
     }
 
+    @Operation(summary = "Toggle user status", description = "Activate or suspend a user account")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Status toggled successfully"),
+        @ApiResponse(responseCode = "404", description = "User not found"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required")
+    })
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<UserResponseDTO> toggleUserStatus(
+            @Parameter(description = "User ID") @PathVariable Long id) {
+        return ResponseEntity.ok(userService.toggleUserStatus(id));
+    }
+
     @GetMapping("/filter")
     public ResponseEntity<UserListResponseDTO> filterUsers(
             @RequestParam(required = false) String role,
@@ -143,5 +155,13 @@ public class UserController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
         return ResponseEntity.ok(userService.filterUsers(role, status, page, size, sortBy, sortDir));
+    }
+
+    @GetMapping("/role/{role}")
+    public ResponseEntity<UserListResponseDTO> getUsersByRole(
+            @PathVariable String role,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(userService.filterUsers(role, null, page, size, "id", "asc"));
     }
 } 

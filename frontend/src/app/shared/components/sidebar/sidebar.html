@@ -1,0 +1,287 @@
+<aside class="sidebar glass-panel">
+  <!-- Top logo header section -->
+  <div class="sidebar-header-logo">
+    <div class="logo-stack-svg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <span class="logo-brand-txt">TaskMaster Pro</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <!-- Admin Workspace Governance Section -->
+    <div *ngIf="isAdmin()">
+      <div class="nav-section-title">Governance</div>
+      
+      <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <rect x="3" y="3" width="7" height="9"></rect>
+          <rect x="14" y="3" width="7" height="5"></rect>
+          <rect x="14" y="12" width="7" height="9"></rect>
+          <rect x="3" y="16" width="7" height="5"></rect>
+        </svg>
+        <span>Dashboard</span>
+      </a>
+      
+      <a routerLink="/admin/users" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+        </svg>
+        <span>Users Management</span>
+      </a>
+      
+      <a routerLink="/admin/projects" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+        </svg>
+        <span>Projects Overview</span>
+      </a>
+
+      <a routerLink="/admin/activity-logs" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        <span>System Activity</span>
+      </a>
+
+      <a routerLink="/admin/support" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Support Tickets</span>
+      </a>
+
+      <a routerLink="/admin/settings" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span>Settings</span>
+      </a>
+
+      <a routerLink="/admin/reports" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>Reports</span>
+      </a>
+    </div>
+
+    <!-- Project Manager Section -->
+    <div *ngIf="isProjectManager()">
+      
+      <a routerLink="/pm/dashboard" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <rect x="3" y="3" width="7" height="9"></rect>
+          <rect x="14" y="3" width="7" height="5"></rect>
+          <rect x="14" y="12" width="7" height="9"></rect>
+          <rect x="3" y="16" width="7" height="5"></rect>
+        </svg>
+        <span>Dashboard</span>
+      </a>
+      
+      <a routerLink="/pm/projects" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>My Projects</span>
+      </a>
+
+      <a routerLink="/pm/tasks" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+        <span>All Tasks</span>
+      </a>
+
+      <a routerLink="/pm/teams" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>Team Management</span>
+      </a>
+
+      <a routerLink="/pm/deliverables" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <polyline points="9 15 11 17 15 13"></polyline>
+        </svg>
+        <span>Deliverables Review</span>
+      </a>
+
+      <a routerLink="/pm/messages" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Messages</span>
+      </a>
+
+      <a routerLink="/pm/calendar" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <span>Calendar</span>
+      </a>
+
+      <a routerLink="/pm/reports" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>Reports</span>
+      </a>
+
+      <!-- Support Link -->
+      <a routerLink="/pm/support" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>Support</span>
+      </a>
+    </div>
+
+    <!-- Standard Employee Portal Section -->
+    <div *ngIf="isUser()">
+      <!-- Menu matching the exact visual ledger -->
+      <a routerLink="/user/dashboard" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <rect x="3" y="3" width="7" height="9"></rect>
+          <rect x="14" y="3" width="7" height="5"></rect>
+          <rect x="14" y="12" width="7" height="9"></rect>
+          <rect x="3" y="16" width="7" height="5"></rect>
+        </svg>
+        <span>Dashboard</span>
+      </a>
+      
+      <a routerLink="/user/my-tasks" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <polyline points="9 11 12 14 22 4"></polyline>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+        </svg>
+        <span>My Tasks</span>
+      </a>
+      
+      <a routerLink="/user/time-logs" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span>Time Log</span>
+      </a>
+      
+      <!-- Placeholder link mapping for My Deliverables -->
+      <a routerLink="/user/deliverables" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+        </svg>
+        <span>My Deliverables</span>
+      </a>
+      
+      <a routerLink="/user/messages" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Messages</span>
+      </a>
+      
+      <a routerLink="/user/calendar" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <span>Calendar</span>
+      </a>
+
+      <!-- Support Link -->
+      <a routerLink="/user/support" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>Support</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Sidebar Footer: Streak Widget and Sign Out -->
+  <div class="sidebar-bottom-wrapper">
+    
+    <!-- Productivity Streak Widget matching mockup -->
+    <div class="streak-card-widget animate-fade-in-up" *ngIf="isUser()">
+      <div class="streak-icon-ribbon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 15l-2 5l2-1l2 1z"></path>
+          <circle cx="12" cy="9" r="6"></circle>
+        </svg>
+      </div>
+      <div class="streak-details">
+        <h4 class="streak-title">Productivity Streak!</h4>
+        <p class="streak-subtitle">5 days hitting targets</p>
+      </div>
+    </div>
+
+    <!-- Active Projects Widget matching PM mockup -->
+    <div class="streak-card-widget pm-active-projects-widget animate-fade-in-up" *ngIf="isProjectManager()">
+      <div class="streak-icon-ribbon pm-widget-icon" style="background: rgba(37, 99, 235, 0.08); color: #2563eb;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+      </div>
+      <div class="streak-details">
+        <h4 class="streak-title" style="margin: 0; font-size: 13.5px; font-weight: 700; color: #0f172a;">5 Active Projects</h4>
+        <p class="streak-subtitle" style="margin: 0; font-size: 11px; font-weight: 500; color: #64748b;">On track</p>
+      </div>
+    </div>
+
+    <!-- System Status Widget matching Admin mockup -->
+    <div class="streak-card-widget admin-system-status-widget animate-fade-in-up" *ngIf="isAdmin()">
+      <div class="streak-icon-ribbon admin-widget-icon" style="background: rgba(37, 99, 235, 0.08); color: #2563eb; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          <polyline points="9 11 11 13 15 9"></polyline>
+        </svg>
+      </div>
+      <div class="streak-details" style="display: flex; flex-direction: column; gap: 2px;">
+        <h4 class="streak-title" style="margin: 0; font-size: 12.5px; font-weight: 700; color: #0f172a; white-space: nowrap;">System Status: Normal</h4>
+        <p class="streak-subtitle" style="margin: 0; font-size: 10.5px; font-weight: 500; color: #64748b; white-space: nowrap;">All services operational</p>
+      </div>
+    </div>
+
+    <!-- Sign Out button wrapper -->
+    <div class="sidebar-footer">
+      <button (click)="logout()" class="nav-link logout-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Sign Out</span>
+      </button>
+    </div>
+
+  </div>
+</aside>

@@ -24,28 +24,26 @@ public class Deliverable {
     private Task task;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "submitted_by", nullable = false)
+    @JoinColumn(name = "submitted_by_id", nullable = false)
     private allUsers submittedBy;
 
     @Column(name = "file_name", nullable = false)
     private String fileName;
 
-    @Column(name = "file_url", nullable = false)
+    @Column(name = "file_path", nullable = false)
     private String fileUrl;
 
-    @Column(name = "file_size")
-    private Long fileSize;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private DeliverableStatus status = DeliverableStatus.PENDING;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "feedback", columnDefinition = "TEXT")
     private String comments;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reviewed_by")
+    @JoinColumn(name = "reviewed_by_id")
     private allUsers reviewedBy;
 
     @Column(name = "reviewed_at")

@@ -1,0 +1,674 @@
+<div class="projects-container animate-fade-in-up">
+  <!-- Governance Greeting Area -->
+  <div class="projects-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div class="header-text">
+      <h2 style="margin: 0;">Project Workspaces</h2>
+      <p style="margin: 4px 0 0 0;">Supervise milestone deliveries, adjust scheduled timelines, and audit active workspace deliverables.</p>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="openAddModal()" style="display: flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: var(--border-radius-md); font-weight: 700; border: none; background: var(--gradient-primary); color: white; cursor: pointer; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25); transition: all var(--transition-fast);">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>New Project</span>
+    </button>
+  </div>
+
+  <!-- Advanced Toolbar Filters -->
+  <div class="glass-panel filter-toolbar">
+    <div class="search-input-wrapper">
+      <div class="search-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <input 
+        type="text" 
+        placeholder="Search projects by title, description..." 
+        [(ngModel)]="searchTerm" 
+        (ngModelChange)="onFilterChange()"
+      />
+    </div>
+
+    <div class="filter-controls">
+      <!-- Status Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
+          <option value="">All Workspaces</option>
+          <option value="IN_PROGRESS">Active In Progress</option>
+          <option value="PLANNED">Planned Workspaces</option>
+          <option value="ON_HOLD">Suspended On Hold</option>
+          <option value="COMPLETED">Completed Projects</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workspaces Accordion list -->
+  <div class="workspaces-list" *ngIf="!loading && filteredProjects.length > 0">
+    <div class="glass-panel workspace-item animate-scale-in" *ngFor="let proj of filteredProjects" [ngClass]="{ expanded: proj.expanded }">
+      
+      <!-- Accordion Trigger Header (Always Visible) -->
+      <div class="workspace-trigger" (click)="toggleAccordion(proj)">
+        <!-- Left: Basic info & status -->
+        <div class="trigger-left">
+          <span class="status-badge" [ngClass]="proj.status?.toLowerCase() || 'planned'">
+            {{ proj.status === 'IN_PROGRESS' ? 'Active' : (proj.status === 'COMPLETED' ? 'Completed' : (proj.status === 'ON_HOLD' ? 'On Hold' : 'Planned')) }}
+          </span>
+          <div class="title-desc">
+            <h4>{{ proj.name }}</h4>
+            <span class="dates-meta">Timeline: {{ proj.startDate }} to {{ proj.endDate }}</span>
+          </div>
+        </div>
+
+        <!-- Middle: Global Progress gauge -->
+        <div class="trigger-middle">
+          <div class="progress-details">
+            <span class="progress-label">Milestones Progress</span>
+            <span class="progress-value">{{ proj.progress || 0 }}%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar" [style.width.%]="proj.progress || 0"></div>
+          </div>
+        </div>
+
+        <!-- Right: Actions & Toggle icon -->
+        <div class="trigger-right">
+          <!-- Stop propagation so clicking Edit doesn't expand the accordion -->
+          <button type="button" class="btn btn-add-users" (click)="openAddUsersModal(proj); $event.stopPropagation()" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%); color: white; border: none; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15); margin-right: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; margin-right: 4px;">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <line x1="19" y1="8" x2="19" y2="14"></line>
+              <line x1="16" y1="11" x2="22" y2="11"></line>
+            </svg>
+            <span>Add Users</span>
+          </button>
+
+          <button class="btn btn-edit-specs" (click)="openEditModal(proj); $event.stopPropagation()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon>
+              <line x1="3" y1="21" x2="21" y2="21"></line>
+            </svg>
+            <span>Edit Specs</span>
+          </button>
+          
+          <div class="chevron-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accordion Content Block (Visible when expanded) -->
+      <div class="workspace-content animate-slide-down" *ngIf="proj.expanded">
+        <div class="content-inner" style="display: flex; flex-direction: column; gap: 20px;">
+          
+          <!-- Detailed Description -->
+          <div class="workspace-details-section" style="border-bottom: 1px dashed rgba(99, 102, 241, 0.08); padding-bottom: 16px;">
+            <h5>Workspace Description</h5>
+            <p>{{ proj.description || 'No descriptive summary set for this project scope.' }}</p>
+          </div>
+
+          <!-- Dual Column Workspace Management Grid -->
+          <div class="workspace-management-grid" style="display: grid; grid-template-columns: 1.7fr 1.3fr; gap: 24px; align-items: start;">
+            
+            <!-- Left Column: Workspace Deliverables -->
+            <div class="deliverables-breakdown">
+              <div class="breakdown-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; margin-bottom: 14px;">
+                <h5 style="margin: 0;">Workspace Nested Deliverables</h5>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="task-count-badge" *ngIf="!proj.loadingTasks" style="font-size: 10.5px;">{{ proj.tasks.length }} items</span>
+                  <button type="button" class="btn btn-primary" (click)="openAddTaskModal(proj)" style="padding: 6px 12px; font-size: 11px; height: 30px; border-radius: var(--border-radius-sm); border: none; background: var(--gradient-primary); color: white; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 700; transition: all var(--transition-fast);">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Add Deliverable</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tasks Spinner loader -->
+              <div class="tasks-spinner" *ngIf="proj.loadingTasks">
+                <div class="spinner"></div>
+                <span>Decrypting project deliverable indices...</span>
+              </div>
+
+              <!-- Empty tasks state -->
+              <div class="tasks-empty" *ngIf="!proj.loadingTasks && proj.tasks.length === 0">
+                <div class="empty-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    <polyline points="12 12 12 16 14 16"></polyline>
+                  </svg>
+                </div>
+                <p>No deliverables registered under this project workspace registry.</p>
+              </div>
+
+              <!-- Deliverables Table Grid -->
+              <div class="deliverables-grid-wrapper" *ngIf="!proj.loadingTasks && proj.tasks.length > 0">
+                <table class="deliverables-table">
+                  <thead>
+                    <tr>
+                      <th>Deliverable</th>
+                      <th>Assignee</th>
+                      <th>Priority</th>
+                      <th>Status</th>
+                      <th>Progress</th>
+                      <th style="text-align: center;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let task of proj.tasks">
+                      <!-- Task name -->
+                      <td class="font-bold cell-task-name" style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="task.name">{{ task.name }}</td>
+                      
+                      <!-- Assignee -->
+                      <td>
+                        <div class="assignee-cell">
+                          <div class="avatar-bubble-sm">
+                            {{ getAssigneeInitials(task.assignedToName) }}
+                          </div>
+                          <span class="assignee-name" style="max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="task.assignedToName || 'Unassigned'">{{ task.assignedToName || 'Unassigned' }}</span>
+                        </div>
+                      </td>
+
+                      <!-- Priority Badge -->
+                      <td>
+                        <span class="priority-pill" [ngClass]="task.priority?.toLowerCase() || 'medium'">
+                          {{ task.priority }}
+                        </span>
+                      </td>
+
+                      <!-- Status badge -->
+                      <td>
+                        <span class="status-pill" [ngClass]="task.status?.toLowerCase() || 'planned'">
+                          {{ task.status === 'IN_PROGRESS' ? 'In Progress' : (task.status === 'COMPLETED' ? 'Completed' : (task.status === 'ON_HOLD' ? 'On Hold' : 'Planned')) }}
+                        </span>
+                      </td>
+
+                      <!-- Task individual Progress -->
+                      <td>
+                        <div class="progress-cell">
+                          <span class="progress-pct">{{ task.progress || 0 }}%</span>
+                          <div class="progress-track-sm">
+                            <div class="progress-bar-sm" [style.width.%]="task.progress || 0"></div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <!-- Actions -->
+                      <td style="text-align: center;">
+                        <button type="button" class="icon-btn delete-btn" (click)="deleteTask(proj, task.id)" title="Delete Task" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; transition: all var(--transition-fast); border-radius: var(--border-radius-sm);">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; color: var(--danger);">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Right Column: Workspace Team Members -->
+            <div class="team-members-breakdown" style="display: flex; flex-direction: column; gap: 16px;">
+              <div class="breakdown-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; margin-bottom: 14px; height: 30px;">
+                <h5 style="margin: 0; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Workspace Team Members</h5>
+                <span class="task-count-badge" *ngIf="!proj.loadingMembers" style="font-size: 10.5px; font-weight: 800; color: var(--text-muted); background: rgba(15, 23, 42, 0.04); padding: 2px 8px; border-radius: 12px;">{{ proj.members?.length || 0 }} users</span>
+              </div>
+
+              <!-- Members Spinner loader -->
+              <div class="tasks-spinner" *ngIf="proj.loadingMembers" style="display: flex; flex-direction: column; align-items: center; padding: 24px 0; gap: 8px; color: var(--text-secondary); font-size: 12px;">
+                <div class="spinner"></div>
+                <span>Decrypting member registry...</span>
+              </div>
+
+              <!-- Empty members state -->
+              <div class="tasks-empty" *ngIf="!proj.loadingMembers && (!proj.members || proj.members.length === 0)" style="display: flex; flex-direction: column; align-items: center; padding: 24px 16px; text-align: center; background: rgba(15, 23, 42, 0.01); border: 1px dashed rgba(99, 102, 241, 0.08); border-radius: var(--border-radius-sm); color: var(--text-secondary);">
+                <div class="empty-icon" style="width: 24px; height: 24px; color: var(--text-muted); margin-bottom: 6px; opacity: 0.7;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <p style="font-size: 11px; font-weight: 600; margin: 0;">No team members currently assigned.</p>
+              </div>
+
+              <!-- Members list -->
+              <div class="members-list-wrapper" *ngIf="!proj.loadingMembers && proj.members && proj.members.length > 0" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+                <div class="member-row" *ngFor="let member of proj.members" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #ffffff; border: 1px solid var(--panel-border); border-radius: var(--border-radius-sm); transition: all var(--transition-fast);">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="avatar-bubble-sm" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px;">
+                      {{ getAssigneeInitials(member.firstName && member.lastName ? member.firstName + ' ' + member.lastName : member.username) }}
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 1px;">
+                      <span style="font-weight: 700; font-size: 12px; color: var(--text-primary);">{{ member.firstName }} {{ member.lastName }}</span>
+                      <span style="font-size: 10px; color: var(--text-muted);">@{{ member.username }}</span>
+                    </div>
+                  </div>
+                  <button type="button" class="icon-btn unassign-btn" (click)="unassignUser(proj, member.id)" title="Unassign User" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; transition: all var(--transition-fast); border-radius: var(--border-radius-sm);">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; color: var(--danger);">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Search Empty State -->
+  <div class="glass-panel empty-state" *ngIf="!loading && filteredProjects.length === 0">
+    <div class="empty-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+    </div>
+    <h3>No Workspaces Found</h3>
+    <p>We couldn't retrieve any active project registries matching your search query or filters.</p>
+  </div>
+</div>
+
+<!-- ================= PM ADD PROJECT WORKSPACE MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="glass-panel modal-card add-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Workspace Creator</span>
+        <h3>Launch New Workspace</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeAddModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitAddProject()">
+      <div class="modal-body">
+        
+        <!-- Project Title -->
+        <div class="form-group">
+          <label for="newProjectName">Workspace Project Name *</label>
+          <input 
+            type="text" 
+            id="newProjectName" 
+            name="newProjectName" 
+            [(ngModel)]="addForm.name" 
+            placeholder="e.g. Core System Integration"
+            required
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="newProjectDesc">Milestone Description Scope</label>
+          <textarea 
+            id="newProjectDesc" 
+            name="newProjectDesc" 
+            rows="3" 
+            [(ngModel)]="addForm.description"
+            placeholder="Outline workspace milestones, delivery strategies, and overall target scopes..."
+          ></textarea>
+        </div>
+
+        <!-- Timelines (Start & End dates) -->
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="newProjectStart">Commencement Date *</label>
+            <input 
+              type="date" 
+              id="newProjectStart" 
+              name="newProjectStart" 
+              [(ngModel)]="addForm.startDate" 
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="newProjectEnd">Milestone Delivery Date *</label>
+            <input 
+              type="date" 
+              id="newProjectEnd" 
+              name="newProjectEnd" 
+              [(ngModel)]="addForm.endDate" 
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Status selector -->
+        <div class="form-group">
+          <label for="newProjectStatus">Workspace Active Status</label>
+          <div class="select-wrapper">
+            <select id="newProjectStatus" name="newProjectStatus" [(ngModel)]="addForm.status" required>
+              <option value="PLANNED">Planned Workspace</option>
+              <option value="IN_PROGRESS">Active In Progress</option>
+              <option value="ON_HOLD">Suspended On Hold</option>
+              <option value="COMPLETED">Completed Project</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer" style="border-top: 1px solid var(--panel-border); padding-top: 16px; margin-top: 16px;">
+        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting || !addForm.name || !addForm.startDate || !addForm.endDate">
+          <svg *ngIf="submitting" class="spinner" viewBox="0 0 24 24" style="width: 14px; height: 14px; margin-right: 6px;">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submitting ? 'Launching Workspace...' : 'Launch Project' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= PM EDIT PROJECT WORKSPACE MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="glass-panel modal-card edit-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Workspace Configurator</span>
+        <h3>Update Specifications: {{ selectedProject?.name }}</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeEditModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitEditProject()" #editFormObj="ngForm">
+      <div class="modal-body">
+        
+        <!-- Project Title -->
+        <div class="form-group">
+          <label for="projectName">Workspace Project Name</label>
+          <input 
+            type="text" 
+            id="projectName" 
+            name="projectName" 
+            [(ngModel)]="editForm.name" 
+            placeholder="e.g. Core System Integration"
+            required
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="projectDesc">Milestone Description Scope</label>
+          <textarea 
+            id="projectDesc" 
+            name="projectDesc" 
+            rows="4" 
+            [(ngModel)]="editForm.description"
+            placeholder="Outline workspace milestones, delivery strategies, and overall target scopes..."
+          ></textarea>
+        </div>
+
+        <div class="form-row-2">
+          <!-- Start date -->
+          <div class="form-group">
+            <label for="startDate">Workspace Launch Date</label>
+            <input 
+              type="date" 
+              id="startDate" 
+              name="startDate" 
+              [(ngModel)]="editForm.startDate" 
+              required
+            />
+          </div>
+
+          <!-- End date -->
+          <div class="form-group">
+            <label for="endDate">Workspace Deadline Target</label>
+            <input 
+              type="date" 
+              id="endDate" 
+              name="endDate" 
+              [(ngModel)]="editForm.endDate" 
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Status selector -->
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="projectStatus">Workspace Active Status</label>
+            <div class="select-wrapper">
+              <select id="projectStatus" name="projectStatus" [(ngModel)]="editForm.status" required>
+                <option value="PLANNED">Planned Workspace</option>
+                <option value="IN_PROGRESS">Active In Progress</option>
+                <option value="ON_HOLD">Suspended On Hold</option>
+                <option value="COMPLETED">Completed Project</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="projectProgress">Milestones Progress (%)</label>
+            <input 
+              type="number" 
+              id="projectProgress" 
+              name="projectProgress" 
+              min="0" 
+              max="100" 
+              [(ngModel)]="editForm.progress" 
+              placeholder="e.g. 60"
+              required
+            />
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting || !editForm.name || !editForm.startDate || !editForm.endDate">
+          <svg *ngIf="submitting" class="spinner" viewBox="0 0 24 24">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submitting ? 'Updating Workspace...' : 'Save Specifications' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= PM ADD USERS TO PROJECT WORKSPACE MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showAddUsersModal" (click)="closeAddUsersModal()">
+  <div class="glass-panel modal-card add-users-modal animate-scale-in" (click)="$event.stopPropagation()" style="max-width: 500px;">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">User Assigner</span>
+        <h3>Assign Users: {{ selectedProjForUsers?.name }}</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeAddUsersModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; padding: 10px 0;">
+      <p style="font-size: 13px; color: var(--text-secondary); margin: 0; font-weight: 500;">
+        Select one or more active developers or team members to assign to this project workspace:
+      </p>
+
+      <div class="loading-overlay" *ngIf="loadingUsers" style="padding: 20px 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <div class="spinner"></div>
+        <span>Retrieving available users...</span>
+      </div>
+
+      <div class="available-users-list" *ngIf="!loadingUsers && availableUsers.length > 0" style="display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 4px;">
+        <div class="user-select-row" *ngFor="let user of availableUsers" (click)="toggleUserSelection(user.id)" [ngClass]="{ selected: selectedUserIds[user.id || 0] }" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #ffffff; border: 1px solid var(--panel-border); border-radius: var(--border-radius-sm); cursor: pointer; transition: all var(--transition-fast);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="avatar-bubble-sm" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px;">
+              {{ getAssigneeInitials(user.firstName + ' ' + user.lastName) }}
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-weight: 700; font-size: 13px; color: var(--text-primary);">{{ user.firstName }} {{ user.lastName }}</span>
+              <span style="font-size: 11px; color: var(--text-muted);">@{{ user.username }} · {{ user.email }}</span>
+            </div>
+          </div>
+          <div class="checkbox-indicator" style="width: 20px; height: 20px; border-radius: 4px; border: 2px solid var(--panel-border); display: flex; align-items: center; justify-content: center; transition: all var(--transition-fast);">
+            <svg *ngIf="selectedUserIds[user.id || 0]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px; color: white;">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-users-block" *ngIf="!loadingUsers && availableUsers.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; border: 1px dashed var(--panel-border); border-radius: var(--border-radius-md); background: rgba(0,0,0,0.01);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 32px; height: 32px; color: var(--text-muted); margin-bottom: 8px;">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+        </svg>
+        <p style="font-size: 12px; color: var(--text-secondary); font-weight: 500; margin: 0;">No active users are currently registered in the system.</p>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="border-top: 1px solid var(--panel-border); padding-top: 16px; margin-top: 12px;">
+      <button type="button" class="btn btn-secondary" (click)="closeAddUsersModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="submitAddUsers()" [disabled]="assigningUsers">
+        <svg *ngIf="assigningUsers" class="spinner" viewBox="0 0 24 24" style="width: 14px; height: 14px; margin-right: 6px;">
+          <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+        </svg>
+        <span>{{ assigningUsers ? 'Assigning...' : 'Assign User(s)' }}</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= PM ADD TASK DELIVERABLE MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showAddTaskModal" (click)="closeAddTaskModal()">
+  <div class="glass-panel modal-card add-task-modal animate-scale-in" (click)="$event.stopPropagation()" style="max-width: 540px;">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Deliverable Creation</span>
+        <h3>Add Deliverable to: {{ selectedProjForTask?.name }}</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeAddTaskModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form #addTaskFormObj="ngForm" (ngSubmit)="submitAddTask()">
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- Task Name -->
+        <div class="form-group">
+          <label for="taskName">Deliverable Name *</label>
+          <input type="text" id="taskName" name="taskName" [(ngModel)]="taskForm.name" placeholder="e.g. Develop core user interfaces" required>
+        </div>
+
+        <!-- Task Description -->
+        <div class="form-group">
+          <label for="taskDescription">Detailed Scope/Description</label>
+          <textarea id="taskDescription" name="taskDescription" [(ngModel)]="taskForm.description" placeholder="Brief explanation of the tasks or parameters included..." rows="3"></textarea>
+        </div>
+
+        <!-- Row: Assignee & Deadline -->
+        <div class="form-row-2">
+          <!-- Assignee Selector -->
+          <div class="form-group">
+            <label for="taskAssignee">Assignee Developer</label>
+            <div class="select-wrapper">
+              <select id="taskAssignee" name="taskAssignee" [(ngModel)]="taskForm.assignedToId">
+                <option [value]="0">-- Select Developer --</option>
+                <option *ngFor="let member of selectedProjForTask?.members" [value]="member.id">
+                  {{ member.firstName }} {{ member.lastName }} (@{{ member.username }})
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Deadline -->
+          <div class="form-group">
+            <label for="taskDeadline">Target Deadline *</label>
+            <input type="date" id="taskDeadline" name="taskDeadline" [(ngModel)]="taskForm.deadline" required>
+          </div>
+        </div>
+
+        <!-- Row: Priority & Difficulty -->
+        <div class="form-row-2">
+          <!-- Priority Selector -->
+          <div class="form-group">
+            <label for="taskPriority">Priority Level</label>
+            <div class="select-wrapper">
+              <select id="taskPriority" name="taskPriority" [(ngModel)]="taskForm.priority">
+                <option value="LOW">Low Priority</option>
+                <option value="MEDIUM">Medium Priority</option>
+                <option value="HIGH">High Priority</option>
+                <option value="CRITICAL">Critical Priority</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Difficulty Selector -->
+          <div class="form-group">
+            <label for="taskDifficulty">Task Difficulty</label>
+            <div class="select-wrapper">
+              <select id="taskDifficulty" name="taskDifficulty" [(ngModel)]="taskForm.difficulty">
+                <option value="EASY">Easy Scope</option>
+                <option value="MEDIUM">Medium Scope</option>
+                <option value="HARD">Hard Scope</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer" style="border-top: 1px solid var(--panel-border); padding-top: 16px; margin-top: 16px;">
+        <button type="button" class="btn btn-secondary" (click)="closeAddTaskModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submittingTask || !taskForm.name || !taskForm.deadline">
+          <svg *ngIf="submittingTask" class="spinner" viewBox="0 0 24 24" style="width: 14px; height: 14px; margin-right: 6px;">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submittingTask ? 'Adding Deliverable...' : 'Add Deliverable' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= FLOATING NOTIFICATION TOAST ================= -->
+<div class="toast-overlay" *ngIf="showToast" [ngClass]="toastType">
+  <div class="toast-card">
+    <div class="toast-icon">
+      <!-- Success Icon -->
+      <svg *ngIf="toastType === 'success'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <!-- Error Icon -->
+      <svg *ngIf="toastType === 'error'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

@@ -1,0 +1,579 @@
+<div class="reports-container animate-fade-in-up">
+  
+  <!-- Loading State Spinner -->
+  <div class="spinner-wrapper" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Compiling workspace governance ledgers...</span>
+  </div>
+
+  <!-- Main Reports dashboard -->
+  <div class="reports-layout-wrapper" *ngIf="!loading">
+    
+    <!-- Greeting Header Area -->
+    <div class="reports-header">
+      <div class="header-text">
+        <h2>Reports & Analytics</h2>
+        <p>Generate, view, and export performance reports.</p>
+      </div>
+      <button class="btn-settings" (click)="openSettings()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span>Report Settings</span>
+      </button>
+    </div>
+
+    <!-- 3-Column Card Layout Grid -->
+    <div class="reports-vitals-grid">
+      
+      <!-- COLUMN 1: Generate New Report Card -->
+      <div class="glass-panel generate-report-card">
+        <div class="card-header-with-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="card-title-icon text-blue">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          <h3>Generate New Report</h3>
+        </div>
+
+        <form (ngSubmit)="generateReport()" class="report-form">
+          <!-- Report Type Selection -->
+          <div class="form-group">
+            <label class="form-label">Report Type</label>
+            <div class="select-wrapper">
+              <select name="reportType" [(ngModel)]="reportType" required>
+                <option value="Project Health & Status">Project Health & Status</option>
+                <option value="Team Resource Allocation">Team Resource Allocation</option>
+                <option value="Milestone Delivery Ledger">Milestone Delivery Ledger</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Date Range Inputs -->
+          <div class="form-group">
+            <label class="form-label">Date Range</label>
+            <div class="date-range-row">
+              <div class="date-input-wrapper">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="input-inline-icon">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <input type="text" name="startDate" [(ngModel)]="startDate" placeholder="Sep 01, 2024">
+              </div>
+              <span class="range-divider">-</span>
+              <div class="date-input-wrapper">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="input-inline-icon">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <input type="text" name="endDate" [(ngModel)]="endDate" placeholder="Sep 30, 2024">
+              </div>
+            </div>
+          </div>
+
+          <!-- Include Projects Checkboxes -->
+          <div class="form-group">
+            <label class="form-label">Include Projects</label>
+            <div class="checkbox-list">
+              <label class="checkbox-item">
+                <input type="checkbox" name="proj1" [(ngModel)]="projectsSelection.websiteRedesign">
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-label">Website Redesign Q3</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" name="proj2" [(ngModel)]="projectsSelection.mobileApp">
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-label">Mobile App V2.0</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" name="proj3" [(ngModel)]="projectsSelection.backendApi">
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-label">Backend API Migration</span>
+              </label>
+              <a href="javascript:void(0)" class="btn-more-projects">+ Select more projects</a>
+            </div>
+          </div>
+
+          <!-- Export Format segmented button toggle -->
+          <div class="form-group">
+            <label class="form-label">Export Format</label>
+            <div class="format-segmented-toggle">
+              <button type="button" class="btn-toggle" [ngClass]="{ active: exportFormat === 'PDF' }" (click)="setFormat('PDF')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toggle-icon">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>PDF</span>
+              </button>
+              <button type="button" class="btn-toggle" [ngClass]="{ active: exportFormat === 'CSV' }" (click)="setFormat('CSV')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toggle-icon">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                  <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg>
+                <span>CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <button type="submit" class="btn-submit-generate">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="submit-bolt-icon">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <span>Generate Report</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- COLUMN 2: Velocity Trend Card -->
+      <div class="glass-panel chart-card velocity-trend-card">
+        <div class="card-header">
+          <h3>Velocity Trend (Last 6 Sprints)</h3>
+          <button class="btn-card-menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="menu-icon">
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+          </button>
+        </div>
+
+        <div class="chart-content">
+          <!-- Premium line chart SVG -->
+          <svg class="line-chart-svg" viewBox="0 0 300 150">
+            <!-- Grid Lines -->
+            <line x1="20" y1="20" x2="280" y2="20" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="3"></line>
+            <line x1="20" y1="60" x2="280" y2="60" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="3"></line>
+            <line x1="20" y1="100" x2="280" y2="100" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="3"></line>
+            
+            <!-- Spline Curve -->
+            <path d="M 20 110 C 60 90, 80 120, 100 100 C 120 80, 140 100, 160 90 C 180 80, 200 50, 240 45 L 280 40" 
+                  fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round"></path>
+            
+            <!-- Under-curve soft blue gradient -->
+            <path d="M 20 110 C 60 90, 80 120, 100 100 C 120 80, 140 100, 160 90 C 180 80, 200 50, 240 45 L 280 40 L 280 140 L 20 140 Z" 
+                  fill="url(#chartGrad)" opacity="0.06"></path>
+
+            <!-- Definitions -->
+            <defs>
+              <linearGradient id="chartGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#2563eb" />
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="chart-label">User Growth over 6 months</span>
+        </div>
+      </div>
+
+      <!-- COLUMN 3: Resource Allocation by Project Card -->
+      <div class="glass-panel chart-card allocation-card">
+        <div class="card-header">
+          <h3>Resource Allocation by Project</h3>
+          <button class="btn-card-menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="menu-icon">
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+          </button>
+        </div>
+
+        <div class="chart-content">
+          <!-- Concentric Ring donut chart in SVG -->
+          <div class="allocation-donut-wrapper">
+            <svg class="radial-svg" viewBox="0 0 100 100">
+              <!-- Ring Backplate -->
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#f1f5f9" stroke-width="8.5"></circle>
+              
+              <!-- Blue Segment: To Do (45%) -->
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#2563eb" stroke-width="8.5"
+                      stroke-dasharray="238.7" stroke-dashoffset="107.4" 
+                      transform="rotate(-90 50 50)"></circle>
+              
+              <!-- Green Segment: Done (35%) -->
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="8.5"
+                      stroke-dasharray="238.7" stroke-dashoffset="155.15" 
+                      transform="rotate(72 50 50)"></circle>
+              
+              <!-- Orange Segment: In Progress (20%) -->
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#f59e0b" stroke-width="8.5"
+                      stroke-dasharray="238.7" stroke-dashoffset="190.96" 
+                      transform="rotate(198 50 50)"></circle>
+            </svg>
+            <div class="donut-center-labels">
+              <span class="donut-total-lbl">Total</span>
+              <span class="donut-total-val">1,245</span>
+            </div>
+          </div>
+
+          <!-- Color Legends below -->
+          <div class="donut-legends">
+            <div class="legend-dot-item">
+              <span class="dot bg-blue"></span>
+              <span class="dot-label">To Do</span>
+            </div>
+            <div class="legend-dot-item">
+              <span class="dot bg-green"></span>
+              <span class="dot-label">Done</span>
+            </div>
+            <div class="legend-dot-item">
+              <span class="dot bg-orange"></span>
+              <span class="dot-label">In Progress</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUMN 4: Tabbed Panel Container (Saved Archive + Project Health + Team Velocities) -->
+    <div class="glass-panel tabbed-reports-card">
+      <div class="panel-header-tabbed">
+        <div class="panel-header-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="panel-icon text-blue">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="9" x2="15" y2="9"></line>
+            <line x1="9" y1="13" x2="15" y2="13"></line>
+            <line x1="9" y1="17" x2="15" y2="17"></line>
+          </svg>
+          <h3>Governance Databases</h3>
+        </div>
+
+        <!-- Segmented Tab switcher buttons -->
+        <div class="tab-switcher-nav">
+          <button class="tab-btn" [ngClass]="{ active: activeTab === 'saved' }" (click)="setActiveTab('saved')">Saved Archive</button>
+          <button class="tab-btn" [ngClass]="{ active: activeTab === 'health' }" (click)="setActiveTab('health')">Project Health Indicators</button>
+          <button class="tab-btn" [ngClass]="{ active: activeTab === 'productivity' }" (click)="setActiveTab('productivity')">Team Velocities</button>
+        </div>
+      </div>
+
+      <!-- TAB PANEL 1: Saved Reports Archive (Exact Mockup Layout) -->
+      <div class="tab-content" *ngIf="activeTab === 'saved'">
+        <div class="saved-reports-list">
+          <div 
+            class="saved-report-item animate-scale-in" 
+            *ngFor="let rep of savedReports"
+            [ngClass]="{ selected: rep.selected }"
+            (click)="selectReport(rep)"
+          >
+            <div class="report-item-left">
+              <div class="doc-icon-wrapper" [ngClass]="{ selected: rep.selected }">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="doc-svg-icon">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+              </div>
+              <div class="report-details">
+                <h4 class="report-name"><strong>{{ rep.name }}</strong></h4>
+                <span class="report-meta">{{ rep.date }} • {{ rep.size }}</span>
+              </div>
+            </div>
+
+            <div class="report-item-right">
+              <button class="btn-action btn-download" (click)="downloadReport(rep, $event)" title="Download Report">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="action-icon">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+              </button>
+              <button class="btn-action btn-delete" (click)="deleteReport(rep, $event)" title="Delete Report">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="action-icon">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB PANEL 2: Project Health Indicators Table -->
+      <div class="tab-content" *ngIf="activeTab === 'health'">
+        <div class="table-responsive">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Project Name</th>
+                <th>Overall Progress</th>
+                <th>Health Status</th>
+                <th>Tasks Completed / Backlog</th>
+                <th>Overdue Tasks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let rep of healthReports">
+                <td class="project-name-cell"><strong>{{ rep.projectName }}</strong></td>
+                <td>
+                  <div class="table-progress-wrapper">
+                    <span>{{ rep.completionRate }}%</span>
+                    <div class="progress-bar-container">
+                      <div class="progress-bar-fill" [style.width.%]="rep.completionRate" [ngClass]="{
+                        'bg-green': rep.completionRate >= 60,
+                        'bg-orange': rep.completionRate >= 30 && rep.completionRate < 60,
+                        'bg-red': rep.completionRate < 30
+                      }"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="health-badge" [ngClass]="rep.health.toLowerCase()">
+                    {{ rep.health === 'ON_TRACK' ? 'On Track' : (rep.health === 'AT_RISK' ? 'At Risk' : 'Critical') }}
+                  </span>
+                </td>
+                <td><strong>{{ rep.tasksCompleted }}</strong> completed <span class="text-muted">/ {{ rep.tasksPending + rep.tasksCompleted }} total</span></td>
+                <td>
+                  <span class="overdue-count" [ngClass]="{ 'text-danger font-bold': rep.overdueTasks > 0 }">
+                    {{ rep.overdueTasks }} tasks
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB PANEL 3: Developer Performance Velocities List -->
+      <div class="tab-content" *ngIf="activeTab === 'productivity'">
+        <div class="velocity-grid">
+          <div class="velocity-profile-card animate-scale-in" *ngFor="let dev of devVelocityReports">
+            <div class="profile-top">
+              <img [src]="dev.avatarUrl" alt="Developer Avatar" class="profile-avatar">
+              <div class="profile-title">
+                <h4>{{ dev.developerName }}</h4>
+                <span>{{ dev.role }}</span>
+              </div>
+            </div>
+
+            <div class="profile-body">
+              <div class="metric-progress-item">
+                <div class="metric-top">
+                  <span class="metric-label">Backlog Completion Ratio</span>
+                  <span class="metric-val"><strong>{{ dev.tasksCompleted }} / {{ dev.tasksAssigned }}</strong></span>
+                </div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill bg-green" [style.width.%]="(dev.tasksCompleted / dev.tasksAssigned) * 100"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-footer">
+              <span class="label">Velocity Grade</span>
+              <span class="badge" [ngClass]="dev.velocityRating.toLowerCase().replace(' ', '-')">{{ dev.velocityRating }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= REPORT SETTINGS MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showSettingsModal" (click)="closeSettings()">
+  <div class="glass-panel modal-card settings-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Report Preferences</span>
+        <h3>Report Template Config</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeSettings()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="saveSettings()">
+      <div class="modal-body">
+        
+        <!-- Default Page Size -->
+        <div class="form-group">
+          <label for="pageSize">Default Page Layout</label>
+          <div class="select-wrapper">
+            <select id="pageSize" name="pageSize" [(ngModel)]="settingsModel.pageSize">
+              <option value="A4">A4 Standard Format</option>
+              <option value="Letter">US Letter Format</option>
+              <option value="Legal">US Legal Format</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Layout Theme -->
+        <div class="form-group">
+          <label for="chartTheme">Visual Color Palette</label>
+          <div class="select-wrapper">
+            <select id="chartTheme" name="chartTheme" [(ngModel)]="settingsModel.chartTheme">
+              <option value="Glassmorphic Blue">Glassmorphic Blue Theme</option>
+              <option value="Classic Slate">Classic Charcoal Theme</option>
+              <option value="Neon Teal">Neon Teal High Tech Theme</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Task Velocity Alert Level -->
+        <div class="form-group">
+          <label for="velocityThreshold">Task Completion SLA threshold (%)</label>
+          <input 
+            type="number" 
+            id="velocityThreshold" 
+            name="velocityThreshold" 
+            [(ngModel)]="settingsModel.velocityThreshold" 
+            min="10" 
+            max="100"
+          />
+        </div>
+
+        <!-- Include Task Notes Toggle -->
+        <div class="form-group checkbox-form-group">
+          <label class="checkbox-item">
+            <input type="checkbox" name="includeNotes" [(ngModel)]="settingsModel.includeNotes">
+            <span class="checkbox-custom"></span>
+            <span class="checkbox-label">Include comprehensive developer logs in summaries</span>
+          </label>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeSettings()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= COMPILATION LOADING PROGRESS MODAL ================= -->
+<div class="modal-backdrop" *ngIf="isCompiling">
+  <div class="glass-panel modal-card compile-loading-modal animate-scale-in">
+    <div class="modal-body compile-body">
+      
+      <!-- High tech glowing loop -->
+      <div class="glow-spinner-wrapper">
+        <svg class="glow-spinner" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#f1f5f9" stroke-width="4"></circle>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#2563eb" stroke-width="5"
+                  stroke-dasharray="264" stroke-dashoffset="132" stroke-linecap="round"></circle>
+        </svg>
+        <div class="glow-percent">{{ compilingProgress }}%</div>
+      </div>
+
+      <div class="compile-text-block">
+        <h3>Compiling Workspace Report</h3>
+        <p class="compile-step-tag">{{ compilingStep }}</p>
+      </div>
+
+      <!-- Linear progress bar -->
+      <div class="linear-progress-wrapper">
+        <div class="linear-progress-fill" [style.width.%]="compilingProgress"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= REPORT PREVIEW & EXPORT MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showPreviewModal" (click)="closePreviewModal()">
+  <div class="glass-panel modal-card report-preview-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Compiler Output Success</span>
+        <h3>Compiled Report Preview</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closePreviewModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      
+      <!-- Preview Visual mock header -->
+      <div class="preview-layout-visual">
+        <div class="mock-sheet">
+          <div class="mock-sheet-header">
+            <span class="bullet-tag">Governance Summary Report</span>
+            <div class="mock-sheet-title">{{ generatedPreview?.name }}</div>
+          </div>
+          <div class="mock-sheet-body">
+            <div class="mock-row-line bold-line"></div>
+            <div class="mock-row-line"></div>
+            <div class="mock-row-line"></div>
+            
+            <!-- visual grid representation inside preview -->
+            <div class="mock-visual-columns">
+              <div class="mock-column-block">
+                <div class="block-bar bg-blue" style="height: 32px"></div>
+                <div class="block-bar bg-green" style="height: 48px"></div>
+              </div>
+              <div class="mock-column-block">
+                <div class="block-circle"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compilation Parameters Details -->
+      <div class="preview-metadata-list">
+        <div class="preview-meta-row">
+          <span class="meta-label">Report Category</span>
+          <span class="meta-value"><strong>{{ generatedPreview?.type }}</strong></span>
+        </div>
+        <div class="preview-meta-row">
+          <span class="meta-label">Document Size / Format</span>
+          <span class="meta-value text-blue"><strong>{{ generatedPreview?.fileSize }} / {{ generatedPreview?.format }}</strong></span>
+        </div>
+        <div class="preview-meta-row">
+          <span class="meta-label">Target Scopes Scanned</span>
+          <span class="meta-value"><strong>{{ generatedPreview?.projectsCount }} projects</strong></span>
+        </div>
+        <div class="preview-meta-row">
+          <span class="meta-label">Workload Telemetries Calculated</span>
+          <span class="meta-value"><strong>{{ generatedPreview?.tasksAnalyzed }} tasks analyzed</strong></span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closePreviewModal()">Discard</button>
+      <button type="button" class="btn btn-primary" (click)="saveGeneratedReport()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="footer-btn-icon" style="width: 14px; height: 14px; margin-right: 6px;">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        <span>Archive & Download</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= FLOATING NOTIFICATION TOAST ================= -->
+<div class="toast-overlay" *ngIf="showToast" [ngClass]="toastType">
+  <div class="toast-card animate-scale-in">
+    <div class="toast-icon">
+      <svg *ngIf="toastType !== 'error'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <svg *ngIf="toastType === 'error'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+      </svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

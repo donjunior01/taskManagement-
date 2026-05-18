@@ -26,6 +26,13 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT COUNT(p) FROM Project p WHERE p.status = :status")
     Long countByStatus(@Param("status") Project.ProjectStatus status);
     
+    @Query("SELECT DISTINCT p FROM Project p LEFT JOIN p.teams t LEFT JOIN t.members m " +
+           "WHERE (p.manager.id = :userId OR m.id = :userId) " +
+           "AND p.status NOT IN (:excludedStatuses)")
+    List<Project> findActiveProjectsByUserIdAndStatusNotIn(
+            @Param("userId") Long userId,
+            @Param("excludedStatuses") List<Project.ProjectStatus> excludedStatuses);
+            
     @Query("SELECT p FROM Project p WHERE p.name LIKE %:keyword% OR p.description LIKE %:keyword%")
     Page<Project> searchProjects(@Param("keyword") String keyword, Pageable pageable);
 }

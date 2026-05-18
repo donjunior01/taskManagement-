@@ -9,11 +9,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -127,11 +130,77 @@ public class TimeLogController {
         return ResponseEntity.ok(timeLogService.getTimeLogsByUserAndDateRange(userId, startDate, endDate));
     }
     
+    @Operation(summary = "Export time logs to CSV", description = "Export time logs for a user within a date range as CSV")
+    @GetMapping("/export/csv")
+    public ResponseEntity<String> exportTimeLogsToCSV(
+            Authentication authentication,
+            @Parameter(description = "Start date") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @Parameter(description = "End date") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        Long userId = getCurrentUserId(authentication);
+        if (userId == null) {
+            return ResponseEntity.badRequest().body("User not authenticated");
+        }
+        
+        List<TimeLogDTO> timeLogs = timeLogService.getTimeLogsByUserAndDateRange(userId, startDate, endDate);
+        String csv = convertToCSV(timeLogs);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        headers.setContentDispositionFormData("attachment", "time-logs-" + startDate + "-to-" + endDate + ".csv");
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(csv);
+    }
+    
+    @Operation(summary = "Export time logs by task to CSV", description = "Export time logs for a task as CSV")
+    @GetMapping("/task/{taskId}/export/csv")
+    public ResponseEntity<String> exportTaskTimeLogsToCSV(
+            @Parameter(description = "Task ID") @PathVariable Long taskId) {
+        PagedResponse<TimeLogDTO> response = timeLogService.getTimeLogsByTask(taskId, 0, 1000);
+        String csv = convertToCSV(response.getData());
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        headers.setContentDispositionFormData("attachment", "task-time-logs-" + taskId + ".csv");
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(csv);
+    }
+    
+    private String convertToCSV(List<TimeLogDTO> timeLogs) {
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID,Task,User,Hours Spent,Log Date,Description\n");
+        
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        
+        for (TimeLogDTO log : timeLogs) {
+            csv.append(log.getId()).append(",");
+            csv.append(log.getTaskName() != null ? log.getTaskName().replace(",", "") : "").append(",");
+            csv.append(log.getUserName() != null ? log.getUserName().replace(",", "") : "").append(",");
+            csv.append(log.getHoursSpent()).append(",");
+            csv.append(log.getLogDate() != null ? log.getLogDate().format(formatter) : "").append(",");
+            csv.append(log.getDescription() != null ? log.getDescription().replace(",", "").replace("\n", " ") : "").append("\n");
+        }
+        
+        return csv.toString();
+    }
+    
     private Long getCurrentUserId(Authentication authentication) {
-        if (authentication != null) {
-            return userRepository.findByEmail(authentication.getName())
-                    .map(allUsers::getId)
-                    .orElse(null);
+        if (authentication != null && authentication.getName() != null) {
+            String name = authentication.getName();
+            try {
+                return Long.parseLong(name);
+            } catch (NumberFormatException e) {
+                return userRepository.findByEmail(name)
+                        .map(allUsers::getId)
+                        .orElseGet(() -> 
+                            userRepository.findByUsername(name)
+                                    .map(allUsers::getId)
+                                    .orElse(null)
+                        );
+            }
         }
         return null;
     }

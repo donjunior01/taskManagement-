@@ -28,7 +28,7 @@ public class TimeLog {
     @JoinColumn(name = "user_id", nullable = false)
     private allUsers user;
 
-    @Column(name = "hours_spent", nullable = false)
+    @Column(name = "hours", nullable = false)
     private Double hoursSpent;
 
     @Column(name = "log_date", nullable = false)
@@ -40,18 +40,11 @@ public class TimeLog {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }
 

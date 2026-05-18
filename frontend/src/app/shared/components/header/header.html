@@ -1,0 +1,244 @@
+<header class="app-header glass-panel">
+  <div class="header-content">
+    
+    <!-- LEFT SIDE: Search input container -->
+    <div class="header-left">
+      <div class="search-bar">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" placeholder="Search tasks, messages...">
+      </div>
+    </div>
+    
+    <!-- RIGHT SIDE: Actions and Profile -->
+    <div class="header-actions">
+      
+      <!-- Messages Chat balloon (badge 2) — hidden for Admin role -->
+      <div class="message-wrapper" *ngIf="!isAdmin()">
+        <button class="message-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span class="message-badge">2</span>
+        </button>
+      </div>
+
+      <!-- Notifications Bell Dropdown (badge 5) -->
+      <div class="notification-wrapper">
+        <button class="notification-btn" (click)="toggleNotifications()" [class.active]="showNotifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-badge">5</span>
+        </button>
+
+        <div class="notification-dropdown glass-panel animate-scale-in" *ngIf="showNotifications">
+          <div class="dropdown-header">
+            <h4>Notifications</h4>
+            <button class="mark-read-btn" (click)="markAllAsRead()">Mark all as read</button>
+          </div>
+          <div class="notification-list">
+            <div class="notification-item" *ngFor="let notif of notifications" [class.unread]="!notif.read">
+              <div class="notif-icon" [ngClass]="notif.type">
+                <svg *ngIf="notif.type === 'info'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                <svg *ngIf="notif.type === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <svg *ngIf="notif.type === 'warning'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              </div>
+              <div class="notif-content">
+                <p class="notif-msg">{{ notif.message }}</p>
+                <span class="notif-time">{{ notif.time }}</span>
+              </div>
+            </div>
+            
+            <div class="empty-notifications" *ngIf="notifications.length === 0">
+              <p>You have no new notifications.</p>
+            </div>
+          </div>
+          <div class="dropdown-footer">
+            <a href="javascript:void(0)" class="view-all-link">View All Activity</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider line -->
+      <div class="header-divider"></div>
+
+      <!-- User Profile block -->
+      <div class="user-profile-wrapper" style="position: relative;">
+        <div class="user-profile" (click)="toggleProfileDropdown()" style="cursor: pointer;">
+          <div class="profile-info">
+            <span class="user-name">{{ getDisplayName() }}</span>
+            <span class="user-role">{{ getDisplayTitle() }}</span>
+          </div>
+          <div class="avatar-wrapper">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80" alt="Avatar" class="avatar-img">
+          </div>
+          <svg class="chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        
+        <!-- Profile Dropdown Menu -->
+        <div class="profile-dropdown glass-panel animate-scale-in" *ngIf="showProfileDropdown">
+          <div class="profile-dropdown-header">
+            <span class="account-lbl">My Account</span>
+            <span class="user-email">{{ currentUser?.email }}</span>
+          </div>
+          <div class="profile-dropdown-list">
+            <div class="profile-dropdown-item" (click)="openProfileModal()">
+              <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <span class="item-text">Edit Profile</span>
+            </div>
+            <div class="profile-dropdown-item" (click)="openPasswordModal()">
+              <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+              <span class="item-text">Change Password</span>
+            </div>
+            <div class="profile-dropdown-item" (click)="openPrefsModal()">
+              <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+              <span class="item-text">Notification Settings</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="profile-dropdown-item signout-item" (click)="logout()">
+              <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+              <span class="item-text">Sign Out</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</header>
+
+<!-- ================= MODALS & TOAST ================= -->
+
+<!-- Profile Modal -->
+<div class="modal-backdrop" *ngIf="showProfileModal" (click)="closeProfileModal()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">User Account</span>
+        <h3>Edit Profile</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeProfileModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <form (ngSubmit)="saveProfile()">
+      <div class="modal-body">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>First Name</label>
+            <input type="text" name="firstName" [(ngModel)]="profileForm.firstName" required>
+          </div>
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" name="lastName" [(ngModel)]="profileForm.lastName" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" name="email" [(ngModel)]="profileForm.email" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeProfileModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Password Modal -->
+<div class="modal-backdrop" *ngIf="showPasswordModal" (click)="closePasswordModal()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Security</span>
+        <h3>Change Password</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closePasswordModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <form (ngSubmit)="changePassword()">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Current Password</label>
+          <input type="password" name="oldPassword" [(ngModel)]="passwordForm.oldPassword" required>
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" name="newPassword" [(ngModel)]="passwordForm.newPassword" required>
+        </div>
+        <div class="form-group">
+          <label>Confirm New Password</label>
+          <input type="password" name="confirmPassword" [(ngModel)]="passwordForm.confirmPassword" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closePasswordModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting">Update Password</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Preferences Modal -->
+<div class="modal-backdrop" *ngIf="showPrefsModal" (click)="closePrefsModal()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">User Settings</span>
+        <h3>Notification Preferences</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closePrefsModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <form (ngSubmit)="savePreferences()">
+      <div class="modal-body">
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <label style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" name="emailNotif" [(ngModel)]="prefsForm.emailNotifications"> Email Notifications
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" name="pushNotif" [(ngModel)]="prefsForm.pushNotifications"> Push Notifications
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" name="smsNotif" [(ngModel)]="prefsForm.smsNotifications"> SMS Notifications
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" name="taskUpdates" [(ngModel)]="prefsForm.taskUpdates"> Receive Task Updates
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" name="mentions" [(ngModel)]="prefsForm.mentions"> Receive Mentions
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" name="systemAlerts" [(ngModel)]="prefsForm.systemAlerts"> Receive System Alerts
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button type="button" class="btn" style="color: var(--danger); background: rgba(239,68,68,0.1); border:none; padding:8px 12px; border-radius:6px; cursor:pointer;" (click)="deletePreferences()">Delete Preferences</button>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-secondary" (click)="closePrefsModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">Save Preferences</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-overlay" *ngIf="showToast">
+  <div class="toast-card">
+    <div class="toast-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

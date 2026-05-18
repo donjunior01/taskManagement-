@@ -1,0 +1,329 @@
+<div class="settings-container animate-fade-in-up">
+  <!-- Governance Greeting Area -->
+  <div class="settings-header">
+    <div class="header-text">
+      <h2>System Settings & Health</h2>
+      <p>Configure global corporate parameters, enforce security gates, and audit real-time engine telemetry.</p>
+    </div>
+  </div>
+
+  <!-- Primary Double-Column Layout Grid -->
+  <div class="settings-grid">
+    
+    <!-- LEFT SIDE: Corporate Settings Configurator Form -->
+    <div class="glass-panel form-card">
+      <div class="card-header">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <h3>Corporate Configurator</h3>
+      </div>
+      
+      <form (ngSubmit)="saveConfiguration()" #settingsForm="ngForm">
+        <!-- Allowed Domains constraint -->
+        <div class="form-group">
+          <label for="allowedDomains">Allowed Email Domains</label>
+          <input 
+            type="text" 
+            id="allowedDomains" 
+            name="allowedDomains" 
+            [(ngModel)]="allowedEmailDomains" 
+            placeholder="e.g. corp.net, company.com"
+            required
+          />
+          <span class="help-text">Restricts registrations and invites to this comma-separated domain list.</span>
+        </div>
+
+        <div class="form-row-2">
+          <!-- Max File Upload Size -->
+          <div class="form-group">
+            <label for="maxUploadSize">Max File Attachment (MB)</label>
+            <input 
+              type="number" 
+              id="maxUploadSize" 
+              name="maxUploadSize" 
+              [(ngModel)]="maxFileUploadSize" 
+              min="1" 
+              max="500"
+              required
+            />
+            <span class="help-text">Upper threshold limit for documents/deliverables.</span>
+          </div>
+
+          <!-- Session Timeout -->
+          <div class="form-group">
+            <label for="idleTimeout">Session Idle Timeout (Min)</label>
+            <input 
+              type="number" 
+              id="idleTimeout" 
+              name="idleTimeout" 
+              [(ngModel)]="idleTimeoutMinutes" 
+              min="5" 
+              max="1440"
+              required
+            />
+            <span class="help-text">Minutes before standard session logout.</span>
+          </div>
+        </div>
+
+        <!-- Security Action Toggles -->
+        <div class="security-toggles">
+          <h4>Security & Event Triggers</h4>
+          
+          <div class="toggle-item">
+            <div class="toggle-text">
+              <span class="toggle-title">Enforce MFA Authentication</span>
+              <span class="toggle-desc">Mandates dual-factor confirmation for administrative logins.</span>
+            </div>
+            <label class="switch-toggle">
+              <input type="checkbox" name="mfaEnforce" [(ngModel)]="mfaRequirement" />
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-item">
+            <div class="toggle-text">
+              <span class="toggle-title">SMTP Deliverable Notification</span>
+              <span class="toggle-desc">Automatically emails assignees upon task allocation triggers.</span>
+            </div>
+            <label class="switch-toggle">
+              <input type="checkbox" name="emailOnCreate" [(ngModel)]="emailNotificationOnCreate" />
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-item">
+            <div class="toggle-text">
+              <span class="toggle-title">System Activity Log Audits</span>
+              <span class="toggle-desc">Emails administrators when database items are permanently destroyed.</span>
+            </div>
+            <label class="switch-toggle">
+              <input type="checkbox" name="emailOnDelete" [(ngModel)]="emailNotificationOnDelete" />
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="submitting || !settingsForm.form.valid">
+            <svg *ngIf="submitting" class="spinner" viewBox="0 0 24 24">
+              <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+            </svg>
+            <span>{{ submitting ? 'Saving Configuration...' : 'Save Configuration' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- RIGHT SIDE: Engine Health, Uptime Telemetry & Quick Maintenance -->
+    <div class="right-column-wrapper">
+      
+      <!-- Upper Glass Panel: Engine Health Vitals -->
+      <div class="glass-panel telemetry-card">
+        <div class="card-header">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+          <h3>Engine Live Telemetry</h3>
+          <span class="live-indicator">LIVE</span>
+        </div>
+
+        <div class="telemetry-grid">
+          
+          <!-- CPU Utilization Vital -->
+          <div class="telemetry-item">
+            <div class="item-header">
+              <span class="metric-label">CPU Load</span>
+              <span class="metric-value" [ngClass]="{ critical: cpuUtilization > 80, high: cpuUtilization > 60 }">
+                {{ cpuUtilization }}%
+              </span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-bar" [style.width.%]="cpuUtilization" [ngClass]="{ critical: cpuUtilization > 80, high: cpuUtilization > 60 }"></div>
+            </div>
+          </div>
+
+          <!-- Memory Allocation Vital -->
+          <div class="telemetry-item">
+            <div class="item-header">
+              <span class="metric-label">RAM Allocated</span>
+              <span class="metric-value">{{ ramUtilization }}%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-bar ram-color" [style.width.%]="ramUtilization"></div>
+            </div>
+          </div>
+
+          <!-- Database Latency Vital -->
+          <div class="metric-pair-row">
+            <div class="pair-card">
+              <span class="pair-label">DB Latency</span>
+              <span class="pair-value" [ngClass]="{ slow: databaseLatency > 15 }">{{ databaseLatency }}ms</span>
+            </div>
+            <div class="pair-card">
+              <span class="pair-label">Redis Cache</span>
+              <span class="pair-value">{{ redisLatency }}ms</span>
+            </div>
+          </div>
+
+          <!-- Sessions & Uptime Summary -->
+          <div class="telemetry-summary">
+            <div class="summary-row">
+              <span class="summary-label">Active Users Sessions</span>
+              <span class="summary-value text-indigo">{{ activeSessionsCount }} users</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Gateway Engine Uptime</span>
+              <span class="summary-value">{{ apiUptime }}</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Lower Glass Panel: Administrative Operations actions -->
+      <div class="glass-panel actions-card">
+        <div class="card-header">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+            <line x1="6" y1="6" x2="6.01" y2="6"></line>
+            <line x1="6" y1="18" x2="6.01" y2="18"></line>
+          </svg>
+          <h3>System Operations</h3>
+        </div>
+
+        <div class="operations-actions">
+          
+          <!-- Toggle Maintenance Mode -->
+          <div class="op-row">
+            <div class="op-desc">
+              <span class="op-title">Enforce Maintenance Gate</span>
+              <span class="op-details">Halts corporate API endpoint responses for normal employees.</span>
+            </div>
+            <label class="switch-toggle danger-switch">
+              <input type="checkbox" [(ngModel)]="maintenanceMode" (change)="toggleMaintenanceMode()" />
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <!-- Flush Caches action -->
+          <div class="action-buttons-group">
+            <button class="btn btn-secondary op-action-btn" (click)="clearRedisCache()" [disabled]="clearingCache">
+              <svg *ngIf="clearingCache" class="spinner" viewBox="0 0 24 24">
+                <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+              </svg>
+              <span>{{ clearingCache ? 'Purging Caches...' : 'Purge Redis Caches' }}</span>
+            </button>
+
+            <!-- Cold Backup action -->
+            <button class="btn btn-secondary op-action-btn" (click)="triggerColdBackup()" [disabled]="backingUp">
+              <svg *ngIf="backingUp" class="spinner" viewBox="0 0 24 24">
+                <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+              </svg>
+              <span>{{ backingUp ? 'Archiving Database...' : 'Run Database Backup' }}</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Security Governance Panel -->
+      <div class="glass-panel security-card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <h3>Security Governance</h3>
+        </div>
+
+        <div class="security-body">
+          <!-- Metrics -->
+          @if (securityMetrics) {
+            <div class="metric-pair-row" style="margin-bottom: 1.5rem;">
+              <div class="pair-card">
+                <span class="pair-label">Total Attempts</span>
+                <span class="pair-value">{{ securityMetrics.totalAttempts }}</span>
+              </div>
+              <div class="pair-card">
+                <span class="pair-label">Failed Attempts</span>
+                <span class="pair-value" [ngClass]="{'danger': securityMetrics.failedAttempts > 0}">{{ securityMetrics.failedAttempts }}</span>
+              </div>
+            </div>
+          }
+
+          <!-- Pending Resets -->
+          <div class="resets-section" style="margin-bottom: 1.5rem;">
+            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">Pending Password Resets</h4>
+            @if (pendingResets.length === 0) {
+              <p style="font-size: 0.85rem; color: var(--text-tertiary);">No pending requests.</p>
+            } @else {
+              <div class="list-container" style="max-height: 150px; overflow-y: auto;">
+                @for (reset of pendingResets; track reset.id) {
+                  <div class="list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div>
+                      <span style="font-weight: 500; font-size: 0.9rem;">{{ reset.username }}</span>
+                      <br/>
+                      <span style="font-size: 0.75rem; color: var(--text-tertiary);">{{ reset.requestedAt | date:'short' }}</span>
+                    </div>
+                    <div class="actions">
+                      <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.5rem;" (click)="approveReset(reset.id)">Approve</button>
+                      <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" (click)="rejectReset(reset.id)">Reject</button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Login Attempts -->
+          <div class="attempts-section">
+            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">Recent Login Attempts</h4>
+            <div class="list-container" style="max-height: 150px; overflow-y: auto; margin-bottom: 1rem;">
+              @for (attempt of loginAttempts; track attempt.id) {
+                <div class="list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <div>
+                    <span style="font-weight: 500; font-size: 0.9rem;">{{ attempt.username }}</span>
+                    <br/>
+                    <span style="font-size: 0.75rem; color: var(--text-tertiary);">IP: {{ attempt.ipAddress }} | {{ attempt.attemptedAt | date:'shortTime' }}</span>
+                  </div>
+                  <div>
+                    <span class="status-badge" [ngClass]="attempt.success ? 'success' : 'danger'" style="font-size: 0.75rem; padding: 0.2rem 0.4rem; border-radius: 4px;">
+                      {{ attempt.success ? 'SUCCESS' : 'FAILED' }}
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+            
+            <button class="btn btn-secondary" style="width: 100%; border-color: var(--danger); color: var(--danger);" (click)="clearLoginAttempts()">
+              Clear Login Attempts Log
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= FLOATING NOTIFICATION TOAST ================= -->
+<div class="toast-overlay" *ngIf="showToast" [ngClass]="toastType">
+  <div class="toast-card">
+    <div class="toast-icon">
+      <!-- Success Icon -->
+      <svg *ngIf="toastType === 'success'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <!-- Error Icon -->
+      <svg *ngIf="toastType === 'error'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

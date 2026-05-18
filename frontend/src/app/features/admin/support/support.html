@@ -1,0 +1,313 @@
+<div class="admin-support-container animate-fade-in-up">
+  
+  <!-- Header Governance Card -->
+  <div class="support-header">
+    <div class="header-text">
+      <h2>Support Tickets Governance</h2>
+      <p>Manage system-wide developer tickets, bug alerts, and authorization credentials.</p>
+    </div>
+  </div>
+
+  <!-- Operational Statistics Row -->
+  <div class="stats-row animate-fade-in-up">
+    <!-- Stat 1: Total Tickets -->
+    <div class="glass-panel stat-card">
+      <div class="stat-main">
+        <span class="stat-label">Total Tickets</span>
+        <div class="stat-value-container">
+          <span class="stat-value">{{ totalTickets }}</span>
+        </div>
+      </div>
+      <div class="card-icon icon-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Stat 2: Open Tickets -->
+    <div class="glass-panel stat-card alert-card">
+      <div class="stat-main">
+        <span class="stat-label">Open Tickets</span>
+        <div class="stat-value-container">
+          <span class="stat-value text-danger">{{ openTickets }}</span>
+          <span class="stat-pill negative" *ngIf="openTickets > 0">Action required</span>
+        </div>
+      </div>
+      <div class="card-icon icon-red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Stat 3: In Progress Tickets -->
+    <div class="glass-panel stat-card">
+      <div class="stat-main">
+        <span class="stat-label">In Progress</span>
+        <div class="stat-value-container">
+          <span class="stat-value text-orange">{{ inProgressTickets }}</span>
+        </div>
+      </div>
+      <div class="card-icon icon-orange">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Stat 4: Resolved Tickets -->
+    <div class="glass-panel stat-card">
+      <div class="stat-main">
+        <span class="stat-label">Resolved Tickets</span>
+        <div class="stat-value-container">
+          <span class="stat-value text-green">{{ resolvedTickets }}</span>
+        </div>
+      </div>
+      <div class="card-icon icon-green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Filters Row -->
+  <div class="glass-panel filters-card animate-fade-in-up">
+    <div class="filters-row">
+      <!-- Search Input -->
+      <div class="search-input-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          (input)="onFilterChange()" 
+          placeholder="Search by Ticket ID, submitter name, or subject..."
+        />
+      </div>
+
+      <!-- Select Status -->
+      <div class="filter-dropdown">
+        <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
+          <option value="">All Statuses</option>
+          <option value="OPEN">Open</option>
+          <option value="IN_PROGRESS">In Progress</option>
+          <option value="RESOLVED">Resolved</option>
+        </select>
+      </div>
+
+      <!-- Select Priority -->
+      <div class="filter-dropdown">
+        <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
+          <option value="">All Priorities</option>
+          <option value="URGENT">Urgent</option>
+          <option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="LOW">Low</option>
+        </select>
+      </div>
+
+      <!-- Reset -->
+      <button class="btn-reset" (click)="resetFilters()" *ngIf="searchTerm || statusFilter || priorityFilter">
+        <span>Reset Filters</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Primary Governance ledger List Table -->
+  <div class="glass-panel ledger-card animate-fade-in-up">
+    <div class="ledger-header">
+      <h3>Active Support Ledgers</h3>
+    </div>
+
+    <div class="table-responsive">
+      <table class="tickets-table">
+        <thead>
+          <tr>
+            <th>Ticket ID</th>
+            <th>Submitter Info</th>
+            <th>Issue Subject</th>
+            <th>Priority Badge</th>
+            <th>Status Badge</th>
+            <th>Date Logged</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let tick of filteredTickets" class="ticket-row animate-scale-in">
+            <td><strong class="text-blue">#{{ tick.id }}</strong></td>
+            <td>
+              <div class="submitter-profile">
+                <div class="profile-avatar">
+                  {{ tick.submittedBy[0] }}
+                </div>
+                <div class="profile-details">
+                  <span class="name"><strong>{{ tick.submittedBy }}</strong></span>
+                  <span class="role">{{ tick.role }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="subject-details">
+                <span class="subject-title"><strong>{{ tick.subject }}</strong></span>
+                <span class="category-tag">{{ tick.category }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="priority-badge" [ngClass]="tick.priority.toLowerCase()">
+                {{ tick.priority }}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="tick.status.toLowerCase()">
+                {{ tick.status === 'OPEN' ? 'Open' : (tick.status === 'IN_PROGRESS' ? 'In Progress' : 'Resolved') }}
+              </span>
+            </td>
+            <td class="date-cell">{{ tick.date }}</td>
+            <td>
+              <div class="action-buttons-row">
+                <button class="btn-action btn-reply" (click)="openReplyModal(tick)" title="Review & Reply">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="action-icon">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                </button>
+                <button class="btn-action btn-delete" (click)="deleteTicket(tick, $event)" title="Delete Log">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="action-icon">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Zero Tickets fallback -->
+          <tr *ngIf="filteredTickets.length === 0">
+            <td colspan="7" class="zero-schedules-cell">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="empty-icon">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <p>Zero support tickets found matching target configurations.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= TICKET REPLY & STATUS UPDATE MODAL ================= -->
+<div class="modal-backdrop" *ngIf="showReplyModal" (click)="closeReplyModal()">
+  <div class="glass-panel modal-card reply-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Review Workspace Ticket</span>
+        <h3>Ticket #{{ selectedTicket?.id }} Details</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeReplyModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitAdminReply()">
+      <div class="modal-body">
+        
+        <!-- Ticket Information Header -->
+        <div class="ticket-info-summary">
+          <div class="meta-row">
+            <span class="lbl">Subject:</span>
+            <span class="val"><strong>{{ selectedTicket?.subject }}</strong></span>
+          </div>
+          <div class="meta-row">
+            <span class="lbl">From:</span>
+            <span class="val">{{ selectedTicket?.submittedBy }} ({{ selectedTicket?.submittedByEmail }}) - <strong>{{ selectedTicket?.role }}</strong></span>
+          </div>
+          <div class="meta-row">
+            <span class="lbl">Date Logged:</span>
+            <span class="val">{{ selectedTicket?.date }}</span>
+          </div>
+        </div>
+
+        <!-- Issue Description -->
+        <div class="form-group">
+          <label>Issue Description</label>
+          <div class="description-backplate">
+            <p>{{ selectedTicket?.description }}</p>
+          </div>
+        </div>
+
+        <!-- Existing replies -->
+        <div class="form-group" *ngIf="selectedTicket && selectedTicket.replies.length > 0">
+          <label>Conversation Log</label>
+          <div class="replies-log-backplate">
+            <div class="reply-bubble animate-scale-in" *ngFor="let rep of selectedTicket.replies">
+              <span class="reply-sender"><strong>{{ rep.sender }}</strong> • {{ rep.timestamp }}</span>
+              <p class="reply-msg">{{ rep.message }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Set status -->
+        <div class="form-group">
+          <label for="nextStatus">Update Ticket Status</label>
+          <div class="select-wrapper">
+            <select id="nextStatus" name="nextStatus" [(ngModel)]="nextStatus">
+              <option value="OPEN">Open</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="RESOLVED">Resolved</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Reply Message text -->
+        <div class="form-group">
+          <label for="adminReplyMessage">Send Reply Message</label>
+          <textarea 
+            id="adminReplyMessage" 
+            name="adminReplyMessage" 
+            rows="3" 
+            [(ngModel)]="adminReplyMessage" 
+            placeholder="Type your response to the developer/manager here..."
+            required
+          ></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeReplyModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submittingReply || !adminReplyMessage.trim()">
+          <span *ngIf="submittingReply" class="spinner"></span>
+          <span>{{ submittingReply ? 'Sending reply...' : 'Send Reply' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= FLOATING NOTIFICATION TOAST ================= -->
+<div class="toast-overlay" *ngIf="showToast">
+  <div class="toast-card">
+    <div class="toast-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

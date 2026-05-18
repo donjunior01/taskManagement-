@@ -51,7 +51,6 @@ public class MessageService {
     public ApiResponse<MessageDTO> sendMessage(MessageRequestDTO request, Long senderId) {
         Message message = new Message();
         message.setContent(request.getContent());
-        message.setSubject(request.getSubject());
         message.setIsRead(false);
         
         userRepository.findById(senderId)
@@ -104,11 +103,18 @@ public class MessageService {
     
     @Transactional(readOnly = true)
     public ApiResponse<List<MessageDTO>> getDirectConversation(Long currentUserId, Long otherUserId) {
-        List<Message> messages = messageRepository.findDirectConversation(currentUserId, otherUserId);
-        List<MessageDTO> messageDTOs = messages.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-        return ApiResponse.success("Conversation retrieved successfully", messageDTOs);
+        if (currentUserId == null || otherUserId == null) {
+            return ApiResponse.success("Conversation empty", new java.util.ArrayList<>());
+        }
+        try {
+            List<Message> messages = messageRepository.findDirectConversation(currentUserId, otherUserId);
+            List<MessageDTO> messageDTOs = messages.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+            return ApiResponse.success("Conversation retrieved successfully", messageDTOs);
+        } catch (Exception e) {
+            return ApiResponse.success("Conversation empty on error", new java.util.ArrayList<>());
+        }
     }
     
     @Transactional
@@ -235,7 +241,6 @@ public class MessageService {
                 .projectId(message.getProject() != null ? message.getProject().getId() : null)
                 .projectName(message.getProject() != null ? message.getProject().getName() : null)
                 .content(message.getContent())
-                .subject(message.getSubject())
                 .isRead(message.getIsRead())
                 .createdAt(message.getCreatedAt())
                 .build();

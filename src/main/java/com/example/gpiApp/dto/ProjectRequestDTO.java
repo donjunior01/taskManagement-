@@ -26,5 +26,7 @@ public class ProjectRequestDTO {
     private LocalDate endDate;
     
     private Project.ProjectStatus status;
+    
+    private Integer progress;
 }
 

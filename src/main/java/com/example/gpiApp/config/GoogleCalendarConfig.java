@@ -9,6 +9,7 @@ import com.google.api.services.calendar.CalendarScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 
+@Slf4j
 @Configuration
 public class GoogleCalendarConfig {
 
@@ -30,25 +32,45 @@ public class GoogleCalendarConfig {
     @Value("${google.calendar.enabled:false}")
     private boolean calendarEnabled;
 
+    @Value("${google.calendar.id:primary}")
+    private String defaultCalendarId;
+
     @Bean
-    public Calendar googleCalendarService() throws GeneralSecurityException, IOException {
-        if (!calendarEnabled || credentialsFile == null || !credentialsFile.exists()) {
+    public Calendar googleCalendarService() {
+        if (!calendarEnabled) {
+            log.info("Google Calendar integration is disabled");
             return null;
         }
 
-        HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-        
-        GoogleCredentials credentials = ServiceAccountCredentials
-                .fromStream(credentialsFile.getInputStream())
-                .createScoped(Collections.singleton(CalendarScopes.CALENDAR));
+        if (credentialsFile == null || !credentialsFile.exists()) {
+            log.warn("Google Calendar credentials file not found. Calendar integration will be disabled.");
+            return null;
+        }
 
-        return new Calendar.Builder(httpTransport, JSON_FACTORY, new HttpCredentialsAdapter(credentials))
-                .setApplicationName(APPLICATION_NAME)
-                .build();
+        try {
+            HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+            
+            GoogleCredentials credentials = ServiceAccountCredentials
+                    .fromStream(credentialsFile.getInputStream())
+                    .createScoped(Collections.singleton(CalendarScopes.CALENDAR));
+
+            Calendar calendar = new Calendar.Builder(httpTransport, JSON_FACTORY, new HttpCredentialsAdapter(credentials))
+                    .setApplicationName(APPLICATION_NAME)
+                    .build();
+
+            log.info("Google Calendar service initialized successfully");
+            return calendar;
+        } catch (IOException | GeneralSecurityException e) {
+            log.error("Failed to initialize Google Calendar service: {}", e.getMessage());
+            return null;
+        }
     }
 
     public boolean isCalendarEnabled() {
         return calendarEnabled;
     }
-}
 
+    public String getDefaultCalendarId() {
+        return defaultCalendarId;
+    }
+}

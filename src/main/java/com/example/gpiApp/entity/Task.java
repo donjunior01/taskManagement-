@@ -33,11 +33,11 @@ public class Task {
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_to")
+    @JoinColumn(name = "assigned_to_id")
     private allUsers assignedTo;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
+    @JoinColumn(name = "created_by_id")
     private allUsers createdBy;
 
     @Enumerated(EnumType.STRING)
@@ -96,15 +96,15 @@ public class Task {
     }
 
     public enum TaskPriority {
-        LOW, MEDIUM, HIGH
+        LOW, MEDIUM, HIGH, CRITICAL
     }
 
     public enum TaskDifficulty {
-        EASY, MEDIUM, DIFFICULT
+        EASY, MEDIUM, DIFFICULT, HARD
     }
 
     public enum TaskStatus {
-        TODO, IN_PROGRESS, COMPLETED, OVERDUE
+        TODO, IN_PROGRESS, COMPLETED, OVERDUE, ON_HOLD
     }
 
     public enum ReminderType {

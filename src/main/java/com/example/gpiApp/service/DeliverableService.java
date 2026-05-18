@@ -71,7 +71,6 @@ public class DeliverableService {
             Deliverable deliverable = Deliverable.builder()
                     .fileName(request.getFileName())
                     .fileUrl(request.getFileUrl())
-                    .fileSize(request.getFileSize())
                     .status(Deliverable.DeliverableStatus.PENDING)
                     .task(task)
                     .submittedBy(user)
@@ -212,7 +211,6 @@ public class DeliverableService {
                     deliverable.getSubmittedBy().getFirstName() + " " + deliverable.getSubmittedBy().getLastName() : null)
                 .fileName(deliverable.getFileName())
                 .fileUrl(deliverable.getFileUrl())
-                .fileSize(deliverable.getFileSize())
                 .status(deliverable.getStatus())
                 .comments(deliverable.getComments())
                 .reviewedById(deliverable.getReviewedBy() != null ? deliverable.getReviewedBy().getId() : null)
@@ -232,11 +230,9 @@ public class DeliverableService {
                     .id(deliverable.getId())
                     .fileName(deliverable.getFileName())
                     .fileUrl(deliverable.getFileUrl())
-                    .fileSize(deliverable.getFileSize())
                     .status(deliverable.getStatus())
                     .comments(deliverable.getComments())
                     .createdAt(deliverable.getCreatedAt())
-                    .updatedAt(deliverable.getUpdatedAt())
                     .build();
         }
     }

@@ -6,7 +6,10 @@ import com.example.gpiApp.entity.Task;
 import com.example.gpiApp.entity.allUsers;
 import com.example.gpiApp.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +23,9 @@ public class DashboardService {
     public DashboardStatsDTO getAdminDashboardStats() {
         long totalUsers = userRepository.count();
         long totalProjects = projectRepository.count();
-        long activeProjects = projectRepository.countByStatus(Project.ProjectStatus.ACTIVE);
+        long activeProjects = projectRepository.countByStatus(Project.ProjectStatus.ACTIVE)
+                + projectRepository.countByStatus(Project.ProjectStatus.IN_PROGRESS)
+                + projectRepository.countByStatus(Project.ProjectStatus.PLANNED);
         long completedProjects = projectRepository.countByStatus(Project.ProjectStatus.COMPLETED);
         long onHoldProjects = projectRepository.countByStatus(Project.ProjectStatus.ON_HOLD);
         
@@ -31,16 +36,18 @@ public class DashboardService {
         long todoTasks = taskRepository.countByStatus(Task.TaskStatus.TODO);
         
         long totalTeams = teamRepository.count();
+        long newUsersThisMonth = userRepository.countUsersCreatedThisMonth();
         
         // Calculate completion rate based on completed vs total non-todo tasks
         long relevantTasks = activeTasks + completedTasks + overdueTasks;
         double taskCompletionRate = relevantTasks > 0 ? (double) completedTasks / relevantTasks * 100 : 0;
+        taskCompletionRate = Math.round(taskCompletionRate * 100.0) / 100.0;
         
         return DashboardStatsDTO.builder()
                 .totalUsers(totalUsers)
                 .activeUsers(totalUsers)
                 .inactiveUsers(0L)
-                .newUsersThisMonth(0L)
+                .newUsersThisMonth(newUsersThisMonth)
                 .totalProjects(totalProjects)
                 .activeProjects(activeProjects)
                 .completedProjects(completedProjects)
@@ -55,17 +62,24 @@ public class DashboardService {
     }
     
     public DashboardStatsDTO getManagerDashboardStats(Long managerId) {
+        // Get projects managed by this PM
+        List<Project> managedProjects = projectRepository.findByManagerId(managerId, Pageable.unpaged()).getContent();
+        List<Long> projectIds = managedProjects.stream()
+                .map(Project::getId)
+                .toList();
+        
         // Count tasks for projects managed by this PM
-        long totalTasks = taskRepository.count();
-        long activeTasks = taskRepository.countByStatus(Task.TaskStatus.IN_PROGRESS);
-        long completedTasks = taskRepository.countByStatus(Task.TaskStatus.COMPLETED);
-        long overdueTasks = taskRepository.countByStatus(Task.TaskStatus.OVERDUE);
+        long totalTasks = projectIds.isEmpty() ? 0 : taskRepository.countByProjectIds(projectIds);
+        long activeTasks = projectIds.isEmpty() ? 0 : taskRepository.countByProjectIdsAndStatus(projectIds, Task.TaskStatus.IN_PROGRESS);
+        long completedTasks = projectIds.isEmpty() ? 0 : taskRepository.countByProjectIdsAndStatus(projectIds, Task.TaskStatus.COMPLETED);
+        long overdueTasks = projectIds.isEmpty() ? 0 : taskRepository.countByProjectIdsAndStatus(projectIds, Task.TaskStatus.OVERDUE);
         
         // Count team members (users with USER role)
         long teamMembers = userRepository.countByRole(allUsers.Role.USER);
         
         long relevantTasks = activeTasks + completedTasks + overdueTasks;
         double taskCompletionRate = relevantTasks > 0 ? (double) completedTasks / relevantTasks * 100 : 0;
+        taskCompletionRate = Math.round(taskCompletionRate * 100.0) / 100.0;
         
         return DashboardStatsDTO.builder()
                 .totalTasks(totalTasks)
@@ -89,6 +103,7 @@ public class DashboardService {
         
         long relevantTasks = allActiveTasks + completedTasks + overdueTasks;
         double taskCompletionRate = relevantTasks > 0 ? (double) completedTasks / relevantTasks * 100 : 0;
+        taskCompletionRate = Math.round(taskCompletionRate * 100.0) / 100.0;
         
         return DashboardStatsDTO.builder()
                 .totalTasks(totalTasks)

@@ -17,4 +17,7 @@ public class UserDTO {
     private String lastName;
     private allUsers.Role role;
     private String fullName;
+    
+    @com.fasterxml.jackson.annotation.JsonProperty("isActive")
+    private boolean isActive;
 } 

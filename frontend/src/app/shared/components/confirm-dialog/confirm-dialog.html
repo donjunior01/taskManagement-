@@ -1,0 +1,17 @@
+@if (isVisible) {
+  <div class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>{{ title }}</h3>
+        <button (click)="hide()" class="close-button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>{{ message }}</p>
+      </div>
+      <div class="modal-footer">
+        <button (click)="cancel()" class="cancel-btn">Cancel</button>
+        <button (click)="confirm()" class="confirm-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+}

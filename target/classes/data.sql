@@ -11,16 +11,16 @@
 -- ===================================
 
 INSERT IGNORE INTO allUsers (id, username, email, password, first_name, last_name, role, is_active, created_at, updated_at) VALUES
-(100, 'mtn_admin', 'admin@mtncameroon.cm', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.QPhR5Cr8gPdzREOb2G', 'Admin', 'MTN', 'ADMIN', true, NOW(), NOW()),
-(101, 'pm_nkoulou', 'nkoulou.pm@mtncameroon.cm', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.QPhR5Cr8gPdzREOb2G', 'Jean-Pierre', 'Nkoulou', 'PROJECT_MANAGER', true, NOW(), NOW()),
-(102, 'pm_tchinda', 'tchinda.pm@mtncameroon.cm', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.QPhR5Cr8gPdzREOb2G', 'Marie', 'Tchinda', 'PROJECT_MANAGER', true, NOW(), NOW()),
-(103, 'user_mbarga', 'mbarga@mtncameroon.cm', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.QPhR5Cr8gPdzREOb2G', 'Paul', 'Mbarga', 'USER', true, NOW(), NOW()),
-(104, 'user_fotso', 'fotso@mtncameroon.cm', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.QPhR5Cr8gPdzREOb2G', 'Sandrine', 'Fotso', 'USER', true, NOW(), NOW()),
-(105, 'user_ngono', 'ngono@mtncameroon.cm', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.QPhR5Cr8gPdzREOb2G', 'Emmanuel', 'Ngono', 'USER', true, NOW(), NOW()),
-(106, 'user_eyebe', 'eyebe@mtncameroon.cm', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.QPhR5Cr8gPdzREOb2G', 'Carine', 'Eyebe', 'USER', true, NOW(), NOW()),
-(107, 'user_tabi', 'tabi@mtncameroon.cm', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.QPhR5Cr8gPdzREOb2G', 'Francis', 'Tabi', 'USER', true, NOW(), NOW()),
-(108, 'user_kamga', 'kamga@mtncameroon.cm', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.QPhR5Cr8gPdzREOb2G', 'Berthe', 'Kamga', 'USER', true, NOW(), NOW()),
-(109, 'user_nana', 'nana@mtncameroon.cm', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.QPhR5Cr8gPdzREOb2G', 'Olivier', 'Nana', 'USER', true, NOW(), NOW());
+(100, 'mtn_admin', 'admin@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Admin', 'MTN', 'ADMIN', true, NOW(), NOW()),
+(101, 'pm_nkoulou', 'nkoulou.pm@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Jean-Pierre', 'Nkoulou', 'PROJECT_MANAGER', true, NOW(), NOW()),
+(102, 'pm_tchinda', 'tchinda.pm@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Marie', 'Tchinda', 'PROJECT_MANAGER', true, NOW(), NOW()),
+(103, 'user_mbarga', 'mbarga@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Paul', 'Mbarga', 'USER', true, NOW(), NOW()),
+(104, 'user_fotso', 'fotso@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Sandrine', 'Fotso', 'USER', true, NOW(), NOW()),
+(105, 'user_ngono', 'ngono@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Emmanuel', 'Ngono', 'USER', true, NOW(), NOW()),
+(106, 'user_eyebe', 'eyebe@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Carine', 'Eyebe', 'USER', true, NOW(), NOW()),
+(107, 'user_tabi', 'tabi@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Francis', 'Francis', 'USER', true, NOW(), NOW()),
+(108, 'user_kamga', 'kamga@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Berthe', 'Kamga', 'USER', true, NOW(), NOW()),
+(109, 'user_nana', 'nana@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Olivier', 'Nana', 'USER', true, NOW(), NOW());
 
 -- ===================================
 -- PROJECTS (10 projects for MTN Cameroon)

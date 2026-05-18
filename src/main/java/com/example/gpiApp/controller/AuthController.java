@@ -1,6 +1,9 @@
 package com.example.gpiApp.controller;
 
 import com.example.gpiApp.dto.RegisterRequest;
+import com.example.gpiApp.dto.LoginRequest;
+import com.example.gpiApp.dto.LoginResponse;
+import com.example.gpiApp.dto.ApiResponse;
 import com.example.gpiApp.entity.allUsers;
 import com.example.gpiApp.repository.UserRepository;
 import com.example.gpiApp.repository.UserService;
@@ -9,15 +12,17 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
+@RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
@@ -28,40 +33,47 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
 
-    @GetMapping("/login")
-    public String showLoginPage(@RequestParam(value = "error", required = false) String error,
-                                @RequestParam(value = "logout", required = false) String logout,
-                                @RequestParam(value = "registered", required = false) String registered,
-                                Model model) {
-        if (error != null) {
-            model.addAttribute("error", "Invalid username or password");
-        }
-        if (logout != null) {
-            model.addAttribute("message", "You have been logged out successfully");
-        }
-        if (registered != null) {
-            model.addAttribute("success", "Registration successful! Please sign in.");
-        }
-        return "login";
-    }
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        try {
+            String usernameOrEmail = loginRequest.getUsername();
+            if (usernameOrEmail == null || usernameOrEmail.trim().isEmpty()) {
+                usernameOrEmail = loginRequest.getEmail();
+            }
 
-    @GetMapping("/register")
-    public String showRegisterPage() {
-        return "auth/register";
+            if (usernameOrEmail == null || usernameOrEmail.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("Username or email is required"));
+            }
+
+            String finalIdentifier = usernameOrEmail;
+            allUsers user = userRepository.findByEmail(finalIdentifier)
+                    .or(() -> userRepository.findByUsername(finalIdentifier))
+                    .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("User not found"));
+
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(user.getEmail(), loginRequest.getPassword())
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtil.generateToken(authentication);
+
+            return ResponseEntity.ok(new LoginResponse(jwt, user));
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid credentials: " + e.getMessage()));
+        }
     }
 
     @PostMapping("/register")
-    public String register(@ModelAttribute RegisterRequest registerRequest, Model model) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
         // Check if username already exists
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            model.addAttribute("error", "Username already exists");
-            return "auth/register";
+            return ResponseEntity.badRequest().body(ApiResponse.error("Username already exists"));
         }
         
         // Check if email already exists
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            model.addAttribute("error", "Email already exists");
-            return "auth/register";
+            return ResponseEntity.badRequest().body(ApiResponse.error("Email already exists"));
         }
 
         try {
@@ -74,25 +86,15 @@ public class AuthController {
             user.setRole(allUsers.Role.USER); // Default role
 
             userRepository.save(user);
-            return "redirect:/api/auth/login?registered=true";
+            return ResponseEntity.ok(ApiResponse.success("Registration successful! Please sign in.", user));
         } catch (Exception e) {
-            model.addAttribute("error", "Registration failed. Please try again.");
-            return "auth/register";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Registration failed. Please try again."));
         }
     }
 
-    // Logout - supports both GET and POST methods
-    @GetMapping("/logout")
-    public String logoutGet(HttpServletRequest request, HttpServletResponse response) {
-        return performLogout(request, response);
-    }
-
     @PostMapping("/logout")
-    public String logoutPost(HttpServletRequest request, HttpServletResponse response) {
-        return performLogout(request, response);
-    }
-
-    private String performLogout(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         // Clear the Security Context
         SecurityContextHolder.clearContext();
 
@@ -114,7 +116,6 @@ public class AuthController {
         sessionCookie.setMaxAge(0);
         response.addCookie(sessionCookie);
 
-        // Redirect to login page with logout parameter
-        return "redirect:/api/auth/login?logout=true";
+        return ResponseEntity.ok(ApiResponse.success("Logged out successfully", null));
     }
 }

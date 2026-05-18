@@ -1,0 +1,593 @@
+<div class="reports-container animate-fade-in-up">
+  
+  <!-- Loading State Spinner -->
+  <div class="spinner-wrapper" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Decrypting workspace governance telemetry ledgers...</span>
+  </div>
+
+  <!-- Main Reports dashboard -->
+  <div class="reports-layout-wrapper" *ngIf="!loading">
+    
+    <!-- Greeting Header Area -->
+    <div class="reports-header">
+      <div class="header-text">
+        <h2>System Audit Control Center</h2>
+        <p>Generate, compile, and configure high-level workspace performance analytics.</p>
+      </div>
+      <button class="btn-settings" (click)="openSettings()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span>Audit Settings</span>
+      </button>
+    </div>
+
+    <!-- 3-Column Card Layout Grid -->
+    <div class="reports-vitals-grid">
+      
+      <!-- COLUMN 1: Generate New System Audit Card -->
+      <div class="glass-panel generate-report-card">
+        <div class="card-header-with-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="card-title-icon text-blue">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <h3>Generate System Audit</h3>
+        </div>
+
+        <form (ngSubmit)="generateReport()" class="report-form">
+          <!-- Audit Type -->
+          <div class="form-group">
+            <label class="form-label">Audit Scope Type</label>
+            <div class="select-wrapper">
+              <select name="auditType" [(ngModel)]="auditType" required>
+                <option value="Users Directory (PDF)">Users Directory (PDF)</option>
+                <option value="Tasks Report (PDF)">Tasks Report (PDF)</option>
+                <option value="Projects Report (PDF)">Projects Report (PDF)</option>
+                <option value="System Load & Performance">System Load & Performance</option>
+                <option value="API Gateway Access Logs">API Gateway Access Logs</option>
+                <option value="User Activity Ledger">User Activity Ledger</option>
+                <option value="Database Node Health">Database Node Health</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Date Range Inputs -->
+          <div class="form-group">
+            <label class="form-label">Audit Window</label>
+            <div class="date-range-row">
+              <div class="date-input-wrapper">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="input-inline-icon">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <input type="text" name="startDate" [(ngModel)]="startDate" placeholder="Sep 01, 2024">
+              </div>
+              <span class="range-divider">-</span>
+              <div class="date-input-wrapper">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="input-inline-icon">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <input type="text" name="endDate" [(ngModel)]="endDate" placeholder="Sep 30, 2024">
+              </div>
+            </div>
+          </div>
+
+          <!-- Include Scopes Checkboxes -->
+          <div class="form-group">
+            <label class="form-label">Audit Scopes</label>
+            <div class="checkbox-list">
+              <label class="checkbox-item">
+                <input type="checkbox" name="scope1" [(ngModel)]="scopesSelection.serverLogs">
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-label">Server Microservices Logs</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" name="scope2" [(ngModel)]="scopesSelection.usersActivity">
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-label">Users Activity Tracking</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" name="scope3" [(ngModel)]="scopesSelection.taskBacklogs">
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-label">Task Completion Backlogs</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" name="scope4" [(ngModel)]="scopesSelection.financialAudits">
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-label">Financial & SLA Auditing</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Export Format -->
+          <div class="form-group">
+            <label class="form-label">Export Format</label>
+            <div class="format-segmented-toggle">
+              <button type="button" class="btn-toggle" [ngClass]="{ active: exportFormat === 'PDF' }" (click)="setFormat('PDF')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toggle-icon">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>PDF</span>
+              </button>
+              <button type="button" class="btn-toggle" [ngClass]="{ active: exportFormat === 'CSV' }" (click)="setFormat('CSV')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toggle-icon">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                  <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg>
+                <span>CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Run Audit Action Button -->
+          <button type="submit" class="btn-submit-generate">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="submit-bolt-icon" style="width: 14px; height: 14px; margin-right: 6px;">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            <span>Run Executive Audit</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- COLUMN 2: SLA Response Compliance Chart -->
+      <div class="glass-panel chart-card velocity-trend-card">
+        <div class="card-header">
+          <h3>API SLA Resolution Trend (24h)</h3>
+          <button class="btn-card-menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="menu-icon">
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+          </button>
+        </div>
+
+        <div class="chart-content">
+          <!-- Premium line chart SVG -->
+          <svg class="line-chart-svg" viewBox="0 0 300 150">
+            <!-- Grid Lines -->
+            <line x1="20" y1="20" x2="280" y2="20" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="3"></line>
+            <line x1="20" y1="60" x2="280" y2="60" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="3"></line>
+            <line x1="20" y1="100" x2="280" y2="100" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="3"></line>
+            
+            <!-- Spline Curve representing SLA Resolution Time (lower is better) -->
+            <path d="M 20 50 C 60 70, 80 40, 100 45 C 120 50, 140 110, 160 95 C 180 80, 200 45, 240 38 L 280 32" 
+                  fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round"></path>
+            
+            <!-- Under-curve soft blue gradient -->
+            <path d="M 20 50 C 60 70, 80 40, 100 45 C 120 50, 140 110, 160 95 C 180 80, 200 45, 240 38 L 280 32 L 280 140 L 20 140 Z" 
+                  fill="url(#chartGrad)" opacity="0.06"></path>
+
+            <defs>
+              <linearGradient id="chartGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#2563eb" />
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="chart-label">Response Time: Avg 98ms SLA compliance</span>
+        </div>
+      </div>
+
+      <!-- COLUMN 3: Server Load Allocation Card -->
+      <div class="glass-panel chart-card allocation-card">
+        <div class="card-header">
+          <h3>Server Load Allocation</h3>
+          <button class="btn-card-menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="menu-icon">
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+          </button>
+        </div>
+
+        <div class="chart-content">
+          <!-- Concentric Ring donut chart in SVG -->
+          <div class="allocation-donut-wrapper">
+            <svg class="radial-svg" viewBox="0 0 100 100">
+              <!-- Ring Backplate -->
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#f1f5f9" stroke-width="8.5"></circle>
+              
+              <!-- Blue Segment: Kubernetes Containers (45%) -->
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#2563eb" stroke-width="8.5"
+                      stroke-dasharray="238.7" stroke-dashoffset="107.4" 
+                      transform="rotate(-90 50 50)"></circle>
+              
+              <!-- Green Segment: PostgreSQL Database (35%) -->
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="8.5"
+                      stroke-dasharray="238.7" stroke-dashoffset="155.15" 
+                      transform="rotate(72 50 50)"></circle>
+              
+              <!-- Orange Segment: Gateway APIs (20%) -->
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#f59e0b" stroke-width="8.5"
+                      stroke-dasharray="238.7" stroke-dashoffset="190.96" 
+                      transform="rotate(198 50 50)"></circle>
+            </svg>
+            <div class="donut-center-labels">
+              <span class="donut-total-lbl">Memory</span>
+              <span class="donut-total-val">42.8 GB</span>
+            </div>
+          </div>
+
+          <!-- Color Legends below -->
+          <div class="donut-legends">
+            <div class="legend-dot-item">
+              <span class="dot bg-blue"></span>
+              <span class="dot-label">Docker K8s</span>
+            </div>
+            <div class="legend-dot-item">
+              <span class="dot bg-green"></span>
+              <span class="dot-label">PostgreSQL</span>
+            </div>
+            <div class="legend-dot-item">
+              <span class="dot bg-orange"></span>
+              <span class="dot-label">API Gateway</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUMN 4: Tabbed Panel Container (Saved Executive Audits + System Vitals + Audit Logs) -->
+    <div class="glass-panel tabbed-reports-card">
+      <div class="panel-header-tabbed">
+        <div class="panel-header-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="panel-icon text-blue">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="9" x2="15" y2="9"></line>
+            <line x1="9" y1="13" x2="15" y2="13"></line>
+            <line x1="9" y1="17" x2="15" y2="17"></line>
+          </svg>
+          <h3>Governance Audit Archives</h3>
+        </div>
+
+        <!-- Segmented Tab switcher buttons -->
+        <div class="tab-switcher-nav">
+          <button class="tab-btn" [ngClass]="{ active: activeTab === 'saved' }" (click)="setActiveTab('saved')">Saved Executive Audits</button>
+          <button class="tab-btn" [ngClass]="{ active: activeTab === 'performance' }" (click)="setActiveTab('performance')">System Performance Vitals</button>
+          <button class="tab-btn" [ngClass]="{ active: activeTab === 'logs' }" (click)="setActiveTab('logs')">Operator Audit Logs</button>
+        </div>
+      </div>
+
+      <!-- TAB PANEL 1: Saved Executive Audits -->
+      <div class="tab-content" *ngIf="activeTab === 'saved'">
+        <div class="saved-reports-list">
+          <div 
+            class="saved-report-item animate-scale-in" 
+            *ngFor="let rep of savedReports"
+            [ngClass]="{ selected: rep.selected }"
+            (click)="selectReport(rep)"
+          >
+            <div class="report-item-left">
+              <div class="doc-icon-wrapper" [ngClass]="{ selected: rep.selected }">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="doc-svg-icon">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <div class="report-details">
+                <h4 class="report-name"><strong>{{ rep.name }}</strong></h4>
+                <span class="report-meta">{{ rep.date }} • {{ rep.size }}</span>
+              </div>
+            </div>
+
+            <div class="report-item-right">
+              <button class="btn-action btn-download" (click)="downloadReport(rep, $event)" title="Download Audit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="action-icon">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+              </button>
+              <button class="btn-action btn-delete" (click)="deleteReport(rep, $event)" title="Delete Audit Log">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="action-icon">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB PANEL 2: System Performance Vitals Table -->
+      <div class="tab-content" *ngIf="activeTab === 'performance'">
+        <div class="table-responsive">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Service API Node Name</th>
+                <th>CPU Load</th>
+                <th>Memory Allocation</th>
+                <th>Response SLA</th>
+                <th>Status</th>
+                <th>Active Conns</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let rep of performanceMetrics">
+                <td class="project-name-cell"><strong>{{ rep.serviceName }}</strong></td>
+                <td>
+                  <div class="table-progress-wrapper">
+                    <span>{{ rep.cpuUsage }}%</span>
+                    <div class="progress-bar-container">
+                      <div class="progress-bar-fill" [style.width.%]="rep.cpuUsage" [ngClass]="{
+                        'bg-green': rep.cpuUsage < 60,
+                        'bg-orange': rep.cpuUsage >= 60 && rep.cpuUsage < 80,
+                        'bg-red': rep.cpuUsage >= 80
+                      }"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="table-progress-wrapper">
+                    <span>{{ rep.memoryUsage }}%</span>
+                    <div class="progress-bar-container">
+                      <div class="progress-bar-fill" [style.width.%]="rep.memoryUsage" [ngClass]="{
+                        'bg-green': rep.memoryUsage < 60,
+                        'bg-orange': rep.memoryUsage >= 60 && rep.memoryUsage < 80,
+                        'bg-red': rep.memoryUsage >= 80
+                      }"></div>
+                    </div>
+                  </div>
+                </td>
+                <td><strong>{{ rep.responseTime }} ms</strong></td>
+                <td>
+                  <span class="health-badge" [ngClass]="rep.status.toLowerCase()">
+                    {{ rep.status === 'OPTIMAL' ? 'Optimal' : (rep.status === 'DEGRADED' ? 'Degraded' : 'Critical') }}
+                  </span>
+                </td>
+                <td><strong>{{ rep.activeConnections | number }}</strong> connections</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB PANEL 3: Operator Audit Logs -->
+      <div class="tab-content" *ngIf="activeTab === 'logs'">
+        <div class="table-responsive">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Audit ID</th>
+                <th>Operator Username</th>
+                <th>Action Administered</th>
+                <th>Target Element</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let log of auditLogsList" class="ticket-row">
+                <td><strong class="text-blue">#LOG-{{ log.id }}</strong></td>
+                <td>
+                  <div class="submitter-profile">
+                    <div class="profile-avatar" style="background: rgba(16, 185, 129, 0.08); color: #10b981;">
+                      {{ log.operatorName[0] }}
+                    </div>
+                    <div class="profile-details">
+                      <span class="name"><strong>{{ log.operatorName }}</strong></span>
+                    </div>
+                  </div>
+                </td>
+                <td><strong>{{ log.action }}</strong></td>
+                <td><span class="category-tag" style="background: rgba(37, 99, 235, 0.06); color: #2563eb; font-weight: 700;">{{ log.target }}</span></td>
+                <td class="date-cell">{{ log.timestamp }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= AUDIT SETTINGS MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showSettingsModal" (click)="closeSettings()">
+  <div class="glass-panel modal-card settings-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Audit Preferences</span>
+        <h3>Audit Configuration Parameters</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeSettings()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="saveSettings()">
+      <div class="modal-body">
+        
+        <!-- Default Page Size -->
+        <div class="form-group">
+          <label for="pageSize">Default Audit Page Layout</label>
+          <div class="select-wrapper">
+            <select id="pageSize" name="pageSize" [(ngModel)]="settingsModel.pageSize">
+              <option value="A4">A4 Standard Format</option>
+              <option value="Letter">US Letter Format</option>
+              <option value="Legal">US Legal Format</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Layout Theme -->
+        <div class="form-group">
+          <label for="chartTheme">Auditing Visual Theme</label>
+          <div class="select-wrapper">
+            <select id="chartTheme" name="chartTheme" [(ngModel)]="settingsModel.chartTheme">
+              <option value="Neon Teal">Neon Teal High Tech Theme</option>
+              <option value="Glassmorphic Blue">Glassmorphic Blue Theme</option>
+              <option value="Classic Slate">Classic Charcoal Theme</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Alert Level Threshold -->
+        <div class="form-group">
+          <label for="threshold">SLA Compliance Alert Threshold (%)</label>
+          <input 
+            type="number" 
+            id="threshold" 
+            name="threshold" 
+            [(ngModel)]="settingsModel.threshold" 
+            min="50" 
+            max="100"
+          />
+        </div>
+
+        <!-- Include Task Notes Toggle -->
+        <div class="form-group checkbox-form-group">
+          <label class="checkbox-item">
+            <input type="checkbox" name="includeNotes" [(ngModel)]="settingsModel.includeNotes">
+            <span class="checkbox-custom"></span>
+            <span class="checkbox-label">Include full cryptographic tracing hashes in logs</span>
+          </label>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeSettings()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= COMPILATION LOADING PROGRESS MODAL ================= -->
+<div class="modal-backdrop" *ngIf="isCompiling">
+  <div class="glass-panel modal-card compile-loading-modal animate-scale-in">
+    <div class="modal-body compile-body">
+      
+      <!-- High tech glowing loop -->
+      <div class="glow-spinner-wrapper">
+        <svg class="glow-spinner" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#f1f5f9" stroke-width="4"></circle>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#2563eb" stroke-width="5"
+                  stroke-dasharray="264" stroke-dashoffset="132" stroke-linecap="round"></circle>
+        </svg>
+        <div class="glow-percent">{{ compilingProgress }}%</div>
+      </div>
+
+      <div class="compile-text-block">
+        <h3>Running System Audit Scan</h3>
+        <p class="compile-step-tag">{{ compilingStep }}</p>
+      </div>
+
+      <!-- Linear progress bar -->
+      <div class="linear-progress-wrapper">
+        <div class="linear-progress-fill" [style.width.%]="compilingProgress"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= REPORT PREVIEW & EXPORT MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showPreviewModal" (click)="closePreviewModal()">
+  <div class="glass-panel modal-card report-preview-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Audit Control Complete</span>
+        <h3>Compiled Executive Preview</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closePreviewModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      
+      <!-- Preview Visual mock header -->
+      <div class="preview-layout-visual">
+        <div class="mock-sheet">
+          <div class="mock-sheet-header">
+            <span class="bullet-tag">Operations Audit Summary</span>
+            <div class="mock-sheet-title">{{ generatedPreview?.name }}</div>
+          </div>
+          <div class="mock-sheet-body">
+            <div class="mock-row-line bold-line"></div>
+            <div class="mock-row-line"></div>
+            <div class="mock-row-line"></div>
+            
+            <!-- visual grid representation inside preview -->
+            <div class="mock-visual-columns">
+              <div class="mock-column-block">
+                <div class="block-bar bg-blue" style="height: 48px"></div>
+                <div class="block-bar bg-green" style="height: 32px"></div>
+              </div>
+              <div class="mock-column-block">
+                <div class="block-circle"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compilation Parameters Details -->
+      <div class="preview-metadata-list">
+        <div class="preview-meta-row">
+          <span class="meta-label">Audit Category</span>
+          <span class="meta-value"><strong>{{ generatedPreview?.type }}</strong></span>
+        </div>
+        <div class="preview-meta-row">
+          <span class="meta-label">Output Format / Page Count</span>
+          <span class="meta-value text-blue"><strong>{{ generatedPreview?.format }} / {{ settingsModel.pageSize }} Layout</strong></span>
+        </div>
+        <div class="preview-meta-row">
+          <span class="meta-label">Document Size</span>
+          <span class="meta-value"><strong>{{ generatedPreview?.fileSize }}</strong></span>
+        </div>
+        <div class="preview-meta-row">
+          <span class="meta-label">Operations Scopes Audited</span>
+          <span class="meta-value"><strong>{{ generatedPreview?.scopesCount }} subsystems</strong></span>
+        </div>
+        <div class="preview-meta-row">
+          <span class="meta-label">API Telemetries calculated</span>
+          <span class="meta-value"><strong>{{ generatedPreview?.metricsAnalyzed }} trace points scanned</strong></span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closePreviewModal()">Discard</button>
+      <button type="button" class="btn btn-primary" (click)="saveGeneratedReport()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="footer-btn-icon" style="width: 14px; height: 14px; margin-right: 6px;">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        <span>Archive & Download</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= FLOATING NOTIFICATION TOAST ================= -->
+<div class="toast-overlay" *ngIf="showToast">
+  <div class="toast-card">
+    <div class="toast-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

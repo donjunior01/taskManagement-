@@ -8,7 +8,7 @@ import com.example.gpiApp.repository.TaskRepository;
 import com.example.gpiApp.repository.TeamRepository;
 import com.example.gpiApp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Lazy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ProjectService {
     
@@ -33,7 +34,7 @@ public class ProjectService {
                           TaskRepository taskRepository,
                           TeamRepository teamRepository,
                           ActivityLogService activityLogService,
-                          @Lazy CalendarService calendarService) {
+                          CalendarService calendarService) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.taskRepository = taskRepository;
@@ -97,8 +98,7 @@ public class ProjectService {
         try {
             calendarService.createProjectCalendarEvents(savedProject, createdById);
         } catch (Exception e) {
-            // Log but don't fail the project creation
-            System.err.println("Failed to create calendar events: " + e.getMessage());
+            log.warn("Failed to create calendar events for project {}: {}", savedProject.getId(), e.getMessage());
         }
         
         return ApiResponse.success("Project created successfully", convertToDTO(savedProject));
@@ -114,6 +114,10 @@ public class ProjectService {
                     project.setEndDate(request.getEndDate());
                     if (request.getStatus() != null) {
                         project.setStatus(request.getStatus());
+                    }
+                    
+                    if (request.getProgress() != null) {
+                        project.setProgress(request.getProgress());
                     }
                     
                     if (request.getManagerId() != null) {
@@ -139,7 +143,7 @@ public class ProjectService {
                     try {
                         calendarService.updateProjectCalendarEvents(updatedProject);
                     } catch (Exception e) {
-                        System.err.println("Failed to update calendar events: " + e.getMessage());
+                        log.warn("Failed to update calendar events for project {}: {}", updatedProject.getId(), e.getMessage());
                     }
                     
                     return ApiResponse.success("Project updated successfully", convertToDTO(updatedProject));
@@ -199,6 +203,61 @@ public class ProjectService {
                 projectPage.isFirst(), projectPage.isLast());
     }
     
+    @Transactional(readOnly = true)
+    public ApiResponse<List<UserDTO>> getProjectMembers(Long projectId) {
+        return projectRepository.findById(projectId)
+                .map(project -> {
+                    List<allUsers> members = project.getTeams().stream()
+                            .flatMap(team -> team.getMembers().stream())
+                            .distinct()
+                            .collect(Collectors.toList());
+                    
+                    List<UserDTO> memberDTOs = members.stream()
+                            .map(this::convertUserToDTO)
+                            .collect(Collectors.toList());
+                    return ApiResponse.success("Project members retrieved successfully", memberDTOs);
+                })
+                .orElse(ApiResponse.error("Project not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponse<List<ProjectDTO>> getActiveProjectsForUser(Long userId) {
+        allUsers user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return ApiResponse.error("User not found");
+        }
+        
+        List<Project> projects;
+        if (user.getRole() == allUsers.Role.ADMIN) {
+            projects = projectRepository.findAll().stream()
+                    .filter(p -> p.getStatus() != Project.ProjectStatus.COMPLETED && p.getStatus() != Project.ProjectStatus.CANCELLED)
+                    .collect(Collectors.toList());
+        } else {
+            projects = projectRepository.findActiveProjectsByUserIdAndStatusNotIn(
+                    userId, 
+                    List.of(Project.ProjectStatus.COMPLETED, Project.ProjectStatus.CANCELLED)
+            );
+        }
+        
+        List<ProjectDTO> projectDTOs = projects.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        
+        return ApiResponse.success("Active assigned projects retrieved successfully", projectDTOs);
+    }
+
+    private UserDTO convertUserToDTO(allUsers user) {
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setRole(user.getRole());
+        dto.setFullName(user.getFirstName() + " " + user.getLastName());
+        return dto;
+    }
+
     private ProjectDTO convertToDTO(Project project) {
         return ProjectDTO.builder()
                 .id(project.getId())
@@ -212,7 +271,11 @@ public class ProjectService {
                 .status(project.getStatus())
                 .progress(project.getProgress())
                 .taskCount(project.getTasks() != null ? project.getTasks().size() : 0)
-                .teamCount(project.getTeams() != null ? project.getTeams().size() : 0)
+                .teamCount((int) (project.getTeams() != null ? 
+                        project.getTeams().stream()
+                                .flatMap(t -> t.getMembers().stream())
+                                .distinct()
+                                .count() : 0))
                 .createdAt(project.getCreatedAt())
                 .updatedAt(project.getUpdatedAt())
                 .build();

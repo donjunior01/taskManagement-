@@ -57,5 +57,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     
     @Query("SELECT t FROM Task t WHERE t.createdBy.id = :userId")
     Page<Task> findByCreatedById(@Param("userId") Long userId, Pageable pageable);
+    
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.project.id IN :projectIds")
+    Long countByProjectIds(@Param("projectIds") List<Long> projectIds);
+    
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.project.id IN :projectIds AND t.status = :status")
+    Long countByProjectIdsAndStatus(@Param("projectIds") List<Long> projectIds, @Param("status") Task.TaskStatus status);
 }
 

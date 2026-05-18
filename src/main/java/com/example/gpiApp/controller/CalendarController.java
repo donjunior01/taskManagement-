@@ -5,16 +5,13 @@ import com.example.gpiApp.entity.allUsers;
 import com.example.gpiApp.repository.UserRepository;
 import com.example.gpiApp.service.CalendarService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
@@ -114,7 +111,7 @@ public class CalendarController {
             LocalDateTime endDateTime = parseDateTime(end);
             List<CalendarEventDTO> events = calendarService.fetchEventsFromGoogle(startDateTime, endDateTime);
             return ResponseEntity.ok(ApiResponse.success("Google Calendar events retrieved", events));
-        } catch (IOException e) {
+        } catch (Exception e) {
             return ResponseEntity.ok(ApiResponse.error("Failed to fetch Google Calendar events: " + e.getMessage()));
         }
     }
@@ -160,10 +157,19 @@ public class CalendarController {
     }
 
     private Long getUserIdFromDetails(UserDetails userDetails) {
-        if (userDetails == null) return null;
-        return userRepository.findByEmail(userDetails.getUsername())
-                .map(allUsers::getId)
-                .orElse(null);
+        if (userDetails == null || userDetails.getUsername() == null) return null;
+        String name = userDetails.getUsername();
+        try {
+            return Long.parseLong(name);
+        } catch (NumberFormatException e) {
+            return userRepository.findByEmail(name)
+                    .map(allUsers::getId)
+                    .orElseGet(() -> 
+                        userRepository.findByUsername(name)
+                                .map(allUsers::getId)
+                                .orElse(null)
+                    );
+        }
     }
 }
 

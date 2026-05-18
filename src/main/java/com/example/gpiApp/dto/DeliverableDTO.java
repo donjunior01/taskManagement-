@@ -20,7 +20,6 @@ public class DeliverableDTO {
     private String submittedByName;
     private String fileName;
     private String fileUrl;
-    private Long fileSize;
     private Deliverable.DeliverableStatus status;
     private String comments;
     private Long reviewedById;

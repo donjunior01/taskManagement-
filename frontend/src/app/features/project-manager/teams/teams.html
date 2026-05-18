@@ -1,0 +1,323 @@
+<div class="teams-container animate-fade-in-up">
+  <!-- Governance Greeting Area -->
+  <div class="teams-header">
+    <div class="header-text">
+      <h2>Team Allocations</h2>
+      <p>Supervise developer workloads, analyze execution telemetry, and allocate team members to project workspaces.</p>
+    </div>
+  </div>
+
+  <!-- Telemetry Summaries Grid -->
+  <div class="telemetry-summary-grid">
+    <!-- Stat Item: Total Team Size -->
+    <div class="glass-panel summary-card">
+      <div class="card-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </div>
+      <div class="summary-info">
+        <span class="summary-val">{{ totalDevs }}</span>
+        <span class="summary-lbl">Team Developers</span>
+      </div>
+    </div>
+
+    <!-- Stat Item: Optimal Workloads -->
+    <div class="glass-panel summary-card">
+      <div class="card-icon icon-green">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </div>
+      <div class="summary-info">
+        <span class="summary-val text-green">{{ optimalCount }}</span>
+        <span class="summary-lbl">Optimal Workload</span>
+      </div>
+    </div>
+
+    <!-- Stat Item: Overloaded Developers -->
+    <div class="glass-panel summary-card" [ngClass]="{ warning: overloadedCount > 0 }">
+      <div class="card-icon icon-red">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="summary-info">
+        <span class="summary-val" [ngClass]="{ 'text-danger': overloadedCount > 0 }">{{ overloadedCount }}</span>
+        <span class="summary-lbl">Overloaded Devs</span>
+      </div>
+    </div>
+
+    <!-- Stat Item: Idle Developers -->
+    <div class="glass-panel summary-card">
+      <div class="card-icon icon-blue">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      </div>
+      <div class="summary-info">
+        <span class="summary-val text-blue">{{ idleCount }}</span>
+        <span class="summary-lbl">Idle / Available</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Filters Toolbar -->
+  <div class="glass-panel filter-toolbar">
+    <div class="filters-left">
+      <!-- Search Input -->
+      <div class="search-input-wrapper">
+        <div class="search-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <input 
+          type="text" 
+          placeholder="Search team members by name, email..." 
+          [(ngModel)]="searchTerm" 
+          (ngModelChange)="onFilterChange()"
+        />
+      </div>
+
+      <!-- Project Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="projectFilter" (change)="onFilterChange()">
+          <option value="">All Projects</option>
+          <option *ngFor="let proj of projectsList" [value]="proj.id">{{ proj.name }}</option>
+        </select>
+      </div>
+
+      <!-- Workload Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="workloadFilter" (change)="onFilterChange()">
+          <option value="">All Workloads</option>
+          <option value="IDLE">Idle Developers</option>
+          <option value="OPTIMAL">Optimal Capacity</option>
+          <option value="OVERLOADED">Overloaded Devs</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 10px;">
+      <button class="btn btn-secondary" (click)="openCreateTeamModal()" style="display: flex; align-items: center; gap: 6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="19" y1="8" x2="19" y2="14"/>
+          <line x1="16" y1="11" x2="22" y2="11"/>
+        </svg>
+        <span>Create Team</span>
+      </button>
+      <button class="btn btn-primary" (click)="openAllocationModal()" style="display: flex; align-items: center; gap: 6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="19" y1="8" x2="19" y2="14"/>
+          <line x1="16" y1="11" x2="22" y2="11"/>
+        </svg>
+        <span>Allocate Developer</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="spinner-wrapper" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Decrypting team delivery vitals...</span>
+  </div>
+
+  <!-- Team Directory Cards Grid -->
+  <div class="team-grid" *ngIf="!loading && filteredDevelopers.length > 0">
+    <div class="glass-panel developer-card animate-scale-in" *ngFor="let dev of filteredDevelopers">
+      
+      <!-- Card Top: Name & Avatars -->
+      <div class="card-header-block">
+        <div class="avatar-bubble">
+          {{ getAssigneeInitials(dev.firstName, dev.lastName) }}
+        </div>
+        
+        <div class="developer-info">
+          <h4>{{ dev.firstName }} {{ dev.lastName }}</h4>
+          <span class="email-lbl">{{ dev.email }}</span>
+          <span class="role-badge">DEVELOPER</span>
+        </div>
+      </div>
+
+      <!-- Card Mid: Workload Status Pill -->
+      <div class="workload-section">
+        <span class="label">Workload Status</span>
+        <span class="workload-pill" [ngClass]="dev.workloadStatus.toLowerCase()">
+          {{ dev.workloadStatus === 'OPTIMAL' ? 'OPTIMAL CAPACITY' : (dev.workloadStatus === 'OVERLOADED' ? 'OVERLOADED (4+ TASKS)' : 'IDLE / AVAILABLE') }}
+        </span>
+      </div>
+
+      <!-- Card Mid: Project mappings pills -->
+      <div class="projects-section">
+        <span class="label">Active Projects Mapping</span>
+        <div class="project-pills-row" *ngIf="dev.assignedProjects.length > 0">
+          <span class="project-pill" *ngFor="let proj of dev.assignedProjects" title="{{ proj.name }}">{{ proj.name }}</span>
+        </div>
+        <div class="empty-projects-lbl" *ngIf="dev.assignedProjects.length === 0">
+          No active workspace assignments.
+        </div>
+      </div>
+
+      <!-- Card Bottom: Performance Vitals counts -->
+      <div class="vitals-section">
+        <div class="vital-item">
+          <span class="vital-val">{{ dev.activeTasksCount }}</span>
+          <span class="vital-lbl">Active Tasks</span>
+        </div>
+        <div class="vital-item border-left">
+          <span class="vital-val">{{ dev.completedTasksCount }}</span>
+          <span class="vital-lbl">Completed</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Search Empty State -->
+  <div class="glass-panel empty-state" *ngIf="!loading && filteredDevelopers.length === 0">
+    <div class="empty-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+    </div>
+    <h3>No Team Members Found</h3>
+    <p>We couldn't retrieve any active developer profiles matching your search parameters or workload filters.</p>
+  </div>
+</div>
+
+<!-- ================= PM DEVELOPER PROJECT ALLOCATION MODAL OVERLAY ================= -->
+<div class="modal-backdrop" *ngIf="showAllocationModal" (click)="closeAllocationModal()">
+  <div class="glass-panel modal-card allocation-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Team Allocation Gateway</span>
+        <h3>Allocate Developer to Workspace</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeAllocationModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitAllocation()" #allocationFormObj="ngForm">
+      <div class="modal-body">
+        
+        <!-- Developer Selection -->
+        <div class="form-group">
+          <label for="allocDeveloper">Select Team Developer</label>
+          <div class="select-wrapper">
+            <select id="allocDeveloper" name="allocDeveloper" [(ngModel)]="allocationForm.developerId" required>
+              <option *ngFor="let dev of allDevelopers" [value]="dev.id">{{ dev.firstName }} {{ dev.lastName }} ({{ dev.email }})</option>
+            </select>
+          </div>
+          <span class="help-text">Choose the developer to assign to the target workspace project scope.</span>
+        </div>
+
+        <!-- Project Selection -->
+        <div class="form-group">
+          <label for="allocProject">Select Target Project Workspace</label>
+          <div class="select-wrapper">
+            <select id="allocProject" name="allocProject" [(ngModel)]="allocationForm.projectId" required>
+              <option *ngFor="let proj of projectsList" [value]="proj.id">{{ proj.name }}</option>
+            </select>
+          </div>
+          <span class="help-text">Select which project the developer should be mapped to under your lead management.</span>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAllocationModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submittingAllocation || !allocationFormObj.form.valid">
+          <svg *ngIf="submittingAllocation" class="spinner" viewBox="0 0 24 24">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submittingAllocation ? 'Allocating Dev...' : 'Map to Workspace' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= CREATE TEAM MODAL ================= -->
+<div class="modal-backdrop" *ngIf="showCreateTeamModal" (click)="closeCreateTeamModal()">
+  <div class="glass-panel modal-card allocation-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Team Manager</span>
+        <h3>Create New Team</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeCreateTeamModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <form (ngSubmit)="submitCreateTeam()">
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="teamName">Team Name *</label>
+          <input type="text" id="teamName" name="teamName" [(ngModel)]="teamForm.name" placeholder="e.g. Backend Core Squad" required />
+        </div>
+        <div class="form-group">
+          <label for="teamProject">Project Workspace *</label>
+          <div class="select-wrapper">
+            <select id="teamProject" name="teamProject" [(ngModel)]="teamForm.projectId" required>
+              <option *ngFor="let proj of projectsList" [value]="proj.id">{{ proj.name }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="teamDesc">Description</label>
+          <textarea id="teamDesc" name="teamDesc" rows="3" [(ngModel)]="teamForm.description" placeholder="Team purpose and scope..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeCreateTeamModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submittingTeam || !teamForm.name || !teamForm.projectId">
+          <svg *ngIf="submittingTeam" class="spinner" viewBox="0 0 24 24" style="width: 14px; height: 14px; margin-right: 6px;">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submittingTeam ? 'Creating...' : 'Create Team' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= FLOATING NOTIFICATION TOAST ================= -->
+<div class="toast-overlay" *ngIf="showToast" [ngClass]="toastType">
+  <div class="toast-card">
+    <div class="toast-icon">
+      <!-- Success Icon -->
+      <svg *ngIf="toastType === 'success'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <!-- Error Icon -->
+      <svg *ngIf="toastType === 'error'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

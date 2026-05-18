@@ -1,0 +1,298 @@
+<div class="time-logs-container animate-fade-in-up">
+  <!-- Governance Greeting Area -->
+  <div class="logs-greeting-header">
+    <div class="greeting-text">
+      <h2>Time Sheets &amp; Deadlines</h2>
+      <p>Analyze development hours logged, coordinate delivery timelines, and visualize monthly milestone deadlines.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn btn-secondary" (click)="exportCsv()" style="display: flex; align-items: center; gap: 6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Export CSV</span>
+      </button>
+      <button class="btn btn-primary" (click)="openLogModal()" style="display: flex; align-items: center; gap: 6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        <span>Log Time</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State Spinner -->
+  <div class="spinner-wrapper" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Decrypting workspace calendars...</span>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <!-- Telemetry Summaries Grid -->
+    <div class="telemetry-summary-grid">
+      <!-- Total Hours logged this week -->
+      <div class="glass-panel summary-card">
+        <div class="card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div class="summary-info">
+          <span class="summary-val">{{ totalHoursThisWeek }} hrs</span>
+          <span class="summary-lbl">Logged This Week</span>
+        </div>
+      </div>
+
+      <!-- Active tasks worked -->
+      <div class="glass-panel summary-card">
+        <div class="card-icon icon-blue">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <div class="summary-info">
+          <span class="summary-val text-blue">{{ activeTasksWorked }} tasks</span>
+          <span class="summary-lbl">Active Tracked Tasks</span>
+        </div>
+      </div>
+
+      <!-- Average daily hours -->
+      <div class="glass-panel summary-card">
+        <div class="card-icon icon-green">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+        </div>
+        <div class="summary-info">
+          <span class="summary-val text-green">{{ averageHoursPerDay }} hrs</span>
+          <span class="summary-lbl">Daily Log Average</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Workspace Layout Columns -->
+    <div class="logs-columns">
+      
+      <!-- LEFT COLUMN: Time Logs Sheets -->
+      <div class="logs-left-col">
+        <div class="glass-panel panel-section animate-scale-in">
+          <div class="section-header">
+            <h3>Weekly Time Sheet Logs</h3>
+            <span class="lbl-count">{{ timeLogsList.length }} entries</span>
+          </div>
+
+          <div class="empty-state" *ngIf="timeLogsList.length === 0">
+            <p>No development hours logged recently in your workspace.</p>
+          </div>
+
+          <div class="logs-stream" *ngIf="timeLogsList.length > 0">
+            <div class="log-item-card" *ngFor="let log of timeLogsList">
+              <div class="card-icon-clock">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+
+              <div class="log-body">
+                <div class="log-meta">
+                  <h4>{{ log.taskName }}</h4>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="hours-badge">{{ log.hours }} hrs</span>
+                    <button type="button" (click)="deleteLog(log.id)" title="Delete log" style="background: none; border: none; cursor: pointer; padding: 2px; color: var(--text-muted); display: inline-flex; align-items: center;">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 13px; height: 13px; color: var(--danger);">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <span class="project-lbl">Workspace: {{ log.projectName }}</span>
+                <p class="log-notes">{{ log.notes }}</p>
+                <span class="date-stamp">{{ log.date }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Interactive Monthly Calendar -->
+      <div class="logs-right-col">
+        
+        <!-- Calendar Widget -->
+        <div class="glass-panel panel-section calendar-section animate-scale-in">
+          <div class="calendar-header">
+            <button class="btn-cal-nav" (click)="prevMonth()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <h3 class="month-lbl">{{ getMonthYearLabel() }}</h3>
+            <button class="btn-cal-nav" (click)="nextMonth()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Weekday Initials -->
+          <div class="calendar-weekdays">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+
+          <!-- Month Days Grid -->
+          <div class="calendar-days-grid">
+            <div 
+              class="day-cell" 
+              *ngFor="let day of calendarDays" 
+              [ngClass]="{ 
+                today: day.isToday, 
+                inactive: !day.isCurrentMonth, 
+                selected: selectedDay?.date?.toDateString() === day.date.toDateString() 
+              }"
+              (click)="selectDay(day)"
+            >
+              <div class="day-number">{{ day.dayOfMonth }}</div>
+              
+              <!-- Indicator Hours Logged Badge -->
+              <span class="hours-logged-indicator" *ngIf="day.hoursLogged > 0">
+                +{{ day.hoursLogged }}h
+              </span>
+
+              <!-- Indicator Deadline dot pins -->
+              <div class="indicator-pins" *ngIf="day.deadlines.length > 0">
+                <span 
+                  *ngFor="let task of day.deadlines" 
+                  class="pin-dot" 
+                  [ngClass]="task.priority?.toLowerCase() || 'medium'"
+                  title="Deadline: {{ task.name }}"
+                ></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Day Deadline Drawer Details -->
+        <div class="glass-panel panel-section selected-day-drawer animate-scale-in" *ngIf="selectedDay">
+          <div class="drawer-header">
+            <h4>Schedules: {{ selectedDay.date.toDateString() }}</h4>
+            <span class="day-vitals-badge" *ngIf="selectedDay.hoursLogged > 0">{{ selectedDay.hoursLogged }} hrs logged</span>
+          </div>
+
+          <div class="drawer-body">
+            
+            <!-- Deadline tasks -->
+            <div class="deadline-detail-block" *ngIf="selectedDay.deadlines.length > 0">
+              <span class="drawer-lbl">Milestone Deadlines</span>
+              <div class="deadline-tasks-list">
+                <div class="deadline-card" *ngFor="let task of selectedDay.deadlines">
+                  <div class="meta-row">
+                    <span class="priority-badge" [ngClass]="task.priority?.toLowerCase() || 'medium'">{{ task.priority }}</span>
+                    <span class="status-lbl">{{ task.status }}</span>
+                  </div>
+                  <h5>{{ task.name }}</h5>
+                  <span class="project-tag">Scope: {{ task.projectName }}</span>
+                  
+                  <div class="card-progress">
+                    <div class="lbl">Progress</div>
+                    <div class="bar-bg">
+                      <div class="bar-fill" [style.width.%]="task.progress || 0"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty schedules -->
+            <div class="drawer-empty" *ngIf="selectedDay.deadlines.length === 0">
+              <div class="empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+              </div>
+              <p>No milestone deadlines set on this date.</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </ng-container>
+</div>
+
+<!-- ================= LOG TIME ENTRY MODAL ================= -->
+<div class="modal-backdrop" *ngIf="showLogModal" (click)="closeLogModal()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()" style="max-width: 480px;">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">Time Tracking</span>
+        <h3>Log Development Hours</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeLogModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <form (ngSubmit)="submitLog()">
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+        <div class="form-group">
+          <label for="logTask">Task</label>
+          <div class="select-wrapper">
+            <select id="logTask" name="logTask" [(ngModel)]="logForm.taskId">
+              <option [value]="0">-- General / Other --</option>
+              <option *ngFor="let t of myTasks" [value]="t.id">{{ t.name }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="logHours">Hours Worked *</label>
+            <input type="number" id="logHours" name="logHours" [(ngModel)]="logForm.hours" min="0.5" max="24" step="0.5" required />
+          </div>
+          <div class="form-group">
+            <label for="logDate">Date *</label>
+            <input type="date" id="logDate" name="logDate" [(ngModel)]="logForm.date" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="logDesc">Notes / Description</label>
+          <textarea id="logDesc" name="logDesc" rows="3" [(ngModel)]="logForm.description" placeholder="Brief description of work completed..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeLogModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submittingLog || !logForm.hours || !logForm.date">
+          <svg *ngIf="submittingLog" class="spinner" viewBox="0 0 24 24" style="width: 14px; height: 14px; margin-right: 6px;">
+            <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+          </svg>
+          <span>{{ submittingLog ? 'Logging...' : 'Submit Log' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= FLOATING TOAST ================= -->
+<div class="toast-overlay" *ngIf="showToast">
+  <div class="toast-card">
+    <div class="toast-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <span class="toast-msg">{{ toastMessage }}</span>
+  </div>
+</div>

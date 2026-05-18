@@ -13,4 +13,5 @@ public interface UserService {
     UserResponseDTO deleteUser(Long id);
     UserListResponseDTO filterUsers(String role, String status, int page, int size, String sortBy, String sortDir);
     void changePassword(String email, String currentPassword, String newPassword);
+    UserResponseDTO toggleUserStatus(Long id);
 } 

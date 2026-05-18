@@ -1,0 +1,451 @@
+<!-- Dynamic Floating Toast Alert System -->
+<div class="toast-alert success animate-scale-in" *ngIf="showToast && toastType === 'success'">
+  <div class="toast-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+  </div>
+  <span class="toast-text">{{ toastMessage }}</span>
+</div>
+
+<div class="toast-alert error animate-scale-in" *ngIf="showToast && toastType === 'error'">
+  <div class="toast-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="15" y1="9" x2="9" y2="15"></line>
+      <line x1="9" y1="9" x2="15" y2="15"></line>
+    </svg>
+  </div>
+  <span class="toast-text">{{ toastMessage }}</span>
+</div>
+
+<div class="tasks-container animate-fade-in-up">
+  <!-- Governance Greeting Area -->
+  <div class="tasks-header">
+    <div class="header-text">
+      <h2>Task Governance</h2>
+      <p>Audit system task portfolios, modify ownership pathways, prioritize blocks, and manage delivery dates.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="openAddModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Create Task
+      </button>
+    </div>
+  </div>
+
+  <!-- Advanced Multiline Filters Toolbar -->
+  <div class="glass-panel filter-toolbar">
+    <div class="search-input-wrapper">
+      <div class="search-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <input 
+        type="text" 
+        placeholder="Search tasks by name, project, assignee..." 
+        [(ngModel)]="searchTerm" 
+        (ngModelChange)="onFilterChange()"
+      />
+    </div>
+
+    <div class="filter-controls">
+      <!-- Project Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="projectFilter" (change)="onFilterChange()">
+          <option value="">All Projects</option>
+          <option *ngFor="let proj of projectList" [value]="proj.id">
+            {{ proj.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Priority Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
+          <option value="">All Priorities</option>
+          <option value="CRITICAL">Critical</option>
+          <option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="LOW">Low</option>
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
+          <option value="">All Statuses</option>
+          <option value="PLANNED">Planned</option>
+          <option value="IN_PROGRESS">In Progress</option>
+          <option value="ON_HOLD">On Hold</option>
+          <option value="COMPLETED">Completed</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Core Grid Layout -->
+  <div class="glass-panel tasks-table-panel">
+    <div class="loading-overlay" *ngIf="loading">
+      <div class="spinner"></div>
+      <span>Querying global task inventory...</span>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && filteredTasks.length === 0">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+      </div>
+      <h3>No Tasks Mapped</h3>
+      <p>No workspace tasks match your active queries, project scopes, or priorities.</p>
+    </div>
+
+    <div class="table-scroll-container" *ngIf="!loading && filteredTasks.length > 0">
+      <table class="tasks-table">
+        <thead>
+          <tr>
+            <th class="clickable" (click)="onSortChange('id')">
+              ID
+              <span class="sort-icon" *ngIf="sortBy === 'id'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th class="clickable" (click)="onSortChange('name')">
+              Task Deliverable / Workspace
+              <span class="sort-icon" *ngIf="sortBy === 'name'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th>Assignee</th>
+            <th class="clickable" (click)="onSortChange('priority')">
+              Priority
+              <span class="sort-icon" *ngIf="sortBy === 'priority'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th>Vitals Progress</th>
+            <th>Deadline</th>
+            <th class="actions-col">Governance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let task of filteredTasks">
+            <td>#{{ task.id }}</td>
+            <td>
+              <div class="task-details-cell">
+                <span class="task-name">{{ task.name }}</span>
+                <span class="project-tag">{{ task.projectName }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="assignee-cell">
+                <div class="assignee-avatar" *ngIf="task.assignedToName">
+                  {{ task.assignedToName[0] }}
+                </div>
+                <div class="assignee-info">
+                  <span class="assignee-name">{{ task.assignedToName || 'Unassigned' }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="priority-badge" [ngClass]="task.priority?.toLowerCase() || 'medium'">
+                {{ task.priority }}
+              </span>
+            </td>
+            <td>
+              <div class="progress-cell">
+                <div class="progress-bar-wrapper">
+                  <div class="progress-fill" [style.width.%]="task.progress || 0"></div>
+                </div>
+                <div class="progress-details">
+                  <span class="percentage">{{ task.progress || 0 }}%</span>
+                  <span class="status-indicator" [ngClass]="task.status?.toLowerCase() || 'planned'">
+                    {{ task.status === 'IN_PROGRESS' ? 'In Progress' : (task.status === 'COMPLETED' ? 'Completed' : (task.status === 'ON_HOLD' ? 'On Hold' : 'Planned')) }}
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="deadline-date">{{ task.deadline || 'N/A' }}</span>
+            </td>
+            <td class="actions-col">
+              <div class="action-buttons">
+                <button class="action-btn edit-btn" (click)="openEditModal(task)" title="Override Configurations">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path>
+                  </svg>
+                </button>
+                <button class="action-btn delete-btn" (click)="openDeleteModal(task)" title="Destroy Task Scope">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="table-footer" *ngIf="!loading && filteredTasks.length > 0">
+      <div class="entries-info">
+        Showing 1 to {{ filteredTasks.length }} of {{ totalElements }} entries
+      </div>
+      <div class="pagination-controls">
+        <button class="pag-btn" (click)="prevPage()" [disabled]="currentPage === 0">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <div class="page-numbers">
+          <button 
+            class="pag-btn num-btn" 
+            *ngFor="let page of [].constructor(totalPages); let idx = index" 
+            [ngClass]="{ active: idx === currentPage }"
+            (click)="goToPage(idx)"
+          >
+            {{ idx + 1 }}
+          </button>
+        </div>
+        <button class="pag-btn" (click)="nextPage()" [disabled]="currentPage === totalPages - 1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL WINDOW OVERLAYS ================= -->
+
+<!-- 1. Create Task Modal -->
+<div class="modal-backdrop" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Create Task Scope</h3>
+      <button class="modal-close-btn" (click)="closeAddModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form class="modal-form" (submit)="submitAddTask(); $event.preventDefault()">
+      <div class="form-group">
+        <label>Task Title</label>
+        <input type="text" placeholder="e.g. Implement HSL Glassmorphic Hover Classes" [(ngModel)]="addForm.name" name="name" required />
+      </div>
+
+      <div class="form-group">
+        <label>Deliverable Specifications</label>
+        <textarea rows="3" placeholder="Explain tasks goals, target benchmarks, and resolution rules..." [(ngModel)]="addForm.description" name="description"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Target Workspace Project</label>
+          <select [(ngModel)]="addForm.projectId" name="projectId" required>
+            <option [value]="undefined" disabled>-- Select Project --</option>
+            <option *ngFor="let proj of projectList" [value]="proj.id">
+              {{ proj.name }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Designated Assignee</label>
+          <select [(ngModel)]="addForm.assignedToId" name="assignedToId" required>
+            <option [value]="undefined" disabled>-- Select Assignee --</option>
+            <option *ngFor="let user of assigneeList" [value]="user.id">
+              {{ user.firstName }} {{ user.lastName }} (@{{ user.username }})
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Priority Rank</label>
+          <select [(ngModel)]="addForm.priority" name="priority" required>
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+            <option value="CRITICAL">Critical</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Difficulty Complexity</label>
+          <select [(ngModel)]="addForm.difficulty" name="difficulty" required>
+            <option value="EASY">Easy</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HARD">Hard</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Target Deadline</label>
+          <input type="date" [(ngModel)]="addForm.deadline" name="deadline" required />
+        </div>
+        <div class="form-group">
+          <label>Delivery Status</label>
+          <select [(ngModel)]="addForm.status" name="status" required>
+            <option value="PLANNED">Planned</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="ON_HOLD">On Hold</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting">
+          <span *ngIf="!submitting">Launch Task</span>
+          <div class="spinner" *ngIf="submitting"></div>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 2. Edit Task Modal -->
+<div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Override Task configurations</h3>
+      <button class="modal-close-btn" (click)="closeEditModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form class="modal-form" (submit)="submitEditTask(); $event.preventDefault()">
+      <div class="form-group">
+        <label>Task Title</label>
+        <input type="text" [(ngModel)]="editForm.name" name="name" required />
+      </div>
+
+      <div class="form-group">
+        <label>Deliverable Specifications</label>
+        <textarea rows="3" [(ngModel)]="editForm.description" name="description"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Target Workspace Project</label>
+          <select [(ngModel)]="editForm.projectId" name="projectId" required>
+            <option [value]="undefined" disabled>-- Select Project --</option>
+            <option *ngFor="let proj of projectList" [value]="proj.id">
+              {{ proj.name }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Designated Assignee</label>
+          <select [(ngModel)]="editForm.assignedToId" name="assignedToId" required>
+            <option [value]="undefined" disabled>-- Select Assignee --</option>
+            <option *ngFor="let user of assigneeList" [value]="user.id">
+              {{ user.firstName }} {{ user.lastName }} (@{{ user.username }})
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Priority Rank</label>
+          <select [(ngModel)]="editForm.priority" name="priority" required>
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+            <option value="CRITICAL">Critical</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Difficulty Complexity</label>
+          <select [(ngModel)]="editForm.difficulty" name="difficulty" required>
+            <option value="EASY">Easy</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HARD">Hard</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Target Deadline</label>
+          <input type="date" [(ngModel)]="editForm.deadline" name="deadline" required />
+        </div>
+        <div class="form-group">
+          <label>Delivery Status</label>
+          <select [(ngModel)]="editForm.status" name="status" required>
+            <option value="PLANNED">Planned</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="ON_HOLD">On Hold</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Progress Control ({{ editForm.progress }}%)</label>
+        <input type="range" min="0" max="100" step="5" [(ngModel)]="editForm.progress" name="progress" />
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting">
+          <span *ngIf="!submitting">Apply Overrides</span>
+          <div class="spinner" *ngIf="submitting"></div>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 3. Permanent Destroy Warning Modal -->
+<div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="glass-panel modal-card animate-scale-in" style="max-width: 440px; border-color: rgba(239, 68, 68, 0.2);" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 style="color: var(--danger);">Destroy Task</h3>
+      <button class="modal-close-btn" (click)="closeDeleteModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-form">
+      <p style="font-size:14px; color: var(--text-secondary); line-height: 1.5; font-weight: 500;">
+        Are you absolutely sure you want to **PERMANENTLY DESTROY** the task scope for
+        **"{{ selectedTask?.name }}"**?
+        <span style="display:block; margin-top:12px; font-size:13px; color: var(--danger); font-weight: 700; background: rgba(239,68,68,0.06); padding: 10px; border-radius: 6px; border: 1px solid rgba(239,68,68,0.15)">
+          WARNING: This action is irreversible. It will wipe all logs, comments, and task files, and will alter the overall project progress calculation.
+        </span>
+      </p>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" style="background: var(--danger); border-color: var(--danger); box-shadow: 0 4px 14px rgba(239,68,68,0.25);" (click)="submitDeleteTask()" [disabled]="submitting">
+          <span *ngIf="!submitting">Destroy Task</span>
+          <div class="spinner" *ngIf="submitting"></div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

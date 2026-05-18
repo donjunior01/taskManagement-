@@ -5,9 +5,11 @@ import com.example.gpiApp.entity.ActivityLog;
 import com.example.gpiApp.entity.Project;
 import com.example.gpiApp.entity.Task;
 import com.example.gpiApp.entity.allUsers;
+import com.example.gpiApp.exception.BusinessException;
+import com.example.gpiApp.exception.ResourceNotFoundException;
 import com.example.gpiApp.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Lazy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -18,6 +20,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class TaskService {
     
@@ -35,7 +38,7 @@ public class TaskService {
                        CommentRepository commentRepository,
                        TimeLogRepository timeLogRepository,
                        ActivityLogService activityLogService,
-                       @Lazy CalendarService calendarService) {
+                       CalendarService calendarService) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
@@ -93,6 +96,11 @@ public class TaskService {
         
         Task savedTask = taskRepository.save(task);
         
+        // Auto-update project progress
+        if (savedTask.getProject() != null) {
+            updateProjectProgressAutomatically(savedTask.getProject());
+        }
+        
         // Log activity
         userRepository.findById(createdById).ifPresent(user -> 
             activityLogService.logActivity(
@@ -109,7 +117,7 @@ public class TaskService {
         try {
             calendarService.createTaskCalendarEvent(savedTask, createdById);
         } catch (Exception e) {
-            System.err.println("Failed to create calendar event for task: " + e.getMessage());
+            log.warn("Failed to create calendar event for task {}: {}", savedTask.getId(), e.getMessage());
         }
         
         return ApiResponse.success("Task created successfully", convertToDTO(savedTask));
@@ -119,6 +127,8 @@ public class TaskService {
     public ApiResponse<TaskDTO> updateTask(Long id, TaskRequestDTO request, Long updatedById) {
         return taskRepository.findById(id)
                 .map(task -> {
+                    Project oldProject = task.getProject();
+                    
                     task.setName(request.getName());
                     task.setDescription(request.getDescription());
                     if (request.getPriority() != null) task.setPriority(request.getPriority());
@@ -140,6 +150,14 @@ public class TaskService {
                     
                     Task updatedTask = taskRepository.save(task);
                     
+                    // Auto-update project progress
+                    if (oldProject != null && (updatedTask.getProject() == null || !oldProject.getId().equals(updatedTask.getProject().getId()))) {
+                        updateProjectProgressAutomatically(oldProject);
+                    }
+                    if (updatedTask.getProject() != null) {
+                        updateProjectProgressAutomatically(updatedTask.getProject());
+                    }
+                    
                     // Log activity
                     userRepository.findById(updatedById).ifPresent(user -> 
                         activityLogService.logActivity(
@@ -156,7 +174,7 @@ public class TaskService {
                     try {
                         calendarService.updateTaskCalendarEvent(updatedTask);
                     } catch (Exception e) {
-                        System.err.println("Failed to update calendar event for task: " + e.getMessage());
+                        log.warn("Failed to update calendar event for task {}: {}", updatedTask.getId(), e.getMessage());
                     }
                     
                     return ApiResponse.success("Task updated successfully", convertToDTO(updatedTask));
@@ -168,8 +186,14 @@ public class TaskService {
     public ApiResponse<Void> deleteTask(Long id, Long deletedById) {
         return taskRepository.findById(id)
                 .map(task -> {
+                    Project project = task.getProject();
                     String taskName = task.getName();
                     taskRepository.delete(task);
+                    
+                    // Auto-update project progress
+                    if (project != null) {
+                        updateProjectProgressAutomatically(project);
+                    }
                     
                     // Log activity
                     userRepository.findById(deletedById).ifPresent(user -> 
@@ -271,9 +295,30 @@ public class TaskService {
                         );
                     }
                     Task updatedTask = taskRepository.save(task);
+                    
+                    // Auto-update project progress
+                    if (updatedTask.getProject() != null) {
+                        updateProjectProgressAutomatically(updatedTask.getProject());
+                    }
+                    
                     return ApiResponse.success("Task progress updated successfully", convertToDTO(updatedTask));
                 })
                 .orElse(ApiResponse.error("Task not found"));
+    }
+    
+    private void updateProjectProgressAutomatically(Project project) {
+        if (project == null) return;
+        List<Task> tasks = taskRepository.findByProject(project);
+        if (tasks == null || tasks.isEmpty()) {
+            project.setProgress(0);
+        } else {
+            long completedCount = tasks.stream()
+                .filter(t -> t.getStatus() == Task.TaskStatus.COMPLETED)
+                .count();
+            int newProgress = (int) ((completedCount * 100) / tasks.size());
+            project.setProgress(newProgress);
+        }
+        projectRepository.save(project);
     }
     
     private TaskDTO convertToDTO(Task task) {

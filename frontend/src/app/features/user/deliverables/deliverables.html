@@ -1,0 +1,295 @@
+<div class="user-deliverables-container animate-fade-in-up">
+  <!-- Governance Greeting Area -->
+  <div class="deliverables-header">
+    <div class="header-text">
+      <h2>My Scope Deliverables</h2>
+      <p>Submit project tasks milestones and review the status of your uploaded deliverables submissions.</p>
+    </div>
+  </div>
+
+  <!-- Deliverables Stats Cards -->
+  <div class="stats-overview-grid">
+    <!-- Total Deliverables -->
+    <div class="glass-panel stats-card">
+      <div class="stats-icon-wrapper" style="background: rgba(99, 102, 241, 0.08); color: #6366f1;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+      </div>
+      <div class="stats-info">
+        <h3>{{ stats.total }}</h3>
+        <p>Assigned Scope Tasks</p>
+      </div>
+    </div>
+
+    <!-- Approved Deliverables -->
+    <div class="glass-panel stats-card">
+      <div class="stats-icon-wrapper" style="background: rgba(16, 185, 129, 0.08); color: #10b981;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <div class="stats-info">
+        <h3>{{ stats.approved }}</h3>
+        <p>Approved Submissions</p>
+      </div>
+    </div>
+
+    <!-- Pending Review -->
+    <div class="glass-panel stats-card">
+      <div class="stats-icon-wrapper" style="background: rgba(245, 158, 11, 0.08); color: #f59e0b;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+      <div class="stats-info">
+        <h3>{{ stats.pending }}</h3>
+        <p>Pending Manager Review</p>
+      </div>
+    </div>
+
+    <!-- Rejected / Revisions -->
+    <div class="glass-panel stats-card">
+      <div class="stats-icon-wrapper" style="background: rgba(239, 68, 68, 0.08); color: #ef4444;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+      </div>
+      <div class="stats-info">
+        <h3>{{ stats.rejected }}</h3>
+        <p>Revisions Required</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Toolbar Filters -->
+  <div class="glass-panel filter-toolbar">
+    <div class="search-input-wrapper">
+      <div class="search-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <input 
+        type="text" 
+        placeholder="Search deliverables by name..." 
+        [(ngModel)]="searchTerm"
+      />
+    </div>
+
+    <div class="filter-controls">
+      <!-- Project Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="selectedProjectFilter">
+          <option value="">All Project Scopes</option>
+          <option *ngFor="let proj of projectsList" [value]="proj.name">{{ proj.name }}</option>
+        </select>
+      </div>
+
+      <!-- Submission Status Filter -->
+      <div class="select-wrapper">
+        <select [(ngModel)]="selectedStatusFilter">
+          <option value="">All Review Statuses</option>
+          <option value="UNSUBMITTED">Unsubmitted</option>
+          <option value="PENDING">Pending Review</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+          <option value="REVISION">Needs Revision</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="spinner-wrapper" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Decrypting active deliverables metrics...</span>
+  </div>
+
+  <!-- Deliverables Grid List -->
+  <div class="deliverables-grid" *ngIf="!loading && getFilteredTasks().length > 0">
+    <div class="glass-panel deliverable-card animate-scale-in" *ngFor="let task of getFilteredTasks()">
+      <!-- Card Top Header -->
+      <div class="card-header-meta">
+        <span class="project-title">{{ task.projectName }}</span>
+        <span class="priority-dot" [ngClass]="task.priority?.toLowerCase() || 'medium'" [title]="'Priority: ' + task.priority"></span>
+      </div>
+
+      <!-- Deliverable Info -->
+      <div class="deliverable-body">
+        <h4>{{ task.name }}</h4>
+        <div class="task-progress-gauge">
+          <div class="progress-info">
+            <span>Work Completion</span>
+            <span>{{ task.progress || 0 }}%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-filled" [style.width.%]="task.progress || 0"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submission Status & Actions -->
+      <div class="deliverable-footer">
+        <!-- Submission Status Indicator -->
+        <div class="submission-status-wrapper">
+          <ng-container [ngSwitch]="getTaskSubmission(task.id)?.status">
+            <!-- Approved -->
+            <div *ngSwitchCase="'APPROVED'" class="status-indicator approved">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Approved</span>
+            </div>
+            
+            <!-- Pending -->
+            <div *ngSwitchCase="'PENDING'" class="status-indicator pending">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Pending Review</span>
+            </div>
+
+            <!-- Rejected / Revision -->
+            <div *ngSwitchCase="'REJECTED'" class="status-indicator rejected">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+              <span>Rejected</span>
+            </div>
+
+            <div *ngSwitchCase="'REVISION'" class="status-indicator revision">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+              </svg>
+              <span>Revision Required</span>
+            </div>
+
+            <!-- Unsubmitted -->
+            <div *ngSwitchDefault class="status-indicator unsubmitted">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>Unsubmitted</span>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Action Button -->
+        <div class="action-btn-wrapper">
+          <a *ngIf="getTaskSubmission(task.id) as sub" [href]="sub.fileUrl" target="_blank" class="btn-sub-view" title="View Submission File / Pull Request Link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            <span>View Link</span>
+          </a>
+
+          <button *ngIf="!getTaskSubmission(task.id) || getTaskSubmission(task.id)?.status === 'REJECTED' || getTaskSubmission(task.id)?.status === 'REVISION'" 
+                  class="btn-sub-action" 
+                  (click)="openSubmitModal(task)" 
+                  title="Submit task deliverable link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>{{ getTaskSubmission(task.id) ? 'Re-Submit' : 'Submit' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty Search Results -->
+  <div class="glass-panel empty-state animate-scale-in" *ngIf="!loading && getFilteredTasks().length === 0">
+    <div class="empty-icon-wrapper">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="9" y1="15" x2="15" y2="15"></line>
+      </svg>
+    </div>
+    <h3>No Deliverables Found</h3>
+    <p>We couldn't find any deliverables matching your search query or selected criteria filters.</p>
+  </div>
+
+  <!-- Upload/Submit Modal -->
+  <div class="modal-backdrop" *ngIf="showSubmitModal">
+    <div class="glass-panel modal-card animate-scale-in">
+      <div class="modal-header">
+        <h3>Submit Project Deliverable</h3>
+        <button class="btn-close" (click)="closeSubmitModal()">&times;</button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedTask">
+        <div class="task-context-box">
+          <h5>Task Scope</h5>
+          <h4>{{ selectedTask.name }}</h4>
+          <p>Project: <strong>{{ selectedTask.projectName }}</strong></p>
+        </div>
+
+        <form (ngSubmit)="submitDeliverableForm()" #submitForm="ngForm" class="submission-form">
+          <div class="form-group">
+            <label for="fileName">Submission Name / Title</label>
+            <input 
+              type="text" 
+              id="fileName" 
+              name="fileName" 
+              [(ngModel)]="submissionForm.fileName" 
+              required
+              placeholder="e.g. cloud_vpc_routing_table_config.tf"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="fileUrl">Pull Request Link or Source Code URL</label>
+            <input 
+              type="url" 
+              id="fileUrl" 
+              name="fileUrl" 
+              [(ngModel)]="submissionForm.fileUrl" 
+              required
+              placeholder="e.g. https://github.com/corp/repository/pull/12"
+            />
+            <span class="input-helper">Please specify the exact git pull request or cloud folder directory URL.</span>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeSubmitModal()">Cancel</button>
+            <button type="submit" class="btn-submit" [disabled]="submitting || !submitForm.valid">
+              <span *ngIf="!submitting">Submit Milestone</span>
+              <span *ngIf="submitting" class="spinner-inline"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Feedback -->
+  <div class="toast-notification" *ngIf="showToast" [ngClass]="toastType">
+    <div class="toast-icon">
+      <svg *ngIf="toastType === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <svg *ngIf="toastType === 'error'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    </div>
+    <span class="toast-message">{{ toastMessage }}</span>
+  </div>
+</div>

@@ -17,6 +17,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -25,11 +29,24 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
-    private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+    private final com.example.gpiApp.config.security.JwtRequestFilter jwtRequestFilter;
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
@@ -74,35 +91,13 @@ public class SecurityConfig {
                 .requestMatchers("/uploads/**").authenticated()
                 .requestMatchers("/api/support-tickets/my").authenticated()
                 .requestMatchers("/api/support-tickets/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PROJECT_MANAGER")
-                // Dashboard pages
-                .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/project-manager/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PROJECT_MANAGER")
-                .requestMatchers("/user/**").authenticated()
                 .anyRequest().authenticated()
             )
-            .formLogin(form -> form
-                .loginPage("/api/auth/login")
-                .loginProcessingUrl("/api/auth/login")
-                .usernameParameter("email")
-                .passwordParameter("password")
-                .successHandler(customAuthenticationSuccessHandler)
-                .failureUrl("/api/auth/login?error=true")
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/api/auth/logout")
-                .logoutSuccessUrl("/api/auth/login")
-                .invalidateHttpSession(true)
-                .clearAuthentication(true)
-                .deleteCookies("JSESSIONID")
-            )
             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
-                .invalidSessionUrl("/api/auth/login")
-                .maximumSessions(1)
-                .expiredUrl("/api/auth/login")
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-            .authenticationProvider(authenticationProvider());
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(jwtRequestFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
