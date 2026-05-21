@@ -6,6 +6,7 @@ import { TaskService, Task, TaskRequest } from '../../../core/services/task.serv
 import { DeliverableService, Deliverable } from '../../../core/services/deliverable.service';
 import { UserService, User } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-pm-deliverables',
@@ -51,18 +52,14 @@ export class PmDeliverablesComponent implements OnInit {
     reminderType: 'EMAIL'
   };
 
-  // Toast Alerts
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-
   constructor(
     private projectService: ProjectService,
     private taskService: TaskService,
     private deliverableService: DeliverableService,
     private userService: UserService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -374,13 +371,7 @@ export class PmDeliverablesComponent implements OnInit {
   }
 
   triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
-    this.toastMessage = message;
-    this.toastType = type;
-    this.showToast = true;
-    setTimeout(() => {
-      this.showToast = false;
-      this.cdr.detectChanges();
-    }, 4000);
+    this.toast.show(message, type);
   }
 
   // Fallback seeders for offline resilience

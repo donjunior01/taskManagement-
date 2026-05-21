@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { DashboardService, AdminDashboardStats } from '../../../core/services/dashboard.service';
 import { UserService, User, UserRequest } from '../../../core/services/user.service';
 import { ProjectService, Project, ProjectRequest } from '../../../core/services/project.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -62,11 +63,6 @@ export class AdminDashboardComponent implements OnInit {
     };
   }
 
-  // Toast Alert System
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-
   // Add User Form State (Synchronized with UserRequest DTO)
   userForm: UserRequest = {
     username: '',
@@ -94,7 +90,8 @@ export class AdminDashboardComponent implements OnInit {
     private userService: UserService,
     private projectService: ProjectService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private toast: ToastService
   ) {}
 
   navigateToProjects(): void {
@@ -160,18 +157,14 @@ export class AdminDashboardComponent implements OnInit {
         try {
           const users = response && response.data ? response.data : [];
           this.projectManagers = users.filter((u: any) => u.role === 'PROJECT_MANAGER' || u.userType === 'PROJECT_MANAGER');
-          if (this.projectManagers.length === 0) {
-            this.seedMockProjectManagers();
-          }
         } catch (e) {
-          console.error('Error filtering project managers:', e);
-          this.seedMockProjectManagers();
+          this.projectManagers = [];
         } finally {
           this.cdr.detectChanges();
         }
       },
       error: () => {
-        this.seedMockProjectManagers();
+        this.projectManagers = [];
         this.cdr.detectChanges();
       }
     });
@@ -190,18 +183,14 @@ export class AdminDashboardComponent implements OnInit {
       next: (response: any) => {
         try {
           this.recentProjects = response && response.data ? response.data : [];
-          if (this.recentProjects.length === 0) {
-            this.seedMockProjects();
-          }
         } catch (e) {
-          console.error('Error parsing recent projects:', e);
-          this.seedMockProjects();
+          this.recentProjects = [];
         } finally {
           this.cdr.detectChanges();
         }
       },
       error: () => {
-        this.seedMockProjects();
+        this.recentProjects = [];
         this.cdr.detectChanges();
       }
     });
@@ -323,13 +312,7 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
-    this.toastMessage = message;
-    this.toastType = type;
-    this.showToast = true;
-    
-    setTimeout(() => {
-      this.showToast = false;
-    }, 4000);
+    this.toast.show(message, type);
   }
 }
 

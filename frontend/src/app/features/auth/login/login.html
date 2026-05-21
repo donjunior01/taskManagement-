@@ -1,3 +1,36 @@
+<!-- Account Suspended Modal -->
+@if (showSuspendedModal) {
+  <div class="suspended-overlay" (click)="showSuspendedModal = false">
+    <div class="suspended-modal animate-modal-in" (click)="$event.stopPropagation()">
+      <div class="suspended-modal-header">
+        <div class="suspended-icon-ring">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+          </svg>
+        </div>
+      </div>
+      <div class="suspended-modal-body">
+        <h3>Account Suspended</h3>
+        <p class="suspended-lead">Your access to <strong>ApexTask</strong> has been suspended by an administrator.</p>
+        <div class="suspended-info-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>If you believe this is an error, please reach out to your system administrator to have your account reviewed and reactivated.</span>
+        </div>
+      </div>
+      <div class="suspended-modal-footer">
+        <button class="suspended-close-btn" (click)="showSuspendedModal = false">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
 <div class="login-container">
   <div class="background-decor">
     <div class="circle circle-1"></div>

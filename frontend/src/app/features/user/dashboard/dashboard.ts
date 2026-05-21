@@ -69,47 +69,29 @@ export class UserDashboardComponent implements OnInit {
     this.loading = true;
     
     if (!this.currentUser || !this.currentUser.id) {
-      console.error('UserDashboardComponent: No user or user ID found! Seeding mock data.');
-      this.seedMockData();
       this.loading = false;
       return;
     }
 
-    console.log('UserDashboardComponent: Calling getTasksByUser for ID:', this.currentUser.id);
     this.taskService.getTasksByUser(this.currentUser.id, 0, 100).subscribe({
       next: (response: any) => {
-        console.log('UserDashboardComponent: getTasksByUser next callback. Response:', response);
         try {
           this.tasksList = response && response.data ? response.data : [];
-          console.log('UserDashboardComponent: Assigned tasksList. Length:', this.tasksList.length);
-          if (this.tasksList.length === 0) {
-            console.log('UserDashboardComponent: tasksList is empty, seeding mock data.');
-            this.seedMockData();
-          } else {
-            console.log('UserDashboardComponent: tasksList is not empty, calculating stats.');
+          if (this.tasksList.length > 0) {
             this.calculateStats();
             this.loadProjectsFromTasks();
           }
         } catch (e) {
-          console.error('UserDashboardComponent: Error processing dashboard data, seeding mock fallback:', e);
-          this.seedMockData();
+          this.tasksList = [];
         } finally {
           this.loading = false;
           this.cdr.detectChanges();
-          console.log('UserDashboardComponent: loading set to false inside next finally.');
         }
       },
-      error: (err: any) => {
-        console.warn('UserDashboardComponent: API getTasksByUser offline/error, enacting developer mock seed:', err);
-        try {
-          this.seedMockData();
-        } catch (e) {
-          console.error('UserDashboardComponent: Error in mock fallback seed:', e);
-        } finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-          console.log('UserDashboardComponent: loading set to false inside error finally.');
-        }
+      error: () => {
+        this.tasksList = [];
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }

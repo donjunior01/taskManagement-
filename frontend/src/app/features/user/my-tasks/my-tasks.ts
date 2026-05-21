@@ -8,6 +8,7 @@ import { DeliverableService } from '../../../core/services/deliverable.service';
 import { CommentService, Comment } from '../../../core/services/comment.service';
 import { FileService } from '../../../core/services/file.service';
 import { MessageService, Message } from '../../../core/services/message.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface DeveloperTaskDetail extends Task {
   expanded?: boolean;
@@ -63,11 +64,6 @@ export class UserMyTasksComponent implements OnInit {
   // Add Comment input state
   activeCommentText: { [taskId: number]: string } = {};
 
-  // Toast Alerts
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-
   constructor(
     private taskService: TaskService,
     private authService: AuthService,
@@ -76,7 +72,8 @@ export class UserMyTasksComponent implements OnInit {
     private fileService: FileService,
     private messageService: MessageService,
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -425,13 +422,7 @@ export class UserMyTasksComponent implements OnInit {
   }
 
   private triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
-    this.toastMessage = message;
-    this.toastType = type;
-    this.showToast = true;
-
-    setTimeout(() => {
-      this.showToast = false;
-    }, 4500);
+    this.toast.show(message, type);
   }
 
   // Detailed Seeding for individual tasks

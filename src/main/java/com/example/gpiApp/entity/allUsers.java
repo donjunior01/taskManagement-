@@ -76,7 +76,7 @@ public class allUsers implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return isActive;
     }
 
     @Override
@@ -86,7 +86,7 @@ public class allUsers implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return isActive;
     }
 
     public enum Role {

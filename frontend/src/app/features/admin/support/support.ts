@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { SupportTicketService, SupportTicket } from '../../../core/services/support-ticket.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface AdminTicket {
   id: number;
@@ -109,14 +110,11 @@ export class AdminSupportComponent implements OnInit {
   nextStatus: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' = 'IN_PROGRESS';
   submittingReply: boolean = false;
 
-  // Floating notifications
-  showToast: boolean = false;
-  toastMessage: string = '';
-
   constructor(
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
-    private ticketService: SupportTicketService
+    private ticketService: SupportTicketService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -297,12 +295,7 @@ export class AdminSupportComponent implements OnInit {
   }
 
   private triggerToast(msg: string): void {
-    this.toastMessage = msg;
-    this.showToast = true;
-    setTimeout(() => {
-      this.showToast = false;
-      this.cdr.detectChanges();
-    }, 3000);
+    this.toast.show(msg, 'success');
   }
 
   private seedMockTickets(): void {

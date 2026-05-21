@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { SupportTicketService } from '../../core/services/support-ticket.service';
+import { ToastService } from '../../core/services/toast.service';
 
 export interface FAQItem {
   id: number;
@@ -92,14 +93,11 @@ export class SupportComponent implements OnInit {
   showTicketModal: boolean = false;
   submittingTicket: boolean = false;
 
-  // Notification Toast state
-  showToast: boolean = false;
-  toastMessage: string = '';
-
   constructor(
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
-    private ticketService: SupportTicketService
+    private ticketService: SupportTicketService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -202,9 +200,7 @@ export class SupportComponent implements OnInit {
     this.submittingTicket = false;
     this.showTicketModal = false;
     this.resetTicketForm();
-    this.showToast = true;
-    this.toastMessage = `Support Ticket ${ticketId} created successfully!`;
-    setTimeout(() => { this.showToast = false; this.cdr.detectChanges(); }, 2500);
+    this.toast.show(`Support Ticket ${ticketId} created successfully!`, 'success');
     this.cdr.detectChanges();
   }
 }

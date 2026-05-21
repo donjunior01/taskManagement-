@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReportService } from '../../../core/services/report.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface SavedAdminReport {
   id: number;
@@ -107,10 +108,6 @@ export class AdminReportsComponent implements OnInit {
     date: string;
   } | null = null;
 
-  // Toast
-  showToast: boolean = false;
-  toastMessage: string = '';
-
   // Audit types that map to real backend endpoints
   private readonly REAL_PDF_TYPES = [
     'Users Directory (PDF)',
@@ -132,7 +129,8 @@ export class AdminReportsComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
-    private reportService: ReportService
+    private reportService: ReportService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -340,12 +338,6 @@ export class AdminReportsComponent implements OnInit {
   }
 
   private triggerToast(msg: string): void {
-    this.toastMessage = msg;
-    this.showToast = true;
-    this.cdr.detectChanges();
-    setTimeout(() => {
-      this.showToast = false;
-      this.cdr.detectChanges();
-    }, 2800);
+    this.toast.show(msg, 'success');
   }
 }

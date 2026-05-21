@@ -8,6 +8,7 @@ import { TaskService, Task } from '../../../core/services/task.service';
 import { ActivityLogService, ActivityLog } from '../../../core/services/activity-log.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReportService } from '../../../core/services/report.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface DeliverableSubmission {
   id: number;
@@ -76,11 +77,6 @@ export class PmDashboardComponent implements OnInit {
   pmFeedback: string = '';
   submittingReview: boolean = false;
 
-  // Toast Alerts
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-
   constructor(
     private dashboardService: DashboardService,
     private projectService: ProjectService,
@@ -88,7 +84,8 @@ export class PmDashboardComponent implements OnInit {
     private activityLogService: ActivityLogService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
-    private reportService: ReportService
+    private reportService: ReportService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -106,15 +103,10 @@ export class PmDashboardComponent implements OnInit {
     // 1. Load stats
     this.dashboardService.getManagerStats().subscribe({
       next: (data: any) => {
-        try {
-          this.stats = data && data.data ? data.data : (data || {});
-        } catch (e) {
-          this.seedMockStats();
-        }
+        this.stats = data && data.data ? data.data : (data || this.stats);
         this.loadProjects();
       },
       error: () => {
-        this.seedMockStats();
         this.loadProjects();
       }
     });
@@ -123,17 +115,11 @@ export class PmDashboardComponent implements OnInit {
   loadProjects(): void {
     this.projectService.getProjectsByManager(this.managerId, 0, 10).subscribe({
       next: (response: any) => {
-        try {
-          this.projectsList = response && response.data ? response.data : [];
-          if (this.projectsList.length === 0) this.seedMockProjects();
-        } catch (e) {
-          this.seedMockProjects();
-        } finally {
-          this.loadUpcomingDeadlines();
-        }
+        this.projectsList = response && response.data ? response.data : [];
+        this.loadUpcomingDeadlines();
       },
       error: () => {
-        this.seedMockProjects();
+        this.projectsList = [];
         this.loadUpcomingDeadlines();
       }
     });
@@ -150,83 +136,28 @@ export class PmDashboardComponent implements OnInit {
               const today = new Date();
               const tomorrow = new Date(today);
               tomorrow.setDate(tomorrow.getDate() + 1);
-
               let dueDate = 'No Date';
               let dueDateClass = 'future';
-
               if (deadline) {
-                if (deadline.toDateString() === today.toDateString()) {
-                  dueDate = 'Today';
-                  dueDateClass = 'today';
-                } else if (deadline.toDateString() === tomorrow.toDateString()) {
-                  dueDate = 'Tomorrow';
-                  dueDateClass = 'tomorrow';
-                } else if (deadline < today) {
-                  dueDate = 'Overdue';
-                  dueDateClass = 'today';
-                } else {
-                  dueDate = deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                  dueDateClass = 'future';
-                }
+                if (deadline.toDateString() === today.toDateString()) { dueDate = 'Today'; dueDateClass = 'today'; }
+                else if (deadline.toDateString() === tomorrow.toDateString()) { dueDate = 'Tomorrow'; dueDateClass = 'tomorrow'; }
+                else if (deadline < today) { dueDate = 'Overdue'; dueDateClass = 'today'; }
+                else { dueDate = deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); dueDateClass = 'future'; }
               }
-
-              return {
-                taskName: task.name,
-                projectName: task.projectName || 'Workspace Project',
-                dueDate,
-                dueDateClass,
-                assigneeName: task.assignedToName
-              };
+              return { taskName: task.name, projectName: task.projectName || 'Workspace Project', dueDate, dueDateClass, assigneeName: task.assignedToName };
             });
           } else {
-            this.seedMockDeadlines();
+            this.upcomingDeadlines = [];
           }
         } catch (e) {
-          this.seedMockDeadlines();
+          this.upcomingDeadlines = [];
         } finally {
           this.loadTeamActivity();
         }
       },
       error: () => {
-        // Also try tasks by status
-        this.taskService.getTasksByStatus('IN_PROGRESS', 0, 6).subscribe({
-          next: (res: any) => {
-            try {
-              const tasks: Task[] = res && res.data ? res.data : [];
-              if (tasks.length > 0) {
-                this.upcomingDeadlines = tasks
-                  .filter(t => t.deadline)
-                  .sort((a, b) => (a.deadline || '') < (b.deadline || '') ? -1 : 1)
-                  .slice(0, 4)
-                  .map(task => {
-                    const deadline = task.deadline ? new Date(task.deadline) : null;
-                    const today = new Date();
-                    const tomorrow = new Date(today);
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    let dueDate = 'No Date';
-                    let dueDateClass = 'future';
-                    if (deadline) {
-                      if (deadline.toDateString() === today.toDateString()) { dueDate = 'Today'; dueDateClass = 'today'; }
-                      else if (deadline.toDateString() === tomorrow.toDateString()) { dueDate = 'Tomorrow'; dueDateClass = 'tomorrow'; }
-                      else if (deadline < today) { dueDate = 'Overdue'; dueDateClass = 'today'; }
-                      else { dueDate = deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); dueDateClass = 'future'; }
-                    }
-                    return { taskName: task.name, projectName: task.projectName || 'Workspace Project', dueDate, dueDateClass, assigneeName: task.assignedToName };
-                  });
-              } else {
-                this.seedMockDeadlines();
-              }
-            } catch (e2) {
-              this.seedMockDeadlines();
-            } finally {
-              this.loadTeamActivity();
-            }
-          },
-          error: () => {
-            this.seedMockDeadlines();
-            this.loadTeamActivity();
-          }
-        });
+        this.upcomingDeadlines = [];
+        this.loadTeamActivity();
       }
     });
   }
@@ -249,16 +180,16 @@ export class PmDashboardComponent implements OnInit {
               activityType: log.action
             }));
           } else {
-            this.seedMockActivities();
+            this.activitiesList = [];
           }
         } catch (e) {
-          this.seedMockActivities();
+          this.activitiesList = [];
         } finally {
           this.loadSubmissions();
         }
       },
       error: () => {
-        this.seedMockActivities();
+        this.activitiesList = [];
         this.loadSubmissions();
       }
     });
@@ -293,14 +224,9 @@ export class PmDashboardComponent implements OnInit {
   }
 
   loadSubmissions(): void {
-    try {
-      this.seedMockSubmissions();
-    } catch (e) {
-      console.error('Error seeding submissions:', e);
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    this.pendingSubmissions = [];
+    this.loading = false;
+    this.cdr.detectChanges();
   }
 
   // Action: Open Review Dialog
@@ -384,10 +310,7 @@ export class PmDashboardComponent implements OnInit {
   }
 
   private triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
-    this.toastMessage = message;
-    this.toastType = type;
-    this.showToast = true;
-    setTimeout(() => { this.showToast = false; }, 4500);
+    this.toast.show(message, type);
   }
 
   // Fallback seed data

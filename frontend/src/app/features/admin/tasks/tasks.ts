@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
 import { ProjectService, Project } from '../../../core/services/project.service';
 import { UserService, User } from '../../../core/services/user.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-admin-tasks',
@@ -70,16 +71,12 @@ export class AdminTasksComponent implements OnInit {
     reminderType: 'NONE'
   };
 
-  // Toast Alerts
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-
   constructor(
     private taskService: TaskService,
     private projectService: ProjectService,
     private userService: UserService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -444,12 +441,6 @@ export class AdminTasksComponent implements OnInit {
   }
 
   private triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
-    this.toastMessage = message;
-    this.toastType = type;
-    this.showToast = true;
-
-    setTimeout(() => {
-      this.showToast = false;
-    }, 4000);
+    this.toast.show(message, type);
   }
 }

@@ -6,6 +6,7 @@ import { TaskService, Task } from '../../../core/services/task.service';
 import { DeliverableService, Deliverable } from '../../../core/services/deliverable.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProjectService, Project } from '../../../core/services/project.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-user-deliverables',
@@ -49,19 +50,14 @@ export class UserDeliverablesComponent implements OnInit {
     rejected: 0
   };
   
-  // Toast Alert setup
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-  private toastTimeout: any = null;
-
   constructor(
     private taskService: TaskService,
     private deliverableService: DeliverableService,
     private authService: AuthService,
     private projectService: ProjectService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -276,17 +272,6 @@ export class UserDeliverablesComponent implements OnInit {
   }
 
   triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
-    if (this.toastTimeout) {
-      clearTimeout(this.toastTimeout);
-    }
-    this.toastMessage = message;
-    this.toastType = type;
-    this.showToast = true;
-    this.cdr.detectChanges();
-
-    this.toastTimeout = setTimeout(() => {
-      this.showToast = false;
-      this.cdr.detectChanges();
-    }, 4000);
+    this.toast.show(message, type);
   }
 }

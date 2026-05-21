@@ -5,6 +5,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { UserService, User } from '../../../core/services/user.service';
 import { MessageService, Message } from '../../../core/services/message.service';
 import { ProjectService } from '../../../core/services/project.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface ChatContact {
   id: number;
@@ -64,18 +65,13 @@ export class UserMessagesComponent implements OnInit {
   voiceSeconds: number = 0;
   voiceInterval: any = null;
 
-  // Notification Toast setup
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-  private toastTimeout: any = null;
-
   constructor(
     private authService: AuthService,
     private userService: UserService,
     private messageService: MessageService,
     private projectService: ProjectService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -350,18 +346,7 @@ export class UserMessagesComponent implements OnInit {
 
   // ================= TOAST FEEDBACK SYSTEM =================
   triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
-    if (this.toastTimeout) {
-      clearTimeout(this.toastTimeout);
-    }
-    this.toastMessage = message;
-    this.toastType = type;
-    this.showToast = true;
-    this.cdr.detectChanges();
-
-    this.toastTimeout = setTimeout(() => {
-      this.showToast = false;
-      this.cdr.detectChanges();
-    }, 4000);
+    this.toast.show(message, type);
   }
 
   // ================= UPLOAD PHOTO, DOCUMENTS & VIDEOS =================

@@ -50,6 +50,11 @@ public class AuthController {
                     .or(() -> userRepository.findByUsername(finalIdentifier))
                     .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("User not found"));
 
+            if (!user.isActive()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("Your account has been suspended. Please contact an administrator."));
+            }
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getEmail(), loginRequest.getPassword())
             );

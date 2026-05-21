@@ -6,6 +6,7 @@ import { ProjectService, Project, ProjectRequest } from '../../../core/services/
 import { TaskService, Task } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService, User } from '../../../core/services/user.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface ProjectDetail extends Project {
   tasks: Task[];
@@ -75,18 +76,14 @@ export class PmProjectsComponent implements OnInit {
     progress: 0
   };
 
-  // Toast Alerts
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-
   constructor(
     private projectService: ProjectService,
     private taskService: TaskService,
     private authService: AuthService,
     private userService: UserService,
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -561,13 +558,7 @@ export class PmProjectsComponent implements OnInit {
   }
 
   private triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
-    this.toastMessage = message;
-    this.toastType = type;
-    this.showToast = true;
-
-    setTimeout(() => {
-      this.showToast = false;
-    }, 4500);
+    this.toast.show(message, type);
   }
 
   // Fallback seeders for offline resilience

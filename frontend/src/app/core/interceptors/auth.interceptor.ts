@@ -12,8 +12,9 @@ import { Router } from '@angular/router';
 export const authInterceptor = (request: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
   const router = inject(Router);
   const token = localStorage.getItem('jwt_token');
-  
-  if (token) {
+  const isAuthEndpoint = request.url.includes('/api/auth/login') || request.url.includes('/api/auth/register');
+
+  if (token && !isAuthEndpoint) {
     request = request.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`
@@ -23,12 +24,14 @@ export const authInterceptor = (request: HttpRequest<unknown>, next: HttpHandler
 
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 || error.status === 403) {
+      if (error.status === 401 || error.status === 403 || error.status === 500) {
         localStorage.removeItem('jwt_token');
         localStorage.removeItem('user_id');
         localStorage.removeItem('user_email');
         localStorage.removeItem('user_roles');
-        router.navigate(['/login']);
+        if (!isAuthEndpoint) {
+          router.navigate(['/login']);
+        }
       }
       return throwError(() => error);
     })

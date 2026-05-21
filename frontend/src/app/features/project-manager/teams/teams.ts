@@ -6,6 +6,7 @@ import { ProjectService, Project } from '../../../core/services/project.service'
 import { TaskService, Task } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TeamService, Team } from '../../../core/services/team.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface DeveloperTeamMember extends User {
   assignedProjects: Project[];
@@ -49,11 +50,6 @@ export class PmTeamsComponent implements OnInit {
     projectId: undefined as number | undefined
   };
 
-  // Toast Alerts
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-
   // Create Team modal
   showCreateTeamModal: boolean = false;
   submittingTeam: boolean = false;
@@ -65,7 +61,8 @@ export class PmTeamsComponent implements OnInit {
     private taskService: TaskService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
-    private teamService: TeamService
+    private teamService: TeamService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -323,13 +320,7 @@ export class PmTeamsComponent implements OnInit {
   }
 
   private triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
-    this.toastMessage = message;
-    this.toastType = type;
-    this.showToast = true;
-
-    setTimeout(() => {
-      this.showToast = false;
-    }, 4500);
+    this.toast.show(message, type);
   }
 
   // Seeding fallbacks

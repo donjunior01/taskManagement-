@@ -29,10 +29,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 allUsers.getEmail(),
                 allUsers.getPassword(),
-                true, // enabled
-                true, // accountNonExpired
-                true, // credentialsNonExpired
-                true, // accountNonLocked
+                allUsers.isActive(),  // enabled — false if suspended
+                true,
+                true,
+                allUsers.isActive(),  // accountNonLocked — false if suspended
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + allUsers.getRole().name()))
         );
     }

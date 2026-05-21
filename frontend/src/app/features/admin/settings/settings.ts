@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminSecurityService, LoginAttempt, SecurityMetrics } from '../../../core/services/admin-security.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-admin-settings',
@@ -42,14 +43,10 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   backingUp: boolean = false;
   clearingCache: boolean = false;
 
-  // Toast Alerts
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-
-
-
-  constructor(private securityService: AdminSecurityService) {}
+  constructor(
+    private securityService: AdminSecurityService,
+    private toast: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.startTelemetrySimulators();
@@ -194,12 +191,6 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   }
 
   private triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
-    this.toastMessage = message;
-    this.toastType = type;
-    this.showToast = true;
-
-    setTimeout(() => {
-      this.showToast = false;
-    }, 4500);
+    this.toast.show(message, type);
   }
 }

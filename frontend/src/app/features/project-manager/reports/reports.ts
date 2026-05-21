@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ProjectService } from '../../../core/services/project.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReportService } from '../../../core/services/report.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface SavedReport {
   id: number;
@@ -109,16 +110,12 @@ export class PmReportsComponent implements OnInit {
     date: string;
   } | null = null;
 
-  // Interactive Toast State
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-
   constructor(
     private projectService: ProjectService,
     private authService: AuthService,
     private reportService: ReportService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -292,9 +289,6 @@ export class PmReportsComponent implements OnInit {
   }
 
   private triggerToast(msg: string, type: 'success' | 'error'): void {
-    this.toastMessage = msg;
-    this.toastType = type;
-    this.showToast = true;
-    setTimeout(() => { this.showToast = false; this.cdr.detectChanges(); }, 3000);
+    this.toast.show(msg, type);
   }
 }

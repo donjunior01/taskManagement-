@@ -1,26 +1,4 @@
 <div class="dashboard-wrapper">
-  <!-- Toast Notification Alert -->
-  @if (showToast) {
-    <div class="toast-alert" [class]="toastType" class="toast-alert animate-fade-in-up">
-      <div class="toast-icon">
-        @if (toastType === 'success') {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-        } @else {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
-        }
-      </div>
-      <div class="toast-content">
-        <span class="toast-text">{{ toastMessage }}</span>
-      </div>
-    </div>
-  }
-
   <!-- Header Greeting Area -->
   <div class="dashboard-header animate-fade-in-up">
     <div class="header-text">

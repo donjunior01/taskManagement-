@@ -19,6 +19,7 @@ export class LoginComponent {
   errorMessage: string = '';
   loading: boolean = false;
   showPassword: boolean = false;
+  showSuspendedModal: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -58,8 +59,14 @@ export class LoginComponent {
       },
       error: (error) => {
         this.loading = false;
-        this.errorMessage = 'Invalid credentials. Please verify your corporate email and try again.';
-        console.error('Login error:', error);
+        // errorInterceptor may transform the error into a plain string
+        const raw = typeof error === 'string' ? error : (error?.error?.message || error?.error?.error || error?.message || '');
+        const isSuspended = error?.status === 403 || raw.toLowerCase().includes('suspended');
+        if (isSuspended) {
+          this.showSuspendedModal = true;
+        } else {
+          this.errorMessage = 'Invalid credentials. Please verify your corporate email and try again.';
+        }
         this.cdr.detectChanges();
       }
     });

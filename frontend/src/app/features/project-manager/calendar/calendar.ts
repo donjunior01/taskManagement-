@@ -5,6 +5,7 @@ import { ProjectService } from '../../../core/services/project.service';
 import { TaskService } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { CalendarService, CalendarEvent as ApiCalendarEvent } from '../../../core/services/calendar.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface CalendarEvent {
   id: number;
@@ -77,17 +78,13 @@ export class PmCalendarComponent implements OnInit {
   dragSourceDay: DaySchedule | null = null;
   dragOverDay: DaySchedule | null = null;
 
-  // Toast
-  showToast: boolean = false;
-  toastMessage: string = '';
-  toastType: 'success' | 'error' = 'success';
-
   constructor(
     private projectService: ProjectService,
     private taskService: TaskService,
     private authService: AuthService,
     private calendarService: CalendarService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -495,10 +492,7 @@ export class PmCalendarComponent implements OnInit {
   }
 
   private triggerToast(msg: string, type: 'success' | 'error'): void {
-    this.toastMessage = msg;
-    this.toastType = type;
-    this.showToast = true;
-    setTimeout(() => { this.showToast = false; this.cdr.detectChanges(); }, 3500);
+    this.toast.show(msg, type);
   }
 
   private seedMockData(): void { this.buildEvents(); }

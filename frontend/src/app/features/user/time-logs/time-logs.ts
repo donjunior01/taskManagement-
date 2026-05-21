@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TaskService, Task } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TimeLogService, TimeLog } from '../../../core/services/time-log.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface CalendarDay {
   date: Date;
@@ -55,15 +56,12 @@ export class UserTimeLogsComponent implements OnInit {
   submittingLog: boolean = false;
   logForm = { taskId: 0, hours: 0, date: '', description: '' };
 
-  // Toast
-  showToast: boolean = false;
-  toastMessage: string = '';
-
   constructor(
     private taskService: TaskService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
-    private timeLogService: TimeLogService
+    private timeLogService: TimeLogService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -254,9 +252,7 @@ export class UserTimeLogsComponent implements OnInit {
   }
 
   private triggerToast(msg: string): void {
-    this.toastMessage = msg;
-    this.showToast = true;
-    setTimeout(() => { this.showToast = false; this.cdr.detectChanges(); }, 3000);
+    this.toast.show(msg, 'success');
   }
 
   private generateTimeLogs(): void {
