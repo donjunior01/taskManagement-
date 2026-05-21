@@ -7,6 +7,7 @@ import { ProjectService, Project } from '../../../core/services/project.service'
 import { TaskService, Task } from '../../../core/services/task.service';
 import { ActivityLogService, ActivityLog } from '../../../core/services/activity-log.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ReportService } from '../../../core/services/report.service';
 
 export interface DeliverableSubmission {
   id: number;
@@ -86,7 +87,8 @@ export class PmDashboardComponent implements OnInit {
     private taskService: TaskService,
     private activityLogService: ActivityLogService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private reportService: ReportService
   ) {}
 
   ngOnInit(): void {
@@ -367,6 +369,18 @@ export class PmDashboardComponent implements OnInit {
     if (type.includes('uploaded') || type.includes('UPLOAD')) return 'upload';
     if (type.includes('commented') || type.includes('COMMENT')) return 'message';
     return 'play';
+  }
+
+  exportReport(): void {
+    this.triggerToast('Generating Project Health report...', 'success');
+    this.reportService.getProjectHealthReportPdf().subscribe({
+      next: (blob) => {
+        ReportService.triggerDownload(blob, 'project_health_report.pdf');
+        this.triggerToast('Project Health report downloaded!', 'success');
+        this.cdr.detectChanges();
+      },
+      error: () => this.triggerToast('Failed to generate report. Please try again.', 'error')
+    });
   }
 
   private triggerToast(message: string, type: 'success' | 'error' = 'success'): void {

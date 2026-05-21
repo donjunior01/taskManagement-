@@ -229,6 +229,49 @@
     </div>
   </div>
 
+  <!-- Task Status Pipeline -->
+  <div class="task-pipeline-grid animate-fade-in-up" style="animation-delay: 0.15s;">
+    <div class="kanban-column column-planned">
+      <div class="column-header">
+        <span class="col-dot"></span>
+        <h4>Planned</h4>
+        <span class="col-count">{{ stats.totalTasks - stats.activeTasks - stats.completedTasks - stats.overdueTasks > 0 ? stats.totalTasks - stats.activeTasks - stats.completedTasks - stats.overdueTasks : 0 }}</span>
+      </div>
+      <span class="col-stat">{{ stats.totalTasks - stats.activeTasks - stats.completedTasks - stats.overdueTasks > 0 ? stats.totalTasks - stats.activeTasks - stats.completedTasks - stats.overdueTasks : 0 }}</span>
+      <span class="col-label">tasks queued for delivery</span>
+    </div>
+
+    <div class="kanban-column column-progress">
+      <div class="column-header">
+        <span class="col-dot"></span>
+        <h4>In Progress</h4>
+        <span class="col-count">{{ stats.activeTasks }}</span>
+      </div>
+      <span class="col-stat">{{ stats.activeTasks }}</span>
+      <span class="col-label">tasks actively in execution</span>
+    </div>
+
+    <div class="kanban-column column-hold">
+      <div class="column-header">
+        <span class="col-dot"></span>
+        <h4>On Hold</h4>
+        <span class="col-count">{{ stats.overdueTasks }}</span>
+      </div>
+      <span class="col-stat">{{ stats.overdueTasks }}</span>
+      <span class="col-label">tasks suspended or overdue</span>
+    </div>
+
+    <div class="kanban-column column-done">
+      <div class="column-header">
+        <span class="col-dot"></span>
+        <h4>Completed</h4>
+        <span class="col-count">{{ stats.completedTasks }}</span>
+      </div>
+      <span class="col-stat">{{ stats.completedTasks }}</span>
+      <span class="col-label">tasks successfully delivered</span>
+    </div>
+  </div>
+
   <!-- Primary Dashboard Section Details -->
   <div class="dashboard-details-grid animate-fade-in-up" style="animation-delay: 0.2s;">
     <!-- Panel 1: Recent Projects -->

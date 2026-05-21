@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './forgot-password.html',
   styleUrls: ['./forgot-password.scss']
 })
@@ -28,6 +28,7 @@ export class ForgotPasswordComponent {
       next: (response) => {
         this.loading = false;
         this.message = 'Password reset link has been sent to your email.';
+        this.router.navigate(['/login']);
       },
       error: (error) => {
         this.loading = false;

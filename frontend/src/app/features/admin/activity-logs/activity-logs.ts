@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivityLogService, ActivityLog } from '../../../core/services/activity-log.service';
@@ -47,9 +47,16 @@ export class AdminActivityLogsComponent implements OnInit {
   selectedLog: AuditLog | null = null;
   showInspectorModal: boolean = false;
 
-  constructor(private activityLogService: ActivityLogService) {}
+  constructor(
+    private activityLogService: ActivityLogService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
+    // Show mock data immediately so the page is never empty on first render
+    this.seedMockLogs();
+    this.applyFilters();
+    // Then replace with real data from the API
     this.loadLogs();
   }
 
@@ -68,31 +75,30 @@ export class AdminActivityLogsComponent implements OnInit {
           logs = response.logs;
         }
 
-        // Map backend ActivityLog to frontend AuditLog format safely
-        this.logsList = logs.map(log => ({
+        // Map backend ActivityLogDTO to frontend AuditLog format
+        this.logsList = logs.map((log: any) => ({
           id: log.id,
           action: log.action || log.activityType || 'SYSTEM_ACTION',
-          performedBy: log.user?.username || (log.user?.firstName ? `${log.user.firstName} ${log.user.lastName}` : 'System'),
-          userRole: log.user?.role || 'SYSTEM',
+          performedBy: log.userName || log.user?.username || (log.user?.firstName ? `${log.user.firstName} ${log.user.lastName}` : 'System'),
+          userRole: log.userRole || log.user?.role || 'SYSTEM',
           details: log.details || log.description || '',
           timestamp: log.timestamp || log.createdAt || '',
           impact: log.impact || 'MEDIUM',
-          category: log.category || 'SYSTEM',
+          category: log.category || log.entityType || 'SYSTEM',
           ipAddress: log.ipAddress || 'N/A',
           metaData: JSON.stringify(log, null, 2)
         }));
         
-        // If the backend returns empty or we want to keep mocks for demo:
         if (this.logsList.length === 0) {
           this.seedMockLogs();
         }
         this.applyFilters();
+        this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('Failed to load activity logs', err);
-        // Fallback to mock data if API fails
+      error: () => {
         this.seedMockLogs();
         this.applyFilters();
+        this.cdr.detectChanges();
       }
     });
   }

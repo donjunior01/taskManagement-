@@ -1,98 +1,79 @@
+/* ── Confirm Dialog ── */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(15,23,42,0.5);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 3000;
+  padding: 24px;
+  animation: fadeIn 0.15s ease;
 
   .modal-content {
-    background: white;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 420px;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
 
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px 20px;
-      border-bottom: 1px solid #eee;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border-light);
 
-      h3 {
-        margin: 0;
-        color: #333;
-        font-size: 18px;
-      }
+      h3 { margin: 0; color: var(--text-primary); font-size: 17px; font-weight: 700; }
 
       .close-button {
         background: none;
         border: none;
-        font-size: 24px;
         cursor: pointer;
-        color: #999;
-        padding: 0;
-        width: 24px;
-        height: 24px;
+        color: var(--text-muted);
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-sm);
         display: flex;
         align-items: center;
         justify-content: center;
-
-        &:hover {
-          color: #333;
-        }
+        font-size: 20px;
+        line-height: 1;
+        transition: all var(--transition-fast);
+        &:hover { background: var(--bg-subtle); color: var(--text-primary); }
       }
     }
 
     .modal-body {
-      padding: 20px;
+      padding: 20px 24px;
 
-      p {
-        margin: 0;
-        color: #666;
-        font-size: 14px;
-      }
+      .confirm-icon-wrapper { display: flex; justify-content: center; margin-bottom: 16px; .icon-circle { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; &.danger { background: var(--danger-bg); color: var(--danger); } &.warning { background: var(--warning-bg); color: var(--warning); } svg { width: 24px; height: 24px; } } }
+
+      p { margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.6; text-align: center; }
     }
 
     .modal-footer {
-      padding: 16px 20px;
-      border-top: 1px solid #eee;
+      padding: 16px 24px 20px;
+      border-top: 1px solid var(--border-light);
       display: flex;
       justify-content: flex-end;
       gap: 10px;
 
       .cancel-btn {
-        padding: 8px 16px;
-        background: #f5f5f5;
-        color: #666;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-
-        &:hover {
-          background: #e0e0e0;
-        }
+        display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; background: #fff; color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); font-family: inherit;
+        &:hover { background: var(--bg-subtle); border-color: #cbd5e1; }
       }
 
       .confirm-btn {
-        padding: 8px 16px;
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-
-        &:hover {
-          background: #5568d3;
-        }
+        display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; background: var(--primary); color: #fff; border: 1px solid var(--primary); border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); box-shadow: 0 2px 8px rgba(37,99,235,0.25); font-family: inherit;
+        &:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        &.danger-confirm { background: var(--danger); border-color: var(--danger); box-shadow: 0 2px 8px rgba(239,68,68,0.25); &:hover { background: #dc2626; } }
       }
     }
   }
 }
+
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }

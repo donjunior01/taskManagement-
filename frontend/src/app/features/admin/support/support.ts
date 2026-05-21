@@ -124,6 +124,9 @@ export class AdminSupportComponent implements OnInit {
     if (user) {
       this.adminName = user.firstName ? `${user.firstName} ${user.lastName}` : 'Administrator';
     }
+    // Pre-populate with inline mock data so the page is never blank on first render
+    this.applyFilters();
+    // Then fetch real data from the API
     this.loadTickets();
   }
 
@@ -142,17 +145,17 @@ export class AdminSupportComponent implements OnInit {
           tickets = response.tickets;
         }
 
-        this.ticketsList = tickets.map(t => ({
+        this.ticketsList = tickets.map((t: any) => ({
           id: t.id!,
-          subject: t.title,
-          category: 'General' as any,
-          submittedBy: `User #${t.userId}`,
-          submittedByEmail: '',
+          subject: t.subject || t.title || 'No Subject',
+          category: t.category || 'General' as any,
+          submittedBy: t.userName || `User #${t.userId}`,
+          submittedByEmail: t.userEmail || '',
           role: 'Employee' as any,
-          priority: 'MEDIUM' as any,
+          priority: (t.priority || 'MEDIUM') as any,
           status: (t.status || 'OPEN') as any,
           date: t.createdAt || '',
-          description: t.description,
+          description: t.description || '',
           replies: []
         }));
 
@@ -162,11 +165,13 @@ export class AdminSupportComponent implements OnInit {
 
         this.loading = false;
         this.applyFilters();
+        this.cdr.detectChanges();
       },
       error: () => {
         this.seedMockTickets();
         this.loading = false;
         this.applyFilters();
+        this.cdr.detectChanges();
       }
     });
 

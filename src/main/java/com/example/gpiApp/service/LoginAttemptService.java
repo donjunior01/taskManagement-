@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -59,10 +60,11 @@ public class LoginAttemptService {
     @Transactional(readOnly = true)
     public Map<String, Object> getSecurityMetrics() {
         Map<String, Object> metrics = new HashMap<>();
-        
-        Long todayAttempts = loginAttemptRepository.countTodayLoginAttempts();
-        Long todayFailed = loginAttemptRepository.countTodayFailedLogins(LoginAttempt.LoginStatus.FAILURE);
-        Long todaySuccessful = loginAttemptRepository.countTodaySuccessfulLogins(LoginAttempt.LoginStatus.SUCCESS);
+
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        Long todayAttempts = loginAttemptRepository.countTodayLoginAttempts(startOfToday);
+        Long todayFailed = loginAttemptRepository.countTodayFailedLogins(LoginAttempt.LoginStatus.FAILURE, startOfToday);
+        Long todaySuccessful = loginAttemptRepository.countTodaySuccessfulLogins(LoginAttempt.LoginStatus.SUCCESS, startOfToday);
         
         // Active sessions: users who logged in successfully in the last 30 minutes
         LocalDateTime thirtyMinutesAgo = LocalDateTime.now().minusMinutes(30);

@@ -1,11 +1,13 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { TaskService, Task } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DeliverableService } from '../../../core/services/deliverable.service';
 import { CommentService, Comment } from '../../../core/services/comment.service';
 import { FileService } from '../../../core/services/file.service';
+import { MessageService, Message } from '../../../core/services/message.service';
 
 export interface DeveloperTaskDetail extends Task {
   expanded?: boolean;
@@ -55,6 +57,9 @@ export class UserMyTasksComponent implements OnInit {
     notes: ''
   };
 
+  // Deep-link from deliverables page
+  deepLinkTaskId: number | null = null;
+
   // Add Comment input state
   activeCommentText: { [taskId: number]: string } = {};
 
@@ -69,6 +74,8 @@ export class UserMyTasksComponent implements OnInit {
     private deliverableService: DeliverableService,
     private commentService: CommentService,
     private fileService: FileService,
+    private messageService: MessageService,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -78,6 +85,10 @@ export class UserMyTasksComponent implements OnInit {
       this.developerId = user.id;
       this.developerName = `${user.firstName} ${user.lastName}`;
     }
+    this.route.queryParams.subscribe(params => {
+      if (params['project']) this.searchTerm = params['project'];
+      this.deepLinkTaskId = params['taskId'] ? Number(params['taskId']) : null;
+    });
     this.loadMyTasks();
   }
 
@@ -101,10 +112,12 @@ export class UserMyTasksComponent implements OnInit {
             this.bootstrapSubDetails();
           }
           this.applyFilters();
+          this.applyDeepLink();
         } catch (e) {
           console.error('Error processing tasks list, seeding mock fallback:', e);
           this.seedMockTasks();
           this.applyFilters();
+          this.applyDeepLink();
         } finally {
           this.loading = false;
           this.cdr.detectChanges();
@@ -115,6 +128,7 @@ export class UserMyTasksComponent implements OnInit {
         try {
           this.seedMockTasks();
           this.applyFilters();
+          this.applyDeepLink();
         } catch (e) {
           console.error('Error in fallback seed:', e);
         } finally {
@@ -132,15 +146,28 @@ export class UserMyTasksComponent implements OnInit {
     });
   }
 
+  private applyDeepLink(): void {
+    if (!this.deepLinkTaskId) return;
+    const target = this.myTasks.find(t => t.id === this.deepLinkTaskId);
+    if (target) {
+      target.expanded = true;
+      setTimeout(() => {
+        const el = document.querySelector(`[data-task-id="${this.deepLinkTaskId}"]`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    }
+  }
+
   applyFilters(): void {
     let result = [...this.myTasks];
 
-    // Filter by search query
+    // Filter by search query (name, description, or project name)
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase().trim();
-      result = result.filter(t => 
-        t.name.toLowerCase().includes(term) || 
-        (t.description && t.description.toLowerCase().includes(term))
+      result = result.filter(t =>
+        t.name.toLowerCase().includes(term) ||
+        (t.description && t.description.toLowerCase().includes(term)) ||
+        (t.projectName && t.projectName.toLowerCase().includes(term))
       );
     }
 
@@ -350,37 +377,49 @@ export class UserMyTasksComponent implements OnInit {
     const text = this.activeCommentText[task.id || 0];
     if (!text || !text.trim()) return;
 
+    const trimmedText = text.trim();
+
     const newComment: Comment = {
-      content: text.trim(),
+      content: trimmedText,
       userId: this.developerId,
       taskId: task.id
     };
 
+    const addLocalComment = (msg: string) => {
+      if (!task.comments) task.comments = [];
+      task.comments.push({
+        sender: this.developerName,
+        message: msg,
+        date: 'Just now',
+        isManager: false
+      });
+      task.commentCount = (task.commentCount || 0) + 1;
+      this.activeCommentText[task.id || 0] = '';
+    };
+
+    // Sync comment as a message to the project group chat
+    const syncToMessageGroup = () => {
+      if (!task.projectId) return;
+      const groupMsg: Message = {
+        senderId: this.developerId,
+        projectId: task.projectId,
+        content: `[Task: ${task.name}] ${trimmedText}`
+      };
+      this.messageService.sendMessage(groupMsg).subscribe({ error: () => {} });
+    };
+
     this.commentService.createComment(newComment).subscribe({
       next: (savedComment) => {
-        if (!task.comments) task.comments = [];
-        task.comments.push({
-          sender: this.developerName,
-          message: savedComment.content,
-          date: 'Just now',
-          isManager: false
-        });
-        task.commentCount = (task.commentCount || 0) + 1;
-        this.activeCommentText[task.id || 0] = '';
-        this.triggerToast('Comment added successfully!', 'success');
+        addLocalComment(savedComment.content);
+        syncToMessageGroup();
+        this.triggerToast('Comment added and synced to project group!', 'success');
+        this.cdr.detectChanges();
       },
       error: () => {
-        // Optimistic UI
-        if (!task.comments) task.comments = [];
-        task.comments.push({
-          sender: this.developerName,
-          message: text.trim(),
-          date: 'Just now',
-          isManager: false
-        });
-        task.commentCount = (task.commentCount || 0) + 1;
-        this.activeCommentText[task.id || 0] = '';
-        this.triggerToast('Comment added optimistically!', 'success');
+        addLocalComment(trimmedText);
+        syncToMessageGroup();
+        this.triggerToast('Comment added!', 'success');
+        this.cdr.detectChanges();
       }
     });
   }

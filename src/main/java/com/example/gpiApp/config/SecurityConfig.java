@@ -34,7 +34,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:7574"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
@@ -90,6 +90,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/files/**").authenticated()
                 .requestMatchers("/uploads/**").authenticated()
                 .requestMatchers("/api/support-tickets/my").authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/support-tickets").authenticated()
                 .requestMatchers("/api/support-tickets/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PROJECT_MANAGER")
                 .anyRequest().authenticated()
             )

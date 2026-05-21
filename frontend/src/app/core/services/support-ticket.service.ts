@@ -4,11 +4,14 @@ import { ApiService } from './api.service';
 
 export interface SupportTicket {
   id?: number;
-  title: string;
+  title?: string;
+  subject?: string;
   description: string;
   status?: string;
+  priority?: string;
   assignedToId?: number;
   userId?: number;
+  userName?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -42,11 +45,11 @@ export class SupportTicketService {
   }
 
   updateTicketStatus(id: number, status: string): Observable<SupportTicket> {
-    return this.apiService.patch<SupportTicket>(`${this.basePath}/${id}/status`, status);
+    return this.apiService.patch<SupportTicket>(`${this.basePath}/${id}/status`, { status });
   }
 
   assignTicket(id: number, assigneeId: number): Observable<SupportTicket> {
-    return this.apiService.patch<SupportTicket>(`${this.basePath}/${id}/assign`, assigneeId);
+    return this.apiService.patch<SupportTicket>(`${this.basePath}/${id}/assign`, { assignedToId: assigneeId });
   }
 
   deleteTicket(id: number): Observable<void> {

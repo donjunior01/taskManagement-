@@ -4,11 +4,14 @@ import { ApiService } from './api.service';
 
 export interface Notification {
   id: number;
+  title?: string;
   message: string;
   type: string;
   isRead: boolean;
   createdAt: string;
   userId: number;
+  referenceId?: number;
+  referenceType?: string;
 }
 
 @Injectable({

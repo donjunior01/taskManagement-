@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { TaskService, Task } from '../../../core/services/task.service';
 import { DeliverableService, Deliverable } from '../../../core/services/deliverable.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -59,6 +60,7 @@ export class UserDeliverablesComponent implements OnInit {
     private deliverableService: DeliverableService,
     private authService: AuthService,
     private projectService: ProjectService,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -88,10 +90,13 @@ export class UserDeliverablesComponent implements OnInit {
       }
     });
     
-    // Fetch all projects for filtering
+    // Fetch all projects for filtering — deferred to avoid NG0100
     this.projectService.getAllProjects(0, 100).subscribe({
       next: (projectRes: any) => {
-        this.projectsList = projectRes && projectRes.data ? projectRes.data : [];
+        Promise.resolve().then(() => {
+          this.projectsList = projectRes && projectRes.data ? projectRes.data : [];
+          this.cdr.detectChanges();
+        });
       },
       error: () => {}
     });
@@ -188,6 +193,14 @@ export class UserDeliverablesComponent implements OnInit {
       const matchStatus = !this.selectedStatusFilter || statusValue === this.selectedStatusFilter;
       
       return matchSearch && matchProject && matchStatus;
+    });
+  }
+
+  viewTaskDetails(task: Task, event: MouseEvent): void {
+    // If the click came from a button inside the card, don't navigate
+    if ((event.target as HTMLElement).closest('button, a')) return;
+    this.router.navigate(['/user/my-tasks'], {
+      queryParams: { project: task.projectName, taskId: task.id }
     });
   }
 

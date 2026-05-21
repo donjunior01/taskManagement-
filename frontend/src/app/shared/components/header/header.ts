@@ -1,10 +1,29 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { NotificationPreferencesService, NotificationPreference } from '../../../core/services/notification-preferences.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { MessageService } from '../../../core/services/message.service';
+
+export interface DisplayNotification {
+  id: number;
+  title: string;
+  message: string;
+  displayType: 'info' | 'success' | 'warning';
+  isRead: boolean;
+  displayTime: string;
+}
+
+export interface DisplayConversation {
+  senderId: number;
+  senderName: string;
+  preview: string;
+  isRead: boolean;
+  displayTime: string;
+}
 
 @Component({
   selector: 'app-header',
@@ -16,15 +35,17 @@ import { NotificationPreferencesService, NotificationPreference } from '../../..
 export class HeaderComponent implements OnInit {
   currentUser: any;
 
+  // Notifications
   showNotifications: boolean = false;
-  unreadCount: number = 5;
-  notifications = [
-    { id: 1, message: 'New deliverable uploaded by David Miller', time: '10 mins ago', read: false, type: 'info' },
-    { id: 2, message: 'Cloud Migration Core milestone completed!', time: '2 hours ago', read: false, type: 'success' },
-    { id: 3, message: 'High CPU usage alert on production server', time: '5 hours ago', read: false, type: 'warning' },
-    { id: 4, message: 'Sarah Kerrigan assigned you to a new task', time: '1 day ago', read: true, type: 'info' }
-  ];
+  unreadCount: number = 0;
+  notificationsList: DisplayNotification[] = [];
 
+  // Messages
+  showMessages: boolean = false;
+  unreadMessagesCount: number = 0;
+  conversationsList: DisplayConversation[] = [];
+
+  // Profile dropdown & modals
   showProfileDropdown: boolean = false;
   showProfileModal: boolean = false;
   showPasswordModal: boolean = false;
@@ -34,7 +55,6 @@ export class HeaderComponent implements OnInit {
   toastMessage: string = '';
   showToast: boolean = false;
 
-  // Forms
   profileForm: any = { firstName: '', lastName: '', email: '' };
   passwordForm: any = { oldPassword: '', newPassword: '', confirmPassword: '' };
   prefsForm: NotificationPreference = {
@@ -47,10 +67,13 @@ export class HeaderComponent implements OnInit {
   };
 
   constructor(
-    private authService: AuthService, 
+    private authService: AuthService,
     private router: Router,
     private userService: UserService,
-    private prefsService: NotificationPreferencesService
+    private prefsService: NotificationPreferencesService,
+    private notificationService: NotificationService,
+    private messageService: MessageService,
+    private cdr: ChangeDetectorRef
   ) {
     this.currentUser = this.authService.getCurrentUser();
   }
@@ -64,56 +87,265 @@ export class HeaderComponent implements OnInit {
       };
       this.loadPreferences();
     }
+    this.seedMockNotifications();
+    this.loadNotifications();
+    if (!this.isAdmin()) {
+      this.seedMockConversations();
+      this.loadConversations();
+    }
   }
 
-  loadPreferences(): void {
-    this.prefsService.getMyPreferences().subscribe({
-      next: (prefs) => {
-        if (prefs) this.prefsForm = prefs;
+  // ─── Close dropdowns on outside click ───
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.notification-wrapper') && this.showNotifications) {
+      this.showNotifications = false;
+      this.cdr.detectChanges();
+    }
+    if (!target.closest('.message-wrapper') && this.showMessages) {
+      this.showMessages = false;
+      this.cdr.detectChanges();
+    }
+    if (!target.closest('.user-profile-wrapper') && this.showProfileDropdown) {
+      this.showProfileDropdown = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // ─── Notifications ───
+  loadNotifications(): void {
+    this.notificationService.getUnreadNotifications().subscribe({
+      next: (response: any) => {
+        const raw: any[] = Array.isArray(response)
+          ? response
+          : (response?.data ?? response?.content ?? response?.notifications ?? []);
+
+        if (raw.length > 0) {
+          this.notificationsList = raw.map(n => this.mapNotification(n));
+          this.unreadCount = this.notificationsList.filter(n => !n.isRead).length;
+          this.cdr.detectChanges();
+        }
       },
-      error: () => console.log('Using default mock preferences')
+      error: () => {} // keep mock data
+    });
+
+    this.notificationService.getUnreadCount().subscribe({
+      next: (count: any) => {
+        const n = typeof count === 'number' ? count : (count?.data ?? count?.count ?? 0);
+        if (n > 0) { this.unreadCount = n; this.cdr.detectChanges(); }
+      },
+      error: () => {}
     });
   }
 
-  getDisplayName(): string {
-    if (this.currentUser && (this.currentUser.username === 'alex' || this.currentUser.email === 'alex@company.com')) {
-      return 'Alex Johnson';
-    }
-    return this.currentUser?.firstName ? `${this.currentUser.firstName} ${this.currentUser.lastName}` : 'Alex Johnson';
+  private mapNotification(n: any): DisplayNotification {
+    const typeMap: Record<string, 'info' | 'success' | 'warning'> = {
+      TASK_COMPLETED: 'success',
+      PROJECT_UPDATE: 'success',
+      DELIVERABLE_DUE: 'warning',
+      SYSTEM: 'warning',
+      REMINDER: 'warning'
+    };
+    return {
+      id: n.id,
+      title: n.title || this.typeToTitle(n.type),
+      message: n.message || n.description || '',
+      displayType: typeMap[n.type] ?? 'info',
+      isRead: n.isRead ?? n.read ?? false,
+      displayTime: this.formatTime(n.createdAt || n.timestamp || '')
+    };
   }
 
-  getDisplayTitle(): string {
-    if (this.currentUser && (this.currentUser.username === 'alex' || this.currentUser.email === 'alex@company.com')) {
-      return 'Frontend Developer';
-    }
-    return this.getDisplayRole();
-  }
-
-  getDisplayRole(): string {
-    if (!this.currentUser || !this.currentUser.role) return 'User Workspace';
-    const role = this.currentUser.role.replace('ROLE_', '');
-    switch (role) {
-      case 'ADMIN': return 'Administrator';
-      case 'PROJECT_MANAGER': return 'Project Manager';
-      case 'USER': return 'Developer Workspace';
-      default: return role;
-    }
-  }
-
-  isAdmin(): boolean {
-    if (!this.currentUser || !this.currentUser.role) return false;
-    const role = this.currentUser.role.replace('ROLE_', '');
-    return role === 'ADMIN';
+  private typeToTitle(type: string): string {
+    const map: Record<string, string> = {
+      TASK_ASSIGNED: 'Task Assigned',
+      TASK_UPDATED: 'Task Updated',
+      TASK_COMPLETED: 'Task Completed',
+      PROJECT_UPDATE: 'Project Update',
+      DELIVERABLE_DUE: 'Deliverable Due',
+      MESSAGE: 'New Message',
+      SYSTEM: 'System Alert',
+      REMINDER: 'Reminder',
+      COMMENT: 'New Comment'
+    };
+    return map[type] ?? 'Notification';
   }
 
   toggleNotifications(): void {
     this.showNotifications = !this.showNotifications;
+    this.showMessages = false;
     this.showProfileDropdown = false;
+  }
+
+  markNotificationRead(notif: DisplayNotification, event: MouseEvent): void {
+    event.stopPropagation();
+    if (notif.isRead) return;
+    notif.isRead = true;
+    this.unreadCount = Math.max(0, this.unreadCount - 1);
+    this.notificationService.markAsRead(notif.id).subscribe({ error: () => {} });
+    this.cdr.detectChanges();
+  }
+
+  markAllAsRead(): void {
+    this.notificationsList.forEach(n => n.isRead = true);
+    this.unreadCount = 0;
+    this.notificationService.markAllAsRead().subscribe({ error: () => {} });
+    this.cdr.detectChanges();
+  }
+
+  private seedMockNotifications(): void {
+    const now = Date.now();
+    this.notificationsList = [
+      { id: 1, title: 'Task Assigned', message: 'Sarah Kerrigan assigned you to "Setup VPC Security Groups"', displayType: 'info', isRead: false, displayTime: '5m ago' },
+      { id: 2, title: 'Milestone Completed', message: 'Cloud Migration Core – Phase 1 milestone marked complete', displayType: 'success', isRead: false, displayTime: '2h ago' },
+      { id: 3, title: 'Deliverable Due', message: '"Website Redesign Q3" report is due in 2 hours', displayType: 'warning', isRead: false, displayTime: '3h ago' },
+      { id: 4, title: 'New Comment', message: 'Alex Mercer commented on "API Gateway timeout" task', displayType: 'info', isRead: true, displayTime: '1d ago' }
+    ];
+    this.unreadCount = this.notificationsList.filter(n => !n.isRead).length;
+  }
+
+  // ─── Messages ───
+  loadConversations(): void {
+    this.messageService.getConversations().subscribe({
+      next: (response: any) => {
+        const raw: any[] = Array.isArray(response)
+          ? response
+          : (response?.data ?? response?.content ?? []);
+
+        if (raw.length > 0) {
+          this.conversationsList = raw.map(m => this.mapConversation(m));
+          this.unreadMessagesCount = this.conversationsList.filter(c => !c.isRead).length;
+          this.cdr.detectChanges();
+        }
+      },
+      error: () => {} // keep mock data
+    });
+
+    this.messageService.getUnreadCount().subscribe({
+      next: (count: any) => {
+        const n = typeof count === 'number' ? count : (count?.data ?? count?.count ?? 0);
+        if (n > 0) { this.unreadMessagesCount = n; this.cdr.detectChanges(); }
+      },
+      error: () => {}
+    });
+  }
+
+  private mapConversation(m: any): DisplayConversation {
+    const senderName = m.senderName
+      ?? (m.sender?.firstName ? `${m.sender.firstName} ${m.sender.lastName}` : 'Unknown');
+    return {
+      senderId: m.senderId ?? m.sender?.id ?? 0,
+      senderName,
+      preview: m.content ?? m.lastMessage ?? '',
+      isRead: m.isRead ?? m.read ?? false,
+      displayTime: this.formatTime(m.createdAt ?? m.sentAt ?? '')
+    };
+  }
+
+  toggleMessages(): void {
+    this.showMessages = !this.showMessages;
+    this.showNotifications = false;
+    this.showProfileDropdown = false;
+  }
+
+  openConversation(conv: DisplayConversation): void {
+    if (!conv.isRead) {
+      conv.isRead = true;
+      this.unreadMessagesCount = Math.max(0, this.unreadMessagesCount - 1);
+      this.messageService.markConversationAsRead(conv.senderId).subscribe({ error: () => {} });
+    }
+    this.showMessages = false;
+    this.goToMessages();
+  }
+
+  markAllMessagesRead(): void {
+    this.conversationsList.forEach(c => c.isRead = true);
+    this.unreadMessagesCount = 0;
+    this.cdr.detectChanges();
+  }
+
+  goToMessages(): void {
+    const role = this.currentUser?.role?.replace('ROLE_', '');
+    this.router.navigate([role === 'PROJECT_MANAGER' ? '/pm/messages' : '/user/messages']);
+  }
+
+  private seedMockConversations(): void {
+    this.conversationsList = [
+      { senderId: 2, senderName: 'Sarah Kerrigan', preview: 'Can you review the VPC firewall task before EOD?', isRead: false, displayTime: '10m ago' },
+      { senderId: 3, senderName: 'Alex Mercer', preview: 'The API tests are failing on staging, need help.', isRead: false, displayTime: '1h ago' },
+      { senderId: 4, senderName: 'David Miller', preview: 'Uploaded the updated architecture diagrams.', isRead: true, displayTime: 'Yesterday' }
+    ];
+    this.unreadMessagesCount = this.conversationsList.filter(c => !c.isRead).length;
+  }
+
+  // ─── Helpers ───
+  formatTime(dateStr: string): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    const diff = Date.now() - date.getTime();
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const days  = Math.floor(hours / 24);
+    if (mins  <  1) return 'Just now';
+    if (mins  < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days  ===1) return 'Yesterday';
+    if (days  <  7) return `${days}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  getInitials(name: string): string {
+    if (!name) return '?';
+    return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  }
+
+  getAvatarColor(name: string): string {
+    const colors = ['#2563eb', '#7c3aed', '#0891b2', '#059669', '#d97706', '#dc2626'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  // ─── Profile ───
+  loadPreferences(): void {
+    this.prefsService.getMyPreferences().subscribe({
+      next: (prefs) => { if (prefs) this.prefsForm = prefs; },
+      error: () => {}
+    });
+  }
+
+  getDisplayName(): string {
+    return this.currentUser?.firstName
+      ? `${this.currentUser.firstName} ${this.currentUser.lastName}`
+      : 'User';
+  }
+
+  getDisplayTitle(): string {
+    return this.getDisplayRole();
+  }
+
+  getDisplayRole(): string {
+    if (!this.currentUser?.role) return 'User Workspace';
+    const role = this.currentUser.role.replace('ROLE_', '');
+    switch (role) {
+      case 'ADMIN':           return 'Administrator';
+      case 'PROJECT_MANAGER': return 'Project Manager';
+      case 'USER':            return 'Developer Workspace';
+      default:                return role;
+    }
+  }
+
+  isAdmin(): boolean {
+    if (!this.currentUser?.role) return false;
+    return this.currentUser.role.replace('ROLE_', '') === 'ADMIN';
   }
 
   toggleProfileDropdown(): void {
     this.showProfileDropdown = !this.showProfileDropdown;
     this.showNotifications = false;
+    this.showMessages = false;
   }
 
   openProfileModal(): void {
@@ -121,7 +353,7 @@ export class HeaderComponent implements OnInit {
     if (this.currentUser) {
       this.userService.getUserProfile(this.currentUser.id).subscribe({
         next: (profile) => this.profileForm = profile,
-        error: () => {} // fallback to existing data
+        error: () => {}
       });
     }
     this.showProfileModal = true;
@@ -132,7 +364,7 @@ export class HeaderComponent implements OnInit {
   saveProfile(): void {
     this.submitting = true;
     this.userService.updateUserProfile(this.currentUser.id, this.profileForm).subscribe({
-      next: (res) => {
+      next: () => {
         this.submitting = false;
         this.showProfileModal = false;
         this.triggerToast('Profile updated successfully.');
@@ -140,7 +372,6 @@ export class HeaderComponent implements OnInit {
         localStorage.setItem('user', JSON.stringify(this.currentUser));
       },
       error: () => {
-        // Optimistic
         this.submitting = false;
         this.showProfileModal = false;
         this.triggerToast('Profile updated locally.');
@@ -173,7 +404,7 @@ export class HeaderComponent implements OnInit {
       error: () => {
         this.submitting = false;
         this.showPasswordModal = false;
-        this.triggerToast('Password changed locally (Optimistic).');
+        this.triggerToast('Password updated locally.');
       }
     });
   }
@@ -188,13 +419,12 @@ export class HeaderComponent implements OnInit {
   savePreferences(): void {
     this.submitting = true;
     this.prefsService.updateMyPreferences(this.prefsForm).subscribe({
-      next: (res) => {
+      next: () => {
         this.submitting = false;
         this.showPrefsModal = false;
         this.triggerToast('Notification preferences saved.');
       },
       error: () => {
-        // Fallback to post if put fails? Or just optimistic
         this.prefsService.createPreferences(this.prefsForm).subscribe({
           next: () => {
             this.submitting = false;
@@ -213,30 +443,19 @@ export class HeaderComponent implements OnInit {
 
   deletePreferences(): void {
     this.prefsService.deleteMyPreferences().subscribe({
-      next: () => {
-        this.showPrefsModal = false;
-        this.triggerToast('Preferences deleted.');
-      },
-      error: () => {
-        this.showPrefsModal = false;
-        this.triggerToast('Preferences deleted locally.');
-      }
+      next: () => { this.showPrefsModal = false; this.triggerToast('Preferences deleted.'); },
+      error: () => { this.showPrefsModal = false; this.triggerToast('Preferences deleted locally.'); }
     });
-  }
-
-  private triggerToast(msg: string): void {
-    this.toastMessage = msg;
-    this.showToast = true;
-    setTimeout(() => this.showToast = false, 3000);
-  }
-
-  markAllAsRead(): void {
-    this.notifications.forEach(n => n.read = true);
-    this.unreadCount = 0;
   }
 
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  private triggerToast(msg: string): void {
+    this.toastMessage = msg;
+    this.showToast = true;
+    setTimeout(() => { this.showToast = false; this.cdr.detectChanges(); }, 3000);
   }
 }

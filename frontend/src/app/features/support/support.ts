@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
+import { SupportTicketService } from '../../core/services/support-ticket.service';
 
 export interface FAQItem {
   id: number;
@@ -97,7 +98,8 @@ export class SupportComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ticketService: SupportTicketService
   ) {}
 
   ngOnInit(): void {
@@ -105,6 +107,33 @@ export class SupportComponent implements OnInit {
     if (user) {
       this.userEmail = user.email;
     }
+    this.loadMyTickets();
+  }
+
+  loadMyTickets(): void {
+    this.ticketService.getMyTickets().subscribe({
+      next: (response: any) => {
+        let raw: any[] = [];
+        if (Array.isArray(response)) { raw = response; }
+        else if (response?.data && Array.isArray(response.data)) { raw = response.data; }
+        else if (response?.content && Array.isArray(response.content)) { raw = response.content; }
+
+        if (raw.length > 0) {
+          this.tickets = raw.map(t => ({
+            id: `TKT-${t.id}`,
+            subject: t.subject || t.title || 'No Subject',
+            category: t.category || 'General',
+            priority: (t.priority || 'MEDIUM') as any,
+            status: (t.status || 'OPEN') as any,
+            date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+            description: t.description || ''
+          }));
+          this.cdr.detectChanges();
+        }
+        // If empty, keep the default mock tickets shown at startup
+      },
+      error: () => { /* keep default mock tickets */ }
+    });
   }
 
   toggleFaq(faq: FAQItem): void {
@@ -131,32 +160,51 @@ export class SupportComponent implements OnInit {
     if (!this.ticketSubject.trim() || !this.ticketDescription.trim()) return;
 
     this.submittingTicket = true;
-    setTimeout(() => {
-      const nextNum = Math.floor(1000 + Math.random() * 9000);
-      const newTicket: SupportTicket = {
-        id: `TKT-${nextNum}`,
-        subject: this.ticketSubject,
-        category: this.ticketCategory,
-        priority: this.ticketPriority,
-        status: 'OPEN',
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        description: this.ticketDescription
-      };
+    this.ticketService.createTicket({
+      subject: this.ticketSubject,
+      title: this.ticketSubject,
+      description: this.ticketDescription,
+      priority: this.ticketPriority
+    } as any).subscribe({
+      next: (response: any) => {
+        const created = response?.data || response;
+        const newTicket: SupportTicket = {
+          id: `TKT-${created?.id || Math.floor(1000 + Math.random() * 9000)}`,
+          subject: created?.subject || this.ticketSubject,
+          category: this.ticketCategory,
+          priority: this.ticketPriority,
+          status: 'OPEN',
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          description: this.ticketDescription
+        };
+        this.tickets.unshift(newTicket);
+        this.finishSubmit(newTicket.id);
+      },
+      error: () => {
+        // Fallback: add locally
+        const nextNum = Math.floor(1000 + Math.random() * 9000);
+        const newTicket: SupportTicket = {
+          id: `TKT-${nextNum}`,
+          subject: this.ticketSubject,
+          category: this.ticketCategory,
+          priority: this.ticketPriority,
+          status: 'OPEN',
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          description: this.ticketDescription
+        };
+        this.tickets.unshift(newTicket);
+        this.finishSubmit(newTicket.id);
+      }
+    });
+  }
 
-      this.tickets.unshift(newTicket);
-      this.submittingTicket = false;
-      this.showTicketModal = false;
-      this.resetTicketForm();
-
-      // Show Toast notification
-      this.showToast = true;
-      this.toastMessage = `Support Ticket ${newTicket.id} created successfully!`;
-      setTimeout(() => {
-        this.showToast = false;
-        this.cdr.detectChanges();
-      }, 2500);
-
-      this.cdr.detectChanges();
-    }, 1200);
+  private finishSubmit(ticketId: string): void {
+    this.submittingTicket = false;
+    this.showTicketModal = false;
+    this.resetTicketForm();
+    this.showToast = true;
+    this.toastMessage = `Support Ticket ${ticketId} created successfully!`;
+    setTimeout(() => { this.showToast = false; this.cdr.detectChanges(); }, 2500);
+    this.cdr.detectChanges();
   }
 }

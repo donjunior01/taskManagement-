@@ -1,23 +1,16 @@
 .user-layout {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  background: var(--bg-page);
 
   .layout-content {
-    display: flex;
-    margin-top: 70px;
+    margin-left: var(--sidebar-w);
+    margin-top: var(--header-h);
+    padding: 32px 36px;
+    min-height: calc(100vh - var(--header-h));
+    transition: margin-left .3s cubic-bezier(.4,0,.2,1);
 
-    .main-content {
-      flex: 1;
-      margin-left: 250px;
-      padding: 36px 40px;
-      background: transparent;
-      min-height: calc(100vh - 70px);
-      
-      @media (max-width: 768px) {
-        margin-left: 0;
-        padding: 24px;
-      }
-    }
+    @media(max-width: 1200px) { padding: 28px 28px; }
+    @media(max-width: 900px)  { padding: 22px 20px; }
+    @media(max-width: 768px)  { margin-left: 0; padding: 20px 16px; }
   }
 }

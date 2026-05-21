@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReportService } from '../../../core/services/report.service';
 
@@ -9,6 +10,7 @@ export interface SavedAdminReport {
   name: string;
   date: string;
   size: string;
+  format: 'PDF' | 'CSV';
   selected?: boolean;
 }
 
@@ -17,7 +19,7 @@ export interface SystemPerformanceMetrics {
   cpuUsage: number;
   memoryUsage: number;
   status: 'OPTIMAL' | 'DEGRADED' | 'CRITICAL';
-  responseTime: number; // in ms
+  responseTime: number;
   activeConnections: number;
 }
 
@@ -41,11 +43,11 @@ export class AdminReportsComponent implements OnInit {
   loading: boolean = false;
 
   // Form State
-  auditType: string = 'System Load & Performance';
-  startDate: string = 'Sep 01, 2024';
-  endDate: string = 'Sep 30, 2024';
+  auditType: string = 'Project Health Report';
+  startDate: string = '';
+  endDate: string = '';
   exportFormat: 'PDF' | 'CSV' = 'PDF';
-  
+
   scopesSelection = {
     serverLogs: true,
     usersActivity: true,
@@ -58,10 +60,10 @@ export class AdminReportsComponent implements OnInit {
 
   // Saved audits list
   savedReports: SavedAdminReport[] = [
-    { id: 1, name: 'System Security Audit - Q3', date: 'Oct 1, 2024', size: '2.5 MB', selected: true },
-    { id: 2, name: 'SLA Support Performance', date: 'Sep 30, 2024', size: '1.1 MB', selected: false },
-    { id: 3, name: 'User Directory Export', date: 'Sep 15, 2024', size: '920 KB', selected: false },
-    { id: 4, name: 'Kubernetes Container Vitals', date: 'Sep 10, 2024', size: '3.4 MB', selected: false }
+    { id: 1, name: 'System Security Audit - Q3', date: 'Oct 1, 2024', size: '2.5 MB', format: 'PDF', selected: true },
+    { id: 2, name: 'SLA Support Performance', date: 'Sep 30, 2024', size: '1.1 MB', format: 'PDF', selected: false },
+    { id: 3, name: 'User Directory Export', date: 'Sep 15, 2024', size: '920 KB', format: 'PDF', selected: false },
+    { id: 4, name: 'Kubernetes Container Vitals', date: 'Sep 10, 2024', size: '3.4 MB', format: 'PDF', selected: false }
   ];
 
   // System performance vitals
@@ -81,13 +83,13 @@ export class AdminReportsComponent implements OnInit {
     { id: 92, operatorName: 'Alex Johnson', action: 'Exported project database', target: 'Cloud Migration Core', timestamp: '1 day ago' }
   ];
 
-  // Modals overlays state
+  // Modals state
   showSettingsModal: boolean = false;
   showPreviewModal: boolean = false;
   isCompiling: boolean = false;
   compilingProgress: number = 0;
   compilingStep: string = '';
-  
+
   settingsModel = {
     pageSize: 'Letter',
     includeNotes: true,
@@ -105,9 +107,27 @@ export class AdminReportsComponent implements OnInit {
     date: string;
   } | null = null;
 
-  // Notification Toast State
+  // Toast
   showToast: boolean = false;
   toastMessage: string = '';
+
+  // Audit types that map to real backend endpoints
+  private readonly REAL_PDF_TYPES = [
+    'Users Directory (PDF)',
+    'Tasks Report (PDF)',
+    'Projects Report (PDF)',
+    'Project Health Report',
+    'Team Allocation Report',
+    'Milestone Delivery Report'
+  ];
+
+  private readonly CSV_SUPPORTED_TYPES = [
+    'Tasks Report (PDF)',
+    'Projects Report (PDF)',
+    'Project Health Report',
+    'Team Allocation Report',
+    'Milestone Delivery Report'
+  ];
 
   constructor(
     private authService: AuthService,
@@ -117,12 +137,19 @@ export class AdminReportsComponent implements OnInit {
 
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
-    if (user) {
-      this.adminId = user.id;
-    }
+    if (user) this.adminId = user.id;
+  }
+
+  isRealReportType(): boolean {
+    return this.REAL_PDF_TYPES.includes(this.auditType);
+  }
+
+  isCsvSupported(): boolean {
+    return this.CSV_SUPPORTED_TYPES.includes(this.auditType);
   }
 
   setFormat(format: 'PDF' | 'CSV'): void {
+    if (format === 'CSV' && !this.isCsvSupported()) return;
     this.exportFormat = format;
   }
 
@@ -135,18 +162,12 @@ export class AdminReportsComponent implements OnInit {
     report.selected = true;
   }
 
-  // Settings
-  openSettings(): void {
-    this.showSettingsModal = true;
-  }
-
-  closeSettings(): void {
-    this.showSettingsModal = false;
-  }
+  openSettings(): void { this.showSettingsModal = true; }
+  closeSettings(): void { this.showSettingsModal = false; }
 
   saveSettings(): void {
     this.showSettingsModal = false;
-    this.triggerToast('System executive auditing templates and parameters updated successfully!');
+    this.triggerToast('Audit parameters updated successfully!');
   }
 
   // Audit compile pipeline
@@ -156,38 +177,34 @@ export class AdminReportsComponent implements OnInit {
     this.compilingStep = 'Initializing system control hooks...';
     this.cdr.detectChanges();
 
-    // Step 1: 400ms
     setTimeout(() => {
       this.compilingProgress = 32;
       this.compilingStep = 'Scanning microservice container allocations...';
       this.cdr.detectChanges();
     }, 450);
 
-    // Step 2: 900ms
     setTimeout(() => {
       this.compilingProgress = 65;
       this.compilingStep = 'Calculating API SLA resolution response times...';
       this.cdr.detectChanges();
     }, 950);
 
-    // Step 3: 1400ms
     setTimeout(() => {
       this.compilingProgress = 92;
       this.compilingStep = 'Signing cryptographic checksum digests...';
       this.cdr.detectChanges();
     }, 1450);
 
-    // Step 4: 1800ms
     setTimeout(() => {
       this.isCompiling = false;
       this.showPreviewModal = true;
       this.generatedPreview = {
-        name: `${this.auditType} - Executive Summary`,
+        name: `${this.auditType} — Executive Summary`,
         type: this.auditType,
         format: this.exportFormat,
-        scopesCount: (this.scopesSelection.serverLogs ? 1 : 0) + 
-                     (this.scopesSelection.usersActivity ? 1 : 0) + 
-                     (this.scopesSelection.taskBacklogs ? 1 : 0) + 
+        scopesCount: (this.scopesSelection.serverLogs ? 1 : 0) +
+                     (this.scopesSelection.usersActivity ? 1 : 0) +
+                     (this.scopesSelection.taskBacklogs ? 1 : 0) +
                      (this.scopesSelection.financialAudits ? 1 : 0),
         metricsAnalyzed: 842,
         fileSize: this.exportFormat === 'PDF' ? '2.8 MB' : '540 KB',
@@ -199,22 +216,28 @@ export class AdminReportsComponent implements OnInit {
 
   saveGeneratedReport(): void {
     if (!this.generatedPreview) return;
-    
-    const nextId = Math.max(...this.savedReports.map(r => r.id)) + 1;
+
+    const nextId = this.savedReports.length > 0
+      ? Math.max(...this.savedReports.map(r => r.id)) + 1
+      : 1;
+
     const newReport: SavedAdminReport = {
       id: nextId,
       name: this.generatedPreview.name,
       date: this.generatedPreview.date,
       size: this.generatedPreview.fileSize,
+      format: this.exportFormat,
       selected: true
     };
 
     this.savedReports.forEach(r => r.selected = false);
     this.savedReports.unshift(newReport);
-    
     this.showPreviewModal = false;
     this.activeTab = 'saved';
-    this.triggerToast('System audit successfully logged and archived.');
+    this.cdr.detectChanges();
+
+    // Trigger actual API download for real report types
+    this.triggerApiDownload(this.auditType, this.exportFormat);
   }
 
   closePreviewModal(): void {
@@ -224,31 +247,21 @@ export class AdminReportsComponent implements OnInit {
 
   downloadReport(report: SavedAdminReport, event: MouseEvent): void {
     event.stopPropagation();
-    
-    if (report.name.includes('Users Directory')) {
-       this.triggerToast(`Generating PDF from API...`);
-       this.reportService.getUsersReportPdf().subscribe(blob => this.handleBlobDownload(blob, 'users_report.pdf'));
-    } else if (report.name.includes('Tasks Report')) {
-       this.triggerToast(`Generating PDF from API...`);
-       this.reportService.getTasksReportPdf().subscribe(blob => this.handleBlobDownload(blob, 'tasks_report.pdf'));
-    } else if (report.name.includes('Projects Report')) {
-       this.triggerToast(`Generating PDF from API...`);
-       this.reportService.getProjectsReportPdf().subscribe(blob => this.handleBlobDownload(blob, 'projects_report.pdf'));
-    } else {
-       this.triggerToast(`Downloading "${report.name}" (${report.size})...`);
-    }
-  }
+    const name = report.name;
+    const fmt = report.format ?? 'PDF';
 
-  private handleBlobDownload(blob: Blob, filename: string): void {
-     const url = window.URL.createObjectURL(blob);
-     const a = document.createElement('a');
-     a.href = url;
-     a.download = filename;
-     document.body.appendChild(a);
-     a.click();
-     document.body.removeChild(a);
-     window.URL.revokeObjectURL(url);
-     this.triggerToast('Download complete!');
+    const obs = this.resolveReportObservable(name, fmt);
+    const filename = this.resolveFilename(name, fmt);
+
+    if (obs) {
+      this.triggerToast('Generating report from API...');
+      obs.subscribe({
+        next: (blob) => this.handleBlobDownload(blob, filename),
+        error: () => this.triggerToast('Error generating report. Please try again.')
+      });
+    } else {
+      this.triggerToast(`Downloading "${report.name}" (${report.size})...`);
+    }
   }
 
   deleteReport(report: SavedAdminReport, event: MouseEvent): void {
@@ -257,12 +270,82 @@ export class AdminReportsComponent implements OnInit {
     this.triggerToast(`Audit report "${report.name}" deleted.`);
   }
 
+  // ── Private helpers ──────────────────────────────────────────────────────
+
+  private triggerApiDownload(auditType: string, format: 'PDF' | 'CSV'): void {
+    const obs = this.resolveReportObservable(auditType, format);
+    const filename = this.resolveFilename(auditType, format);
+
+    if (obs) {
+      this.triggerToast('Generating report from API...');
+      obs.subscribe({
+        next: (blob) => this.handleBlobDownload(blob, filename),
+        error: () => this.triggerToast('Error generating report. Please try again.')
+      });
+    } else {
+      this.triggerToast('System audit successfully logged and archived.');
+    }
+  }
+
+  private resolveReportObservable(nameOrType: string, format: 'PDF' | 'CSV'): Observable<Blob> | null {
+    const n = nameOrType.toLowerCase();
+
+    if (n.includes('project health')) {
+      return format === 'CSV'
+        ? this.reportService.getProjectsReportCsv()
+        : this.reportService.getProjectHealthReportPdf();
+    }
+    if (n.includes('team allocation')) {
+      return format === 'CSV'
+        ? this.reportService.getTasksReportCsv()
+        : this.reportService.getTeamAllocationReportPdf();
+    }
+    if (n.includes('milestone delivery')) {
+      return format === 'CSV'
+        ? this.reportService.getTasksReportCsv()
+        : this.reportService.getMilestoneDeliveryReportPdf();
+    }
+    if (n.includes('users directory') || n.includes('user directory') || n.includes('users report')) {
+      return this.reportService.getUsersReportPdf();
+    }
+    if (n.includes('tasks report') || n.includes('tasks (')) {
+      return format === 'CSV'
+        ? this.reportService.getTasksReportCsv()
+        : this.reportService.getTasksReportPdf();
+    }
+    if (n.includes('projects report') || n.includes('projects (')) {
+      return format === 'CSV'
+        ? this.reportService.getProjectsReportCsv()
+        : this.reportService.getProjectsReportPdf();
+    }
+    return null;
+  }
+
+  private resolveFilename(nameOrType: string, format: 'PDF' | 'CSV'): string {
+    const ext = format.toLowerCase();
+    const n = nameOrType.toLowerCase();
+    if (n.includes('project health'))    return `project_health_report.${ext}`;
+    if (n.includes('team allocation'))   return `team_allocation_report.${ext}`;
+    if (n.includes('milestone delivery')) return `milestone_delivery_report.${ext}`;
+    if (n.includes('users directory') || n.includes('user directory')) return `users_report.pdf`;
+    if (n.includes('tasks report') || n.includes('tasks (')) return `tasks_report.${ext}`;
+    if (n.includes('projects report') || n.includes('projects (')) return `projects_report.${ext}`;
+    return `report.${ext}`;
+  }
+
+  private handleBlobDownload(blob: Blob, filename: string): void {
+    ReportService.triggerDownload(blob, filename);
+    this.triggerToast('Download complete!');
+    this.cdr.detectChanges();
+  }
+
   private triggerToast(msg: string): void {
     this.toastMessage = msg;
     this.showToast = true;
+    this.cdr.detectChanges();
     setTimeout(() => {
       this.showToast = false;
       this.cdr.detectChanges();
-    }, 2500);
+    }, 2800);
   }
 }

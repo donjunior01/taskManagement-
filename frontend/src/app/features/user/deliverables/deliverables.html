@@ -113,7 +113,7 @@
 
   <!-- Deliverables Grid List -->
   <div class="deliverables-grid" *ngIf="!loading && getFilteredTasks().length > 0">
-    <div class="glass-panel deliverable-card animate-scale-in" *ngFor="let task of getFilteredTasks()">
+    <div class="glass-panel deliverable-card animate-scale-in" *ngFor="let task of getFilteredTasks()" (click)="viewTaskDetails(task, $event)" style="cursor: pointer;">
       <!-- Card Top Header -->
       <div class="card-header-meta">
         <span class="project-title">{{ task.projectName }}</span>

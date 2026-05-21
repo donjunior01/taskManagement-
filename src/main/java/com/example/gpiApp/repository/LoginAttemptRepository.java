@@ -13,24 +13,23 @@ import java.util.List;
 
 @Repository
 public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long> {
-    
+
     Page<LoginAttempt> findAllByOrderByAttemptedAtDesc(Pageable pageable);
-    
-    @Query("SELECT COUNT(l) FROM LoginAttempt l WHERE DATE(l.attemptedAt) = CURRENT_DATE")
-    Long countTodayLoginAttempts();
-    
-    @Query("SELECT COUNT(l) FROM LoginAttempt l WHERE l.status = :status AND DATE(l.attemptedAt) = CURRENT_DATE")
-    Long countTodayFailedLogins(@Param("status") LoginAttempt.LoginStatus status);
-    
-    @Query("SELECT COUNT(l) FROM LoginAttempt l WHERE l.status = :status AND DATE(l.attemptedAt) = CURRENT_DATE")
-    Long countTodaySuccessfulLogins(@Param("status") LoginAttempt.LoginStatus status);
-    
+
+    @Query("SELECT COUNT(l) FROM LoginAttempt l WHERE l.attemptedAt >= :startOfDay")
+    Long countTodayLoginAttempts(@Param("startOfDay") LocalDateTime startOfDay);
+
+    @Query("SELECT COUNT(l) FROM LoginAttempt l WHERE l.status = :status AND l.attemptedAt >= :startOfDay")
+    Long countTodayFailedLogins(@Param("status") LoginAttempt.LoginStatus status, @Param("startOfDay") LocalDateTime startOfDay);
+
+    @Query("SELECT COUNT(l) FROM LoginAttempt l WHERE l.status = :status AND l.attemptedAt >= :startOfDay")
+    Long countTodaySuccessfulLogins(@Param("status") LoginAttempt.LoginStatus status, @Param("startOfDay") LocalDateTime startOfDay);
+
     List<LoginAttempt> findByAttemptedAtBetween(LocalDateTime start, LocalDateTime end);
-    
+
     @Query("SELECT l FROM LoginAttempt l WHERE l.user.id = :userId ORDER BY l.attemptedAt DESC")
     List<LoginAttempt> findByUserId(@Param("userId") Long userId);
-    
-    @Query("SELECT COUNT(DISTINCT l.user.id) FROM LoginAttempt l WHERE l.status = :status AND l.attemptedAt >= :since")
+
+    @Query("SELECT COUNT(DISTINCT l.user.id) FROM LoginAttempt l WHERE l.status = :status AND l.attemptedAt >= :since AND l.user IS NOT NULL")
     Long countActiveSessionsSince(@Param("since") LocalDateTime since, @Param("status") LoginAttempt.LoginStatus status);
 }
-

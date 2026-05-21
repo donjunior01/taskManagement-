@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="TeamAllocationReport" pageWidth="595" pageHeight="842"
+              columnWidth="555" leftMargin="20" rightMargin="20"
+              topMargin="20" bottomMargin="20">
+
+    <parameter name="title" class="java.lang.String"/>
+    <parameter name="generatedBy" class="java.lang.String"/>
+
+    <field name="fullName" class="java.lang.String"/>
+    <field name="username" class="java.lang.String"/>
+    <field name="role" class="java.lang.String"/>
+    <field name="email" class="java.lang.String"/>
+    <field name="tasksAssigned" class="java.lang.Integer"/>
+    <field name="tasksCompleted" class="java.lang.Integer"/>
+    <field name="projectsCount" class="java.lang.Integer"/>
+
+    <title>
+        <band height="70">
+            <rectangle>
+                <reportElement mode="Opaque" x="0" y="0" width="555" height="55" backcolor="#0F172A" forecolor="#0F172A"/>
+                <graphicElement>
+                    <pen lineWidth="0.0"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="15" y="10" width="525" height="28" forecolor="#FFFFFF"/>
+                <textElement textAlignment="Left" fontName="Arial" fontSize="16" isBold="true"/>
+                <text><![CDATA[Team Allocation Report]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="15" y="40" width="280" height="12" forecolor="#94A3B8"/>
+                <textElement fontName="Arial" fontSize="8"/>
+                <text><![CDATA[Task Management System — Team Overview]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="355" y="40" width="200" height="12" forecolor="#94A3B8"/>
+                <textElement textAlignment="Right" fontName="Arial" fontSize="8"/>
+                <textFieldExpression><![CDATA["Generated: " + new java.text.SimpleDateFormat("MMM dd, yyyy").format(new java.util.Date())]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="26">
+            <rectangle>
+                <reportElement mode="Opaque" x="0" y="0" width="555" height="26" backcolor="#2563EB" forecolor="#2563EB"/>
+                <graphicElement>
+                    <pen lineWidth="0.0"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="4" y="5" width="105" height="16" forecolor="#FFFFFF"/>
+                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <text><![CDATA[Full Name]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="113" y="5" width="80" height="16" forecolor="#FFFFFF"/>
+                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <text><![CDATA[Username]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="197" y="5" width="70" height="16" forecolor="#FFFFFF"/>
+                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <text><![CDATA[Role]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="271" y="5" width="130" height="16" forecolor="#FFFFFF"/>
+                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <text><![CDATA[Email]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="405" y="5" width="45" height="16" forecolor="#FFFFFF"/>
+                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <text><![CDATA[Assigned]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="453" y="5" width="50" height="16" forecolor="#FFFFFF"/>
+                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <text><![CDATA[Completed]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="506" y="5" width="45" height="16" forecolor="#FFFFFF"/>
+                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <text><![CDATA[Projects]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="22">
+            <line>
+                <reportElement x="0" y="21" width="555" height="1" forecolor="#E2E8F0"/>
+            </line>
+            <textField isBlankWhenNull="true">
+                <reportElement x="4" y="4" width="105" height="14"/>
+                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <textFieldExpression><![CDATA[$F{fullName}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="113" y="4" width="80" height="14"/>
+                <textElement fontName="Arial" fontSize="8"/>
+                <textFieldExpression><![CDATA[$F{username}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="197" y="4" width="70" height="14"/>
+                <textElement fontName="Arial" fontSize="8"/>
+                <textFieldExpression><![CDATA[$F{role}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="271" y="4" width="130" height="14"/>
+                <textElement fontName="Arial" fontSize="8"/>
+                <textFieldExpression><![CDATA[$F{email}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="405" y="4" width="45" height="14"/>
+                <textElement fontName="Arial" fontSize="8"/>
+                <textFieldExpression><![CDATA[$F{tasksAssigned}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="453" y="4" width="50" height="14"/>
+                <textElement fontName="Arial" fontSize="8"/>
+                <textFieldExpression><![CDATA[$F{tasksCompleted}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="506" y="4" width="45" height="14"/>
+                <textElement fontName="Arial" fontSize="8"/>
+                <textFieldExpression><![CDATA[$F{projectsCount}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="20">
+            <line>
+                <reportElement x="0" y="0" width="555" height="1" forecolor="#CBD5E1"/>
+            </line>
+            <staticText>
+                <reportElement x="0" y="4" width="280" height="13" forecolor="#94A3B8"/>
+                <textElement fontName="Arial" fontSize="7"/>
+                <text><![CDATA[© Task Management System — Confidential]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="420" y="4" width="135" height="13" forecolor="#94A3B8"/>
+                <textElement textAlignment="Right" fontName="Arial" fontSize="7"/>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+</jasperReport>

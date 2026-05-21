@@ -57,7 +57,7 @@
 
   <!-- Deliverables Accordion List -->
   <div class="tasks-accordion-list" *ngIf="!loading && filteredTasks.length > 0">
-    <div class="glass-panel task-item animate-scale-in" *ngFor="let task of filteredTasks" [ngClass]="{ expanded: task.expanded }">
+    <div class="glass-panel task-item animate-scale-in" *ngFor="let task of filteredTasks" [ngClass]="{ expanded: task.expanded }" [attr.data-task-id]="task.id">
       
       <!-- Accordion Header -->
       <div class="task-trigger" (click)="toggleAccordion(task)">

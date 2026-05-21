@@ -5,7 +5,7 @@
       <h2 style="margin: 0;">Project Workspaces</h2>
       <p style="margin: 4px 0 0 0;">Supervise milestone deliveries, adjust scheduled timelines, and audit active workspace deliverables.</p>
     </div>
-    <button type="button" class="btn btn-primary" (click)="openAddModal()" style="display: flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: var(--border-radius-md); font-weight: 700; border: none; background: var(--gradient-primary); color: white; cursor: pointer; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25); transition: all var(--transition-fast);">
+    <button type="button" class="btn btn-primary" (click)="openAddModal()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -76,8 +76,8 @@
         <!-- Right: Actions & Toggle icon -->
         <div class="trigger-right">
           <!-- Stop propagation so clicking Edit doesn't expand the accordion -->
-          <button type="button" class="btn btn-add-users" (click)="openAddUsersModal(proj); $event.stopPropagation()" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%); color: white; border: none; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15); margin-right: 8px;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; margin-right: 4px;">
+          <button type="button" class="btn btn-add-users" (click)="openAddUsersModal(proj); $event.stopPropagation()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <line x1="19" y1="8" x2="19" y2="14"></line>
@@ -121,7 +121,7 @@
                 <h5 style="margin: 0;">Workspace Nested Deliverables</h5>
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <span class="task-count-badge" *ngIf="!proj.loadingTasks" style="font-size: 10.5px;">{{ proj.tasks.length }} items</span>
-                  <button type="button" class="btn btn-primary" (click)="openAddTaskModal(proj)" style="padding: 6px 12px; font-size: 11px; height: 30px; border-radius: var(--border-radius-sm); border: none; background: var(--gradient-primary); color: white; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 700; transition: all var(--transition-fast);">
+                  <button type="button" class="btn btn-primary btn-sm" (click)="openAddTaskModal(proj)">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;">
                       <line x1="12" y1="5" x2="12" y2="19"></line>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -203,8 +203,8 @@
 
                       <!-- Actions -->
                       <td style="text-align: center;">
-                        <button type="button" class="icon-btn delete-btn" (click)="deleteTask(proj, task.id)" title="Delete Task" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; transition: all var(--transition-fast); border-radius: var(--border-radius-sm);">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; color: var(--danger);">
+                        <button type="button" class="icon-btn delete-btn" (click)="deleteTask(proj, task.id)" title="Delete Task">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                           </svg>
@@ -252,8 +252,8 @@
                       <span style="font-size: 10px; color: var(--text-muted);">@{{ member.username }}</span>
                     </div>
                   </div>
-                  <button type="button" class="icon-btn unassign-btn" (click)="unassignUser(proj, member.id)" title="Unassign User" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; transition: all var(--transition-fast); border-radius: var(--border-radius-sm);">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; color: var(--danger);">
+                  <button type="button" class="icon-btn unassign-btn" (click)="unassignUser(proj, member.id)" title="Unassign User">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
                       <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>

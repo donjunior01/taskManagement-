@@ -26,6 +26,7 @@ public class SupportTicketService {
     private final SupportTicketRepository ticketRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public PagedResponse<SupportTicketDTO> getAllTickets(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<SupportTicket> ticketPage = ticketRepository.findAll(pageable);
@@ -45,6 +46,7 @@ public class SupportTicketService {
         );
     }
 
+    @Transactional(readOnly = true)
     public PagedResponse<SupportTicketDTO> getTicketsByUser(Long userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<SupportTicket> ticketPage = ticketRepository.findByUserId(userId, pageable);

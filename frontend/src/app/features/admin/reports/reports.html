@@ -42,13 +42,20 @@
             <label class="form-label">Audit Scope Type</label>
             <div class="select-wrapper">
               <select name="auditType" [(ngModel)]="auditType" required>
-                <option value="Users Directory (PDF)">Users Directory (PDF)</option>
-                <option value="Tasks Report (PDF)">Tasks Report (PDF)</option>
-                <option value="Projects Report (PDF)">Projects Report (PDF)</option>
-                <option value="System Load & Performance">System Load & Performance</option>
-                <option value="API Gateway Access Logs">API Gateway Access Logs</option>
-                <option value="User Activity Ledger">User Activity Ledger</option>
-                <option value="Database Node Health">Database Node Health</option>
+                <optgroup label="— Live Backend Reports —">
+                  <option value="Project Health Report">Project Health Report (PDF)</option>
+                  <option value="Team Allocation Report">Team Allocation Report (PDF)</option>
+                  <option value="Milestone Delivery Report">Milestone Delivery Report (PDF)</option>
+                  <option value="Users Directory (PDF)">Users Directory (PDF)</option>
+                  <option value="Tasks Report (PDF)">Tasks Report (PDF / CSV)</option>
+                  <option value="Projects Report (PDF)">Projects Report (PDF / CSV)</option>
+                </optgroup>
+                <optgroup label="— System Analytics —">
+                  <option value="System Load &amp; Performance">System Load &amp; Performance</option>
+                  <option value="API Gateway Access Logs">API Gateway Access Logs</option>
+                  <option value="User Activity Ledger">User Activity Ledger</option>
+                  <option value="Database Node Health">Database Node Health</option>
+                </optgroup>
               </select>
             </div>
           </div>
@@ -117,7 +124,7 @@
                 </svg>
                 <span>PDF</span>
               </button>
-              <button type="button" class="btn-toggle" [ngClass]="{ active: exportFormat === 'CSV' }" (click)="setFormat('CSV')">
+              <button type="button" class="btn-toggle" [ngClass]="{ active: exportFormat === 'CSV', disabled: !isCsvSupported() }" [disabled]="!isCsvSupported()" (click)="setFormat('CSV')" [title]="isCsvSupported() ? 'Export as CSV' : 'CSV not available for this report type'">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toggle-icon">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                   <line x1="3" y1="9" x2="21" y2="9"></line>
@@ -574,7 +581,7 @@
           <polyline points="17 21 17 13 7 13 7 21"/>
           <polyline points="7 3 7 8 15 8"/>
         </svg>
-        <span>Archive & Download</span>
+        <span>Archive &amp; Download</span>
       </button>
     </div>
   </div>

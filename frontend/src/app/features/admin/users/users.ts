@@ -319,6 +319,7 @@ export class AdminUsersComponent implements OnInit {
       next: (response: any) => {
         this.submitting = false;
         this.showStatusModal = false;
+        this.cdr.detectChanges();
         const updatedUser = response?.data || response;
         const newState = updatedUser?.isActive !== undefined ? updatedUser.isActive : !wasActive;
         // Sync local list
@@ -344,6 +345,7 @@ export class AdminUsersComponent implements OnInit {
           console.warn('PATCH /status endpoint not available (404), applying offline fallback UI toggle...');
           this.submitting = false;
           this.showStatusModal = false;
+          this.cdr.detectChanges();
           const newActiveState = !wasActive;
           const index = this.usersList.findIndex(u => u.id === userId);
           if (index !== -1) {
@@ -359,6 +361,7 @@ export class AdminUsersComponent implements OnInit {
           this.submitting = false;
           console.error('API Error toggling status:', err);
           this.showStatusModal = false;
+          this.cdr.detectChanges();
           this.triggerToast('Failed to toggle status. Please try again.', 'error');
           this.selectedUser = null;
         }

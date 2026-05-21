@@ -5,12 +5,15 @@ import { ApiService } from './api.service';
 export interface Message {
   id?: number;
   senderId?: number;
-  receiverId?: number;
+  senderName?: string;
+  recipientId?: number;
+  recipientName?: string;
   projectId?: number;
+  projectName?: string;
+  subject?: string;
   content: string;
   isRead?: boolean;
   createdAt?: string;
-  senderName?: string;
 }
 
 @Injectable({

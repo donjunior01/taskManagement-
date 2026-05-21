@@ -130,24 +130,29 @@ public class TimeLogController {
         return ResponseEntity.ok(timeLogService.getTimeLogsByUserAndDateRange(userId, startDate, endDate));
     }
     
-    @Operation(summary = "Export time logs to CSV", description = "Export time logs for a user within a date range as CSV")
+    @Operation(summary = "Export time logs to CSV", description = "Export time logs for the authenticated user, optionally filtered by date range")
     @GetMapping("/export/csv")
     public ResponseEntity<String> exportTimeLogsToCSV(
             Authentication authentication,
-            @Parameter(description = "Start date") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @Parameter(description = "End date") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @Parameter(description = "Start date (optional, defaults to 1 year ago)")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @Parameter(description = "End date (optional, defaults to today)")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         Long userId = getCurrentUserId(authentication);
         if (userId == null) {
             return ResponseEntity.badRequest().body("User not authenticated");
         }
-        
-        List<TimeLogDTO> timeLogs = timeLogService.getTimeLogsByUserAndDateRange(userId, startDate, endDate);
+
+        LocalDate from = startDate != null ? startDate : LocalDate.now().minusYears(1);
+        LocalDate to   = endDate   != null ? endDate   : LocalDate.now();
+
+        List<TimeLogDTO> timeLogs = timeLogService.getTimeLogsByUserAndDateRange(userId, from, to);
         String csv = convertToCSV(timeLogs);
-        
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
-        headers.setContentDispositionFormData("attachment", "time-logs-" + startDate + "-to-" + endDate + ".csv");
-        
+        headers.setContentDispositionFormData("attachment", "time-logs-" + from + "-to-" + to + ".csv");
+
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(csv);
