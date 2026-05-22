@@ -102,44 +102,24 @@ export class UserMyTasksComponent implements OnInit {
             comments: [],
             submissions: []
           }));
-
-          if (this.myTasks.length === 0) {
-            this.seedMockTasks();
-          } else {
-            this.bootstrapSubDetails();
-          }
           this.applyFilters();
           this.applyDeepLink();
         } catch (e) {
-          console.error('Error processing tasks list, seeding mock fallback:', e);
-          this.seedMockTasks();
+          console.error('Error processing tasks list:', e);
+          this.myTasks = [];
           this.applyFilters();
-          this.applyDeepLink();
         } finally {
           this.loading = false;
           this.cdr.detectChanges();
         }
       },
       error: (err: any) => {
-        console.warn('API getTasksByUser offline, enacting developer tasks mock seed:', err);
-        try {
-          this.seedMockTasks();
-          this.applyFilters();
-          this.applyDeepLink();
-        } catch (e) {
-          console.error('Error in fallback seed:', e);
-        } finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+        console.warn('Failed to load tasks:', err);
+        this.myTasks = [];
+        this.filteredTasks = [];
+        this.loading = false;
+        this.cdr.detectChanges();
       }
-    });
-  }
-
-  bootstrapSubDetails(): void {
-    // Inject mock time logs, submissions, and comments into real tasks for detailed UX
-    this.myTasks.forEach(task => {
-      this.seedDetailsForTask(task);
     });
   }
 
@@ -286,13 +266,9 @@ export class UserMyTasksComponent implements OnInit {
 
     const processDeliverable = (fileUrl?: string) => {
       const deliverableData = {
-        title: this.submissionForm.fileName || 'Deliverable Submission',
-        description: this.submissionForm.notes,
-        status: 'PENDING',
-        dueDate: new Date().toISOString(),
-        taskId: this.selectedTaskForSubmission!.id,
-        userId: this.developerId,
-        fileUrl: fileUrl
+        taskId: this.selectedTaskForSubmission!.id!,
+        fileName: this.submissionForm.fileName || 'Deliverable Submission',
+        fileUrl: fileUrl || ''
       };
 
       this.deliverableService.submitDeliverable(deliverableData).subscribe({
@@ -409,13 +385,11 @@ export class UserMyTasksComponent implements OnInit {
       next: (savedComment) => {
         addLocalComment(savedComment.content);
         syncToMessageGroup();
-        this.triggerToast('Comment added and synced to project group!', 'success');
+        this.triggerToast('Comment added!', 'success');
         this.cdr.detectChanges();
       },
       error: () => {
-        addLocalComment(trimmedText);
-        syncToMessageGroup();
-        this.triggerToast('Comment added!', 'success');
+        this.triggerToast('Failed to save comment. Please try again.', 'error');
         this.cdr.detectChanges();
       }
     });
@@ -425,116 +399,4 @@ export class UserMyTasksComponent implements OnInit {
     this.toast.show(message, type);
   }
 
-  // Detailed Seeding for individual tasks
-  private seedDetailsForTask(task: DeveloperTaskDetail): void {
-    task.timeLogs = [
-      { date: '2026-05-14', hours: 4, notes: 'Configured security profiles and checked handshakes.' },
-      { date: '2026-05-15', hours: 3, notes: 'Write network firewalls and VPN gateway policies.' }
-    ];
-
-    task.comments = [
-      { sender: 'Lead PM', message: 'AWS monolith transition is top priority. Let me know when VPC is verified.', date: '2 days ago', isManager: true }
-    ];
-
-    task.submissions = [
-      { fileName: 'VPC_Architecture_Specs.pdf', date: '2026-05-15', size: '2.4 MB', status: 'APPROVED' }
-    ];
-  }
-
-  private seedMockTasks(): void {
-    this.myTasks = [
-      {
-        id: 1,
-        name: 'Setup VPC Security Groups',
-        description: 'Address corporate firewall rules, SSH keys, and VPN gateway settings on AWS VPC core.',
-        projectId: 1,
-        projectName: 'Cloud Migration Core',
-        assignedToId: this.developerId,
-        assignedToName: this.developerName,
-        priority: 'CRITICAL',
-        difficulty: 'HARD',
-        status: 'IN_PROGRESS',
-        progress: 60,
-        deadline: '2026-05-20',
-        commentCount: 1,
-        totalHoursLogged: 7,
-        timeLogs: [
-          { date: '2026-05-14', hours: 4, notes: 'Configured security profiles and checked handshakes.' },
-          { date: '2026-05-15', hours: 3, notes: 'Write network firewalls and VPN gateway policies.' }
-        ],
-        comments: [
-          { sender: 'Lead PM', message: 'AWS monolith transition is top priority. Let me know when VPC is verified.', date: '2 days ago', isManager: true }
-        ],
-        submissions: [
-          { fileName: 'VPC_Architecture_Specs.pdf', date: '2026-05-15', size: '2.4 MB', status: 'APPROVED' }
-        ]
-      },
-      {
-        id: 2,
-        name: 'Design Translucent Cards',
-        description: 'Backdrop CSS filters, soft HSL hover shadows, and translucent borders matching SaaS light theme.',
-        projectId: 2,
-        projectName: 'Glassmorphic Design UI',
-        assignedToId: this.developerId,
-        assignedToName: this.developerName,
-        priority: 'HIGH',
-        difficulty: 'MEDIUM',
-        status: 'IN_PROGRESS',
-        progress: 45,
-        deadline: '2026-05-25',
-        commentCount: 2,
-        totalHoursLogged: 4,
-        timeLogs: [
-          { date: '2026-05-16', hours: 4, notes: 'Coded translucent card CSS and shadow grids.' }
-        ],
-        comments: [
-          { sender: 'Lead PM', message: 'Deliverable sent back: "Please increase background glass backdrop filter to 12px."', date: '1 day ago', isManager: true },
-          { sender: this.developerName, message: 'Implemented! Re-uploading card specs uploader now.', date: '12 hours ago', isManager: false }
-        ],
-        submissions: [
-          { fileName: 'Glassmorphic_Demo.png', date: '2026-05-16', size: '1.2 MB', status: 'PENDING' }
-        ]
-      },
-      {
-        id: 4,
-        name: 'Integrate Token HTTP Interceptor',
-        description: 'Attach bearer security tokens automatically to all microservices API headers.',
-        projectId: 1,
-        projectName: 'Cloud Migration Core',
-        assignedToId: this.developerId,
-        assignedToName: this.developerName,
-        priority: 'MEDIUM',
-        difficulty: 'MEDIUM',
-        status: 'PLANNED',
-        progress: 0,
-        deadline: '2026-06-10',
-        commentCount: 0,
-        totalHoursLogged: 0,
-        timeLogs: [],
-        comments: [],
-        submissions: []
-      },
-      {
-        id: 5,
-        name: 'SMTP Mail Server Handshakes',
-        description: 'Ensure user registration invites deliver in seconds without hitting spam boxes.',
-        projectId: 1,
-        projectName: 'Cloud Migration Core',
-        assignedToId: this.developerId,
-        assignedToName: this.developerName,
-        priority: 'LOW',
-        difficulty: 'EASY',
-        status: 'ON_HOLD',
-        progress: 10,
-        deadline: '2026-05-30',
-        commentCount: 0,
-        totalHoursLogged: 1,
-        timeLogs: [
-          { date: '2026-05-12', hours: 1, notes: 'Checked local SMTP mail sender handshake timeouts.' }
-        ],
-        comments: [],
-        submissions: []
-      }
-    ];
-  }
 }

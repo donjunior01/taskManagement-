@@ -44,15 +44,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
     this.notificationService.getUnreadNotifications().subscribe({
       next: (notifs) => this.notifications = notifs,
-      error: () => {
-        // Fallback mock
-        if (this.notifications.length === 0) {
-          this.notifications = [
-            { id: 1, message: 'New deliverable assigned to you', type: 'TASK', isRead: false, createdAt: new Date().toISOString(), userId: 0 }
-          ];
-          this.unreadCount = this.notifications.length;
-        }
-      }
+      error: () => {}
     });
   }
 

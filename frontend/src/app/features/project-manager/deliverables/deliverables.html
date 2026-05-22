@@ -10,7 +10,8 @@
       <label for="pmProjectSelect">Active Project Scope</label>
       <div class="select-wrapper">
         <select id="pmProjectSelect" [(ngModel)]="selectedProjectId" (change)="onProjectChange()">
-          <option *ngFor="let proj of projectsList" [value]="proj.id">{{ proj.name }}</option>
+          <option [ngValue]="null">All Projects</option>
+          <option *ngFor="let proj of projectsList" [ngValue]="proj.id">{{ proj.name }}</option>
         </select>
       </div>
     </div>
@@ -259,7 +260,7 @@
             <label for="delProject">Scope Project</label>
             <div class="select-wrapper">
               <select id="delProject" name="delProject" [(ngModel)]="newEvent.projectId" required>
-                <option *ngFor="let proj of projectsList" [value]="proj.id">{{ proj.name }}</option>
+                <option *ngFor="let proj of projectsList" [ngValue]="proj.id">{{ proj.name }}</option>
               </select>
             </div>
           </div>
@@ -514,7 +515,8 @@
         <table class="registry-table" style="margin-top: 0;">
           <thead>
             <tr>
-              <th>File Submission</th>
+              <th>Submitted File</th>
+              <th>Submitted By</th>
               <th>Status</th>
               <th>Date</th>
               <th class="text-right">Action</th>
@@ -522,18 +524,40 @@
           </thead>
           <tbody>
             <tr *ngFor="let sub of taskSubmissions" class="registry-tr">
-              <td><strong>{{ sub.title }}</strong><br/><small *ngIf="sub.description">{{ sub.description }}</small></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <strong>{{ sub.fileName }}</strong>
+                  <a *ngIf="sub.fileUrl" [href]="sub.fileUrl" target="_blank" title="Open link" style="color:var(--primary);display:flex;align-items:center;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                      <polyline points="15 3 21 3 21 9"/>
+                      <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                  </a>
+                </div>
+                <small *ngIf="sub.comments" style="color:var(--text-muted)">{{ sub.comments }}</small>
+              </td>
+              <td>
+                <span style="font-size:12px;color:var(--text-secondary);">{{ sub.submittedByName || '—' }}</span>
+              </td>
               <td>
                 <span class="status-badge" [ngClass]="sub.status.toLowerCase()">{{ sub.status }}</span>
               </td>
-              <td>{{ sub.dueDate | date:'shortDate' }}</td>
+              <td style="font-size:12px;color:var(--text-muted);">{{ sub.createdAt | date:'MMM d, y' }}</td>
               <td class="text-right td-actions">
-                <button class="action-btn text-success" style="margin-right:0.5rem;" (click)="reviewSubmission(sub.id, 'APPROVED')" [disabled]="submitting" title="Approve">
+                <button class="action-btn text-success"
+                        style="margin-right:0.5rem;"
+                        (click)="reviewSubmission(sub.id, 'APPROVED')"
+                        [disabled]="submitting || sub.status === 'APPROVED'"
+                        title="Approve submission">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                 </button>
-                <button class="action-btn text-danger" (click)="reviewSubmission(sub.id, 'REJECTED')" [disabled]="submitting" title="Reject">
+                <button class="action-btn text-danger"
+                        (click)="reviewSubmission(sub.id, 'REJECTED')"
+                        [disabled]="submitting || sub.status === 'REJECTED'"
+                        title="Reject submission">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>

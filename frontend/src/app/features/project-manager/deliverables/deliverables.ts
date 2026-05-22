@@ -1,6 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
 import { ProjectService, Project } from '../../../core/services/project.service';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
 import { DeliverableService, Deliverable } from '../../../core/services/deliverable.service';
@@ -30,7 +31,7 @@ export class PmDeliverablesComponent implements OnInit {
   completedCount = 0;
   overdueCount = 0;
 
-  // Add / Edit Modal Form State
+  // Modal state
   showAddModal: boolean = false;
   showEditModal: boolean = false;
   showReviewModal: boolean = false;
@@ -58,7 +59,6 @@ export class PmDeliverablesComponent implements OnInit {
     private deliverableService: DeliverableService,
     private userService: UserService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef,
     private toast: ToastService
   ) {}
 
@@ -74,57 +74,70 @@ export class PmDeliverablesComponent implements OnInit {
     this.loading = true;
     this.projectService.getProjectsByManager(this.managerId, 0, 50).subscribe({
       next: (response: any) => {
-        try {
-          this.projectsList = response && response.data ? response.data : [];
-          if (this.projectsList.length > 0) {
-            this.selectedProjectId = this.projectsList[0].id || null;
-            this.loadDeliverables();
-          }
-        } catch (e) {
-          console.error('Error fetching initial PM deliverables projects:', e);
-        } finally {
+        this.projectsList = response && response.data ? response.data : [];
+        // setTimeout defers the state update to a new macrotask so Angular's
+        // dev-mode double-check pass finishes before selectedProjectId changes,
+        // preventing NG0100 on the [(ngModel)] binding.
+        setTimeout(() => {
+          this.loadDeliverables();
           this.loading = false;
-          this.cdr.detectChanges();
-        }
+        }, 0);
       },
       error: () => {
         this.projectsList = [];
         this.loading = false;
-        this.cdr.detectChanges();
       }
     });
 
-    // Load developers for assignment list
     this.userService.getAllUsers(0, 100).subscribe({
       next: (res: any) => {
-        this.developersList = res && res.data ? res.data.filter((u: any) => u.role !== 'ROLE_ADMIN' && u.role !== 'ADMIN') : [];
+        this.developersList = res && res.data
+          ? res.data.filter((u: any) => u.role !== 'ROLE_ADMIN' && u.role !== 'ADMIN')
+          : [];
       },
-      error: () => {
-        this.developersList = [];
-      }
+      error: () => { this.developersList = []; }
     });
   }
 
   loadDeliverables(): void {
-    if (!this.selectedProjectId) return;
     this.loadingTasks = true;
+
+    if (!this.selectedProjectId) {
+      // "All Projects" — fetch tasks for every project in parallel
+      if (this.projectsList.length === 0) {
+        this.deliverablesList = [];
+        this.calculateStats();
+        this.loadingTasks = false;
+        return;
+      }
+      const requests = this.projectsList.map(p =>
+        this.taskService.getTasksByProject(p.id!, 0, 100)
+      );
+      forkJoin(requests).subscribe({
+        next: (responses: any[]) => {
+          this.deliverablesList = responses.flatMap(r => r && r.data ? r.data : []);
+          this.calculateStats();
+          this.loadingTasks = false;
+        },
+        error: () => {
+          this.deliverablesList = [];
+          this.calculateStats();
+          this.loadingTasks = false;
+        }
+      });
+      return;
+    }
+
     this.taskService.getTasksByProject(this.selectedProjectId, 0, 100).subscribe({
       next: (response: any) => {
-        try {
-          this.deliverablesList = response && response.data ? response.data : [];
-          this.calculateStats();
-        } catch (e) {
-          this.calculateStats();
-        } finally {
-          this.loadingTasks = false;
-          this.cdr.detectChanges();
-        }
+        this.deliverablesList = response && response.data ? response.data : [];
+        this.calculateStats();
+        this.loadingTasks = false;
       },
       error: () => {
         this.deliverablesList = [];
         this.calculateStats();
         this.loadingTasks = false;
-        this.cdr.detectChanges();
       }
     });
   }
@@ -138,7 +151,6 @@ export class PmDeliverablesComponent implements OnInit {
     this.totalCount = list.length;
     this.inProgressCount = list.filter(d => d.status === 'IN_PROGRESS').length;
     this.completedCount = list.filter(d => d.status === 'COMPLETED').length;
-    
     const todayStr = new Date().toISOString().split('T')[0];
     this.overdueCount = list.filter(d => d.deadline && d.deadline < todayStr && d.status !== 'COMPLETED').length;
   }
@@ -179,12 +191,8 @@ export class PmDeliverablesComponent implements OnInit {
       },
       error: (err) => {
         this.submitting = false;
-        console.warn('API task creation offline, applying simulation logic:', err);
-        
-        // Simulation logic
         const developer = this.developersList.find(d => d.id == this.newEvent.assignedToId);
         const project = this.projectsList.find(p => p.id == this.newEvent.projectId);
-        
         const mockTask: Task = {
           id: Date.now(),
           name: this.newEvent.name,
@@ -200,12 +208,10 @@ export class PmDeliverablesComponent implements OnInit {
           deadline: this.newEvent.deadline,
           totalHoursLogged: 0
         };
-
         this.deliverablesList.push(mockTask);
         this.calculateStats();
         this.showAddModal = false;
         this.triggerToast(`Optimistic Entry: Added "${mockTask.name}" to Deliverables ledger!`, 'success');
-        this.cdr.detectChanges();
       }
     });
   }
@@ -240,13 +246,11 @@ export class PmDeliverablesComponent implements OnInit {
       next: () => {
         this.submitting = false;
         this.showEditModal = false;
-        this.triggerToast(`Successfully saved deliverable configurations!`, 'success');
+        this.triggerToast('Successfully saved deliverable configurations!', 'success');
         this.loadDeliverables();
       },
       error: () => {
         this.submitting = false;
-        
-        // Simulation update
         const index = this.deliverablesList.findIndex(d => d.id === this.selectedDeliverable?.id);
         if (index !== -1) {
           const dev = this.developersList.find(d => d.id == this.newEvent.assignedToId);
@@ -265,8 +269,7 @@ export class PmDeliverablesComponent implements OnInit {
           this.calculateStats();
         }
         this.showEditModal = false;
-        this.triggerToast(`Optimistic Save: Updated deliverable details!`, 'success');
-        this.cdr.detectChanges();
+        this.triggerToast('Optimistic Save: Updated deliverable details!', 'success');
       }
     });
   }
@@ -276,15 +279,13 @@ export class PmDeliverablesComponent implements OnInit {
 
     this.taskService.deleteTask(del.id).subscribe({
       next: () => {
-        this.triggerToast(`Successfully deleted deliverable milestone!`, 'success');
+        this.triggerToast('Successfully deleted deliverable milestone!', 'success');
         this.loadDeliverables();
       },
       error: () => {
-        // Simulation delete
         this.deliverablesList = this.deliverablesList.filter(d => d.id !== del.id);
         this.calculateStats();
-        this.triggerToast(`Optimistic Deletion: Removed deliverable milestone!`, 'success');
-        this.cdr.detectChanges();
+        this.triggerToast('Optimistic Deletion: Removed deliverable milestone!', 'success');
       }
     });
   }
@@ -297,15 +298,13 @@ export class PmDeliverablesComponent implements OnInit {
     this.taskSubmissions = [];
 
     this.deliverableService.getDeliverablesByTask(del.id).subscribe({
-      next: (subs) => {
+      next: (subs: Deliverable[]) => {
         this.taskSubmissions = subs;
         this.loadingSubmissions = false;
-        this.cdr.detectChanges();
       },
       error: () => {
         this.taskSubmissions = [];
         this.loadingSubmissions = false;
-        this.cdr.detectChanges();
       }
     });
   }
@@ -316,23 +315,25 @@ export class PmDeliverablesComponent implements OnInit {
     this.taskSubmissions = [];
   }
 
-  reviewSubmission(subId: number | undefined, status: string): void {
+  reviewSubmission(subId: number | undefined, status: 'APPROVED' | 'REJECTED'): void {
     if (!subId) return;
     this.submitting = true;
-    this.deliverableService.reviewDeliverable(subId, { status: status, comments: `Reviewed as ${status}` }).subscribe({
-      next: () => {
-        const sub = this.taskSubmissions.find(s => s.id === subId);
-        if (sub) sub.status = status;
+    this.deliverableService.reviewDeliverable(subId, {
+      status,
+      comments: status === 'APPROVED' ? 'Approved by project manager.' : 'Rejected by project manager. Please revise and resubmit.'
+    }).subscribe({
+      next: (updated: Deliverable) => {
+        const idx = this.taskSubmissions.findIndex(s => s.id === subId);
+        if (idx !== -1) this.taskSubmissions[idx] = updated;
         this.submitting = false;
-        this.triggerToast(`Submission ${status} successfully!`, 'success');
-        this.cdr.detectChanges();
+        this.triggerToast(`Submission ${status === 'APPROVED' ? 'approved' : 'rejected'} successfully!`, 'success');
       },
       error: () => {
+        // Optimistic update so the PM sees the result immediately
         const sub = this.taskSubmissions.find(s => s.id === subId);
         if (sub) sub.status = status;
         this.submitting = false;
-        this.triggerToast(`Optimistic: Submission ${status}!`, 'success');
-        this.cdr.detectChanges();
+        this.triggerToast(`Submission ${status === 'APPROVED' ? 'approved' : 'rejected'}!`, 'success');
       }
     });
   }
@@ -340,5 +341,4 @@ export class PmDeliverablesComponent implements OnInit {
   triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
     this.toast.show(message, type);
   }
-
 }

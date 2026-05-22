@@ -4,6 +4,7 @@ import com.example.gpiApp.dto.*;
 import com.example.gpiApp.entity.ActivityLog;
 import com.example.gpiApp.entity.Deliverable;
 import com.example.gpiApp.entity.Notification;
+import com.example.gpiApp.entity.allUsers;
 import com.example.gpiApp.repository.DeliverableRepository;
 import com.example.gpiApp.repository.TaskRepository;
 import com.example.gpiApp.repository.UserRepository;
@@ -90,18 +91,30 @@ public class DeliverableService {
                 null
             );
 
+            String notifTitle = "New Deliverable Submitted";
+            String notifMsg = user.getFirstName() + " " + user.getLastName()
+                    + " submitted \"" + savedDeliverable.getFileName()
+                    + "\" for task \"" + task.getName() + "\"";
+
             // Notify the project manager
             if (task.getProject() != null && task.getProject().getManager() != null) {
                 notificationService.createNotification(
                         task.getProject().getManager().getId(),
-                        "New Deliverable Submitted",
-                        user.getFirstName() + " " + user.getLastName()
-                                + " submitted \"" + savedDeliverable.getFileName()
-                                + "\" for task \"" + task.getName() + "\"",
+                        notifTitle, notifMsg,
                         Notification.NotificationType.TASK_UPDATED,
                         savedDeliverable.getId(), "DELIVERABLE"
                 );
             }
+
+            // Notify all admins
+            userRepository.findByRole(allUsers.Role.ADMIN).forEach(admin ->
+                notificationService.createNotification(
+                        admin.getId(),
+                        notifTitle, notifMsg,
+                        Notification.NotificationType.TASK_UPDATED,
+                        savedDeliverable.getId(), "DELIVERABLE"
+                )
+            );
 
             return ApiResponse.success("Deliverable submitted successfully", convertToDTOSafe(savedDeliverable));
         } catch (Exception e) {

@@ -1,16 +1,29 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService } from './api.service';
 
 export interface Deliverable {
   id?: number;
-  title: string;
-  description?: string;
-  status: string;
-  dueDate: string;
   taskId?: number;
-  userId?: number;
+  taskName?: string;
+  submittedById?: number;
+  submittedByName?: string;
+  fileName: string;
   fileUrl?: string;
+  status: string;
+  comments?: string;
+  reviewedById?: number;
+  reviewedByName?: string;
+  reviewedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DeliverableSubmitRequest {
+  taskId: number;
+  fileName: string;
+  fileUrl: string;
 }
 
 @Injectable({
@@ -22,39 +35,57 @@ export class DeliverableService {
   constructor(private apiService: ApiService) {}
 
   getAllDeliverables(): Observable<Deliverable[]> {
-    return this.apiService.get<Deliverable[]>(this.basePath);
+    return this.apiService.get<any>(this.basePath).pipe(
+      map(r => r && r.data ? r.data : [])
+    );
   }
 
   getDeliverableById(id: number): Observable<Deliverable> {
-    return this.apiService.get<Deliverable>(`${this.basePath}/${id}`);
+    return this.apiService.get<any>(`${this.basePath}/${id}`).pipe(
+      map(r => r && r.data ? r.data : r)
+    );
   }
 
   getDeliverablesByUser(userId: number): Observable<Deliverable[]> {
-    return this.apiService.get<Deliverable[]>(`${this.basePath}/user/${userId}`);
+    return this.apiService.get<any>(`${this.basePath}/user/${userId}`).pipe(
+      map(r => r && r.data ? r.data : [])
+    );
   }
 
   getDeliverablesByTask(taskId: number): Observable<Deliverable[]> {
-    return this.apiService.get<Deliverable[]>(`${this.basePath}/task/${taskId}`);
+    return this.apiService.get<any>(`${this.basePath}/task/${taskId}`).pipe(
+      map(r => r && r.data ? r.data : [])
+    );
   }
 
   getDeliverablesByStatus(status: string): Observable<Deliverable[]> {
-    return this.apiService.get<Deliverable[]>(`${this.basePath}/status/${status}`);
+    return this.apiService.get<any>(`${this.basePath}/status/${status}`).pipe(
+      map(r => r && r.data ? r.data : [])
+    );
   }
 
   getPendingDeliverables(): Observable<Deliverable[]> {
-    return this.apiService.get<Deliverable[]>(`${this.basePath}/pending`);
+    return this.apiService.get<any>(`${this.basePath}/pending`).pipe(
+      map(r => r && r.data ? r.data : [])
+    );
   }
 
   getMyDeliverables(): Observable<Deliverable[]> {
-    return this.apiService.get<Deliverable[]>(`${this.basePath}/my`);
+    return this.apiService.get<any>(`${this.basePath}/my`).pipe(
+      map(r => r && r.data ? r.data : [])
+    );
   }
 
-  submitDeliverable(deliverable: Deliverable): Observable<Deliverable> {
-    return this.apiService.post<Deliverable>(this.basePath, deliverable);
+  submitDeliverable(request: DeliverableSubmitRequest): Observable<Deliverable> {
+    return this.apiService.post<any>(this.basePath, request).pipe(
+      map(r => r && r.data ? r.data : r)
+    );
   }
 
-  reviewDeliverable(id: number, reviewData: any): Observable<Deliverable> {
-    return this.apiService.put<Deliverable>(`${this.basePath}/${id}/review`, reviewData);
+  reviewDeliverable(id: number, reviewData: { status: string; comments?: string }): Observable<Deliverable> {
+    return this.apiService.put<any>(`${this.basePath}/${id}/review`, reviewData).pipe(
+      map(r => r && r.data ? r.data : r)
+    );
   }
 
   deleteDeliverable(id: number): Observable<void> {
