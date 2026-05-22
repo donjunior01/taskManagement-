@@ -607,32 +607,22 @@
   // --- Message bubble wrapper ---
   .message-bubble-wrapper {
     display: flex;
-    gap: 6px;
+    flex-direction: column;  // column so align-items controls left/right
+    align-items: flex-start; // default: received = left
     width: 100%;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 
-    // Other person — left aligned
-    &:not(.self) {
-      justify-content: flex-start;
-      flex-direction: row;
-
-      .message-bubble {
-        background: #fff;
-        border-radius: 0 18px 18px 18px;
-        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.12);
-      }
-    }
-
-    // Self — right aligned, row-reverse
+    // Self (sent) — push bubble to the right
     &.self {
-      justify-content: flex-end;
-      flex-direction: row-reverse;
+      align-items: flex-end;
 
       .message-bubble {
         background: var(--primary, #2563eb);
         color: #fff;
-        border-radius: 18px 18px 0 18px;
-        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+        border-radius: 18px 4px 18px 18px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+
+        .bubble-sender-name { display: none; } // never show name on own messages
 
         .message-text {
           color: #fff;
@@ -648,46 +638,23 @@
       }
     }
 
-    // Per-message avatar
-    .avatar-bubble {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary, #2563eb), var(--accent, #ea580c));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 700;
-      color: #fff;
-      flex-shrink: 0;
-      align-self: flex-end;
-      margin-bottom: 2px;
-    }
-
-    .avatar-bubble-self {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent, #ea580c), var(--primary, #2563eb));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 700;
-      color: #fff;
-      flex-shrink: 0;
-      align-self: flex-end;
-      margin-bottom: 2px;
+    // Received — bubble stays left (align-items: flex-start above)
+    &:not(.self) {
+      .message-bubble {
+        background: #fff;
+        border-radius: 4px 18px 18px 18px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
     }
 
     // The message bubble itself
     .message-bubble {
-      max-width: 65%;
+      max-width: 62%;
+      min-width: 80px;
       display: flex;
       flex-direction: column;
       gap: 2px;
-      padding: 7px 12px 20px;
+      padding: 7px 12px 22px;
       position: relative;
 
       // Delete button (visible on hover)
