@@ -34,7 +34,7 @@
           <div class="conversation-list">
             <div
               class="conversation-item"
-              *ngFor="let conv of conversationsList"
+              *ngFor="let conv of unreadConversations"
               [class.unread]="!conv.isRead"
               (click)="openConversation(conv)">
               <div class="conv-avatar" [style.background]="getAvatarColor(conv.senderName)">
@@ -50,7 +50,7 @@
               <span class="unread-dot" *ngIf="!conv.isRead"></span>
             </div>
 
-            <div class="empty-conversations" *ngIf="conversationsList.length === 0">
+            <div class="empty-conversations" *ngIf="unreadConversations.length === 0">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
               <p>No messages yet.</p>
             </div>

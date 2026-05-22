@@ -3,6 +3,7 @@ package com.example.gpiApp.service;
 import com.example.gpiApp.dto.ApiResponse;
 import com.example.gpiApp.dto.PagedResponse;
 import com.example.gpiApp.dto.SupportTicketDTO;
+import com.example.gpiApp.entity.Notification;
 import com.example.gpiApp.entity.SupportTicket;
 import com.example.gpiApp.entity.allUsers;
 import com.example.gpiApp.repository.SupportTicketRepository;
@@ -25,6 +26,7 @@ public class SupportTicketService {
 
     private final SupportTicketRepository ticketRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public PagedResponse<SupportTicketDTO> getAllTickets(int page, int size) {
@@ -88,6 +90,20 @@ public class SupportTicketService {
                 .build();
 
         SupportTicket saved = ticketRepository.save(ticket);
+
+        // Notify all admins about the new support ticket
+        String notifTitle = "New Support Ticket";
+        String notifMsg = user.getFirstName() + " " + user.getLastName()
+                + " submitted a ticket: \"" + subject + "\"";
+        List<allUsers> admins = userRepository.findByRole(allUsers.Role.ADMIN);
+        for (allUsers admin : admins) {
+            notificationService.createNotification(
+                    admin.getId(), notifTitle, notifMsg,
+                    Notification.NotificationType.SYSTEM,
+                    saved.getId(), "SUPPORT_TICKET"
+            );
+        }
+
         return ApiResponse.success("Ticket created successfully", convertToDTO(saved));
     }
 
@@ -100,6 +116,17 @@ public class SupportTicketService {
                         ticket.setResolvedAt(LocalDateTime.now());
                     }
                     SupportTicket saved = ticketRepository.save(ticket);
+
+                    // Notify the ticket owner of the status change
+                    String statusLabel = status.charAt(0) + status.substring(1).toLowerCase().replace('_', ' ');
+                    notificationService.createNotification(
+                            saved.getUser().getId(),
+                            "Support Ticket Updated",
+                            "Your ticket \"" + saved.getSubject() + "\" status changed to: " + statusLabel,
+                            Notification.NotificationType.SYSTEM,
+                            saved.getId(), "SUPPORT_TICKET"
+                    );
+
                     return ApiResponse.success("Ticket status updated", convertToDTO(saved));
                 })
                 .orElse(ApiResponse.error("Ticket not found"));

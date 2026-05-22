@@ -3,6 +3,7 @@ package com.example.gpiApp.service;
 import com.example.gpiApp.dto.*;
 import com.example.gpiApp.entity.ActivityLog;
 import com.example.gpiApp.entity.Deliverable;
+import com.example.gpiApp.entity.Notification;
 import com.example.gpiApp.repository.DeliverableRepository;
 import com.example.gpiApp.repository.TaskRepository;
 import com.example.gpiApp.repository.UserRepository;
@@ -20,11 +21,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class DeliverableService {
-    
+
     private final DeliverableRepository deliverableRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ActivityLogService activityLogService;
+    private final NotificationService notificationService;
     
     @Transactional(readOnly = true)
     public PagedResponse<DeliverableDTO> getAllDeliverables(int page, int size) {
@@ -77,7 +79,7 @@ public class DeliverableService {
                     .build();
             
             Deliverable savedDeliverable = deliverableRepository.save(deliverable);
-            
+
             // Log activity
             activityLogService.logActivity(
                 ActivityLog.ActivityType.DELIVERABLE_SUBMITTED,
@@ -87,7 +89,20 @@ public class DeliverableService {
                 savedDeliverable.getId(),
                 null
             );
-            
+
+            // Notify the project manager
+            if (task.getProject() != null && task.getProject().getManager() != null) {
+                notificationService.createNotification(
+                        task.getProject().getManager().getId(),
+                        "New Deliverable Submitted",
+                        user.getFirstName() + " " + user.getLastName()
+                                + " submitted \"" + savedDeliverable.getFileName()
+                                + "\" for task \"" + task.getName() + "\"",
+                        Notification.NotificationType.TASK_UPDATED,
+                        savedDeliverable.getId(), "DELIVERABLE"
+                );
+            }
+
             return ApiResponse.success("Deliverable submitted successfully", convertToDTOSafe(savedDeliverable));
         } catch (Exception e) {
             e.printStackTrace();
@@ -107,9 +122,9 @@ public class DeliverableService {
                             .ifPresent(deliverable::setReviewedBy);
                     
                     Deliverable updatedDeliverable = deliverableRepository.save(deliverable);
-                    
+
                     // Log activity
-                    userRepository.findById(reviewerId).ifPresent(user -> 
+                    userRepository.findById(reviewerId).ifPresent(user ->
                         activityLogService.logActivity(
                             ActivityLog.ActivityType.DELIVERABLE_REVIEWED,
                             "Deliverable '" + updatedDeliverable.getFileName() + "' was " + request.getStatus().toString().toLowerCase(),
@@ -119,7 +134,20 @@ public class DeliverableService {
                             null
                         )
                     );
-                    
+
+                    // Notify the submitter of the review outcome
+                    if (updatedDeliverable.getSubmittedBy() != null) {
+                        String statusLabel = request.getStatus() == Deliverable.DeliverableStatus.APPROVED
+                                ? "approved" : "rejected";
+                        notificationService.createNotification(
+                                updatedDeliverable.getSubmittedBy().getId(),
+                                "Deliverable " + (statusLabel.equals("approved") ? "Approved" : "Rejected"),
+                                "Your deliverable \"" + updatedDeliverable.getFileName() + "\" has been " + statusLabel + ".",
+                                Notification.NotificationType.TASK_UPDATED,
+                                updatedDeliverable.getId(), "DELIVERABLE"
+                        );
+                    }
+
                     return ApiResponse.success("Deliverable reviewed successfully", convertToDTO(updatedDeliverable));
                 })
                 .orElse(ApiResponse.error("Deliverable not found"));

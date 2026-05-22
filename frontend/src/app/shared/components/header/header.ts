@@ -226,6 +226,10 @@ export class HeaderComponent implements OnInit {
     };
   }
 
+  get unreadConversations(): DisplayConversation[] {
+    return this.conversationsList.filter(c => !c.isRead);
+  }
+
   toggleMessages(): void {
     this.showMessages = !this.showMessages;
     this.showNotifications = false;
