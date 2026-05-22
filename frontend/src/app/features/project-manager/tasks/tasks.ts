@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
@@ -74,7 +74,6 @@ export class PmTasksComponent implements OnInit {
     private projectService: ProjectService,
     private userService: UserService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef,
     private toast: ToastService
   ) {}
 
@@ -142,14 +141,12 @@ export class PmTasksComponent implements OnInit {
           this.applyFilters();
         } finally {
           this.loading = false;
-          this.cdr.detectChanges();
         }
       },
       error: () => {
         this.allTasks = [];
         this.applyFilters();
         this.loading = false;
-        this.cdr.detectChanges();
       }
     });
   }

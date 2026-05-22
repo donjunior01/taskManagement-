@@ -34,6 +34,7 @@ public class ReportService {
 
     // ── Existing reports ────────────────────────────────────────────────────
 
+    @Transactional(readOnly = true)
     public byte[] generateTasksReport(Long projectId) throws JRException {
         List<Task> tasks = projectId != null
             ? taskRepository.findByProjectId(projectId, org.springframework.data.domain.Pageable.unpaged()).getContent()
@@ -44,6 +45,8 @@ public class ReportService {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("title", projectId != null ? "Tasks Report for Project" : "All Tasks Report");
         parameters.put("generatedBy", "Task Management System");
+        parameters.put("COMPANY_NAME", "GPI Enterprise");
+        parameters.put("COMPANY_TAGLINE", "Project & Task Management Platform");
 
         InputStream reportStream = getClass().getResourceAsStream("/reports/tasks_report.jrxml");
         JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
@@ -106,7 +109,7 @@ public class ReportService {
 
             return new ProjectHealthData(
                 project.getName(),
-                project.getStatus().name(),
+                project.getStatus() != null ? project.getStatus().name() : "PLANNED",
                 project.getProgress() != null ? project.getProgress() : 0,
                 totalTasks,
                 completedTasks,
@@ -194,8 +197,8 @@ public class ReportService {
                 task.getName(),
                 projectName,
                 assigneeName,
-                task.getPriority().name(),
-                task.getStatus().name(),
+                task.getPriority() != null ? task.getPriority().name() : "MEDIUM",
+                task.getStatus() != null ? task.getStatus().name() : "PLANNED",
                 task.getDeadline() != null ? task.getDeadline().toString() : "N/A",
                 task.getProgress() != null ? task.getProgress() : 0
             );

@@ -4,160 +4,217 @@
               xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
               http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
               name="ProjectHealthReport" pageWidth="595" pageHeight="842"
+              whenNoDataType="AllSectionsNoDetail"
               columnWidth="555" leftMargin="20" rightMargin="20"
               topMargin="20" bottomMargin="20">
 
-    <parameter name="title" class="java.lang.String"/>
-    <parameter name="generatedBy" class="java.lang.String"/>
+    <!--
+    ==========================================================================
+    COMPANY BRANDING — EDIT HERE
+    Update the defaultValueExpression values below to change the company name
+    and tagline shown at the top of every generated report.
+    ==========================================================================
+    -->
+    <parameter name="COMPANY_NAME" class="java.lang.String">
+        <defaultValueExpression><![CDATA["GPI Enterprise"]]></defaultValueExpression>
+    </parameter>
+    <parameter name="COMPANY_TAGLINE" class="java.lang.String">
+        <defaultValueExpression><![CDATA["Project & Task Management Platform"]]></defaultValueExpression>
+    </parameter>
+    <parameter name="title" class="java.lang.String">
+        <defaultValueExpression><![CDATA["Project Health Report"]]></defaultValueExpression>
+    </parameter>
+    <parameter name="generatedBy" class="java.lang.String">
+        <defaultValueExpression><![CDATA["System"]]></defaultValueExpression>
+    </parameter>
 
-    <field name="projectName" class="java.lang.String"/>
-    <field name="status" class="java.lang.String"/>
+    <field name="projectName"    class="java.lang.String"/>
+    <field name="status"         class="java.lang.String"/>
     <field name="progressPercent" class="java.lang.Integer"/>
-    <field name="totalTasks" class="java.lang.Integer"/>
+    <field name="totalTasks"     class="java.lang.Integer"/>
     <field name="completedTasks" class="java.lang.Integer"/>
-    <field name="pendingTasks" class="java.lang.Integer"/>
-    <field name="startDate" class="java.lang.String"/>
-    <field name="endDate" class="java.lang.String"/>
+    <field name="pendingTasks"   class="java.lang.Integer"/>
+    <field name="startDate"      class="java.lang.String"/>
+    <field name="endDate"        class="java.lang.String"/>
 
+    <!-- ═══════════════════  TITLE BAND  ═══════════════════ -->
     <title>
-        <band height="70">
+        <band height="92">
+            <!-- Navy background -->
             <rectangle>
-                <reportElement mode="Opaque" x="0" y="0" width="555" height="55" backcolor="#0F172A" forecolor="#0F172A"/>
-                <graphicElement>
-                    <pen lineWidth="0.0"/>
-                </graphicElement>
+                <reportElement mode="Opaque" x="0" y="0" width="555" height="75"
+                               backcolor="#1E3A5F" forecolor="#1E3A5F"/>
+                <graphicElement><pen lineWidth="0.0"/></graphicElement>
             </rectangle>
-            <staticText>
-                <reportElement x="15" y="10" width="525" height="28" forecolor="#FFFFFF"/>
-                <textElement textAlignment="Left" fontName="Arial" fontSize="16" isBold="true"/>
-                <text><![CDATA[Project Health Report]]></text>
-            </staticText>
-            <staticText>
-                <reportElement x="15" y="40" width="280" height="12" forecolor="#94A3B8"/>
-                <textElement fontName="Arial" fontSize="8"/>
-                <text><![CDATA[Task Management System — Executive Report]]></text>
-            </staticText>
+            <!-- Company name — EDIT defaultValueExpression above to change this -->
             <textField>
-                <reportElement x="355" y="40" width="200" height="12" forecolor="#94A3B8"/>
-                <textElement textAlignment="Right" fontName="Arial" fontSize="8"/>
-                <textFieldExpression><![CDATA["Generated: " + new java.text.SimpleDateFormat("MMM dd, yyyy").format(new java.util.Date())]]></textFieldExpression>
+                <reportElement x="16" y="10" width="400" height="28" forecolor="#FFFFFF"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="18" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{COMPANY_NAME}]]></textFieldExpression>
             </textField>
+            <!-- Tagline -->
+            <textField>
+                <reportElement x="16" y="40" width="310" height="14" forecolor="#93C5FD"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{COMPANY_TAGLINE}]]></textFieldExpression>
+            </textField>
+            <!-- Report label -->
+            <staticText>
+                <reportElement x="16" y="56" width="230" height="14" forecolor="#BFDBFE"/>
+                <textElement>
+                    <font fontName="SansSerif" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[PROJECT HEALTH REPORT]]></text>
+            </staticText>
+            <!-- Generated date -->
+            <textField>
+                <reportElement x="340" y="58" width="210" height="12" forecolor="#93C5FD"/>
+                <textElement textAlignment="Right">
+                    <font fontName="SansSerif" size="7"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Generated: " + new java.text.SimpleDateFormat("MMM dd, yyyy  HH:mm").format(new java.util.Date())]]></textFieldExpression>
+            </textField>
+            <!-- Blue accent line -->
+            <rectangle>
+                <reportElement mode="Opaque" x="0" y="75" width="555" height="4"
+                               backcolor="#2563EB" forecolor="#2563EB"/>
+                <graphicElement><pen lineWidth="0.0"/></graphicElement>
+            </rectangle>
         </band>
     </title>
 
+    <!-- ═══════════════════  COLUMN HEADER  ═══════════════════ -->
     <columnHeader>
         <band height="26">
             <rectangle>
-                <reportElement mode="Opaque" x="0" y="0" width="555" height="26" backcolor="#2563EB" forecolor="#2563EB"/>
-                <graphicElement>
-                    <pen lineWidth="0.0"/>
-                </graphicElement>
+                <reportElement mode="Opaque" x="0" y="0" width="555" height="26"
+                               backcolor="#1D4ED8" forecolor="#1D4ED8"/>
+                <graphicElement><pen lineWidth="0.0"/></graphicElement>
             </rectangle>
             <staticText>
-                <reportElement x="4" y="5" width="130" height="16" forecolor="#FFFFFF"/>
-                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <reportElement x="4" y="5" width="138" height="16" forecolor="#FFFFFF"/>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Project Name]]></text>
             </staticText>
             <staticText>
-                <reportElement x="138" y="5" width="60" height="16" forecolor="#FFFFFF"/>
-                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <reportElement x="142" y="5" width="62" height="16" forecolor="#FFFFFF"/>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Status]]></text>
             </staticText>
             <staticText>
-                <reportElement x="202" y="5" width="50" height="16" forecolor="#FFFFFF"/>
-                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <reportElement x="204" y="5" width="48" height="16" forecolor="#FFFFFF"/>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Progress]]></text>
             </staticText>
             <staticText>
-                <reportElement x="255" y="5" width="45" height="16" forecolor="#FFFFFF"/>
-                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <reportElement x="252" y="5" width="40" height="16" forecolor="#FFFFFF"/>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Total]]></text>
             </staticText>
             <staticText>
-                <reportElement x="303" y="5" width="60" height="16" forecolor="#FFFFFF"/>
-                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <reportElement x="292" y="5" width="58" height="16" forecolor="#FFFFFF"/>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Completed]]></text>
             </staticText>
             <staticText>
-                <reportElement x="366" y="5" width="50" height="16" forecolor="#FFFFFF"/>
-                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <reportElement x="350" y="5" width="52" height="16" forecolor="#FFFFFF"/>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Pending]]></text>
             </staticText>
             <staticText>
-                <reportElement x="419" y="5" width="68" height="16" forecolor="#FFFFFF"/>
-                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <reportElement x="402" y="5" width="72" height="16" forecolor="#FFFFFF"/>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Start Date]]></text>
             </staticText>
             <staticText>
-                <reportElement x="490" y="5" width="62" height="16" forecolor="#FFFFFF"/>
-                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <reportElement x="474" y="5" width="77" height="16" forecolor="#FFFFFF"/>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[End Date]]></text>
             </staticText>
         </band>
     </columnHeader>
 
+    <!-- ═══════════════════  DETAIL ROWS  ═══════════════════ -->
     <detail>
         <band height="22">
+            <!-- Alternating row highlight on even rows -->
+            <rectangle>
+                <reportElement mode="Opaque" x="0" y="0" width="555" height="22"
+                               backcolor="#EFF6FF" forecolor="#EFF6FF">
+                    <printWhenExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></printWhenExpression>
+                </reportElement>
+                <graphicElement><pen lineWidth="0.0"/></graphicElement>
+            </rectangle>
             <line>
-                <reportElement x="0" y="21" width="555" height="1" forecolor="#E2E8F0"/>
+                <reportElement x="0" y="21" width="555" height="1" forecolor="#DBEAFE"/>
             </line>
             <textField isBlankWhenNull="true">
-                <reportElement x="4" y="4" width="130" height="14"/>
-                <textElement fontName="Arial" fontSize="8" isBold="true"/>
+                <reportElement x="4" y="4" width="134" height="14"/>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$F{projectName}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="138" y="4" width="60" height="14"/>
-                <textElement fontName="Arial" fontSize="8"/>
+                <reportElement x="142" y="4" width="58" height="14"/>
+                <textElement><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$F{status}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="202" y="4" width="50" height="14"/>
-                <textElement fontName="Arial" fontSize="8"/>
-                <textFieldExpression><![CDATA[$F{progressPercent} + "%"]]></textFieldExpression>
+                <reportElement x="204" y="4" width="44" height="14"/>
+                <textElement><font fontName="SansSerif" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{progressPercent} != null ? $F{progressPercent} + "%" : "0%"]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="255" y="4" width="45" height="14"/>
-                <textElement fontName="Arial" fontSize="8"/>
+                <reportElement x="252" y="4" width="36" height="14"/>
+                <textElement><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$F{totalTasks}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="303" y="4" width="60" height="14"/>
-                <textElement fontName="Arial" fontSize="8"/>
+                <reportElement x="292" y="4" width="54" height="14"/>
+                <textElement><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$F{completedTasks}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="366" y="4" width="50" height="14"/>
-                <textElement fontName="Arial" fontSize="8"/>
+                <reportElement x="350" y="4" width="48" height="14"/>
+                <textElement><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$F{pendingTasks}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="419" y="4" width="68" height="14"/>
-                <textElement fontName="Arial" fontSize="8"/>
+                <reportElement x="402" y="4" width="68" height="14"/>
+                <textElement><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$F{startDate}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="490" y="4" width="62" height="14"/>
-                <textElement fontName="Arial" fontSize="8"/>
+                <reportElement x="474" y="4" width="73" height="14"/>
+                <textElement><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$F{endDate}]]></textFieldExpression>
             </textField>
         </band>
     </detail>
 
+    <!-- ═══════════════════  PAGE FOOTER  ═══════════════════ -->
     <pageFooter>
-        <band height="20">
+        <band height="22">
             <line>
                 <reportElement x="0" y="0" width="555" height="1" forecolor="#CBD5E1"/>
             </line>
-            <staticText>
-                <reportElement x="0" y="4" width="280" height="13" forecolor="#94A3B8"/>
-                <textElement fontName="Arial" fontSize="7"/>
-                <text><![CDATA[© Task Management System — Confidential]]></text>
-            </staticText>
             <textField>
-                <reportElement x="420" y="4" width="135" height="13" forecolor="#94A3B8"/>
-                <textElement textAlignment="Right" fontName="Arial" fontSize="7"/>
-                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+                <reportElement x="0" y="5" width="300" height="13" forecolor="#94A3B8"/>
+                <textElement><font fontName="SansSerif" size="7"/></textElement>
+                <textFieldExpression><![CDATA["© " + $P{COMPANY_NAME} + " — Confidential"]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="390" y="5" width="95" height="13" forecolor="#94A3B8"/>
+                <textElement textAlignment="Right"><font fontName="SansSerif" size="7"/></textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " of "]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement x="485" y="5" width="70" height="13" forecolor="#94A3B8"/>
+                <textElement><font fontName="SansSerif" size="7"/></textElement>
+                <textFieldExpression><![CDATA[$V{PAGE_COUNT}]]></textFieldExpression>
             </textField>
         </band>
     </pageFooter>
