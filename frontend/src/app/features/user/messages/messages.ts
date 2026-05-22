@@ -93,23 +93,19 @@ export class UserMessagesComponent implements OnInit {
           const rawProjects = response && response.data ? response.data : [];
           this.mapProjectsToGroupConversations(rawProjects);
         } catch (e) {
-          console.error('Error processing projects list, seeding mock fallback:', e);
-          this.seedMockProjectGroups();
+          console.error('Error processing projects list:', e);
+          this.contacts = [];
+          this.filteredContacts = [];
         } finally {
           this.loadingContacts = false;
           this.cdr.detectChanges();
         }
       },
-      error: (err: any) => {
-        console.warn('API projects service offline, seeding project groups list:', err);
-        try {
-          this.seedMockProjectGroups();
-        } catch (e) {
-          console.error('Error in fallback seed:', e);
-        } finally {
-          this.loadingContacts = false;
-          this.cdr.detectChanges();
-        }
+      error: () => {
+        this.contacts = [];
+        this.filteredContacts = [];
+        this.loadingContacts = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -130,11 +126,10 @@ export class UserMessagesComponent implements OnInit {
       };
     });
 
-    if (this.contacts.length === 0) {
-      this.seedMockProjectGroups();
-    } else {
+    if (this.contacts.length > 0) {
       this.selectDefaultContact();
     }
+    this.filteredContacts = [...this.contacts];
   }
 
   private selectDefaultContact(): void {
@@ -168,20 +163,7 @@ export class UserMessagesComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: () => {
-        console.warn("API Messages offline or empty, loading fallback project thread");
-        if (projectId === 101) {
-          this.messageThread = [
-            { id: 1, senderId: 105, senderName: 'Olivia Vance', text: `Hello team, welcome to the Cloud Migration core group.`, timestamp: '10:15 AM', isSelf: false, status: 'READ' },
-            { id: 2, senderId: 105, senderName: 'Olivia Vance', text: 'Please ensure you check VPC security group rules.', timestamp: '10:16 AM', isSelf: false, status: 'READ' },
-            { id: 3, senderId: this.developerId, senderName: this.developerName, text: 'Hi Olivia! I have set up the public/private subnets and VPC endpoints.', timestamp: '10:20 AM', isSelf: true, status: 'READ' },
-            { id: 4, senderId: 106, senderName: 'Alex Mercer', text: 'Great, I will start configuring the Kubernetes cluster inside those subnets.', timestamp: '10:22 AM', isSelf: false, status: 'READ' }
-          ];
-        } else {
-          this.messageThread = [
-            { id: 1, senderId: 106, senderName: 'Alex Mercer', text: 'Welcome everyone! Let’s coordinate our development deliverables here.', timestamp: 'Yesterday', isSelf: false, status: 'READ' },
-            { id: 2, senderId: this.developerId, senderName: this.developerName, text: 'Sounds good. Pushed initial frontend boilerplate to repository.', timestamp: 'Yesterday', isSelf: true, status: 'READ' }
-          ];
-        }
+        this.messageThread = [];
       }
     });
 
@@ -250,98 +232,6 @@ export class UserMessagesComponent implements OnInit {
       newMsg.status = 'READ';
     }, 1800);
 
-    // Simulate automated real-time reply
-    this.simulateReply(currentText);
-  }
-
-  private simulateReply(userMessage: string): void {
-    if (!this.selectedContact) return;
-
-    const contact = this.selectedContact;
-    const lowerMsg = userMessage.toLowerCase();
-
-    let replyText = 'Understood. I will check this and get back to you shortly.';
-
-    if (contact.id === 101) {
-      if (lowerMsg.includes('vpc') || lowerMsg.includes('aws') || lowerMsg.includes('migration')) {
-        replyText = 'Excellent work on the migration phase. Let’s review the security groups rules during our bridge status meeting.';
-      } else if (lowerMsg.includes('task') || lowerMsg.includes('deliverable') || lowerMsg.includes('deadline')) {
-        replyText = 'Got it. Keep the progress sliders updated in your workspace so we can verify the metrics.';
-      } else if (lowerMsg.includes('hello') || lowerMsg.includes('hi') || lowerMsg.includes('hey')) {
-        replyText = `Hello! How is the development progress going on your assigned tasks?`;
-      }
-    } else {
-      if (lowerMsg.includes('seed') || lowerMsg.includes('docker') || lowerMsg.includes('compose')) {
-        replyText = 'Perfect. Pushing my local changes now so we sync dev-integration.';
-      } else if (lowerMsg.includes('hello') || lowerMsg.includes('hi')) {
-        replyText = 'Hey! Let me know if you need help testing the VPC endpoints!';
-      }
-    }
-
-    setTimeout(() => {
-      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      const replyMsg: ChatMessage = {
-        id: this.messageThread.length + 1,
-        senderId: contact.id,
-        senderName: contact.name.includes('Migration') ? 'Olivia Vance' : 'Alex Mercer',
-        text: replyText,
-        timestamp: timeStr,
-        isSelf: false,
-        status: 'READ'
-      };
-
-      this.messageThread.push(replyMsg);
-      
-      // Update sidebar
-      contact.lastMessageText = replyText;
-      contact.lastMessageTime = timeStr;
-      
-      // If contact is not currently viewed, increase unread (safe fallback)
-      if (this.selectedContact?.id !== contact.id) {
-        contact.unreadCount++;
-      }
-    }, 2000);
-  }
-
-  private seedMockProjectGroups(): void {
-    this.contacts = [
-      {
-        id: 101,
-        name: 'Cloud Migration & Core Infrastructure Group',
-        email: 'Olivia Vance (Lead PM)',
-        role: 'PROJECT_MANAGER',
-        online: true,
-        avatarInitials: 'CM',
-        unreadCount: 0,
-        lastMessageText: 'Perfect. Let’s do 2:00 PM. I’ll send a bridge invite link.',
-        lastMessageTime: '10:22 AM'
-      },
-      {
-        id: 102,
-        name: 'Next-Gen Mobile Commerce Group',
-        email: 'Alex Mercer (Tech Lead)',
-        role: 'DEVELOPER',
-        online: true,
-        avatarInitials: 'NM',
-        unreadCount: 0,
-        lastMessageText: 'Alex: Pushing my local changes now so we sync dev-integration.',
-        lastMessageTime: 'Yesterday'
-      },
-      {
-        id: 103,
-        name: 'Enterprise Data Lake Platform Group',
-        email: 'Marcus Thorne (Architect)',
-        role: 'DEVELOPER',
-        online: false,
-        avatarInitials: 'ED',
-        unreadCount: 0,
-        lastMessageText: 'Marcus: Let’s review the schema diagrams before Wednesday.',
-        lastMessageTime: '3 days ago'
-      }
-    ];
-
-    this.selectDefaultContact();
   }
 
   // ================= TOAST FEEDBACK SYSTEM =================

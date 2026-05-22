@@ -77,21 +77,18 @@ export class AdminUsersComponent implements OnInit {
           this.totalPages = response ? response.totalPages : 0;
           this.applyClientFilters();
         } catch (e) {
-          console.error('Error parsing users list:', e);
-          this.seedMockUsers();
+          this.usersList = [];
+          this.applyClientFilters();
         } finally {
           this.loading = false;
           this.cdr.detectChanges();
         }
       },
-      error: (err: any) => {
-        console.error('Error fetching system user directory, initiating offline seed content:', err);
-        try {
-          this.seedMockUsers();
-        } catch(e) {} finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+      error: () => {
+        this.usersList = [];
+        this.applyClientFilters();
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -364,26 +361,6 @@ export class AdminUsersComponent implements OnInit {
         }
       }
     });
-  }
-
-  // Seeding Fallback offline mock database
-  private seedMockUsers(): void {
-    this.usersList = [
-      { id: 1, username: 'don.junior', email: 'don.junior@company.com', firstName: 'Don', lastName: 'Junior', role: 'ADMIN', isActive: true },
-      { id: 2, username: 'sarah.k', email: 'sarah.k@company.com', firstName: 'Sarah', lastName: 'Kerrigan', role: 'PROJECT_MANAGER', isActive: true },
-      { id: 3, username: 'alex.dev', email: 'alex.dev@company.com', firstName: 'Alex', lastName: 'Mercer', role: 'USER', isActive: true },
-      { id: 4, username: 'david.m', email: 'david.m@company.com', firstName: 'David', lastName: 'Miller', role: 'USER', isActive: true },
-      { id: 5, username: 'marcus.a', email: 'marcus.a@company.com', firstName: 'Marcus', lastName: 'Aurelius', role: 'PROJECT_MANAGER', isActive: true },
-      { id: 6, username: 'elena.r', email: 'elena.r@company.com', firstName: 'Elena', lastName: 'Rostova', role: 'PROJECT_MANAGER', isActive: false },
-      { id: 7, username: 'john.doe', email: 'john.doe@company.com', firstName: 'John', lastName: 'Doe', role: 'USER', isActive: true },
-      { id: 8, username: 'jane.smith', email: 'jane.smith@company.com', firstName: 'Jane', lastName: 'Smith', role: 'USER', isActive: true },
-      { id: 9, username: 'robert.d', email: 'robert.d@company.com', firstName: 'Robert', lastName: 'Downey', role: 'USER', isActive: false },
-      { id: 10, username: 'emma.w', email: 'emma.w@company.com', firstName: 'Emma', lastName: 'Watson', role: 'USER', isActive: true }
-    ];
-    this.totalElements = this.usersList.length;
-    this.totalPages = Math.ceil(this.totalElements / this.pageSize);
-    this.applyClientFilters();
-    this.loading = false;
   }
 
   private resetAddForm(): void {

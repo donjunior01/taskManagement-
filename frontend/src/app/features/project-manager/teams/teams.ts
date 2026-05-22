@@ -81,17 +81,14 @@ export class PmTeamsComponent implements OnInit {
       next: (response: any) => {
         try {
           this.projectsList = response && response.data ? response.data : [];
-          if (this.projectsList.length === 0) {
-            this.seedMockProjects();
-          }
         } catch(e) {
-          this.seedMockProjects();
+          this.projectsList = [];
         } finally {
           this.loadDevelopersAndTasks();
         }
       },
       error: () => {
-        this.seedMockProjects();
+        this.projectsList = [];
         this.loadDevelopersAndTasks();
       }
     });
@@ -110,8 +107,9 @@ export class PmTeamsComponent implements OnInit {
               const rawTasks = taskResponse && taskResponse.data ? taskResponse.data : [];
               this.mapTeamVitals(rawDevs, rawTasks);
             } catch(e) {
-              console.error('Error mapping team vitals:', e);
-              this.seedMockTeam();
+              this.allDevelopers = [];
+              this.calculateTelemetrySummaries();
+              this.applyFilters();
             } finally {
               this.loading = false;
               this.cdr.detectChanges();
@@ -121,7 +119,9 @@ export class PmTeamsComponent implements OnInit {
             try {
               this.mapTeamVitals(rawDevs, []);
             } catch(e) {
-              this.seedMockTeam();
+              this.allDevelopers = [];
+              this.calculateTelemetrySummaries();
+              this.applyFilters();
             } finally {
               this.loading = false;
               this.cdr.detectChanges();
@@ -129,14 +129,12 @@ export class PmTeamsComponent implements OnInit {
           }
         });
       },
-      error: (err: any) => {
-        console.warn('API users service offline, enacting simulated team directory:', err);
-        try {
-          this.seedMockTeam();
-        } catch (e) {} finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+      error: () => {
+        this.allDevelopers = [];
+        this.calculateTelemetrySummaries();
+        this.applyFilters();
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -172,13 +170,8 @@ export class PmTeamsComponent implements OnInit {
       };
     });
 
-    // Seed mock team if no members are active
-    if (this.allDevelopers.length === 0 || this.allDevelopers.every(d => d.assignedProjects.length === 0)) {
-      this.seedMockTeam();
-    } else {
-      this.calculateTelemetrySummaries();
-      this.applyFilters();
-    }
+    this.calculateTelemetrySummaries();
+    this.applyFilters();
   }
 
   calculateTelemetrySummaries(): void {
@@ -323,66 +316,4 @@ export class PmTeamsComponent implements OnInit {
     this.toast.show(message, type);
   }
 
-  // Seeding fallbacks
-  private seedMockProjects(): void {
-    this.projectsList = [
-      { id: 1, name: 'Cloud Migration Core' },
-      { id: 2, name: 'Glassmorphic Design UI' }
-    ];
-  }
-
-  private seedMockTeam(): void {
-    const proj1 = this.projectsList[0];
-    const proj2 = this.projectsList[1];
-
-    this.allDevelopers = [
-      {
-        id: 3,
-        username: 'alexmercer',
-        email: 'alex.mercer@corp.net',
-        firstName: 'Alex',
-        lastName: 'Mercer',
-        assignedProjects: [proj1, proj2],
-        activeTasksCount: 2,
-        completedTasksCount: 4,
-        workloadStatus: 'OPTIMAL'
-      },
-      {
-        id: 4,
-        username: 'davidmiller',
-        email: 'david.miller@corp.net',
-        firstName: 'David',
-        lastName: 'Miller',
-        assignedProjects: [proj1],
-        activeTasksCount: 4,
-        completedTasksCount: 2,
-        workloadStatus: 'OVERLOADED'
-      },
-      {
-        id: 5,
-        username: 'sarahkerrigan',
-        email: 'sarah.k@corp.net',
-        firstName: 'Sarah',
-        lastName: 'Kerrigan',
-        assignedProjects: [proj2],
-        activeTasksCount: 0,
-        completedTasksCount: 5,
-        workloadStatus: 'IDLE'
-      },
-      {
-        id: 6,
-        username: 'jimraynor',
-        email: 'jim.raynor@corp.net',
-        firstName: 'Jim',
-        lastName: 'Raynor',
-        assignedProjects: [],
-        activeTasksCount: 0,
-        completedTasksCount: 0,
-        workloadStatus: 'IDLE'
-      }
-    ];
-
-    this.calculateTelemetrySummaries();
-    this.applyFilters();
-  }
 }

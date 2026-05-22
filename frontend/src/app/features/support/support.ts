@@ -68,26 +68,7 @@ export class SupportComponent implements OnInit {
   ];
 
   // Active tickets list
-  tickets: SupportTicket[] = [
-    {
-      id: 'TKT-8902',
-      subject: 'Unable to export report to CSV',
-      category: 'Reporting Bug',
-      priority: 'HIGH',
-      status: 'IN_PROGRESS',
-      date: 'May 16, 2026',
-      description: 'The CSV export button is loading indefinitely when Website Redesign Q3 is selected.'
-    },
-    {
-      id: 'TKT-8741',
-      subject: 'Invite link not working for backend team',
-      category: 'Account/Access',
-      priority: 'MEDIUM',
-      status: 'RESOLVED',
-      date: 'May 12, 2026',
-      description: 'New backend engineers are receiving a 403 Forbidden error when using the invitation token.'
-    }
-  ];
+  tickets: SupportTicket[] = [];
 
   // Ticket Modal state
   showTicketModal: boolean = false;
@@ -128,9 +109,8 @@ export class SupportComponent implements OnInit {
           }));
           this.cdr.detectChanges();
         }
-        // If empty, keep the default mock tickets shown at startup
       },
-      error: () => { /* keep default mock tickets */ }
+      error: () => {}
     });
   }
 

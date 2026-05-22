@@ -99,13 +99,10 @@ export class PmCalendarComponent implements OnInit {
       next: (response: any) => {
         const projects = response?.data ?? [];
         this.projectsList = projects.map((p: any) => p.name);
-        if (!this.projectsList.length) {
-          this.projectsList = ['Website Redesign Q3','Mobile App V2.0','Backend API Migration','Marketing Campaign Q4','Client Portal Overhaul'];
-        }
         this.fetchCalendarEvents();
       },
       error: () => {
-        this.projectsList = ['Website Redesign Q3','Mobile App V2.0','Backend API Migration','Marketing Campaign Q4','Client Portal Overhaul'];
+        this.projectsList = [];
         this.fetchCalendarEvents();
       }
     });
@@ -129,14 +126,14 @@ export class PmCalendarComponent implements OnInit {
             };
           });
         } else {
-          this.seedMockData();
+          this.eventsList = [];
         }
         this.buildAllViews();
         this.loading = false;
         this.cdr.detectChanges();
       },
       error: () => {
-        this.seedMockData();
+        this.eventsList = [];
         this.buildAllViews();
         this.loading = false;
         this.cdr.detectChanges();
@@ -495,22 +492,4 @@ export class PmCalendarComponent implements OnInit {
     this.toast.show(msg, type);
   }
 
-  private seedMockData(): void { this.buildEvents(); }
-
-  buildEvents(): void {
-    this.eventsList = [];
-    const year = this.currentDate.getFullYear();
-    const month = this.currentDate.getMonth();
-    const d = (day: number) => new Date(year, month, day).toISOString().split('T')[0];
-
-    this.eventsList = [
-      { id: 1, title: 'Design Review Session',          projectName: 'Website Redesign Q3',    time: '10:00 AM', type: 'MEETING',   priority: 'MEDIUM',   notes: `Review high-fidelity mockups with Sarah Jenkins.|DATE:${d(5)}`     },
-      { id: 2, title: 'VPC Security Groups Deployment', projectName: 'Backend API Migration',   time: '05:00 PM', type: 'DEADLINE',  priority: 'CRITICAL', notes: `Final backend security group sign-off.|DATE:${d(12)}`             },
-      { id: 3, title: 'Daily Standup Sync',             projectName: 'Website Redesign Q3',    time: '09:00 AM', type: 'MEETING',   priority: 'LOW',      notes: `Tasks and roadblocks standup.|DATE:${d(14)}`                      },
-      { id: 4, title: 'Mobile App Beta Launch',         projectName: 'Mobile App V2.0',        time: '02:00 PM', type: 'MILESTONE', priority: 'HIGH',     notes: `Launch beta client to stakeholders.|DATE:${d(14)}`               },
-      { id: 5, title: 'SMTP Server Integration Review', projectName: 'Backend API Migration',   time: '12:30 PM', type: 'MEETING',   priority: 'MEDIUM',   notes: `SMTP handshakes code review.|DATE:${d(18)}`                       },
-      { id: 6, title: 'Marketing Plan Sign-off',        projectName: 'Marketing Campaign Q4',  time: '10:00 AM', type: 'MILESTONE', priority: 'HIGH',     notes: `Sign-off final deliverables for Q4 campaign.|DATE:${d(22)}`      },
-      { id: 7, title: 'Client Portal Release',          projectName: 'Client Portal Overhaul', time: '11:00 AM', type: 'DEADLINE',  priority: 'CRITICAL', notes: `Deploy stable version to production servers.|DATE:${d(28)}`      }
-    ];
-  }
 }

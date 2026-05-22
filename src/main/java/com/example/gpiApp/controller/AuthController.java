@@ -4,10 +4,12 @@ import com.example.gpiApp.dto.RegisterRequest;
 import com.example.gpiApp.dto.LoginRequest;
 import com.example.gpiApp.dto.LoginResponse;
 import com.example.gpiApp.dto.ApiResponse;
+import com.example.gpiApp.entity.Notification;
 import com.example.gpiApp.entity.allUsers;
 import com.example.gpiApp.repository.UserRepository;
 import com.example.gpiApp.repository.UserService;
 import com.example.gpiApp.config.security.JwtUtil;
+import com.example.gpiApp.service.NotificationService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,6 +34,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
@@ -90,8 +93,16 @@ public class AuthController {
             user.setLastName(registerRequest.getLastName());
             user.setRole(allUsers.Role.USER); // Default role
 
-            userRepository.save(user);
-            return ResponseEntity.ok(ApiResponse.success("Registration successful! Please sign in.", user));
+            allUsers savedUser = userRepository.save(user);
+            notificationService.createNotification(
+                savedUser.getId(),
+                "Welcome to the system!",
+                "Your account has been created. You can now receive task assignments and project updates.",
+                Notification.NotificationType.SYSTEM,
+                null,
+                null
+            );
+            return ResponseEntity.ok(ApiResponse.success("Registration successful! Please sign in.", savedUser));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Registration failed. Please try again."));

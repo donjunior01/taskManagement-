@@ -59,30 +59,9 @@ export class AdminReportsComponent implements OnInit {
   // Tab Control
   activeTab: 'saved' | 'performance' | 'logs' = 'saved';
 
-  // Saved audits list
-  savedReports: SavedAdminReport[] = [
-    { id: 1, name: 'System Security Audit - Q3', date: 'Oct 1, 2024', size: '2.5 MB', format: 'PDF', selected: true },
-    { id: 2, name: 'SLA Support Performance', date: 'Sep 30, 2024', size: '1.1 MB', format: 'PDF', selected: false },
-    { id: 3, name: 'User Directory Export', date: 'Sep 15, 2024', size: '920 KB', format: 'PDF', selected: false },
-    { id: 4, name: 'Kubernetes Container Vitals', date: 'Sep 10, 2024', size: '3.4 MB', format: 'PDF', selected: false }
-  ];
-
-  // System performance vitals
-  performanceMetrics: SystemPerformanceMetrics[] = [
-    { serviceName: 'Authentication Service', cpuUsage: 35, memoryUsage: 45, status: 'OPTIMAL', responseTime: 85, activeConnections: 1240 },
-    { serviceName: 'Project Management APIs', cpuUsage: 68, memoryUsage: 78, status: 'OPTIMAL', responseTime: 120, activeConnections: 3120 },
-    { serviceName: 'Database Node Main', cpuUsage: 85, memoryUsage: 82, status: 'DEGRADED', responseTime: 240, activeConnections: 450 },
-    { serviceName: 'Notification Socket Stream', cpuUsage: 15, memoryUsage: 25, status: 'OPTIMAL', responseTime: 10, activeConnections: 890 },
-    { serviceName: 'Nginx API Gateway', cpuUsage: 42, memoryUsage: 38, status: 'OPTIMAL', responseTime: 40, activeConnections: 5410 }
-  ];
-
-  // Audit Logs
-  auditLogsList: AuditOperationLog[] = [
-    { id: 101, operatorName: 'Admin User', action: 'Generated Audit Report', target: 'Security Audit - Q3', timestamp: '10 mins ago' },
-    { id: 98, operatorName: 'Sarah Jenkins', action: 'Deleted user account', target: 'David Miller', timestamp: '2 hours ago' },
-    { id: 95, operatorName: 'Admin User', action: 'Updated System Settings', target: 'JWT Token Expiration', timestamp: '5 hours ago' },
-    { id: 92, operatorName: 'Alex Johnson', action: 'Exported project database', target: 'Cloud Migration Core', timestamp: '1 day ago' }
-  ];
+  savedReports: SavedAdminReport[] = [];
+  performanceMetrics: SystemPerformanceMetrics[] = [];
+  auditLogsList: AuditOperationLog[] = [];
 
   // Modals state
   showSettingsModal: boolean = false;

@@ -132,16 +132,15 @@ export class UserCalendarComponent implements OnInit {
           this.loading = false;
           this.cdr.detectChanges();
         } else {
-          this.seedMockData();
+          this.eventsList = [];
           this.extractProjects();
           this.buildAllViews();
           this.loading = false;
           this.cdr.detectChanges();
         }
       },
-      error: (err) => {
-        console.warn('Failed to load events from API, using mock', err);
-        this.seedMockData();
+      error: () => {
+        this.eventsList = [];
         this.extractProjects();
         this.buildAllViews();
         this.loading = false;
@@ -236,29 +235,6 @@ export class UserCalendarComponent implements OnInit {
     const s = `${this.monthNames[startOfWeek.getMonth()].slice(0, 3)} ${startOfWeek.getDate()}`;
     const e = `${this.monthNames[endOfWeek.getMonth()].slice(0, 3)} ${endOfWeek.getDate()}, ${endOfWeek.getFullYear()}`;
     return `${s} – ${e}`;
-  }
-
-  buildEvents(): void {
-    this.eventsList = [];
-    const year = this.currentDate.getFullYear();
-    const month = this.currentDate.getMonth();
-
-    const d5  = new Date(year, month, 5).toISOString().split('T')[0];
-    const d12 = new Date(year, month, 12).toISOString().split('T')[0];
-    const d14 = new Date(year, month, 14).toISOString().split('T')[0];
-    const d18 = new Date(year, month, 18).toISOString().split('T')[0];
-    const d22 = new Date(year, month, 22).toISOString().split('T')[0];
-    const d28 = new Date(year, month, 28).toISOString().split('T')[0];
-
-    this.eventsList.push(
-      { id: 1, title: 'Design Review',      projectName: 'Glassmorphic Design UI',  time: '10:00 AM', type: 'MEETING',   priority: 'MEDIUM',   notes: `Review the high fidelity mockups and feedback.|DATE:${d5}` },
-      { id: 2, title: 'Project Deadline',   projectName: 'Cloud Migration Core',    time: '05:00 PM', type: 'DEADLINE',  priority: 'CRITICAL', notes: `Final workspace milestone delivery and sign-off.|DATE:${d12}` },
-      { id: 3, title: 'Daily Standup',      projectName: 'General Admin',           time: '09:00 AM', type: 'MEETING',   priority: 'LOW',      notes: `Daily sync with the product team.|DATE:${d14}` },
-      { id: 4, title: 'Client Call',        projectName: 'ApexTask Integration',    time: '02:00 PM', type: 'MEETING',   priority: 'HIGH',     notes: `Align integration targets with corporate stakeholders.|DATE:${d14}` },
-      { id: 5, title: 'Team Lunch',         projectName: 'Social Sync',             time: '12:30 PM', type: 'MILESTONE', priority: 'LOW',      notes: `Offsite bonding lunch with the core developer squad.|DATE:${d18}` },
-      { id: 6, title: 'Sprint Kickoff',     projectName: 'ApexTask NextGen',        time: '10:00 AM', type: 'MILESTONE', priority: 'HIGH',     notes: `Review architecture layout specifications and stack standards.|DATE:${d22}` },
-      { id: 7, title: 'Release Deployment', projectName: 'Production Build',        time: '11:59 PM', type: 'DEADLINE',  priority: 'CRITICAL', notes: `Deploy stable hotfixes and token interception strategies.|DATE:${d28}` }
-    );
   }
 
   generateCalendarGrid(): void {
@@ -555,7 +531,4 @@ export class UserCalendarComponent implements OnInit {
     this.toast.show(msg, type);
   }
 
-  private seedMockData(): void {
-    this.buildEvents();
-  }
 }

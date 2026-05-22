@@ -89,21 +89,18 @@ export class AdminProjectsComponent implements OnInit {
           this.totalPages = response ? response.totalPages : 0;
           this.applyClientFilters();
         } catch (e) {
-          console.error('Error parsing projects list:', e);
-          this.seedMockProjects();
+          this.projectsList = [];
+          this.applyClientFilters();
         } finally {
           this.loading = false;
           this.cdr.detectChanges();
         }
       },
-      error: (err: any) => {
-        console.error('API Error fetching backend project directory, spinning offline mock DB:', err);
-        try {
-          this.seedMockProjects();
-        } catch(e) {} finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+      error: () => {
+        this.projectsList = [];
+        this.applyClientFilters();
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -111,24 +108,12 @@ export class AdminProjectsComponent implements OnInit {
   loadProjectManagers(): void {
     this.userService.getAllUsers(0, 100).subscribe({
       next: (response) => {
-        // Filter users to get those with PROJECT_MANAGER role
         this.projectManagers = response.data.filter(u => u.role === 'PROJECT_MANAGER' || u.userType === 'PROJECT_MANAGER');
-        if (this.projectManagers.length === 0) {
-          this.seedMockManagers();
-        }
       },
       error: () => {
-        this.seedMockManagers();
+        this.projectManagers = [];
       }
     });
-  }
-
-  private seedMockManagers(): void {
-    this.projectManagers = [
-      { id: 101, username: 'sarah.k', email: 'sarah.k@company.com', firstName: 'Sarah', lastName: 'Kerrigan', role: 'PROJECT_MANAGER' },
-      { id: 102, username: 'marcus.a', email: 'marcus.a@company.com', firstName: 'Marcus', lastName: 'Aurelius', role: 'PROJECT_MANAGER' },
-      { id: 103, username: 'elena.r', email: 'elena.r@company.com', firstName: 'Elena', lastName: 'Rostova', role: 'PROJECT_MANAGER' }
-    ];
   }
 
   applyClientFilters(): void {
@@ -384,22 +369,6 @@ export class AdminProjectsComponent implements OnInit {
         this.triggerToast(`Optimistic destroy: Removed project "${this.selectedProject?.name}"!`, 'success');
       }
     });
-  }
-
-  // Offline Seeding content
-  private seedMockProjects(): void {
-    this.projectsList = [
-      { id: 1, name: 'Cloud Migration Core', description: 'Migrate the legacy central ERP database systems to high-velocity secure AWS configurations.', managerId: 101, managerName: 'Sarah Kerrigan', startDate: '2026-02-15', endDate: '2026-06-30', status: 'IN_PROGRESS', progress: 75, taskCount: 24, teamCount: 6 },
-      { id: 2, name: 'Glassmorphic Design UI', description: 'Revamp the central system layout interfaces with modern, attractive, neon glassmorphic components.', managerId: 103, managerName: 'Elena Rostova', startDate: '2026-03-01', endDate: '2026-05-30', status: 'IN_PROGRESS', progress: 40, taskCount: 16, teamCount: 4 },
-      { id: 3, name: 'ISO 27001 Compliance Audit', description: 'Evaluate corporate compliance standards, establish activity timelog structures, and perform auditing reviews.', managerId: 102, managerName: 'Marcus Aurelius', startDate: '2026-01-10', endDate: '2026-03-15', status: 'COMPLETED', progress: 100, taskCount: 8, teamCount: 3 },
-      { id: 4, name: 'Mobile App Integration', description: 'Build structural backend endpoints and integrate standard Android and iOS device native modules.', managerId: 101, managerName: 'Sarah Kerrigan', startDate: '2026-05-01', endDate: '2026-09-15', status: 'PLANNED', progress: 0, taskCount: 12, teamCount: 5 },
-      { id: 5, name: 'Cyber Security Shield 2.0', description: 'Incorporate centralized threat intelligence APIs, token guards, and real-time JWT verification schemas.', managerId: 102, managerName: 'Marcus Aurelius', startDate: '2026-04-10', endDate: '2026-07-20', status: 'ON_HOLD', progress: 15, taskCount: 20, teamCount: 8 },
-      { id: 6, name: 'SaaS Billing Core Portal', description: 'Integrate corporate credit pathways and manage automated stripe subscription validation routines.', managerId: 103, managerName: 'Elena Rostova', startDate: '2026-05-10', endDate: '2026-08-30', status: 'PLANNED', progress: 0, taskCount: 5, teamCount: 2 }
-    ];
-    this.totalElements = this.projectsList.length;
-    this.totalPages = Math.ceil(this.totalElements / this.pageSize);
-    this.applyClientFilters();
-    this.loading = false;
   }
 
   private resetAddForm(): void {

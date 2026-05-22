@@ -313,44 +313,4 @@ export class PmDashboardComponent implements OnInit {
     this.toast.show(message, type);
   }
 
-  // Fallback seed data
-  private seedMockStats(): void {
-    this.stats = { totalTasks: 248, activeTasks: 79, completedTasks: 169, overdueTasks: 0, taskCompletionRate: 68, teamMembers: 12 };
-  }
-
-  private seedMockProjects(): void {
-    this.projectsList = [
-      { id: 1, name: 'Website Redesign Q3', description: 'Track project health, team velocity, and deliverables.', startDate: '2026-05-10', endDate: '2026-06-30', status: 'IN_PROGRESS', progress: 75, taskCount: 54, teamCount: 4 },
-      { id: 2, name: 'Mobile App V2.0', description: 'Complete mobile client experience redesign and native integrations.', startDate: '2026-05-12', endDate: '2026-05-28', status: 'IN_PROGRESS', progress: 40, taskCount: 88, teamCount: 5 },
-      { id: 3, name: 'Backend API Migration', description: 'Migrating backend endpoints to high performance Spring Boot gateways.', startDate: '2026-06-01', endDate: '2026-07-15', status: 'IN_PROGRESS', progress: 90, taskCount: 42, teamCount: 3 },
-      { id: 4, name: 'Marketing Campaign Q4', description: 'Prepare materials and campaigns for MTN Q4 promotions.', startDate: '2026-04-01', endDate: '2026-08-31', status: 'IN_PROGRESS', progress: 15, taskCount: 30, teamCount: 2 },
-      { id: 5, name: 'Client Portal Overhaul', description: 'Rebuild core client portal using modern Angular architectures.', startDate: '2026-03-01', endDate: '2026-09-30', status: 'IN_PROGRESS', progress: 60, taskCount: 34, teamCount: 4 }
-    ];
-  }
-
-  private seedMockDeadlines(): void {
-    this.upcomingDeadlines = [
-      { taskName: 'Finalize Design Mockups', projectName: 'Website Redesign Q3', dueDate: 'Today', dueDateClass: 'today', assigneeName: 'Alex Johnson' },
-      { taskName: 'API Endpoint Spec Review', projectName: 'Backend API Migration', dueDate: 'Tomorrow', dueDateClass: 'tomorrow', assigneeName: 'Carlos Rodriguez' },
-      { taskName: 'User Testing Session 1', projectName: 'Mobile App V2.0', dueDate: 'Jun 18', dueDateClass: 'future', assigneeName: 'Maya Ndlovu' },
-      { taskName: 'Campaign Asset Delivery', projectName: 'Marketing Campaign Q4', dueDate: 'Jun 19', dueDateClass: 'future', assigneeName: 'Leila Hassan' }
-    ];
-  }
-
-  private seedMockSubmissions(): void {
-    this.pendingSubmissions = [
-      { id: 1, taskName: 'Setup VPC Security Groups', projectName: 'Backend API Migration', taskId: 1, submittedBy: 'Alex Johnson', submittedById: 3, submissionDate: '2026-05-17 14:30', fileName: 'vpc_security_groups.tf', fileSize: '12.4 KB', status: 'PENDING' },
-      { id: 2, taskName: 'Design Translucent Cards', projectName: 'Website Redesign Q3', taskId: 2, submittedBy: 'Carlos Rodriguez', submittedById: 4, submissionDate: '2026-05-17 12:15', fileName: 'glassmorphic_styles.scss', fileSize: '8.2 KB', status: 'PENDING' },
-      { id: 3, taskName: 'SMTP Mail Server Handshakes', projectName: 'Backend API Migration', taskId: 5, submittedBy: 'Leila Hassan', submittedById: 5, submissionDate: '2026-05-16 16:45', fileName: 'smtp_handshakes.js', fileSize: '4.8 KB', status: 'PENDING' }
-    ];
-  }
-
-  private seedMockActivities(): void {
-    this.activitiesList = [
-      { id: 1, developerName: 'Alex Johnson', action: 'completed task', taskName: 'Implement User Dashboard', timestamp: '10 mins ago', details: 'Mobile App V2.0', activityType: 'TASK_COMPLETED' },
-      { id: 2, developerName: 'Maya Ndlovu', action: 'uploaded deliverable', taskName: 'Auth Flow Sequence Diagram', timestamp: '45 mins ago', details: 'Mobile App V2.0', activityType: 'DELIVERABLE_UPLOADED' },
-      { id: 3, developerName: 'Carlos Rodriguez', action: 'commented on', taskName: 'API Endpoints Documentation', timestamp: '2 hours ago', details: 'Backend API Migration', activityType: 'COMMENT_ADDED' },
-      { id: 4, developerName: 'Leila Hassan', action: 'started working on', taskName: 'Database Schema Update', timestamp: '3 hours ago', details: 'Backend API Migration', activityType: 'TASK_STARTED' }
-    ];
-  }
 }

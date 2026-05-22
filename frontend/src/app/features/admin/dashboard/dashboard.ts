@@ -45,13 +45,8 @@ export class AdminDashboardComponent implements OnInit {
   showAddUserModal: boolean = false;
   showCreateProjectModal: boolean = false;
   
-  // Chart Data
-  userGrowthData: number[] = [12, 18, 24, 28, 35, 42, 48]; // Mock history
-  supportTickets = {
-    open: 14,
-    inProgress: 5,
-    resolved: 81
-  };
+  userGrowthData: number[] = [];
+  supportTickets = { open: 0, inProgress: 0, resolved: 0 };
 
   get projectDistribution() {
     const planned = this.stats.totalProjects - this.stats.activeProjects - this.stats.completedProjects - this.stats.onHoldProjects;
@@ -102,7 +97,6 @@ export class AdminDashboardComponent implements OnInit {
     this.loadDashboardData();
     this.loadProjectManagers();
     this.loadRecentProjects();
-    this.seedActivityLogs();
   }
 
   loadDashboardData(): void {
@@ -113,42 +107,16 @@ export class AdminDashboardComponent implements OnInit {
           this.stats = data && data.data ? data.data : (data || {});
         } catch (e) {
           console.error('Error parsing admin stats:', e);
-          this.setFallbackStats();
         } finally {
           this.loadingStats = false;
           this.cdr.detectChanges();
         }
       },
-      error: (err) => {
-        console.error('Error fetching dashboard statistics, seeding fallback content:', err);
-        this.setFallbackStats();
+      error: () => {
         this.loadingStats = false;
         this.cdr.detectChanges();
       }
     });
-  }
-
-  private setFallbackStats(): void {
-    this.stats = {
-      totalUsers: 48,
-      activeUsers: 42,
-      inactiveUsers: 6,
-      newUsersThisMonth: 12,
-      
-      totalProjects: 12,
-      activeProjects: 8,
-      completedProjects: 3,
-      onHoldProjects: 1,
-      
-      totalTasks: 184,
-      activeTasks: 62,
-      completedTasks: 122,
-      overdueTasks: 15,
-      taskCompletionRate: 66.3,
-      
-      totalTeams: 5,
-      teamMembers: 35
-    };
   }
 
   loadProjectManagers(): void {
@@ -170,13 +138,6 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
-  private seedMockProjectManagers(): void {
-    this.projectManagers = [
-      { id: 101, username: 'sarah.k', email: 'sarah.k@apex.com', firstName: 'Sarah', lastName: 'Kerrigan', role: 'PROJECT_MANAGER' },
-      { id: 102, username: 'marcus.a', email: 'marcus.a@apex.com', firstName: 'Marcus', lastName: 'Aurelius', role: 'PROJECT_MANAGER' },
-      { id: 103, username: 'elena.r', email: 'elena.r@apex.com', firstName: 'Elena', lastName: 'Rostova', role: 'PROJECT_MANAGER' }
-    ];
-  }
 
   loadRecentProjects(): void {
     this.projectService.getAllProjects(0, 15).subscribe({
@@ -194,25 +155,6 @@ export class AdminDashboardComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
-  }
-
-  private seedMockProjects(): void {
-    this.recentProjects = [
-      { id: 1, name: 'Cloud Migration Core', description: 'Migrating legacy ERP services to AWS.', progress: 75, status: 'IN_PROGRESS', managerName: 'Sarah Kerrigan', taskCount: 24 },
-      { id: 2, name: 'Glassmorphic Design UI', description: 'Design revamp of the core user interface.', progress: 40, status: 'IN_PROGRESS', managerName: 'Elena Rostova', taskCount: 16 },
-      { id: 3, name: 'ISO 27001 Compliance Audit', description: 'Securing structural audits and verification logs.', progress: 95, status: 'IN_PROGRESS', managerName: 'Marcus Aurelius', taskCount: 8 },
-      { id: 4, name: 'Q3 Financial Reporting', description: 'Quarterly financial aggregation system.', progress: 100, status: 'COMPLETED', managerName: 'David Miller', taskCount: 32 },
-      { id: 5, name: 'Mobile App Optimization', description: 'Performance tuning for React Native clients.', progress: 20, status: 'IN_PROGRESS', managerName: 'Sarah Kerrigan', taskCount: 12 },
-      { id: 6, name: 'Database Sharding Phase 1', description: 'Scaling PostgreSQL clusters for EU region.', progress: 0, status: 'PLANNED', managerName: 'Marcus Aurelius', taskCount: 45 }
-    ];
-  }
-
-  seedActivityLogs(): void {
-    this.recentActivity = [
-      { id: 1, type: 'user_reg', message: 'New user account created for David Miller (Developer)', timestamp: '10 mins ago', user: 'Admin' },
-      { id: 2, type: 'proj_create', message: 'Project "ISO 27001 Compliance Audit" created', timestamp: '1 hour ago', user: 'Admin' },
-      { id: 3, type: 'task_del', message: 'Task #492 removed from Cloud Migration core', timestamp: '3 hours ago', user: 'System' }
-    ];
   }
 
   // Create User DTO submission

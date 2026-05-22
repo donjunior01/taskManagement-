@@ -739,6 +739,15 @@
         visibility: visible;
       }
 
+      .bubble-sender-name {
+        display: block;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--primary, #2563eb);
+        margin-bottom: 2px;
+        letter-spacing: 0.01em;
+      }
+
       .message-text {
         font-size: 13px;
         line-height: 1.5;

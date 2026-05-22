@@ -176,6 +176,9 @@
                   </svg>
                 </button>
 
+                <!-- Sender name (for all non-self messages including attachments) -->
+                <span class="bubble-sender-name" *ngIf="!message.isSelf && message.attachmentType">{{ message.senderName }}</span>
+
                 <!-- 1. IMAGE Attachment Bubble -->
                 <div class="attachment-image-container" *ngIf="message.attachmentType === 'IMAGE'">
                   <img [src]="message.attachmentUrl" class="bubble-image-preview" alt="Image attachment" />
@@ -252,6 +255,9 @@
                     </svg>
                   </div>
                 </div>
+
+                <!-- Sender name label (plain text messages from others) -->
+                <span class="bubble-sender-name" *ngIf="!message.isSelf && !message.attachmentType">{{ message.senderName }}</span>
 
                 <!-- 5. Default PLAIN TEXT Message -->
                 <p class="message-text" *ngIf="!message.attachmentType">{{ message.text }}</p>

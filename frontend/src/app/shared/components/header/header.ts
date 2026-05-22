@@ -87,10 +87,8 @@ export class HeaderComponent implements OnInit {
       };
       this.loadPreferences();
     }
-    this.seedMockNotifications();
     this.loadNotifications();
     if (!this.isAdmin()) {
-      this.seedMockConversations();
       this.loadConversations();
     }
   }
@@ -121,13 +119,11 @@ export class HeaderComponent implements OnInit {
           ? response
           : (response?.data ?? response?.content ?? response?.notifications ?? []);
 
-        if (raw.length > 0) {
-          this.notificationsList = raw.map(n => this.mapNotification(n));
-          this.unreadCount = this.notificationsList.filter(n => !n.isRead).length;
-          this.cdr.detectChanges();
-        }
+        this.notificationsList = raw.map(n => this.mapNotification(n));
+        this.unreadCount = this.notificationsList.filter(n => !n.isRead).length;
+        this.cdr.detectChanges();
       },
-      error: () => {} // keep mock data
+      error: () => {}
     });
 
     this.notificationService.getUnreadCount().subscribe({
@@ -194,17 +190,6 @@ export class HeaderComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  private seedMockNotifications(): void {
-    const now = Date.now();
-    this.notificationsList = [
-      { id: 1, title: 'Task Assigned', message: 'Sarah Kerrigan assigned you to "Setup VPC Security Groups"', displayType: 'info', isRead: false, displayTime: '5m ago' },
-      { id: 2, title: 'Milestone Completed', message: 'Cloud Migration Core – Phase 1 milestone marked complete', displayType: 'success', isRead: false, displayTime: '2h ago' },
-      { id: 3, title: 'Deliverable Due', message: '"Website Redesign Q3" report is due in 2 hours', displayType: 'warning', isRead: false, displayTime: '3h ago' },
-      { id: 4, title: 'New Comment', message: 'Alex Mercer commented on "API Gateway timeout" task', displayType: 'info', isRead: true, displayTime: '1d ago' }
-    ];
-    this.unreadCount = this.notificationsList.filter(n => !n.isRead).length;
-  }
-
   // ─── Messages ───
   loadConversations(): void {
     this.messageService.getConversations().subscribe({
@@ -213,13 +198,11 @@ export class HeaderComponent implements OnInit {
           ? response
           : (response?.data ?? response?.content ?? []);
 
-        if (raw.length > 0) {
-          this.conversationsList = raw.map(m => this.mapConversation(m));
-          this.unreadMessagesCount = this.conversationsList.filter(c => !c.isRead).length;
-          this.cdr.detectChanges();
-        }
+        this.conversationsList = raw.map(m => this.mapConversation(m));
+        this.unreadMessagesCount = this.conversationsList.filter(c => !c.isRead).length;
+        this.cdr.detectChanges();
       },
-      error: () => {} // keep mock data
+      error: () => {}
     });
 
     this.messageService.getUnreadCount().subscribe({
@@ -268,15 +251,6 @@ export class HeaderComponent implements OnInit {
   goToMessages(): void {
     const role = this.currentUser?.role?.replace('ROLE_', '');
     this.router.navigate([role === 'PROJECT_MANAGER' ? '/pm/messages' : '/user/messages']);
-  }
-
-  private seedMockConversations(): void {
-    this.conversationsList = [
-      { senderId: 2, senderName: 'Sarah Kerrigan', preview: 'Can you review the VPC firewall task before EOD?', isRead: false, displayTime: '10m ago' },
-      { senderId: 3, senderName: 'Alex Mercer', preview: 'The API tests are failing on staging, need help.', isRead: false, displayTime: '1h ago' },
-      { senderId: 4, senderName: 'David Miller', preview: 'Uploaded the updated architecture diagrams.', isRead: true, displayTime: 'Yesterday' }
-    ];
-    this.unreadMessagesCount = this.conversationsList.filter(c => !c.isRead).length;
   }
 
   // ─── Helpers ───

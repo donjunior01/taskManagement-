@@ -76,54 +76,31 @@ export class PmDeliverablesComponent implements OnInit {
       next: (response: any) => {
         try {
           this.projectsList = response && response.data ? response.data : [];
-          if (this.projectsList.length === 0) {
-            this.seedMockProjects();
-          }
           if (this.projectsList.length > 0) {
             this.selectedProjectId = this.projectsList[0].id || null;
             this.loadDeliverables();
           }
         } catch (e) {
           console.error('Error fetching initial PM deliverables projects:', e);
-          this.seedMockProjects();
-          if (this.projectsList.length > 0) {
-            this.selectedProjectId = this.projectsList[0].id || null;
-            this.loadDeliverables();
-          }
         } finally {
           this.loading = false;
           this.cdr.detectChanges();
         }
       },
-      error: (err) => {
-        console.warn('API getProjectsByManager offline in PM deliverables, seeding fallback:', err);
-        try {
-          this.seedMockProjects();
-          if (this.projectsList.length > 0) {
-            this.selectedProjectId = this.projectsList[0].id || null;
-            this.loadDeliverables();
-          }
-        } catch (e) {} finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+      error: () => {
+        this.projectsList = [];
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
 
     // Load developers for assignment list
     this.userService.getAllUsers(0, 100).subscribe({
       next: (res: any) => {
-        try {
-          this.developersList = res && res.data ? res.data.filter((u: any) => u.role !== 'ROLE_ADMIN' && u.role !== 'ADMIN') : [];
-          if (this.developersList.length === 0) {
-            this.seedMockDevelopers();
-          }
-        } catch(e) {
-          this.seedMockDevelopers();
-        }
+        this.developersList = res && res.data ? res.data.filter((u: any) => u.role !== 'ROLE_ADMIN' && u.role !== 'ADMIN') : [];
       },
       error: () => {
-        this.seedMockDevelopers();
+        this.developersList = [];
       }
     });
   }
@@ -135,12 +112,8 @@ export class PmDeliverablesComponent implements OnInit {
       next: (response: any) => {
         try {
           this.deliverablesList = response && response.data ? response.data : [];
-          if (this.deliverablesList.length === 0) {
-            this.seedMockDeliverables();
-          }
           this.calculateStats();
         } catch (e) {
-          this.seedMockDeliverables();
           this.calculateStats();
         } finally {
           this.loadingTasks = false;
@@ -148,13 +121,10 @@ export class PmDeliverablesComponent implements OnInit {
         }
       },
       error: () => {
-        try {
-          this.seedMockDeliverables();
-          this.calculateStats();
-        } catch (e) {} finally {
-          this.loadingTasks = false;
-          this.cdr.detectChanges();
-        }
+        this.deliverablesList = [];
+        this.calculateStats();
+        this.loadingTasks = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -333,10 +303,7 @@ export class PmDeliverablesComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: () => {
-        console.warn("API offline, loading mock submissions");
-        this.taskSubmissions = [
-          { id: Date.now(), title: 'Demo Submission.zip', status: 'PENDING', dueDate: new Date().toISOString() }
-        ];
+        this.taskSubmissions = [];
         this.loadingSubmissions = false;
         this.cdr.detectChanges();
       }
@@ -374,35 +341,4 @@ export class PmDeliverablesComponent implements OnInit {
     this.toast.show(message, type);
   }
 
-  // Fallback seeders for offline resilience
-  private seedMockProjects(): void {
-    this.projectsList = [
-      { id: 1, name: 'Cloud Migration Core', description: 'Migrating legacy monolithic workflows into AWS scopes.', startDate: '2026-05-10', endDate: '2026-06-30', status: 'IN_PROGRESS', progress: 60 },
-      { id: 2, name: 'Glassmorphic Design UI', description: 'Implementing high-end modern layout pages.', startDate: '2026-05-12', endDate: '2026-05-28', status: 'IN_PROGRESS', progress: 45 }
-    ];
-  }
-
-  private seedMockDeliverables(): void {
-    if (this.selectedProjectId === 1) {
-      this.deliverablesList = [
-        { id: 1, name: 'Setup VPC Security Groups', description: 'AWS firewalls and SSH parameters.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 3, assignedToName: 'Alex Mercer', priority: 'CRITICAL', difficulty: 'HARD', status: 'IN_PROGRESS', progress: 60, deadline: '2026-05-20', totalHoursLogged: 7 },
-        { id: 4, name: 'Integrate Token HTTP Interceptor', description: 'Attach bearer headers.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 3, assignedToName: 'Alex Mercer', priority: 'MEDIUM', difficulty: 'MEDIUM', status: 'PLANNED', progress: 0, deadline: '2026-06-10', totalHoursLogged: 2 },
-        { id: 5, name: 'SMTP Mail Server Handshakes', description: 'Address verification email timeouts.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 4, assignedToName: 'David Miller', priority: 'LOW', difficulty: 'EASY', status: 'ON_HOLD', progress: 10, deadline: '2026-05-30', totalHoursLogged: 4 }
-      ];
-    } else if (this.selectedProjectId === 2) {
-      this.deliverablesList = [
-        { id: 2, name: 'Design Translucent Cards', description: 'Micro-elevation HSL hover shadows.', projectId: 2, projectName: 'Glassmorphic Design UI', assignedToId: 4, assignedToName: 'David Miller', priority: 'HIGH', difficulty: 'MEDIUM', status: 'COMPLETED', progress: 100, deadline: '2026-05-25', totalHoursLogged: 8 },
-        { id: 7, name: 'Establish Gantt Chart Trackers', description: 'Sleek project scheduling visual gauges.', projectId: 2, projectName: 'Glassmorphic Design UI', assignedToId: 4, assignedToName: 'David Miller', priority: 'MEDIUM', difficulty: 'HARD', status: 'IN_PROGRESS', progress: 20, deadline: '2026-05-28', totalHoursLogged: 3 }
-      ];
-    } else {
-      this.deliverablesList = [];
-    }
-  }
-
-  private seedMockDevelopers(): void {
-    this.developersList = [
-      { id: 3, username: 'alex', email: 'alex@company.com', firstName: 'Alex', lastName: 'Mercer', role: 'ROLE_USER' },
-      { id: 4, username: 'david', email: 'david@company.com', firstName: 'David', lastName: 'Miller', role: 'ROLE_USER' }
-    ];
-  }
 }

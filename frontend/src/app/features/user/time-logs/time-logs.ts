@@ -99,8 +99,6 @@ export class UserTimeLogsComponent implements OnInit {
             date: l.date || (l as any).logDate || ''
           }));
           this.calculateTelemetry();
-        } else {
-          this.seedMockLogs();
         }
 
         // Also fetch user's tasks to populate form selection
@@ -126,40 +124,12 @@ export class UserTimeLogsComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: () => {
-        // Fallback: load tasks then generate logs
-        this.taskService.getTasksByUser(this.developerId, 0, 100).subscribe({
-          next: (response: any) => {
-            try {
-              let taskArr = [];
-              if (response && Array.isArray(response.data)) {
-                taskArr = response.data;
-              } else if (response && Array.isArray(response.content)) {
-                taskArr = response.content;
-              } else if (Array.isArray(response)) {
-                taskArr = response;
-              }
-              this.myTasks = taskArr;
-              if (this.myTasks.length === 0) { this.seedMockData(); }
-              else { this.generateTimeLogs(); }
-              this.generateCalendar();
-              this.calculateTelemetry();
-            } catch (e) {
-              this.seedMockData();
-              this.generateCalendar();
-              this.calculateTelemetry();
-            } finally {
-              this.loading = false;
-              this.cdr.detectChanges();
-            }
-          },
-          error: () => {
-            this.seedMockData();
-            this.generateCalendar();
-            this.calculateTelemetry();
-            this.loading = false;
-            this.cdr.detectChanges();
-          }
-        });
+        this.timeLogsList = [];
+        this.myTasks = [];
+        this.generateCalendar();
+        this.calculateTelemetry();
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -286,9 +256,6 @@ export class UserTimeLogsComponent implements OnInit {
       }
     });
 
-    if (this.timeLogsList.length === 0) {
-      this.seedMockLogs();
-    }
   }
 
   private calculateTelemetry(): void {
@@ -394,54 +361,4 @@ export class UserTimeLogsComponent implements OnInit {
     return d.toISOString().split('T')[0];
   }
 
-  private seedMockLogs(): void {
-    const todayStr = new Date().toISOString().split('T')[0];
-    this.timeLogsList = [
-      {
-        id: 1,
-        taskName: 'Setup VPC Security Groups',
-        projectName: 'Cloud Migration Core',
-        hours: 4,
-        notes: 'Mapped VPC subnets security policies and local firewalls routing.',
-        date: this.getPreviousDateStr(todayStr, 1)
-      },
-      {
-        id: 2,
-        taskName: 'Setup VPC Security Groups',
-        projectName: 'Cloud Migration Core',
-        hours: 3,
-        notes: 'Configured security network access control lists (NACLs) rules.',
-        date: this.getPreviousDateStr(todayStr, 2)
-      },
-      {
-        id: 3,
-        taskName: 'Design Translucent Cards',
-        projectName: 'Glassmorphic Design UI',
-        hours: 4,
-        notes: 'Created modern light theme CSS layouts with translucent cards backgrounds.',
-        date: this.getPreviousDateStr(todayStr, 1)
-      },
-      {
-        id: 4,
-        taskName: 'Integrate Token HTTP Interceptor',
-        projectName: 'Cloud Migration Core',
-        hours: 2,
-        notes: 'Attached bearer authentication credentials to Axios endpoints headers.',
-        date: todayStr
-      }
-    ];
-  }
-
-  private seedMockData(): void {
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    this.myTasks = [
-      { id: 1, name: 'Setup VPC Security Groups', projectId: 1, projectName: 'Cloud Migration Core', priority: 'CRITICAL', difficulty: 'HARD', status: 'IN_PROGRESS', progress: 60, deadline: this.getPreviousDateStr(todayStr, 1), totalHoursLogged: 7 },
-      { id: 2, name: 'Design Translucent Cards', projectId: 2, projectName: 'Glassmorphic Design UI', priority: 'HIGH', difficulty: 'MEDIUM', status: 'IN_PROGRESS', progress: 45, deadline: this.getPreviousDateStr(todayStr, 2), totalHoursLogged: 4 },
-      { id: 4, name: 'Integrate Token HTTP Interceptor', projectId: 1, projectName: 'Cloud Migration Core', priority: 'MEDIUM', difficulty: 'MEDIUM', status: 'PLANNED', progress: 0, deadline: this.getPreviousDateStr(todayStr, -2), totalHoursLogged: 2 },
-      { id: 5, name: 'SMTP Mail Server Handshakes', projectId: 1, projectName: 'Cloud Migration Core', priority: 'LOW', difficulty: 'EASY', status: 'ON_HOLD', progress: 10, deadline: this.getPreviousDateStr(todayStr, -6), totalHoursLogged: 1 }
-    ];
-
-    this.seedMockLogs();
-  }
 }

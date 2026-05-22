@@ -31,10 +31,10 @@ export class AdminSupportComponent implements OnInit {
   loading: boolean = false;
 
   // Statistics
-  totalTickets: number = 24;
-  openTickets: number = 8;
-  inProgressTickets: number = 6;
-  resolvedTickets: number = 10;
+  totalTickets: number = 0;
+  openTickets: number = 0;
+  inProgressTickets: number = 0;
+  resolvedTickets: number = 0;
 
   // Filters State
   searchTerm: string = '';
@@ -42,64 +42,7 @@ export class AdminSupportComponent implements OnInit {
   priorityFilter: string = '';
 
   // Tickets List
-  ticketsList: AdminTicket[] = [
-    {
-      id: 4092,
-      subject: 'API Gateway connection timeout on PDF download',
-      category: 'Reporting Bug',
-      submittedBy: 'David Chen',
-      submittedByEmail: 'd.chen@taskmaster.com',
-      role: 'Project Manager',
-      priority: 'URGENT',
-      status: 'OPEN',
-      date: '2026-05-17 10:15',
-      description: 'The reports generator takes more than 15s to respond resulting in Nginx Gateway 504 timeouts when managers export project statuses.',
-      replies: [
-        { sender: 'System Monitor', message: 'Automated traceback captured: Timeout occurred on microservice pipeline 4.', timestamp: '10:16 AM' }
-      ]
-    },
-    {
-      id: 4088,
-      subject: 'Kanban board empty when switching to completed state',
-      category: 'Task Board',
-      submittedBy: 'Alex Johnson',
-      submittedByEmail: 'a.johnson@taskmaster.com',
-      role: 'Employee',
-      priority: 'HIGH',
-      status: 'IN_PROGRESS',
-      date: '2026-05-17 08:30',
-      description: 'Whenever I filter my tasks to completed status, the interface displays an empty screen even though the dashboard says I have 24 completed items.',
-      replies: []
-    },
-    {
-      id: 4085,
-      subject: 'Please map Leila Hassan to Cloud Migration Core',
-      category: 'Account/Access',
-      submittedBy: 'Sarah Jenkins',
-      submittedByEmail: 's.jenkins@taskmaster.com',
-      role: 'Project Manager',
-      priority: 'MEDIUM',
-      status: 'OPEN',
-      date: '2026-05-16 16:45',
-      description: 'Leila requires access to deploy task VPC firewalls, but she does not show up in my project team lists. Please review database mapping.',
-      replies: []
-    },
-    {
-      id: 4072,
-      subject: 'Forgot password secret security answer',
-      category: 'General',
-      submittedBy: 'Carlos Rodriguez',
-      submittedByEmail: 'c.rod@taskmaster.com',
-      role: 'Employee',
-      priority: 'LOW',
-      status: 'RESOLVED',
-      date: '2026-05-15 11:20',
-      description: 'I cannot log in from my second corporate laptop due to a security verification prompt where my security answers are flagged as wrong.',
-      replies: [
-        { sender: 'Administrator', message: 'Your login credentials and security questions have been hard reset. Please try signing in again.', timestamp: 'May 16, 2:30 PM' }
-      ]
-    }
-  ];
+  ticketsList: AdminTicket[] = [];
 
   filteredTickets: AdminTicket[] = [];
 
@@ -122,9 +65,6 @@ export class AdminSupportComponent implements OnInit {
     if (user) {
       this.adminName = user.firstName ? `${user.firstName} ${user.lastName}` : 'Administrator';
     }
-    // Pre-populate with inline mock data so the page is never blank on first render
-    this.applyFilters();
-    // Then fetch real data from the API
     this.loadTickets();
   }
 
@@ -157,16 +97,12 @@ export class AdminSupportComponent implements OnInit {
           replies: []
         }));
 
-        if (this.ticketsList.length === 0) {
-          this.seedMockTickets();
-        }
-
         this.loading = false;
         this.applyFilters();
         this.cdr.detectChanges();
       },
       error: () => {
-        this.seedMockTickets();
+        this.ticketsList = [];
         this.loading = false;
         this.applyFilters();
         this.cdr.detectChanges();
@@ -298,64 +234,4 @@ export class AdminSupportComponent implements OnInit {
     this.toast.show(msg, 'success');
   }
 
-  private seedMockTickets(): void {
-    this.ticketsList = [
-      {
-        id: 4092,
-        subject: 'API Gateway connection timeout on PDF download',
-        category: 'Reporting Bug',
-        submittedBy: 'David Chen',
-        submittedByEmail: 'd.chen@taskmaster.com',
-        role: 'Project Manager',
-        priority: 'URGENT',
-        status: 'OPEN',
-        date: '2026-05-17 10:15',
-        description: 'The reports generator takes more than 15s to respond resulting in Nginx Gateway 504 timeouts when managers export project statuses.',
-        replies: [
-          { sender: 'System Monitor', message: 'Automated traceback captured: Timeout occurred on microservice pipeline 4.', timestamp: '10:16 AM' }
-        ]
-      },
-      {
-        id: 4088,
-        subject: 'Kanban board empty when switching to completed state',
-        category: 'Task Board',
-        submittedBy: 'Alex Johnson',
-        submittedByEmail: 'a.johnson@taskmaster.com',
-        role: 'Employee',
-        priority: 'HIGH',
-        status: 'IN_PROGRESS',
-        date: '2026-05-17 08:30',
-        description: 'Whenever I filter my tasks to completed status, the interface displays an empty screen even though the dashboard says I have 24 completed items.',
-        replies: []
-      },
-      {
-        id: 4085,
-        subject: 'Please map Leila Hassan to Cloud Migration Core',
-        category: 'Account/Access',
-        submittedBy: 'Sarah Jenkins',
-        submittedByEmail: 's.jenkins@taskmaster.com',
-        role: 'Project Manager',
-        priority: 'MEDIUM',
-        status: 'OPEN',
-        date: '2026-05-16 16:45',
-        description: 'Leila requires access to deploy task VPC firewalls, but she does not show up in my project team lists. Please review database mapping.',
-        replies: []
-      },
-      {
-        id: 4072,
-        subject: 'Forgot password secret security answer',
-        category: 'General',
-        submittedBy: 'Carlos Rodriguez',
-        submittedByEmail: 'c.rod@taskmaster.com',
-        role: 'Employee',
-        priority: 'LOW',
-        status: 'RESOLVED',
-        date: '2026-05-15 11:20',
-        description: 'I cannot log in from my second corporate laptop due to a security verification prompt where my security answers are flagged as wrong.',
-        replies: [
-          { sender: 'Administrator', message: 'Your login credentials and security questions have been hard reset. Please try signing in again.', timestamp: 'May 16, 2:30 PM' }
-        ]
-      }
-    ];
-  }
 }

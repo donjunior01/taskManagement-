@@ -96,20 +96,18 @@ export class AdminTasksComponent implements OnInit {
           this.applyClientFilters();
         } catch (e) {
           console.error('Error parsing tasks list:', e);
-          this.seedMockTasks();
+          this.tasksList = [];
+          this.applyClientFilters();
         } finally {
           this.loading = false;
           this.cdr.detectChanges();
         }
       },
-      error: (err: any) => {
-        console.error('Error fetching backend task inventory, spinning offline seeding:', err);
-        try {
-          this.seedMockTasks();
-        } catch(e) {} finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+      error: () => {
+        this.tasksList = [];
+        this.applyClientFilters();
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -118,46 +116,22 @@ export class AdminTasksComponent implements OnInit {
     this.projectService.getAllProjects(0, 100).subscribe({
       next: (response) => {
         this.projectList = response.data;
-        if (this.projectList.length === 0) {
-          this.seedMockProjects();
-        }
       },
       error: () => {
-        this.seedMockProjects();
+        this.projectList = [];
       }
     });
-  }
-
-  private seedMockProjects(): void {
-    this.projectList = [
-      { id: 1, name: 'Cloud Migration Core', status: 'IN_PROGRESS' },
-      { id: 2, name: 'Glassmorphic Design UI', status: 'IN_PROGRESS' },
-      { id: 3, name: 'ISO 27001 Compliance Audit', status: 'COMPLETED' }
-    ];
   }
 
   loadAssignees(): void {
     this.userService.getAllUsers(0, 100).subscribe({
       next: (response) => {
-        // Admins can assign tasks to any registered developer or project manager
         this.assigneeList = response.data;
-        if (this.assigneeList.length === 0) {
-          this.seedMockAssignees();
-        }
       },
       error: () => {
-        this.seedMockAssignees();
+        this.assigneeList = [];
       }
     });
-  }
-
-  private seedMockAssignees(): void {
-    this.assigneeList = [
-      { id: 1, firstName: 'Don', lastName: 'Junior', username: 'don.junior', email: 'don@taskmanagement.com', role: 'ADMIN' },
-      { id: 2, firstName: 'Sarah', lastName: 'Kerrigan', username: 'sarah.k', email: 'sarah@taskmanagement.com', role: 'PROJECT_MANAGER' },
-      { id: 3, firstName: 'Alex', lastName: 'Mercer', username: 'alex.dev', email: 'alex@taskmanagement.com', role: 'USER' },
-      { id: 4, firstName: 'David', lastName: 'Miller', username: 'david.m', email: 'david@taskmanagement.com', role: 'USER' }
-    ];
   }
 
   applyClientFilters(): void {
@@ -405,24 +379,6 @@ export class AdminTasksComponent implements OnInit {
         this.triggerToast(`Optimistic destroy: Removed task "${this.selectedTask?.name}"!`, 'success');
       }
     });
-  }
-
-  // Offline Seeding
-  private seedMockTasks(): void {
-    this.tasksList = [
-      { id: 1, name: 'Setup VPC Security Groups', description: 'Configure AWS security profiles, open ports 80/443 and restrict administrative SSH.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 3, assignedToName: 'Alex Mercer', priority: 'CRITICAL', difficulty: 'HARD', status: 'IN_PROGRESS', progress: 60, deadline: '2026-05-20', commentCount: 3, totalHoursLogged: 8 },
-      { id: 2, name: 'Design Translucent Cards', description: 'Implement beautiful micro-elevation HSL hover shadows and CSS backdrop-filters.', projectId: 2, projectName: 'Glassmorphic Design UI', assignedToId: 4, assignedToName: 'David Miller', priority: 'HIGH', difficulty: 'MEDIUM', status: 'IN_PROGRESS', progress: 45, deadline: '2026-05-25', commentCount: 6, totalHoursLogged: 12 },
-      { id: 3, name: 'Formulate Audit Evidence Logs', description: 'Review security check logs and format reports matching standard requirements.', projectId: 3, projectName: 'ISO 27001 Compliance Audit', assignedToId: 2, assignedToName: 'Sarah Kerrigan', priority: 'HIGH', difficulty: 'EASY', status: 'COMPLETED', progress: 100, deadline: '2026-03-05', commentCount: 1, totalHoursLogged: 4 },
-      { id: 4, name: 'Integrate Token HTTP Interceptor', description: 'Write security modules that automatically attach bearer authentication headers.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 3, assignedToName: 'Alex Mercer', priority: 'MEDIUM', difficulty: 'MEDIUM', status: 'PLANNED', progress: 0, deadline: '2026-06-10', commentCount: 0, totalHoursLogged: 0 },
-      { id: 5, name: 'SMTP Mail Server Handshakes', description: 'Address connection drops during user account registration triggers.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 4, assignedToName: 'David Miller', priority: 'LOW', difficulty: 'EASY', status: 'ON_HOLD', progress: 10, deadline: '2026-05-30', commentCount: 4, totalHoursLogged: 2 },
-      { id: 6, name: 'Verify Database Constraints', description: 'Write unit tests validating that user roles comply with system specifications.', projectId: 3, projectName: 'ISO 27001 Compliance Audit', assignedToId: 2, assignedToName: 'Sarah Kerrigan', priority: 'MEDIUM', difficulty: 'HARD', status: 'COMPLETED', progress: 100, deadline: '2026-03-12', commentCount: 2, totalHoursLogged: 16 },
-      { id: 7, name: 'Establish Gantt Chart Trackers', description: 'Design premium scheduling grid blocks matching user workspace dates.', projectId: 2, projectName: 'Glassmorphic Design UI', assignedToId: 4, assignedToName: 'David Miller', priority: 'MEDIUM', difficulty: 'HARD', status: 'PLANNED', progress: 0, deadline: '2026-05-28', commentCount: 0, totalHoursLogged: 0 },
-      { id: 8, name: 'Secure JWT Verification Secrets', description: 'Move configurations into environment variables and secure credentials storage.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 3, assignedToName: 'Alex Mercer', priority: 'CRITICAL', difficulty: 'HARD', status: 'ON_HOLD', progress: 20, deadline: '2026-06-01', commentCount: 12, totalHoursLogged: 6 }
-    ];
-    this.totalElements = this.tasksList.length;
-    this.totalPages = Math.ceil(this.totalElements / this.pageSize);
-    this.applyClientFilters();
-    this.loading = false;
   }
 
   private resetAddForm(): void {

@@ -94,17 +94,14 @@ export class PmTasksComponent implements OnInit {
       next: (response: any) => {
         try {
           this.projectsList = response && response.data ? response.data : [];
-          if (this.projectsList.length === 0) {
-            this.seedMockProjects();
-          }
         } catch (e) {
-          this.seedMockProjects();
+          this.projectsList = [];
         } finally {
           this.loadDevelopers();
         }
       },
       error: () => {
-        this.seedMockProjects();
+        this.projectsList = [];
         this.loadDevelopers();
       }
     });
@@ -116,17 +113,14 @@ export class PmTasksComponent implements OnInit {
       next: (response: any) => {
         try {
           this.developersList = response && response.data ? response.data : [];
-          if (this.developersList.length === 0) {
-            this.seedMockDevelopers();
-          }
         } catch(e) {
-          this.seedMockDevelopers();
+          this.developersList = [];
         } finally {
           this.loadTasks();
         }
       },
       error: () => {
-        this.seedMockDevelopers();
+        this.developersList = [];
         this.loadTasks();
       }
     });
@@ -142,13 +136,9 @@ export class PmTasksComponent implements OnInit {
           const projectIds = this.projectsList.map(p => p.id);
           this.allTasks = this.allTasks.filter(t => projectIds.includes(t.projectId));
           
-          if (this.allTasks.length === 0) {
-            this.seedMockTasks();
-          }
-
           this.applyFilters();
         } catch(e) {
-          this.seedMockTasks();
+          this.allTasks = [];
           this.applyFilters();
         } finally {
           this.loading = false;
@@ -156,13 +146,10 @@ export class PmTasksComponent implements OnInit {
         }
       },
       error: () => {
-        try {
-          this.seedMockTasks();
-          this.applyFilters();
-        } catch(e) {} finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+        this.allTasks = [];
+        this.applyFilters();
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -383,28 +370,4 @@ export class PmTasksComponent implements OnInit {
     this.toast.show(message, type);
   }
 
-  // Resilient Seed Fallbacks
-  private seedMockProjects(): void {
-    this.projectsList = [
-      { id: 1, name: 'Cloud Migration Core', managerId: this.managerId },
-      { id: 2, name: 'Glassmorphic Design UI', managerId: this.managerId }
-    ];
-  }
-
-  private seedMockDevelopers(): void {
-    this.developersList = [
-      { id: 3, username: 'alexmercer', email: 'alex@corp.net', firstName: 'Alex', lastName: 'Mercer' },
-      { id: 4, username: 'davidmiller', email: 'david@corp.net', firstName: 'David', lastName: 'Miller' }
-    ];
-  }
-
-  private seedMockTasks(): void {
-    this.allTasks = [
-      { id: 1, name: 'Setup VPC Security Groups', description: 'Address corporate firewall rules and SSH keys.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 3, assignedToName: 'Alex Mercer', priority: 'CRITICAL', difficulty: 'HARD', status: 'IN_PROGRESS', progress: 60, deadline: '2026-05-20' },
-      { id: 2, name: 'Design Translucent Cards', description: 'Backdrop CSS filters and soft gray shadows.', projectId: 2, projectName: 'Glassmorphic Design UI', assignedToId: 4, assignedToName: 'David Miller', priority: 'HIGH', difficulty: 'MEDIUM', status: 'IN_PROGRESS', progress: 45, deadline: '2026-05-25' },
-      { id: 4, name: 'Integrate Token HTTP Interceptor', description: 'Attach bearer security tokens automatically.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 3, assignedToName: 'Alex Mercer', priority: 'MEDIUM', difficulty: 'MEDIUM', status: 'PLANNED', progress: 0, deadline: '2026-06-10' },
-      { id: 5, name: 'SMTP Mail Server Handshakes', description: 'Ensure user registration invites deliver in seconds.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 4, assignedToName: 'David Miller', priority: 'LOW', difficulty: 'EASY', status: 'ON_HOLD', progress: 10, deadline: '2026-05-30' },
-      { id: 6, name: 'Build Dashboard Layouts', description: 'Implement sidebar widgets and responsive navigation controls.', projectId: 2, projectName: 'Glassmorphic Design UI', assignedToId: 3, assignedToName: 'Alex Mercer', priority: 'HIGH', difficulty: 'HARD', status: 'COMPLETED', progress: 100, deadline: '2026-05-15' }
-    ];
-  }
 }

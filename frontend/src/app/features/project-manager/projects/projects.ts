@@ -112,28 +112,21 @@ export class PmProjectsComponent implements OnInit {
             expanded: false,
             loadingTasks: false
           }));
-          if (this.projectsList.length === 0) {
-            this.seedMockProjects();
-          }
           this.applyFilters();
         } catch (e) {
           console.error('Error parsing projects list:', e);
-          this.seedMockProjects();
+          this.projectsList = [];
           this.applyFilters();
         } finally {
           this.loading = false;
           this.cdr.detectChanges();
         }
       },
-      error: (err: any) => {
-        console.warn('API getProjectsByManager offline, enacting manager mock seed:', err);
-        try {
-          this.seedMockProjects();
-          this.applyFilters();
-        } catch (e) {} finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+      error: () => {
+        this.projectsList = [];
+        this.applyFilters();
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -189,23 +182,17 @@ export class PmProjectsComponent implements OnInit {
         try {
           const tasks = response && response.data ? response.data : [];
           proj.tasks = tasks;
-          if (proj.tasks.length === 0) {
-            this.seedMockTasksForProject(proj);
-          }
         } catch (e) {
-          this.seedMockTasksForProject(proj);
+          proj.tasks = [];
         } finally {
           proj.loadingTasks = false;
           this.cdr.detectChanges();
         }
       },
       error: () => {
-        try {
-          this.seedMockTasksForProject(proj);
-        } catch(e) {} finally {
-          proj.loadingTasks = false;
-          this.cdr.detectChanges();
-        }
+        proj.tasks = [];
+        proj.loadingTasks = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -217,40 +204,19 @@ export class PmProjectsComponent implements OnInit {
       next: (response: any) => {
         try {
           proj.members = response && response.data ? response.data : [];
-          if (!proj.members || proj.members.length === 0) {
-            this.seedMockMembersForProject(proj);
-          }
         } catch (e) {
-          this.seedMockMembersForProject(proj);
+          proj.members = [];
         } finally {
           proj.loadingMembers = false;
           this.cdr.detectChanges();
         }
       },
       error: () => {
-        try {
-          this.seedMockMembersForProject(proj);
-        } catch(e) {} finally {
-          proj.loadingMembers = false;
-          this.cdr.detectChanges();
-        }
+        proj.members = [];
+        proj.loadingMembers = false;
+        this.cdr.detectChanges();
       }
     });
-  }
-
-  seedMockMembersForProject(proj: ProjectDetail): void {
-    if (proj.id === 1) {
-      proj.members = [
-        { id: 3, username: 'alex_mercer', email: 'mercer@mtncameroon.cm', firstName: 'Alex', lastName: 'Mercer', role: 'USER' },
-        { id: 4, username: 'david_miller', email: 'miller@mtncameroon.cm', firstName: 'David', lastName: 'Miller', role: 'USER' }
-      ];
-    } else if (proj.id === 2) {
-      proj.members = [
-        { id: 4, username: 'david_miller', email: 'miller@mtncameroon.cm', firstName: 'David', lastName: 'Miller', role: 'USER' }
-      ];
-    } else {
-      proj.members = [];
-    }
   }
 
   unassignUser(proj: ProjectDetail, userId: number | undefined): void {
@@ -561,70 +527,6 @@ export class PmProjectsComponent implements OnInit {
     this.toast.show(message, type);
   }
 
-  // Fallback seeders for offline resilience
-  private seedMockProjects(): void {
-    this.projectsList = [
-      {
-        id: 1,
-        name: 'Cloud Migration Core',
-        description: 'Migrating legacy monolithic workflows into containerized microservice scopes on AWS.',
-        startDate: '2026-05-10',
-        endDate: '2026-06-30',
-        status: 'IN_PROGRESS',
-        progress: 60,
-        taskCount: 5,
-        teamCount: 3,
-        tasks: [],
-        expanded: false,
-        loadingTasks: false
-      },
-      {
-        id: 2,
-        name: 'Glassmorphic Design UI',
-        description: 'Implementing high-end modern layout pages with vibrant colors and light theme glass controls.',
-        startDate: '2026-05-12',
-        endDate: '2026-05-28',
-        status: 'IN_PROGRESS',
-        progress: 45,
-        taskCount: 3,
-        teamCount: 2,
-        tasks: [],
-        expanded: false,
-        loadingTasks: false
-      },
-      {
-        id: 3,
-        name: 'Automated CI/CD Pipelines',
-        description: 'Write Docker configurations and orchestrate GitHub Actions for deployment stages.',
-        startDate: '2026-06-01',
-        endDate: '2026-07-15',
-        status: 'PLANNED',
-        progress: 0,
-        taskCount: 0,
-        teamCount: 2,
-        tasks: [],
-        expanded: false,
-        loadingTasks: false
-      }
-    ];
-  }
-
-  private seedMockTasksForProject(proj: ProjectDetail): void {
-    if (proj.id === 1) {
-      proj.tasks = [
-        { id: 1, name: 'Setup VPC Security Groups', description: 'AWS firewalls and SSH parameters.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 3, assignedToName: 'Alex Mercer', priority: 'CRITICAL', difficulty: 'HARD', status: 'IN_PROGRESS', progress: 60, deadline: '2026-05-20' },
-        { id: 4, name: 'Integrate Token HTTP Interceptor', description: 'Attach bearer headers.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 3, assignedToName: 'Alex Mercer', priority: 'MEDIUM', difficulty: 'MEDIUM', status: 'PLANNED', progress: 0, deadline: '2026-06-10' },
-        { id: 5, name: 'SMTP Mail Server Handshakes', description: 'Address verification email timeouts.', projectId: 1, projectName: 'Cloud Migration Core', assignedToId: 4, assignedToName: 'David Miller', priority: 'LOW', difficulty: 'EASY', status: 'ON_HOLD', progress: 10, deadline: '2026-05-30' }
-      ];
-    } else if (proj.id === 2) {
-      proj.tasks = [
-        { id: 2, name: 'Design Translucent Cards', description: 'Micro-elevation HSL hover shadows.', projectId: 2, projectName: 'Glassmorphic Design UI', assignedToId: 4, assignedToName: 'David Miller', priority: 'HIGH', difficulty: 'MEDIUM', status: 'IN_PROGRESS', progress: 45, deadline: '2026-05-25' },
-        { id: 7, name: 'Establish Gantt Chart Trackers', description: 'Sleek project scheduling visual gauges.', projectId: 2, projectName: 'Glassmorphic Design UI', assignedToId: 4, assignedToName: 'David Miller', priority: 'MEDIUM', difficulty: 'HARD', status: 'PLANNED', progress: 0, deadline: '2026-05-28' }
-      ];
-    } else {
-      proj.tasks = [];
-    }
-  }
 
   openAddUsersModal(proj: ProjectDetail): void {
     this.selectedProjForUsers = proj;
@@ -636,15 +538,11 @@ export class PmProjectsComponent implements OnInit {
     this.userService.getUsersByRole('USER', 0, 100).subscribe({
       next: (response: any) => {
         this.availableUsers = response && response.data ? response.data : [];
-        if (this.availableUsers.length === 0) {
-          this.seedMockUsersForPM();
-        }
         this.loadingUsers = false;
         this.cdr.detectChanges();
       },
-      error: (err: any) => {
-        console.warn('API getUsersByRole offline, seeding offline user list:', err);
-        this.seedMockUsersForPM();
+      error: () => {
+        this.availableUsers = [];
         this.loadingUsers = false;
         this.cdr.detectChanges();
       }
@@ -754,12 +652,4 @@ export class PmProjectsComponent implements OnInit {
     });
   }
 
-  private seedMockUsersForPM(): void {
-    this.availableUsers = [
-      { id: 3, username: 'alex_mercer', email: 'mercer@mtncameroon.cm', firstName: 'Alex', lastName: 'Mercer', role: 'USER' },
-      { id: 4, username: 'david_miller', email: 'miller@mtncameroon.cm', firstName: 'David', lastName: 'Miller', role: 'USER' },
-      { id: 103, username: 'user_mbarga', email: 'mbarga@mtncameroon.cm', firstName: 'Paul', lastName: 'Mbarga', role: 'USER' },
-      { id: 104, username: 'user_fotso', email: 'fotso@mtncameroon.cm', firstName: 'Sandrine', lastName: 'Fotso', role: 'USER' }
-    ];
-  }
 }

@@ -3,6 +3,8 @@ package com.example.gpiApp.service;
 import com.example.gpiApp.dto.*;
 import com.example.gpiApp.entity.ActivityLog;
 import com.example.gpiApp.entity.Comment;
+import com.example.gpiApp.entity.Task;
+import com.example.gpiApp.entity.allUsers;
 import com.example.gpiApp.repository.CommentRepository;
 import com.example.gpiApp.repository.TaskRepository;
 import com.example.gpiApp.repository.UserRepository;
@@ -48,31 +50,40 @@ public class CommentService {
     
     @Transactional
     public ApiResponse<CommentDTO> createComment(CommentRequestDTO request, Long userId) {
+        if (userId == null) {
+            return ApiResponse.error("User not authenticated");
+        }
+
+        Task task = taskRepository.findById(request.getTaskId())
+                .orElse(null);
+        if (task == null) {
+            return ApiResponse.error("Task not found with id: " + request.getTaskId());
+        }
+
+        allUsers user = userRepository.findById(userId)
+                .orElse(null);
+        if (user == null) {
+            return ApiResponse.error("User not found with id: " + userId);
+        }
+
         Comment comment = new Comment();
         comment.setContent(request.getContent());
+        comment.setTask(task);
+        comment.setUser(user);
         comment.setAttachmentUrl(request.getAttachmentUrl());
         comment.setAttachmentName(request.getAttachmentName());
-        
-        taskRepository.findById(request.getTaskId())
-                .ifPresent(comment::setTask);
-        
-        userRepository.findById(userId)
-                .ifPresent(comment::setUser);
-        
+
         Comment savedComment = commentRepository.save(comment);
-        
-        // Log activity
-        userRepository.findById(userId).ifPresent(user -> 
-            activityLogService.logActivity(
-                ActivityLog.ActivityType.COMMENT_ADDED,
-                "Comment added to task",
-                user,
-                "COMMENT",
-                savedComment.getId(),
-                null
-            )
+
+        activityLogService.logActivity(
+            ActivityLog.ActivityType.COMMENT_ADDED,
+            "Comment added to task: " + task.getName(),
+            user,
+            "COMMENT",
+            savedComment.getId(),
+            null
         );
-        
+
         return ApiResponse.success("Comment created successfully", convertToDTO(savedComment));
     }
     

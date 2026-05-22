@@ -4,10 +4,12 @@ import com.example.gpiApp.dto.UserDTO;
 import com.example.gpiApp.dto.UserListResponseDTO;
 import com.example.gpiApp.dto.UserRequestDTO;
 import com.example.gpiApp.dto.UserResponseDTO;
+import com.example.gpiApp.entity.Notification;
 import com.example.gpiApp.entity.allUsers;
 import com.example.gpiApp.entity.allUsers.Role;
 import com.example.gpiApp.repository.UserRepository;
 import com.example.gpiApp.repository.UserService;
+import com.example.gpiApp.service.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -24,10 +26,12 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, NotificationService notificationService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -86,6 +90,14 @@ public class UserServiceImpl implements UserService {
             System.out.println("Saving allUsers: " + allUsers);
             allUsers savedAllUsers = userRepository.save(allUsers);
             System.out.println("allUsers saved successfully with ID: " + savedAllUsers.getId());
+            notificationService.createNotification(
+                savedAllUsers.getId(),
+                "Welcome to the system!",
+                "Your account has been created. You can now receive task assignments and project updates.",
+                Notification.NotificationType.SYSTEM,
+                null,
+                null
+            );
             UserDTO userDTO = convertToDTO(savedAllUsers);
             return new UserResponseDTO(true, "allUsers created successfully", userDTO);
         } catch (Exception e) {
