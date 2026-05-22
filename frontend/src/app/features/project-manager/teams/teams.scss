@@ -1,3 +1,11 @@
+/* ── Glass Panel base (shared surface for all cards) ── */
+.glass-panel {
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
 /* ── PM Teams ── */
 .teams-container {
   display: flex; flex-direction: column; gap: 24px;
@@ -13,8 +21,8 @@
 
 /* ── Summary Grid ── */
 .telemetry-summary-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-  @media(max-width: 700px) { grid-template-columns: 1fr; }
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  @media(max-width: 600px) { grid-template-columns: 1fr; }
 }
 
 .summary-card {
@@ -22,6 +30,7 @@
   &:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
   .card-icon {
     width: 44px; height: 44px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    background: var(--bg-subtle); color: var(--text-secondary);
     svg { width: 20px; height: 20px; }
     &.icon-blue   { background: var(--primary-bg); color: var(--primary); }
     &.icon-green  { background: var(--success-bg); color: var(--success); }
