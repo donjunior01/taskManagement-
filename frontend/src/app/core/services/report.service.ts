@@ -56,21 +56,24 @@ export class ReportService {
    * Falls back to projects PDF if type is not matched.
    */
   downloadReport(options: ReportDownloadOptions): Observable<Blob> {
-    const fmt = options.format.toLowerCase();
+    const csv = options.format.toLowerCase() === 'csv';
     switch (options.type) {
+      // No dedicated CSV for project-health/team-allocation/milestone-delivery/users —
+      // fall back to the closest available CSV endpoint.
       case 'project-health':
-        return fmt === 'csv' ? this.getProjectsReportCsv() : this.getProjectHealthReportPdf();
+        return csv ? this.getProjectsReportCsv() : this.getProjectHealthReportPdf();
       case 'team-allocation':
-        return fmt === 'csv' ? this.getUsersReportPdf() : this.getTeamAllocationReportPdf();
+        return csv ? this.getTasksReportCsv()    : this.getTeamAllocationReportPdf();
       case 'milestone-delivery':
-        return fmt === 'csv' ? this.getTasksReportCsv() : this.getMilestoneDeliveryReportPdf();
-      case 'tasks':
-        return fmt === 'csv' ? this.getTasksReportCsv() : this.getTasksReportPdf();
+        return csv ? this.getTasksReportCsv()    : this.getMilestoneDeliveryReportPdf();
       case 'users':
+        // No CSV endpoint for users; always return PDF
         return this.getUsersReportPdf();
+      case 'tasks':
+        return csv ? this.getTasksReportCsv()    : this.getTasksReportPdf();
       case 'projects':
       default:
-        return fmt === 'csv' ? this.getProjectsReportCsv() : this.getProjectsReportPdf();
+        return csv ? this.getProjectsReportCsv() : this.getProjectsReportPdf();
     }
   }
 

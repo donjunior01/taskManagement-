@@ -1,3 +1,11 @@
+/* ── Glass Panel base ── */
+.glass-panel {
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
 /* ── PM Tasks ── */
 .tasks-container {
   display: flex; flex-direction: column; gap: 24px;
@@ -54,7 +62,7 @@
   padding: 16px; display: flex; flex-direction: column; gap: 12px;
 
   .column-header {
-    display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-shrink: 0;
     .column-dot {
       width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
       &.dot-planned   { background: var(--primary); }
@@ -73,6 +81,25 @@
   &.column-progress { border-top: 3px solid var(--warning); }
   &.column-hold     { border-top: 3px solid var(--accent); }
   &.column-completed{ border-top: 3px solid var(--success); }
+}
+
+/* Scrollable cards area — shows ~3 cards, scroll for more */
+.column-cards-area {
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 510px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+
+  /* Slim scrollbar inside column */
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+  &::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+}
+
+.empty-column-msg {
+  font-size: 12px; color: var(--text-muted); text-align: center; padding: 24px 0; font-style: italic;
 }
 
 /* ── Task Card ── */
@@ -113,10 +140,18 @@
     }
     .deadline-lbl { font-size: 11px; color: var(--text-muted); }
     .quick-move-btn {
+      display: inline-flex; align-items: center; gap: 3px;
       padding: 4px 10px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm);
       font-size: 11px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: var(--t-fast);
+      svg { width: 11px; height: 11px; flex-shrink: 0; }
       &:hover { background: var(--primary-bg); border-color: var(--primary-border); color: var(--primary); }
+      &.btn-start  { color: var(--primary);  background: var(--primary-bg);  border-color: var(--primary-border); &:hover { background: var(--primary);  color: #fff; } }
+      &.btn-finish { color: var(--success);  background: var(--success-bg);  border-color: var(--success-border); &:hover { background: var(--success);  color: #fff; } }
+      &.btn-hold   { color: var(--warning);  background: var(--warning-bg);  border-color: var(--warning-border); &:hover { background: var(--warning);  color: #fff; } }
+      &.btn-resume { color: var(--primary);  background: var(--primary-bg);  border-color: var(--primary-border); &:hover { background: var(--primary);  color: #fff; } }
+      &.btn-reopen { color: var(--text-secondary); background: var(--bg-subtle); border-color: var(--border);         &:hover { background: var(--border);  color: var(--text-primary); } }
     }
+    .quick-move-group { display: flex; gap: 5px; }
   }
 }
 

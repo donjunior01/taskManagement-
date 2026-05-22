@@ -59,30 +59,14 @@ export class PmReportsComponent implements OnInit {
   // Tab Control: 'saved' | 'health' | 'productivity'
   activeTab: 'saved' | 'health' | 'productivity' = 'saved';
 
-  // Saved reports list
-  savedReports: SavedReport[] = [
-    { id: 1, name: 'Q3 Velocity Report', date: 'Oct 1, 2024', size: '1.2 MB', format: 'PDF', selected: true },
-    { id: 2, name: 'Team Allocation - Sep', date: 'Sep 30, 2024', size: '850 KB', format: 'PDF', selected: false },
-    { id: 3, name: 'Project Health Summary', date: 'Sep 15, 2024', size: '2.4 MB', format: 'PDF', selected: false },
-    { id: 4, name: 'Sprint 42 Retrospective', date: 'Sep 10, 2024', size: '1.8 MB', format: 'CSV', selected: false }
-  ];
+  // Saved reports list — populated when user generates and archives reports
+  savedReports: SavedReport[] = [];
 
-  // Project Health reports
-  healthReports: ProjectHealthReport[] = [
-    { projectName: 'Website Redesign Q3', completionRate: 75, health: 'ON_TRACK', tasksCompleted: 42, tasksPending: 12, overdueTasks: 0 },
-    { projectName: 'Mobile App V2.0', completionRate: 40, health: 'AT_RISK', tasksCompleted: 35, tasksPending: 48, overdueTasks: 5 },
-    { projectName: 'Backend API Migration', completionRate: 90, health: 'ON_TRACK', tasksCompleted: 38, tasksPending: 4, overdueTasks: 0 },
-    { projectName: 'Marketing Campaign Q4', completionRate: 15, health: 'ON_TRACK', tasksCompleted: 4, tasksPending: 26, overdueTasks: 1 },
-    { projectName: 'Client Portal Overhaul', completionRate: 60, health: 'ON_TRACK', tasksCompleted: 20, tasksPending: 14, overdueTasks: 0 }
-  ];
+  // Project Health reports — populated from real backend data (future endpoint)
+  healthReports: ProjectHealthReport[] = [];
 
-  // Developer Productivity reports
-  devVelocityReports: DevProductivityReport[] = [
-    { developerName: 'Alex Johnson', role: 'Frontend Architect', tasksAssigned: 26, tasksCompleted: 24, velocityRating: 'Excellent', avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150' },
-    { developerName: 'Maya Ndlovu', role: 'Fullstack Dev', tasksAssigned: 22, tasksCompleted: 18, velocityRating: 'Very Good', avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150' },
-    { developerName: 'Carlos Rodriguez', role: 'Backend Engineer', tasksAssigned: 25, tasksCompleted: 21, velocityRating: 'Very Good', avatarUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150' },
-    { developerName: 'Leila Hassan', role: 'Mobile Dev', tasksAssigned: 18, tasksCompleted: 16, velocityRating: 'Excellent', avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150' }
-  ];
+  // Developer Productivity reports — populated from real backend data (future endpoint)
+  devVelocityReports: DevProductivityReport[] = [];
 
   // Modal overlays state
   showSettingsModal: boolean = false;
