@@ -179,7 +179,7 @@ export class PmTasksComponent implements OnInit {
     }
 
     // Map filtered tasks into Kanban Swimlanes
-    this.plannedTasks = result.filter(t => t.status === 'PLANNED');
+    this.plannedTasks = result.filter(t => t.status === 'PLANNED' || t.status === 'TODO');
     this.inProgressTasks = result.filter(t => t.status === 'IN_PROGRESS');
     this.onHoldTasks = result.filter(t => t.status === 'ON_HOLD');
     this.completedTasks = result.filter(t => t.status === 'COMPLETED');

@@ -251,6 +251,43 @@ CREATE INDEX IF NOT EXISTS idx_calendar_events_start_time ON calendar_events(sta
 CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at);
 
+-- Create login_attempts table
+CREATE TABLE IF NOT EXISTS `login_attempts` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `username` VARCHAR(255),
+    `email` VARCHAR(255),
+    `status` VARCHAR(50) NOT NULL,
+    `ip_address` VARCHAR(255),
+    `user_agent` TEXT,
+    `user_id` BIGINT,
+    `attempted_at` DATETIME NOT NULL,
+    `reason` VARCHAR(255),
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE INDEX IF NOT EXISTS idx_login_attempts_attempted_at ON login_attempts(attempted_at);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_status ON login_attempts(status);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_email ON login_attempts(email);
+
+-- Create password_reset_requests table
+CREATE TABLE IF NOT EXISTS `password_reset_requests` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `email` VARCHAR(255) NOT NULL,
+    `reason` TEXT,
+    `status` VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    `user_id` BIGINT,
+    `processed_by_id` BIGINT,
+    `requested_at` DATETIME,
+    `processed_at` DATETIME,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`processed_by_id`) REFERENCES `allUsers`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_email ON password_reset_requests(email);
+CREATE INDEX IF NOT EXISTS idx_password_reset_status ON password_reset_requests(status);
+
 -- User notification preferences table
 CREATE TABLE IF NOT EXISTS `user_notification_preferences` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,

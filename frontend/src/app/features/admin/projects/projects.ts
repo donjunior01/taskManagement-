@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ProjectService, Project, ProjectRequest } from '../../../core/services/project.service';
 import { UserService, User } from '../../../core/services/user.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -32,18 +33,11 @@ export class AdminProjectsComponent implements OnInit {
 
   // Modals Visibility
   showAddModal: boolean = false;
-  showEditModal: boolean = false;
-  showDeleteModal: boolean = false;
-  showDetailModal: boolean = false;
 
   // View state
   viewMode: 'grid' | 'list' = 'grid';
-  detailProject: Project | null = null;
-  detailProjectMembers: User[] = [];
-  loadingMembers: boolean = false;
 
   // Form states
-  selectedProject: Project | null = null;
   submitting: boolean = false;
 
   // Add Project Form (matches ProjectRequest DTO)
@@ -56,22 +50,12 @@ export class AdminProjectsComponent implements OnInit {
     managerId: undefined
   };
 
-  // Edit Project Form (matches ProjectRequest DTO)
-  editForm: ProjectRequest = {
-    name: '',
-    description: '',
-    startDate: '',
-    endDate: '',
-    status: 'IN_PROGRESS',
-    managerId: undefined,
-    progress: 0
-  };
-
   constructor(
     private projectService: ProjectService,
     private userService: UserService,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService
+    private toast: ToastService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -163,7 +147,14 @@ export class AdminProjectsComponent implements OnInit {
     }
   }
 
-  // Modals Actions
+  // Navigate to project detail page
+  openProjectDetail(project: Project): void {
+    if (project.id) {
+      this.router.navigate(['/admin/projects', project.id]);
+    }
+  }
+
+  // Add Modal
   openAddModal(): void {
     this.resetAddForm();
     this.showAddModal = true;
@@ -171,79 +162,6 @@ export class AdminProjectsComponent implements OnInit {
 
   closeAddModal(): void {
     this.showAddModal = false;
-  }
-
-  openEditModal(project: Project): void {
-    this.selectedProject = project;
-    this.editForm = {
-      name: project.name,
-      description: project.description || '',
-      managerId: project.managerId,
-      startDate: project.startDate || '',
-      endDate: project.endDate || '',
-      status: project.status || 'PLANNED',
-      progress: project.progress || 0
-    };
-    this.showEditModal = true;
-  }
-
-  closeEditModal(): void {
-    this.showEditModal = false;
-    this.selectedProject = null;
-  }
-
-  openDeleteModal(project: Project): void {
-    this.selectedProject = project;
-    this.showDeleteModal = true;
-  }
-
-  closeDeleteModal(): void {
-    this.showDeleteModal = false;
-    this.selectedProject = null;
-  }
-
-  openDetailModal(project: Project): void {
-    this.detailProject = project;
-    this.detailProjectMembers = [];
-    this.showDetailModal = true;
-    
-    if (project.id) {
-      this.loadingMembers = true;
-      this.projectService.getProjectMembers(project.id).subscribe({
-        next: (response: any) => {
-          this.detailProjectMembers = response && response.data ? response.data : [];
-          this.loadingMembers = false;
-          this.cdr.detectChanges();
-        },
-        error: (err: any) => {
-          console.warn('API getProjectMembers error, seeding fallback offline users:', err);
-          // Fallback seeding: generate simulated team members based on project
-          if (project.id === 1) {
-            this.detailProjectMembers = [
-              { id: 103, username: 'user_mbarga', email: 'mbarga@mtncameroon.cm', firstName: 'Paul', lastName: 'Mbarga', role: 'USER' },
-              { id: 104, username: 'user_fotso', email: 'fotso@mtncameroon.cm', firstName: 'Sandrine', lastName: 'Fotso', role: 'USER' }
-            ];
-          } else if (project.id === 2) {
-            this.detailProjectMembers = [
-              { id: 105, username: 'user_ngono', email: 'ngono@mtncameroon.cm', firstName: 'Emmanuel', lastName: 'Ngono', role: 'USER' },
-              { id: 106, username: 'user_eyebe', email: 'eyebe@mtncameroon.cm', firstName: 'Carine', lastName: 'Eyebe', role: 'USER' }
-            ];
-          } else {
-            this.detailProjectMembers = [
-              { id: 107, username: 'user_tabi', email: 'tabi@mtncameroon.cm', firstName: 'Francis', lastName: 'Tabi', role: 'USER' }
-            ];
-          }
-          this.loadingMembers = false;
-          this.cdr.detectChanges();
-        }
-      });
-    }
-  }
-
-  closeDetailModal(): void {
-    this.showDetailModal = false;
-    this.detailProject = null;
-    this.detailProjectMembers = [];
   }
 
   // DTO Submissions
@@ -295,81 +213,6 @@ export class AdminProjectsComponent implements OnInit {
     });
   }
 
-  submitEditProject(): void {
-    if (!this.selectedProject || !this.selectedProject.id) return;
-
-    if (!this.editForm.name || !this.editForm.startDate || !this.editForm.endDate) {
-      this.triggerToast('All mandatory workspace details must be provided.', 'error');
-      return;
-    }
-
-    this.submitting = true;
-
-    if (this.editForm.managerId) {
-      this.editForm.managerId = Number(this.editForm.managerId);
-    }
-
-    this.projectService.updateProject(this.selectedProject.id, this.editForm).subscribe({
-      next: (updatedProj) => {
-        this.submitting = false;
-        this.showEditModal = false;
-        this.triggerToast(`Successfully updated project specifications for "${updatedProj.name}"!`, 'success');
-        this.loadProjects();
-      },
-      error: (err) => {
-        this.submitting = false;
-        console.error('API Project update error, running offline simulation edits:', err);
-        // Optimistic simulation update
-        this.showEditModal = false;
-        const index = this.projectsList.findIndex(p => p.id === this.selectedProject?.id);
-        if (index !== -1) {
-          const selectedManager = this.projectManagers.find(m => m.id === Number(this.editForm.managerId));
-          // Calculate realistic mock progress based on statuses
-          let progressVal = this.projectsList[index].progress || 0;
-          if (this.editForm.status === 'COMPLETED') progressVal = 100;
-          else if (this.editForm.status === 'PLANNED') progressVal = 0;
-          
-          this.projectsList[index] = {
-            ...this.projectsList[index],
-            name: this.editForm.name,
-            description: this.editForm.description,
-            managerId: this.editForm.managerId ? Number(this.editForm.managerId) : undefined,
-            managerName: selectedManager ? `${selectedManager.firstName} ${selectedManager.lastName}` : 'Unassigned',
-            startDate: this.editForm.startDate,
-            endDate: this.editForm.endDate,
-            status: this.editForm.status,
-            progress: this.editForm.progress || 0
-          };
-          this.applyClientFilters();
-        }
-        this.triggerToast(`Optimistic update: Saved details for "${this.editForm.name}"!`, 'success');
-      }
-    });
-  }
-
-  submitDeleteProject(): void {
-    if (!this.selectedProject || !this.selectedProject.id) return;
-
-    this.submitting = true;
-    this.projectService.deleteProject(this.selectedProject.id).subscribe({
-      next: () => {
-        this.submitting = false;
-        this.showDeleteModal = false;
-        this.triggerToast(`Project workspace "${this.selectedProject?.name}" was destroyed permanently.`, 'success');
-        this.loadProjects();
-      },
-      error: (err) => {
-        this.submitting = false;
-        console.error('API Project delete error, running simulation actions:', err);
-        // Simulation delete
-        this.showDeleteModal = false;
-        this.projectsList = this.projectsList.filter(p => p.id !== this.selectedProject?.id);
-        this.totalElements--;
-        this.applyClientFilters();
-        this.triggerToast(`Optimistic destroy: Removed project "${this.selectedProject?.name}"!`, 'success');
-      }
-    });
-  }
 
   private resetAddForm(): void {
     this.addForm = {

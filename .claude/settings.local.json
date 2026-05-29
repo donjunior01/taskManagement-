@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"subject: t\\\\|priority: 'MEDIUM'\\\\|submittedBy: \\\\`User\\\\|status: \\(t\" \"frontend/src/app/features/admin/support/support.ts\")",
+      "Bash(npx tsc *)",
+      "Bash(xargs grep -l \"toggle\\\\|isActive\\\\|activate\\\\|suspend\")",
+      "Bash(xargs cat)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\DON JUNIOR\\\\Documents\\\\Project\\\\taskManagement-\\\\frontend\\\\src\\\\app\\\\core\\\\services\\\\\" -File | Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\DON JUNIOR\\\\Documents\\\\Project\\\\taskManagement-\" -Force)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\DON JUNIOR\\\\Documents\\\\Project\\\\taskManagement-\" -Recurse -Filter \"ReportService.java\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(mvn compile *)",
+      "Read(//c/Program Files/Java/**)",
+      "Read(//c/Users/DON JUNIOR/.m2/wrapper/dists/**)",
+      "Bash(git push *)",
+      "PowerShell($mvn = \"C:\\\\Program Files\\\\JetBrains\\\\IntelliJ IDEA 2026.1\\\\plugins\\\\maven\\\\lib\\\\maven3\\\\bin\\\\mvn.cmd\"; Set-Location \"C:\\\\Users\\\\DON JUNIOR\\\\Documents\\\\Project\\\\taskManagement-\"; & $mvn compile -q 2>&1 | Select-Object -Last 30)",
+      "Bash(xargs grep -l \"download\\\\|export\")",
+      "Bash(npm install *)",
+      "Read(//c/Program Files/**)",
+      "Bash(Copy-Item \"c:\\\\Users\\\\DON JUNIOR\\\\Documents\\\\Project\\\\taskManagement-\\\\frontend\\\\src\\\\app\\\\features\\\\admin\\\\project-detail\\\\project-detail.scss\" \"c:\\\\Users\\\\DON JUNIOR\\\\Documents\\\\Project\\\\taskManagement-\\\\frontend\\\\src\\\\app\\\\features\\\\project-manager\\\\project-detail\\\\project-detail.scss\")",
+      "Bash(npx ng *)"
+    ]
+  }
+}

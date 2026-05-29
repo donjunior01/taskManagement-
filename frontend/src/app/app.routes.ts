@@ -11,11 +11,13 @@ import { UserLayoutComponent } from './layouts/user-layout/user-layout';
 import { AdminDashboardComponent } from './features/admin/dashboard/dashboard';
 import { AdminUsersComponent } from './features/admin/users/users';
 import { AdminProjectsComponent } from './features/admin/projects/projects';
+import { AdminProjectDetailComponent } from './features/admin/project-detail/project-detail';
 import { AdminTasksComponent } from './features/admin/tasks/tasks';
 import { AdminActivityLogsComponent } from './features/admin/activity-logs/activity-logs';
 import { AdminSettingsComponent } from './features/admin/settings/settings';
 import { PmDashboardComponent } from './features/project-manager/dashboard/dashboard';
 import { PmProjectsComponent } from './features/project-manager/projects/projects';
+import { PmProjectDetailComponent } from './features/project-manager/project-detail/project-detail';
 import { PmTasksComponent } from './features/project-manager/tasks/tasks';
 import { PmTeamsComponent } from './features/project-manager/teams/teams';
 import { PmDeliverablesComponent } from './features/project-manager/deliverables/deliverables';
@@ -49,6 +51,7 @@ export const routes: Routes = [
       { path: 'dashboard', component: AdminDashboardComponent },
       { path: 'users', component: AdminUsersComponent },
       { path: 'projects', component: AdminProjectsComponent },
+      { path: 'projects/:id', component: AdminProjectDetailComponent },
       { path: 'tasks', component: AdminTasksComponent },
       { path: 'activity-logs', component: AdminActivityLogsComponent },
       { path: 'settings', component: AdminSettingsComponent },
@@ -66,6 +69,7 @@ export const routes: Routes = [
       { path: '', redirectTo: '/pm/dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: PmDashboardComponent },
       { path: 'projects', component: PmProjectsComponent },
+      { path: 'projects/:id', component: PmProjectDetailComponent },
       { path: 'tasks', component: PmTasksComponent },
       { path: 'teams', component: PmTeamsComponent },
       { path: 'deliverables', component: PmDeliverablesComponent },

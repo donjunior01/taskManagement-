@@ -1,0 +1,686 @@
+<div class="pd-page animate-fade-in-up">
+
+  <!-- ── Top Navigation Bar ─────────────────────────────────────────────── -->
+  <div class="pd-topbar">
+    <button class="back-btn" (click)="goBack()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+      Back to Projects
+    </button>
+    <div class="pd-topbar-actions" *ngIf="!loading && project">
+      <button class="btn btn-add-users" (click)="openAddUsersModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <line x1="19" y1="8" x2="19" y2="14"></line>
+          <line x1="16" y1="11" x2="22" y2="11"></line>
+        </svg>
+        Add Users
+      </button>
+      <button class="btn btn-add-task" (click)="openAddTaskModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Add Task
+      </button>
+      <button class="btn btn-secondary" (click)="openEditModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon>
+          <line x1="3" y1="21" x2="21" y2="21"></line>
+        </svg>
+        Edit
+      </button>
+      <button class="btn btn-danger" (click)="openDeleteModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loading ────────────────────────────────────────────────────────── -->
+  <div class="pd-loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Loading project workspace...</span>
+  </div>
+
+  <!-- ── Not Found ──────────────────────────────────────────────────────── -->
+  <div class="glass-panel pd-empty" *ngIf="!loading && !project">
+    <div class="empty-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+      </svg>
+    </div>
+    <h3>Workspace Not Found</h3>
+    <p>The project could not be loaded. Please return to the projects list.</p>
+    <button class="btn btn-primary" (click)="goBack()">Back to Projects</button>
+  </div>
+
+  <!-- ── Main Content ───────────────────────────────────────────────────── -->
+  <div class="pd-content" *ngIf="!loading && project">
+
+    <!-- ── Hero ─────────────────────────────────────────────────────────── -->
+    <div class="glass-panel pd-hero">
+      <div class="hero-content">
+        <span class="status-badge" [ngClass]="project.status?.toLowerCase() || 'planned'">
+          {{ getStatusLabel(project.status) }}
+        </span>
+        <h1 class="hero-title">{{ project.name }}</h1>
+        <p class="hero-desc">{{ project.description || 'No description registered for this workspace.' }}</p>
+        <div class="hero-meta">
+          <div class="meta-chip">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>{{ project.managerName || 'Unassigned Manager' }}</span>
+          </div>
+          <div class="meta-chip">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>{{ project.startDate || 'N/A' }} → {{ project.endDate || 'N/A' }}</span>
+          </div>
+          <div class="meta-chip">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>{{ getDaysRemaining() }} days remaining</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-ring">
+        <svg class="progress-ring-svg" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="45" fill="none" stroke="var(--bg-subtle)" stroke-width="10"/>
+          <circle cx="60" cy="60" r="45" fill="none" stroke="var(--primary)" stroke-width="10"
+            [attr.stroke-dasharray]="getProgressDash(project.progress)"
+            [attr.stroke-dashoffset]="-70.75"
+            stroke-linecap="round"/>
+        </svg>
+        <div class="ring-center">
+          <span class="ring-pct">{{ project.progress || 0 }}%</span>
+          <span class="ring-label">Progress</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Stats Row ─────────────────────────────────────────────────────── -->
+    <div class="stats-grid">
+      <div class="glass-panel stat-card animate-scale-in">
+        <div class="stat-icon tasks-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ taskStats.total || project.taskCount || 0 }}</span>
+          <span class="stat-label">Total Tasks</span>
+        </div>
+      </div>
+
+      <div class="glass-panel stat-card animate-scale-in">
+        <div class="stat-icon members-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ members.length || project.teamCount || 0 }}</span>
+          <span class="stat-label">Team Members</span>
+        </div>
+      </div>
+
+      <div class="glass-panel stat-card animate-scale-in">
+        <div class="stat-icon done-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ taskStats.completed }}</span>
+          <span class="stat-label">Completed Tasks</span>
+        </div>
+      </div>
+
+      <div class="glass-panel stat-card animate-scale-in">
+        <div class="stat-icon days-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ getDaysRemaining() }}</span>
+          <span class="stat-label">Days Remaining</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Charts Row ─────────────────────────────────────────────────────── -->
+    <div class="charts-grid">
+
+      <!-- Task Status Donut -->
+      <div class="glass-panel chart-card">
+        <div class="chart-header">
+          <h4>Task Status Distribution</h4>
+          <span class="chart-subtitle">{{ taskStats.total }} tasks total</span>
+        </div>
+
+        <div class="task-donut-wrap" *ngIf="taskStats.total > 0">
+          <svg class="task-donut-svg" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="45" fill="none" stroke="var(--bg-subtle)" stroke-width="14"/>
+            <circle cx="60" cy="60" r="45" fill="none" stroke="#94a3b8" stroke-width="14"
+              [attr.stroke-dasharray]="getTaskSegmentDash(taskStats.planned)"
+              [attr.stroke-dashoffset]="getTaskSegmentOffset(0)" stroke-linecap="butt"/>
+            <circle cx="60" cy="60" r="45" fill="none" stroke="var(--primary)" stroke-width="14"
+              [attr.stroke-dasharray]="getTaskSegmentDash(taskStats.inProgress)"
+              [attr.stroke-dashoffset]="getTaskSegmentOffset(1)" stroke-linecap="butt"/>
+            <circle cx="60" cy="60" r="45" fill="none" stroke="var(--success)" stroke-width="14"
+              [attr.stroke-dasharray]="getTaskSegmentDash(taskStats.completed)"
+              [attr.stroke-dashoffset]="getTaskSegmentOffset(2)" stroke-linecap="butt"/>
+            <circle cx="60" cy="60" r="45" fill="none" stroke="var(--warning, #f59e0b)" stroke-width="14"
+              [attr.stroke-dasharray]="getTaskSegmentDash(taskStats.onHold)"
+              [attr.stroke-dashoffset]="getTaskSegmentOffset(3)" stroke-linecap="butt"/>
+            <text x="60" y="56" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text-primary)">{{ taskStats.total }}</text>
+            <text x="60" y="70" text-anchor="middle" font-size="9" fill="var(--text-muted)" font-weight="600">TASKS</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="legend-item"><span class="legend-dot" style="background:#94a3b8;"></span><span class="legend-label">Planned</span><span class="legend-count">{{ taskStats.planned }}</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span><span class="legend-label">In Progress</span><span class="legend-count">{{ taskStats.inProgress }}</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--success);"></span><span class="legend-label">Completed</span><span class="legend-count">{{ taskStats.completed }}</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--warning, #f59e0b);"></span><span class="legend-label">On Hold</span><span class="legend-count">{{ taskStats.onHold }}</span></div>
+          </div>
+        </div>
+        <div class="chart-empty" *ngIf="taskStats.total === 0 && !loadingTasks">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          <span>No tasks assigned yet</span>
+        </div>
+        <div class="chart-loading" *ngIf="loadingTasks"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="glass-panel chart-card">
+        <div class="chart-header">
+          <h4>Project Timeline</h4>
+          <span class="chart-subtitle">Duration analysis</span>
+        </div>
+        <div class="timeline-chart">
+          <div class="timeline-gauge">
+            <div class="gauge-labels">
+              <span class="gauge-start">{{ project.startDate || 'Start' }}</span>
+              <span class="gauge-pct">{{ getDaysElapsedPct() | number:'1.0-0' }}% elapsed</span>
+              <span class="gauge-end">{{ project.endDate || 'End' }}</span>
+            </div>
+            <div class="gauge-track">
+              <div class="gauge-fill" [style.width.%]="getDaysElapsedPct()"></div>
+              <div class="gauge-marker" [style.left.%]="getDaysElapsedPct()"></div>
+            </div>
+          </div>
+          <div class="timeline-stats">
+            <div class="tl-stat">
+              <span class="tl-num">{{ getDaysTotal() }}</span>
+              <span class="tl-lbl">Total Days</span>
+            </div>
+            <div class="tl-divider"></div>
+            <div class="tl-stat">
+              <span class="tl-num">{{ getDaysTotal() - getDaysRemaining() }}</span>
+              <span class="tl-lbl">Days Elapsed</span>
+            </div>
+            <div class="tl-divider"></div>
+            <div class="tl-stat">
+              <span class="tl-num" [class.overdue]="getDaysRemaining() === 0">{{ getDaysRemaining() }}</span>
+              <span class="tl-lbl">Days Left</span>
+            </div>
+          </div>
+          <div class="completion-bar-section" *ngIf="taskStats.total > 0">
+            <span class="completion-label">Completion Rate</span>
+            <div class="completion-track">
+              <div class="completion-fill" [style.width.%]="taskStats.total > 0 ? (taskStats.completed / taskStats.total * 100) : 0"></div>
+            </div>
+            <span class="completion-pct">{{ taskStats.total > 0 ? (taskStats.completed / taskStats.total * 100 | number:'1.0-0') : 0 }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Chart -->
+      <div class="glass-panel chart-card">
+        <div class="chart-header">
+          <h4>Team Composition</h4>
+          <span class="chart-subtitle">{{ members.length }} member(s)</span>
+        </div>
+        <div class="members-chart" *ngIf="members.length > 0 && !loadingMembers">
+          <div class="members-avatars-row">
+            <div class="member-avatar-lg" *ngFor="let m of members | slice:0:8" [title]="m.firstName + ' ' + m.lastName">
+              {{ m.firstName[0] || '' }}{{ m.lastName[0] || '' }}
+            </div>
+            <div class="avatar-overflow" *ngIf="members.length > 8">+{{ members.length - 8 }}</div>
+          </div>
+          <div class="members-bar-chart">
+            <div class="mbar-item" *ngFor="let m of members | slice:0:5">
+              <div class="mbar-name">{{ m.firstName }} {{ m.lastName }}</div>
+              <div class="mbar-track"><div class="mbar-fill" [style.width.%]="100"></div></div>
+              <span class="mbar-role">{{ m.role || 'USER' }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-loading" *ngIf="loadingMembers"><div class="spinner"></div></div>
+        <div class="chart-empty" *ngIf="!loadingMembers && members.length === 0">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+          <span>No team members assigned</span>
+        </div>
+      </div>
+
+      <!-- Priority Chart -->
+      <div class="glass-panel chart-card">
+        <div class="chart-header">
+          <h4>Task Priority Breakdown</h4>
+          <span class="chart-subtitle">Priority distribution</span>
+        </div>
+        <div class="priority-bars-direct" *ngIf="tasks.length > 0 && !loadingTasks">
+          <div class="pb-row">
+            <span class="pb-label high-lbl">High</span>
+            <div class="pb-track"><div class="pb-fill high-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('HIGH') / tasks.length * 100) : 0"></div></div>
+            <span class="pb-val">{{ getCountByPriority('HIGH') }}</span>
+          </div>
+          <div class="pb-row">
+            <span class="pb-label med-lbl">Medium</span>
+            <div class="pb-track"><div class="pb-fill med-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('MEDIUM') / tasks.length * 100) : 0"></div></div>
+            <span class="pb-val">{{ getCountByPriority('MEDIUM') }}</span>
+          </div>
+          <div class="pb-row">
+            <span class="pb-label low-lbl">Low</span>
+            <div class="pb-track"><div class="pb-fill low-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('LOW') / tasks.length * 100) : 0"></div></div>
+            <span class="pb-val">{{ getCountByPriority('LOW') }}</span>
+          </div>
+        </div>
+        <div class="chart-loading" *ngIf="loadingTasks"><div class="spinner"></div></div>
+        <div class="chart-empty" *ngIf="!loadingTasks && tasks.length === 0">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span>No task priority data</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Team Members Section ───────────────────────────────────────────── -->
+    <div class="glass-panel pd-section">
+      <div class="section-header">
+        <div class="section-title-group">
+          <h4>Team Members</h4>
+          <span class="section-count">{{ members.length }} member(s)</span>
+        </div>
+        <button class="btn btn-add-users btn-sm" (click)="openAddUsersModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <line x1="19" y1="8" x2="19" y2="14"></line>
+            <line x1="16" y1="11" x2="22" y2="11"></line>
+          </svg>
+          Add Users
+        </button>
+      </div>
+
+      <div class="members-list" *ngIf="!loadingMembers && members.length > 0">
+        <div class="member-row animate-scale-in" *ngFor="let m of members">
+          <div class="member-left">
+            <div class="member-avatar">{{ m.firstName[0] || '' }}{{ m.lastName[0] || '' }}</div>
+            <div class="member-info">
+              <span class="member-name">{{ m.firstName }} {{ m.lastName }}</span>
+              <span class="member-meta">@{{ m.username }} · {{ m.email }}</span>
+            </div>
+          </div>
+          <div class="member-right">
+            <span class="member-badge">{{ m.role || 'USER' }}</span>
+            <button class="unassign-btn" (click)="openUnassignModal(m)" title="Remove from project">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <line x1="18" y1="8" x2="23" y2="13"></line>
+                <line x1="23" y1="8" x2="18" y2="13"></line>
+              </svg>
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-loading" *ngIf="loadingMembers"><div class="spinner"></div><span>Loading team roster...</span></div>
+      <div class="section-empty" *ngIf="!loadingMembers && members.length === 0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+        <p>No team members assigned. Click "Add Users" to assign team members.</p>
+      </div>
+    </div>
+
+    <!-- ── Tasks Section ──────────────────────────────────────────────────── -->
+    <div class="glass-panel pd-section">
+      <div class="section-header">
+        <div class="section-title-group">
+          <h4>Project Tasks</h4>
+          <span class="section-count">{{ tasks.length }} task(s)</span>
+        </div>
+        <button class="btn btn-add-task btn-sm" (click)="openAddTaskModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Task
+        </button>
+      </div>
+
+      <div class="tasks-table-wrap" *ngIf="!loadingTasks && tasks.length > 0">
+        <table class="tasks-table">
+          <thead>
+            <tr>
+              <th>Task Name</th>
+              <th>Assignee</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Progress</th>
+              <th>Deadline</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="task-row animate-scale-in" *ngFor="let t of tasks">
+              <td class="task-name-cell">
+                <span class="task-name">{{ t.name }}</span>
+                <span class="task-desc" *ngIf="t.description">{{ t.description }}</span>
+              </td>
+              <td>
+                <div class="assignee-cell" *ngIf="t.assignedToName">
+                  <div class="assignee-avatar">{{ t.assignedToName[0] }}</div>
+                  <span>{{ t.assignedToName }}</span>
+                </div>
+                <span class="unassigned" *ngIf="!t.assignedToName">—</span>
+              </td>
+              <td><span class="priority-badge" [ngClass]="getPriorityClass(t.priority)">{{ t.priority || 'MEDIUM' }}</span></td>
+              <td><span class="task-status-badge" [ngClass]="getTaskStatusClass(t.status)">{{ t.status || 'TODO' }}</span></td>
+              <td>
+                <div class="task-progress-cell">
+                  <div class="task-prog-track"><div class="task-prog-fill" [style.width.%]="t.progress || 0"></div></div>
+                  <span class="task-prog-pct">{{ t.progress || 0 }}%</span>
+                </div>
+              </td>
+              <td class="deadline-cell">{{ t.deadline || '—' }}</td>
+              <td>
+                <div style="display:flex; justify-content:flex-end;">
+                  <button class="del-task-btn" (click)="deleteTask(t.id)" title="Delete Task">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section-loading" *ngIf="loadingTasks"><div class="spinner"></div><span>Loading tasks...</span></div>
+      <div class="section-empty" *ngIf="!loadingTasks && tasks.length === 0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+        <p>No tasks yet. Click "Add Task" to create the first deliverable.</p>
+      </div>
+    </div>
+
+  </div><!-- /pd-content -->
+</div>
+
+<!-- ═══════════════════ ADD USERS MODAL ═══════════════════ -->
+<div class="modal-backdrop" *ngIf="showAddUsersModal" (click)="closeAddUsersModal()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()" style="max-width:560px;">
+    <div class="modal-header">
+      <div class="modal-icon users-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <line x1="19" y1="8" x2="19" y2="14"></line>
+          <line x1="16" y1="11" x2="22" y2="11"></line>
+        </svg>
+      </div>
+      <div class="modal-title-group">
+        <h3>Add Users to Project</h3>
+        <span class="modal-subtitle">Select team members to assign to <strong>{{ project?.name }}</strong></span>
+      </div>
+      <button class="modal-close-btn" (click)="closeAddUsersModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="users-modal-body">
+      <div class="users-modal-loading" *ngIf="loadingUsers">
+        <div class="spinner"></div><span>Loading available users...</span>
+      </div>
+
+      <div class="users-list" *ngIf="!loadingUsers && availableUsers.length > 0">
+        <div class="user-select-row"
+          *ngFor="let u of availableUsers"
+          [class.selected]="selectedUserIds[u.id!]"
+          [class.already-member]="isUserAlreadyMember(u.id)"
+          (click)="!isUserAlreadyMember(u.id) && toggleUserSelection(u.id)">
+          <div class="user-checkbox">
+            <input type="checkbox"
+              [checked]="selectedUserIds[u.id!] || false"
+              [disabled]="isUserAlreadyMember(u.id)"
+              (click)="$event.stopPropagation()" />
+          </div>
+          <div class="user-avatar-sm">{{ u.firstName[0] || '' }}{{ u.lastName[0] || '' }}</div>
+          <div class="user-info-block">
+            <span class="user-full-name">{{ u.firstName }} {{ u.lastName }}</span>
+            <span class="user-sub">@{{ u.username }} · {{ u.email }}</span>
+          </div>
+          <span class="already-badge" *ngIf="isUserAlreadyMember(u.id)">Already Assigned</span>
+        </div>
+      </div>
+
+      <div class="users-empty" *ngIf="!loadingUsers && availableUsers.length === 0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+        <span>No users available to assign.</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <span class="selection-info" *ngIf="selectedCount > 0">{{ selectedCount }} user(s) selected</span>
+      <button type="button" class="btn btn-secondary" (click)="closeAddUsersModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="submitAddUsers()" [disabled]="assigningUsers || selectedCount === 0">
+        <span *ngIf="!assigningUsers">Assign Selected Users</span>
+        <div class="spinner" *ngIf="assigningUsers"></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ ADD TASK MODAL ═══════════════════ -->
+<div class="modal-backdrop" *ngIf="showAddTaskModal" (click)="closeAddTaskModal()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>New Task / Deliverable</h3>
+      <button class="modal-close-btn" (click)="closeAddTaskModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <form class="modal-form" (submit)="submitAddTask(); $event.preventDefault()">
+      <div class="form-group">
+        <label>Task Name</label>
+        <input type="text" [(ngModel)]="taskForm.name" name="name" placeholder="e.g. Implement authentication module" required />
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea rows="2" [(ngModel)]="taskForm.description" name="description" placeholder="Describe the task scope and deliverables..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Assign To</label>
+          <select [(ngModel)]="taskForm.assignedToId" name="assignedToId">
+            <option [value]="0">-- Unassigned --</option>
+            <option *ngFor="let m of members" [value]="m.id">{{ m.firstName }} {{ m.lastName }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Deadline</label>
+          <input type="date" [(ngModel)]="taskForm.deadline" name="deadline" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Priority</label>
+          <select [(ngModel)]="taskForm.priority" name="priority">
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Difficulty</label>
+          <select [(ngModel)]="taskForm.difficulty" name="difficulty">
+            <option value="EASY">Easy</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HARD">Hard</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAddTaskModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submittingTask">
+          <span *ngIf="!submittingTask">Create Task</span>
+          <div class="spinner" *ngIf="submittingTask"></div>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ EDIT PROJECT MODAL ═══════════════════ -->
+<div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Edit Project Workspace</h3>
+      <button class="modal-close-btn" (click)="closeEditModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <form class="modal-form" (submit)="submitEditProject(); $event.preventDefault()">
+      <div class="form-group">
+        <label>Project Name</label>
+        <input type="text" [(ngModel)]="editForm.name" name="name" required />
+      </div>
+      <div class="form-group">
+        <label>Business Description</label>
+        <textarea rows="3" [(ngModel)]="editForm.description" name="description"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" [(ngModel)]="editForm.startDate" name="startDate" required />
+        </div>
+        <div class="form-group">
+          <label>Delivery Target Date</label>
+          <input type="date" [(ngModel)]="editForm.endDate" name="endDate" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Workspace Status</label>
+          <select [(ngModel)]="editForm.status" name="status">
+            <option value="PLANNED">Planned</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="ON_HOLD">On Hold</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Progress (%)</label>
+          <input type="number" min="0" max="100" [(ngModel)]="editForm.progress" name="progress" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting">
+          <span *ngIf="!submitting">Save Specifications</span>
+          <div class="spinner" *ngIf="submitting"></div>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ DELETE CONFIRMATION MODAL ═══════════════════ -->
+<div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="glass-panel modal-card delete-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="delete-icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+      </div>
+      <h3>Destroy Workspace</h3>
+    </div>
+    <div class="delete-modal-body">
+      <p class="delete-message">
+        You are about to permanently destroy the project workspace
+        <strong>"{{ project?.name }}"</strong>.
+      </p>
+      <div class="delete-warning-box">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>This action is irreversible. All tasks, assignments, milestones, and data linked to this workspace will be permanently erased.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">Cancel</button>
+      <button type="button" class="btn btn-danger-solid" (click)="submitDeleteProject()" [disabled]="submitting">
+        <span *ngIf="!submitting">Yes, Destroy Workspace</span>
+        <div class="spinner" *ngIf="submitting"></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ UNASSIGN USER CONFIRMATION MODAL ═══════════════════ -->
+<div class="modal-backdrop" *ngIf="showUnassignModal" (click)="closeUnassignModal()">
+  <div class="glass-panel modal-card delete-modal animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="delete-icon-wrap" style="background:rgba(245,158,11,.1); color:var(--warning, #f59e0b);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <line x1="18" y1="8" x2="23" y2="13"></line>
+          <line x1="23" y1="8" x2="18" y2="13"></line>
+        </svg>
+      </div>
+      <h3>Remove Team Member</h3>
+    </div>
+    <div class="delete-modal-body">
+      <p class="delete-message">
+        Are you sure you want to remove <strong>{{ memberToUnassign?.firstName }} {{ memberToUnassign?.lastName }}</strong> from this project workspace?
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeUnassignModal()">Cancel</button>
+      <button type="button" class="btn btn-danger" (click)="submitUnassignUser()">Remove Member</button>
+    </div>
+  </div>
+</div>
