@@ -130,6 +130,23 @@
         }
       </div>
 
+      @if (twoFactorRequired) {
+        <div class="form-group">
+          <label for="twofa-code">Authentication Code</label>
+          <input
+            type="text"
+            id="twofa-code"
+            [(ngModel)]="loginRequest.code"
+            name="code"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            placeholder="6-digit code from your authenticator app"
+            autofocus />
+          <span class="validation-msg" style="color: var(--text-muted);">Enter the code from your authenticator app to finish signing in.</span>
+        </div>
+      }
+
       <button type="submit" [disabled]="loading || loginForm.invalid" class="login-button">
         @if (loading) {
           <span class="spinner"></span>

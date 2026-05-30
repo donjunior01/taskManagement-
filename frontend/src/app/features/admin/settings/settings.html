@@ -230,6 +230,50 @@
         </div>
       </div>
 
+      <!-- Two-Factor Authentication Panel -->
+      <div class="glass-panel security-card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <h3>Two-Factor Authentication</h3>
+        </div>
+
+        <div class="security-body twofa-body">
+          <!-- Enabled state -->
+          @if (twoFaEnabled) {
+            <p class="twofa-status on"><span class="twofa-dot on"></span>2FA is <strong>enabled</strong> on your account.</p>
+            <p class="twofa-hint">To disable it, enter a current code from your authenticator app.</p>
+            <div class="twofa-inline">
+              <input type="text" [(ngModel)]="twoFaCode" name="disableCode" maxlength="6" inputmode="numeric" placeholder="6-digit code" />
+              <button class="btn-2fa danger" (click)="disableTwoFa()" [disabled]="twoFaBusy">Disable 2FA</button>
+            </div>
+          } @else if (twoFaSetup) {
+            <!-- Setup in progress -->
+            <p class="twofa-hint">Add this account to your authenticator app, then enter the generated code to activate.</p>
+            <div class="twofa-secret">
+              <span class="twofa-label">Secret key</span>
+              <code>{{ twoFaSetup.secret }}</code>
+            </div>
+            <div class="twofa-secret">
+              <span class="twofa-label">otpauth URI</span>
+              <code class="twofa-uri">{{ twoFaSetup.otpauthUri }}</code>
+            </div>
+            <div class="twofa-inline">
+              <input type="text" [(ngModel)]="twoFaCode" name="enableCode" maxlength="6" inputmode="numeric" placeholder="6-digit code" />
+              <button class="btn-2fa primary" (click)="confirmEnableTwoFa()" [disabled]="twoFaBusy || !twoFaCode.trim()">Verify & Enable</button>
+              <button class="btn-2fa ghost" (click)="cancelTwoFaSetup()" [disabled]="twoFaBusy">Cancel</button>
+            </div>
+          } @else {
+            <!-- Disabled, no setup -->
+            <p class="twofa-status off"><span class="twofa-dot off"></span>2FA is <strong>not enabled</strong>.</p>
+            <p class="twofa-hint">Add a second factor (TOTP) for stronger account security.</p>
+            <button class="btn-2fa primary" (click)="startTwoFaSetup()" [disabled]="twoFaBusy">Set up 2FA</button>
+          }
+        </div>
+      </div>
+
       <!-- Security Governance Panel -->
       <div class="glass-panel security-card" style="margin-top: 1.5rem;">
         <div class="card-header">

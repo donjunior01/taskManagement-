@@ -295,3 +295,44 @@
 @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
 @keyframes slideUp  { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 @keyframes spin     { to { transform: rotate(360deg); } }
+
+/* ── Google Calendar sync bar ── */
+.gcal-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border-color, rgba(0,0,0,.08));
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,.05));
+}
+.gcal-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.gcal-icon { width: 26px; height: 26px; color: var(--primary); flex-shrink: 0; }
+.gcal-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gcal-title { font-size: 14px; font-weight: 700; color: var(--text-primary, #0f172a); }
+.gcal-status { font-size: 12px; color: var(--text-muted, #64748b); display: inline-flex; align-items: center; gap: 6px; }
+.gcal-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.gcal-dot.on { background: var(--success, #10b981); }
+.gcal-dot.off { background: #94a3b8; }
+.gcal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-gcal {
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-md, 10px);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--primary);
+  color: #fff;
+  transition: filter .15s ease;
+  &:hover:not(:disabled) { filter: brightness(1.05); }
+  &:disabled { opacity: .6; cursor: default; }
+}
+.btn-gcal-secondary {
+  background: var(--bg-subtle, #eef2f7);
+  color: var(--text-primary, #0f172a);
+}

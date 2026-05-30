@@ -16,6 +16,23 @@ export interface CalendarEvent {
   location?: string;
 }
 
+export interface CalendarSyncStatus {
+  enabled: boolean;
+  calendarId: string;
+  totalEvents: number;
+  syncedEvents: number;
+  unsyncedEvents: number;
+}
+
+export interface CalendarSyncResult {
+  enabled: boolean;
+  pushed: number;
+  imported: number;
+  skipped: number;
+  failed: number;
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -55,6 +72,20 @@ export class CalendarService {
 
   syncEvent(id: number): Observable<any> {
     return this.apiService.post<any>(`${this.basePath}/${id}/sync`, {});
+  }
+
+  getSyncStatus(): Observable<CalendarSyncStatus> {
+    return this.apiService.get<CalendarSyncStatus>(`${this.basePath}/google/status`);
+  }
+
+  syncAllToGoogle(): Observable<CalendarSyncResult> {
+    return this.apiService.post<CalendarSyncResult>(`${this.basePath}/google/sync-all`, {});
+  }
+
+  importFromGoogle(start: string, end: string): Observable<CalendarSyncResult> {
+    const params = new HttpParams().set('start', start).set('end', end);
+    return this.apiService.post<CalendarSyncResult>(
+      `${this.basePath}/google/import?${params.toString()}`, {});
   }
 
   createEventForTask(taskId: number, event: CalendarEvent): Observable<CalendarEvent> {

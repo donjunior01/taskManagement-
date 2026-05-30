@@ -20,6 +20,7 @@ export class LoginComponent {
   loading: boolean = false;
   showPassword: boolean = false;
   showSuspendedModal: boolean = false;
+  twoFactorRequired: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -37,6 +38,14 @@ export class LoginComponent {
 
     this.authService.login(this.loginRequest).subscribe({
       next: (response) => {
+        // 2FA challenge: password accepted, ask for the authenticator code.
+        if (response && response.twoFactorRequired && !response.token) {
+          this.twoFactorRequired = true;
+          this.loading = false;
+          this.errorMessage = '';
+          this.cdr.detectChanges();
+          return;
+        }
         try {
           // Dynamic redirection based on user roles
           const roles = response && response.roles ? response.roles : [];
@@ -64,6 +73,8 @@ export class LoginComponent {
         const isSuspended = error?.status === 403 || raw.toLowerCase().includes('suspended');
         if (isSuspended) {
           this.showSuspendedModal = true;
+        } else if (this.twoFactorRequired) {
+          this.errorMessage = 'Invalid authentication code. Please try again.';
         } else {
           this.errorMessage = 'Invalid credentials. Please verify your corporate email and try again.';
         }

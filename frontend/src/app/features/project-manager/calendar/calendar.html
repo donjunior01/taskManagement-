@@ -6,6 +6,39 @@
     <span>Decrypting scheduler pipelines...</span>
   </div>
 
+  <!-- Google Calendar sync bar -->
+  <div class="gcal-bar" *ngIf="!loading">
+    <div class="gcal-info">
+      <svg class="gcal-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      <div class="gcal-text">
+        <span class="gcal-title">Google Calendar</span>
+        <span class="gcal-status" *ngIf="syncStatus">
+          <ng-container *ngIf="syncStatus.enabled; else gcalOff">
+            <span class="gcal-dot on"></span>Connected · {{ syncStatus.syncedEvents }}/{{ syncStatus.totalEvents }} events synced
+          </ng-container>
+          <ng-template #gcalOff>
+            <span class="gcal-dot off"></span>Not configured — set up Google credentials to enable sync
+          </ng-template>
+        </span>
+      </div>
+    </div>
+    <div class="gcal-actions">
+      <button class="btn-gcal" (click)="syncAllToGoogle()" [disabled]="syncing || importing">
+        <span *ngIf="!syncing">Push to Google</span>
+        <span *ngIf="syncing">Syncing…</span>
+      </button>
+      <button class="btn-gcal btn-gcal-secondary" (click)="importFromGoogle()" [disabled]="syncing || importing">
+        <span *ngIf="!importing">Import from Google</span>
+        <span *ngIf="importing">Importing…</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Main Dashboard -->
   <div class="calendar-dashboard-layout" *ngIf="!loading">
 

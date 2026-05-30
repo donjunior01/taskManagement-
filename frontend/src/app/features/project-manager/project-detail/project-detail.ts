@@ -7,6 +7,9 @@ import { TaskService, Task, TaskRequest } from '../../../core/services/task.serv
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService, User } from '../../../core/services/user.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { AiAssistantService, ProjectInsight, PrioritizationResult, RiskAssessment } from '../../../core/services/ai-assistant.service';
+import { ChecklistService, ChecklistItem } from '../../../core/services/checklist.service';
+import { MessageService, Message } from '../../../core/services/message.service';
 
 interface TaskStats {
   planned: number;
@@ -72,6 +75,29 @@ export class PmProjectDetailComponent implements OnInit {
   showUnassignModal = false;
   memberToUnassign: User | null = null;
 
+  // ── AI Assistant ─────────────────────────────────────────────────────────
+  aiInsight: ProjectInsight | null = null;
+  aiPriorities: PrioritizationResult | null = null;
+  aiRisks: RiskAssessment | null = null;
+  loadingAiSummary = false;
+  loadingAiPriorities = false;
+  loadingAiRisks = false;
+
+  // ── Checklist / sub-tasks ──────────────────────────────────────────────────
+  showChecklistModal = false;
+  checklistTask: Task | null = null;
+  checklistItems: ChecklistItem[] = [];
+  loadingChecklist = false;
+  newChecklistTitle = '';
+  savingChecklistItem = false;
+
+  // ── Team chat (project group chat) ─────────────────────────────────────────
+  showChatModal = false;
+  chatMessages: Message[] = [];
+  chatInput = '';
+  loadingChat = false;
+  sendingChat = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -80,7 +106,10 @@ export class PmProjectDetailComponent implements OnInit {
     private authService: AuthService,
     private userService: UserService,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService
+    private toast: ToastService,
+    private aiService: AiAssistantService,
+    private checklistService: ChecklistService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
@@ -549,5 +578,286 @@ export class PmProjectDetailComponent implements OnInit {
 
   getCountByPriority(priority: string): number {
     return this.tasks.filter(t => (t.priority || '').toUpperCase() === priority).length;
+  }
+
+  // ── AI Assistant ───────────────────────────────────────────────────────────
+  generateAiSummary(): void {
+    if (!this.projectId || this.loadingAiSummary) return;
+    this.loadingAiSummary = true;
+    this.aiService.getProjectSummary(this.projectId).subscribe({
+      next: (response: any) => {
+        this.aiInsight = response?.data || response;
+        this.loadingAiSummary = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loadingAiSummary = false;
+        this.toast.show('Could not generate the project summary.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  generateAiPriorities(): void {
+    if (!this.projectId || this.loadingAiPriorities) return;
+    this.loadingAiPriorities = true;
+    this.aiService.getTaskPriorities(this.projectId).subscribe({
+      next: (response: any) => {
+        this.aiPriorities = response?.data || response;
+        this.loadingAiPriorities = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loadingAiPriorities = false;
+        this.toast.show('Could not generate priority suggestions.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  getHealthClass(status: string | undefined): string {
+    switch ((status || '').toUpperCase()) {
+      case 'ON_TRACK': return 'health-ontrack';
+      case 'AT_RISK': return 'health-atrisk';
+      case 'OFF_TRACK': return 'health-offtrack';
+      default: return 'health-atrisk';
+    }
+  }
+
+  getUrgencyClass(score: number): string {
+    if (score >= 75) return 'urgency-critical';
+    if (score >= 55) return 'urgency-high';
+    if (score >= 30) return 'urgency-medium';
+    return 'urgency-low';
+  }
+
+  generateAiRisks(): void {
+    if (!this.projectId || this.loadingAiRisks) return;
+    this.loadingAiRisks = true;
+    this.aiService.getRiskAssessment(this.projectId).subscribe({
+      next: (response: any) => {
+        this.aiRisks = response?.data || response;
+        this.loadingAiRisks = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loadingAiRisks = false;
+        this.toast.show('Could not generate the risk assessment.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  getRiskClass(level: string | undefined): string {
+    switch ((level || '').toUpperCase()) {
+      case 'CRITICAL': return 'risk-critical';
+      case 'HIGH': return 'risk-high';
+      case 'MEDIUM': return 'risk-medium';
+      default: return 'risk-low';
+    }
+  }
+
+  // ── Gantt / timeline ─────────────────────────────────────────────────────────
+  /** Overall date window spanning the project and all task bars. */
+  get ganttRange(): { start: number; end: number } {
+    const dates: number[] = [];
+    if (this.project?.startDate) dates.push(new Date(this.project.startDate).getTime());
+    if (this.project?.endDate) dates.push(new Date(this.project.endDate).getTime());
+    this.tasks.forEach(t => {
+      if (t.createdAt) dates.push(new Date(t.createdAt).getTime());
+      if (t.deadline) dates.push(new Date(t.deadline).getTime());
+    });
+    if (dates.length === 0) {
+      const now = Date.now();
+      return { start: now, end: now + 30 * 86400000 };
+    }
+    let min = Math.min(...dates);
+    let max = Math.max(...dates);
+    if (max <= min) max = min + 7 * 86400000;
+    // Pad ~3% each side so end bars aren't flush against the edge.
+    const pad = (max - min) * 0.03;
+    return { start: min - pad, end: max + pad };
+  }
+
+  /** Left offset and width (in %) of a task's bar within the gantt range. */
+  ganttBar(task: Task): { left: number; width: number } {
+    const r = this.ganttRange;
+    const total = r.end - r.start || 1;
+    const bStart = task.createdAt ? new Date(task.createdAt).getTime()
+      : (this.project?.startDate ? new Date(this.project.startDate).getTime() : r.start);
+    const bEnd = task.deadline ? new Date(task.deadline).getTime() : r.end;
+    const s = Math.max(bStart, r.start);
+    const e = Math.max(s + 86400000, Math.min(bEnd, r.end)); // at least ~1 day wide
+    const left = ((s - r.start) / total) * 100;
+    const width = Math.min(100 - left, ((e - s) / total) * 100);
+    return { left, width };
+  }
+
+  get ganttTodayPct(): number {
+    const r = this.ganttRange;
+    const total = r.end - r.start || 1;
+    return ((Date.now() - r.start) / total) * 100;
+  }
+
+  /** Month gridline labels positioned across the range. */
+  get ganttMonths(): { label: string; left: number }[] {
+    const r = this.ganttRange;
+    const total = r.end - r.start || 1;
+    const out: { label: string; left: number }[] = [];
+    const d = new Date(r.start);
+    d.setDate(1);
+    let guard = 0;
+    while (d.getTime() <= r.end && guard++ < 60) {
+      const left = ((d.getTime() - r.start) / total) * 100;
+      if (left >= 0 && left <= 100) {
+        out.push({ label: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), left });
+      }
+      d.setMonth(d.getMonth() + 1);
+    }
+    return out;
+  }
+
+  // ── Checklist / sub-tasks ──────────────────────────────────────────────────
+  openChecklist(task: Task): void {
+    this.checklistTask = task;
+    this.checklistItems = [];
+    this.newChecklistTitle = '';
+    this.showChecklistModal = true;
+    this.loadChecklist();
+  }
+
+  closeChecklist(): void {
+    this.showChecklistModal = false;
+    this.checklistTask = null;
+    this.checklistItems = [];
+  }
+
+  loadChecklist(): void {
+    if (!this.checklistTask?.id) return;
+    this.loadingChecklist = true;
+    this.checklistService.getItems(this.checklistTask.id).subscribe({
+      next: (response: any) => {
+        this.checklistItems = response?.data || [];
+        this.loadingChecklist = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.checklistItems = [];
+        this.loadingChecklist = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  addChecklistItem(): void {
+    const title = this.newChecklistTitle.trim();
+    if (!title || !this.checklistTask?.id || this.savingChecklistItem) return;
+    this.savingChecklistItem = true;
+    this.checklistService.addItem(this.checklistTask.id, title).subscribe({
+      next: (response: any) => {
+        const item = response?.data || response;
+        if (item) this.checklistItems.push(item);
+        this.newChecklistTitle = '';
+        this.savingChecklistItem = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.savingChecklistItem = false;
+        this.toast.show('Could not add the sub-task.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  toggleChecklistItem(item: ChecklistItem): void {
+    if (!item.id) return;
+    const previous = item.completed;
+    item.completed = !item.completed; // optimistic
+    this.checklistService.toggle(item.id).subscribe({
+      next: (response: any) => {
+        const updated = response?.data;
+        if (updated) item.completed = updated.completed;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        item.completed = previous; // revert
+        this.toast.show('Could not update the sub-task.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  deleteChecklistItem(item: ChecklistItem): void {
+    if (!item.id) return;
+    this.checklistService.delete(item.id).subscribe({
+      next: () => {
+        this.checklistItems = this.checklistItems.filter(i => i.id !== item.id);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.checklistItems = this.checklistItems.filter(i => i.id !== item.id);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  get checklistDoneCount(): number {
+    return this.checklistItems.filter(i => i.completed).length;
+  }
+
+  get checklistProgress(): number {
+    if (!this.checklistItems.length) return 0;
+    return Math.round((this.checklistDoneCount / this.checklistItems.length) * 100);
+  }
+
+  // ── Team chat (project group chat) ─────────────────────────────────────────
+  openChat(): void {
+    this.showChatModal = true;
+    this.loadChat();
+  }
+
+  closeChat(): void {
+    this.showChatModal = false;
+  }
+
+  loadChat(): void {
+    if (!this.projectId) return;
+    this.loadingChat = true;
+    this.messageService.getMessagesByProject(this.projectId).subscribe({
+      next: (response: any) => {
+        this.chatMessages = response?.data || response || [];
+        this.loadingChat = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.chatMessages = [];
+        this.loadingChat = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  sendChat(): void {
+    const content = this.chatInput.trim();
+    if (!content || !this.projectId || this.sendingChat) return;
+    this.sendingChat = true;
+    this.messageService.sendMessage({ projectId: this.projectId, content }).subscribe({
+      next: (response: any) => {
+        const msg = response?.data || response;
+        if (msg) this.chatMessages.push(msg);
+        this.chatInput = '';
+        this.sendingChat = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.sendingChat = false;
+        this.toast.show('Could not send the message.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  isOwnMessage(m: Message): boolean {
+    return m.senderId === this.managerId;
   }
 }

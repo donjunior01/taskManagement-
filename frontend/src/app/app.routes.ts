@@ -16,6 +16,7 @@ import { AdminTasksComponent } from './features/admin/tasks/tasks';
 import { AdminActivityLogsComponent } from './features/admin/activity-logs/activity-logs';
 import { AdminSettingsComponent } from './features/admin/settings/settings';
 import { PmDashboardComponent } from './features/project-manager/dashboard/dashboard';
+import { PmAnalyticsComponent } from './features/project-manager/analytics/analytics';
 import { PmProjectsComponent } from './features/project-manager/projects/projects';
 import { PmProjectDetailComponent } from './features/project-manager/project-detail/project-detail';
 import { PmTasksComponent } from './features/project-manager/tasks/tasks';
@@ -68,6 +69,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: '/pm/dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: PmDashboardComponent },
+      { path: 'analytics', component: PmAnalyticsComponent },
       { path: 'projects', component: PmProjectsComponent },
       { path: 'projects/:id', component: PmProjectDetailComponent },
       { path: 'tasks', component: PmTasksComponent },

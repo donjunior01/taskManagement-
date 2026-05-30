@@ -7,6 +7,7 @@ import { ApiService } from './api.service';
 export interface LoginRequest {
   email: string;
   password: string;
+  code?: string;   // TOTP code when 2FA is enabled
 }
 
 export interface LoginResponse {
@@ -15,6 +16,7 @@ export interface LoginResponse {
   id: number;
   email: string;
   roles: string[];
+  twoFactorRequired?: boolean;   // true when the account needs a TOTP code
 }
 
 export interface User {

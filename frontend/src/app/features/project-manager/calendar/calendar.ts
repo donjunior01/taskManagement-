@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ProjectService } from '../../../core/services/project.service';
 import { TaskService } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { CalendarService, CalendarEvent as ApiCalendarEvent } from '../../../core/services/calendar.service';
+import { CalendarService, CalendarEvent as ApiCalendarEvent, CalendarSyncStatus } from '../../../core/services/calendar.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 export interface CalendarEvent {
@@ -78,6 +78,11 @@ export class PmCalendarComponent implements OnInit {
   dragSourceDay: DaySchedule | null = null;
   dragOverDay: DaySchedule | null = null;
 
+  // Google Calendar sync
+  syncStatus: CalendarSyncStatus | null = null;
+  syncing: boolean = false;
+  importing: boolean = false;
+
   constructor(
     private projectService: ProjectService,
     private taskService: TaskService,
@@ -91,6 +96,69 @@ export class PmCalendarComponent implements OnInit {
     const user = this.authService.getCurrentUser();
     if (user) this.managerId = user.id;
     this.loadData();
+    this.loadSyncStatus();
+  }
+
+  // ── Google Calendar sync ─────────────────────────────────────────────────────
+
+  loadSyncStatus(): void {
+    this.calendarService.getSyncStatus().subscribe({
+      next: (res: any) => {
+        this.syncStatus = res?.data || res;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.syncStatus = null; }
+    });
+  }
+
+  syncAllToGoogle(): void {
+    if (this.syncing) return;
+    this.syncing = true;
+    this.calendarService.syncAllToGoogle().subscribe({
+      next: (res: any) => {
+        const result = res?.data || res;
+        this.syncing = false;
+        if (result?.enabled) {
+          this.triggerToast(result.message || 'Synced to Google Calendar.', 'success');
+        } else {
+          this.triggerToast(result?.message || 'Google Calendar is not configured.', 'error');
+        }
+        this.loadSyncStatus();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.syncing = false;
+        this.triggerToast('Sync failed. Please try again.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  importFromGoogle(): void {
+    if (this.importing) return;
+    this.importing = true;
+    // Import a 6-month window around today.
+    const start = new Date(); start.setMonth(start.getMonth() - 1);
+    const end = new Date(); end.setMonth(end.getMonth() + 5);
+    this.calendarService.importFromGoogle(start.toISOString(), end.toISOString()).subscribe({
+      next: (res: any) => {
+        const result = res?.data || res;
+        this.importing = false;
+        if (result?.enabled) {
+          this.triggerToast(result.message || 'Imported from Google Calendar.', 'success');
+          this.loadData();
+        } else {
+          this.triggerToast(result?.message || 'Google Calendar is not configured.', 'error');
+        }
+        this.loadSyncStatus();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.importing = false;
+        this.triggerToast('Import failed. Please try again.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   loadData(): void {

@@ -1,0 +1,132 @@
+<div class="an-page animate-fade-in-up">
+
+  <!-- Header -->
+  <div class="an-header">
+    <div>
+      <h1 class="an-title">Analytics</h1>
+      <p class="an-subtitle">Delivery performance across your projects</p>
+    </div>
+    <button class="btn btn-secondary btn-sm" (click)="load()" [disabled]="loading">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+      Refresh
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="an-loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Crunching the numbers...</span>
+  </div>
+
+  <ng-container *ngIf="!loading && analytics as a">
+
+    <!-- KPI cards -->
+    <div class="kpi-grid">
+      <div class="glass-panel kpi-card">
+        <span class="kpi-label">On-Time Completion</span>
+        <span class="kpi-value">{{ a.onTimeCompletionRate }}%</span>
+        <span class="kpi-foot">of tasks met their deadline</span>
+      </div>
+      <div class="glass-panel kpi-card">
+        <span class="kpi-label">Velocity (4 wks)</span>
+        <span class="kpi-value">{{ a.velocityLast4Weeks }}</span>
+        <span class="kpi-foot">tasks completed</span>
+      </div>
+      <div class="glass-panel kpi-card">
+        <span class="kpi-label">Avg. Completion</span>
+        <span class="kpi-value">{{ a.avgCompletionDays }}<small> d</small></span>
+        <span class="kpi-foot">from creation to done</span>
+      </div>
+      <div class="glass-panel kpi-card">
+        <span class="kpi-label">Overdue</span>
+        <span class="kpi-value" [class.danger]="a.overdueTasks > 0">{{ a.overdueTasks }}</span>
+        <span class="kpi-foot">open tasks past deadline</span>
+      </div>
+    </div>
+
+    <div class="an-grid">
+
+      <!-- Velocity / completion trend -->
+      <div class="glass-panel chart-card span-2">
+        <div class="chart-header">
+          <h4>Velocity & Completion Trend</h4>
+          <div class="legend-inline">
+            <span class="li"><span class="dot dot-created"></span>Created</span>
+            <span class="li"><span class="dot dot-completed"></span>Completed</span>
+          </div>
+        </div>
+        <div class="trend-chart" *ngIf="a.weeklyTrend?.length; else noTrend">
+          <div class="trend-col" *ngFor="let p of a.weeklyTrend; trackBy: trackByLabel">
+            <div class="trend-bars">
+              <div class="tbar tbar-created" [style.height.%]="barHeight(p.created)" [title]="p.created + ' created'"></div>
+              <div class="tbar tbar-completed" [style.height.%]="barHeight(p.completed)" [title]="p.completed + ' completed'"></div>
+            </div>
+            <span class="trend-label">{{ p.label }}</span>
+          </div>
+        </div>
+        <ng-template #noTrend><div class="chart-empty"><span>No activity in the last 8 weeks</span></div></ng-template>
+      </div>
+
+      <!-- On-time gauge -->
+      <div class="glass-panel chart-card">
+        <div class="chart-header"><h4>On-Time Rate</h4></div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="45" fill="none" stroke="var(--bg-subtle)" stroke-width="12"/>
+            <circle cx="60" cy="60" r="45" fill="none" stroke="var(--success)" stroke-width="12"
+              [attr.stroke-dasharray]="ringDash(a.onTimeCompletionRate)" [attr.stroke-dashoffset]="-70.75"
+              stroke-linecap="round"/>
+            <text x="60" y="56" text-anchor="middle" font-size="22" font-weight="800" fill="var(--text-primary)">{{ a.onTimeCompletionRate }}%</text>
+            <text x="60" y="72" text-anchor="middle" font-size="8" fill="var(--text-muted)" font-weight="600">ON TIME</text>
+          </svg>
+          <div class="gauge-foot">
+            <span><strong>{{ a.completedTasks }}</strong> completed</span>
+            <span><strong>{{ a.openTasks }}</strong> open</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workload by member -->
+      <div class="glass-panel chart-card span-2">
+        <div class="chart-header">
+          <h4>Workload by Member</h4>
+          <span class="chart-subtitle">open vs completed</span>
+        </div>
+        <div class="workload-list" *ngIf="a.workloadByMember?.length; else noWorkload">
+          <div class="wl-row" *ngFor="let m of a.workloadByMember">
+            <div class="wl-avatar">{{ initials(m.memberName) }}</div>
+            <div class="wl-body">
+              <div class="wl-top">
+                <span class="wl-name">{{ m.memberName }}</span>
+                <span class="wl-counts">{{ m.openTasks }} open · {{ m.completedTasks }} done</span>
+              </div>
+              <div class="wl-track">
+                <div class="wl-fill wl-open" [style.width.%]="workloadWidth(m.openTasks)"></div>
+                <div class="wl-fill wl-done" [style.width.%]="workloadWidth(m.completedTasks)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #noWorkload><div class="chart-empty"><span>No tasks assigned to members yet</span></div></ng-template>
+      </div>
+
+      <!-- Status breakdown -->
+      <div class="glass-panel chart-card">
+        <div class="chart-header"><h4>Task Status</h4></div>
+        <div class="status-list">
+          <div class="st-row"><span class="st-dot" style="background:#94a3b8;"></span><span class="st-name">Backlog</span><span class="st-val">{{ a.todoTasks }}</span></div>
+          <div class="st-row"><span class="st-dot" style="background:var(--primary);"></span><span class="st-name">In Progress</span><span class="st-val">{{ a.inProgressTasks }}</span></div>
+          <div class="st-row"><span class="st-dot" style="background:var(--success);"></span><span class="st-name">Completed</span><span class="st-val">{{ a.completedTasks }}</span></div>
+          <div class="st-row"><span class="st-dot" style="background:var(--warning, #f59e0b);"></span><span class="st-name">On Hold</span><span class="st-val">{{ a.onHoldTasks }}</span></div>
+          <div class="st-row"><span class="st-dot" style="background:var(--danger, #ef4444);"></span><span class="st-name">Overdue</span><span class="st-val">{{ a.overdueTasks }}</span></div>
+          <div class="st-divider"></div>
+          <div class="st-row st-total"><span class="st-name">{{ a.totalProjects }} projects</span><span class="st-val">{{ a.totalTasks }} tasks</span></div>
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+</div>

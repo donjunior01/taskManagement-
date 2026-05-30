@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminSecurityService, LoginAttempt, SecurityMetrics } from '../../../core/services/admin-security.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { TwoFactorService, TwoFactorSetup } from '../../../core/services/twofa.service';
 
 @Component({
   selector: 'app-admin-settings',
@@ -43,14 +44,88 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   backingUp: boolean = false;
   clearingCache: boolean = false;
 
+  // Two-factor authentication (real)
+  twoFaEnabled: boolean = false;
+  twoFaSetup: TwoFactorSetup | null = null;
+  twoFaCode: string = '';
+  twoFaBusy: boolean = false;
+
   constructor(
     private securityService: AdminSecurityService,
-    private toast: ToastService
+    private toast: ToastService,
+    private twoFactorService: TwoFactorService
   ) {}
 
   ngOnInit(): void {
     this.startTelemetrySimulators();
     this.loadSecurityData();
+    this.loadTwoFaStatus();
+  }
+
+  // ── Two-factor authentication ────────────────────────────────────────────
+  loadTwoFaStatus(): void {
+    this.twoFactorService.status().subscribe({
+      next: (res: any) => { this.twoFaEnabled = !!(res?.data?.enabled ?? res?.enabled); },
+      error: () => { this.twoFaEnabled = false; }
+    });
+  }
+
+  startTwoFaSetup(): void {
+    this.twoFaBusy = true;
+    this.twoFactorService.setup().subscribe({
+      next: (res: any) => {
+        this.twoFaSetup = res?.data || res;
+        this.twoFaCode = '';
+        this.twoFaBusy = false;
+      },
+      error: () => {
+        this.twoFaBusy = false;
+        this.triggerToast('Could not start 2FA setup.', 'error');
+      }
+    });
+  }
+
+  confirmEnableTwoFa(): void {
+    if (!this.twoFaCode.trim()) return;
+    this.twoFaBusy = true;
+    this.twoFactorService.enable(this.twoFaCode.trim()).subscribe({
+      next: () => {
+        this.twoFaEnabled = true;
+        this.twoFaSetup = null;
+        this.twoFaCode = '';
+        this.twoFaBusy = false;
+        this.triggerToast('Two-factor authentication enabled.', 'success');
+      },
+      error: () => {
+        this.twoFaBusy = false;
+        this.triggerToast('Invalid code — please try again.', 'error');
+      }
+    });
+  }
+
+  cancelTwoFaSetup(): void {
+    this.twoFaSetup = null;
+    this.twoFaCode = '';
+  }
+
+  disableTwoFa(): void {
+    if (!this.twoFaCode.trim()) {
+      this.triggerToast('Enter a current code to disable 2FA.', 'error');
+      return;
+    }
+    this.twoFaBusy = true;
+    this.twoFactorService.disable(this.twoFaCode.trim()).subscribe({
+      next: () => {
+        this.twoFaEnabled = false;
+        this.twoFaCode = '';
+        this.twoFaBusy = false;
+        this.triggerToast('Two-factor authentication disabled.', 'success');
+      },
+      error: () => {
+        this.twoFaBusy = false;
+        this.triggerToast('Invalid code — please try again.', 'error');
+      }
+    });
   }
 
   ngOnDestroy(): void {

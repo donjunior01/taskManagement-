@@ -25,6 +25,12 @@
         </svg>
         Add Task
       </button>
+      <button class="btn btn-secondary" (click)="openChat()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Team Chat
+      </button>
       <button class="btn btn-secondary" (click)="openEditModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon>
@@ -315,6 +321,165 @@
       </div>
     </div>
 
+    <!-- ── Gantt / Timeline Section ───────────────────────────────────────── -->
+    <div class="glass-panel pd-section gantt-section">
+      <div class="section-header">
+        <div class="section-title-group">
+          <h4>Project Timeline</h4>
+          <span class="section-count">{{ tasks.length }} task(s) on the Gantt</span>
+        </div>
+      </div>
+
+      <div class="gantt-wrap" *ngIf="!loadingTasks && tasks.length > 0">
+        <div class="gantt-grid">
+          <!-- Left: task name column -->
+          <div class="gantt-labels">
+            <div class="gantt-axis-spacer"></div>
+            <div class="gantt-label-row" *ngFor="let t of tasks" [title]="t.name">{{ t.name }}</div>
+          </div>
+          <!-- Right: positioned canvas (axis + today + bars share one coordinate system) -->
+          <div class="gantt-canvas">
+            <div class="gantt-axis">
+              <div class="gantt-axis-label" *ngFor="let m of ganttMonths" [style.left.%]="m.left">{{ m.label }}</div>
+            </div>
+            <div class="gantt-today" *ngIf="ganttTodayPct >= 0 && ganttTodayPct <= 100" [style.left.%]="ganttTodayPct" title="Today"></div>
+            <div class="gantt-canvas-rows">
+              <div class="gantt-track" *ngFor="let t of tasks">
+                <div class="gantt-bar" [ngClass]="getTaskStatusClass(t.status)"
+                     [style.left.%]="ganttBar(t).left" [style.width.%]="ganttBar(t).width"
+                     [title]="t.name + ' · ' + (t.progress || 0) + '%'">
+                  <div class="gantt-bar-fill" [style.width.%]="t.progress || 0"></div>
+                  <span class="gantt-bar-pct" *ngIf="ganttBar(t).width > 8">{{ t.progress || 0 }}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Legend -->
+        <div class="gantt-legend">
+          <span class="gl-item"><span class="gl-dot status-planned"></span>Planned</span>
+          <span class="gl-item"><span class="gl-dot status-inprogress"></span>In Progress</span>
+          <span class="gl-item"><span class="gl-dot status-completed"></span>Completed</span>
+          <span class="gl-item"><span class="gl-dot status-onhold"></span>On Hold</span>
+          <span class="gl-item"><span class="gl-today-key"></span>Today</span>
+        </div>
+      </div>
+      <div class="section-loading" *ngIf="loadingTasks"><div class="spinner"></div><span>Building timeline...</span></div>
+      <div class="section-empty" *ngIf="!loadingTasks && tasks.length === 0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="15" y2="6"></line><line x1="3" y1="18" x2="18" y2="18"></line></svg>
+        <p>No tasks to plot on the timeline yet.</p>
+      </div>
+    </div>
+
+    <!-- ── AI Assistant Section ───────────────────────────────────────────── -->
+    <div class="glass-panel pd-section ai-section">
+      <div class="section-header">
+        <div class="section-title-group">
+          <h4>
+            <svg class="ai-spark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l1.9 5.8L20 9.7l-5.1 3.5L17 19l-5-3.6L7 19l2.1-5.8L4 9.7l6.1-1.9z"></path>
+            </svg>
+            AI Assistant
+          </h4>
+          <span class="section-count">Insights &amp; prioritisation</span>
+        </div>
+        <div class="ai-actions">
+          <button class="btn btn-primary btn-sm" (click)="generateAiSummary()" [disabled]="loadingAiSummary">
+            <span *ngIf="!loadingAiSummary">Summarise Project</span>
+            <div class="spinner" *ngIf="loadingAiSummary"></div>
+          </button>
+          <button class="btn btn-secondary btn-sm" (click)="generateAiPriorities()" [disabled]="loadingAiPriorities">
+            <span *ngIf="!loadingAiPriorities">Suggest Priorities</span>
+            <div class="spinner" *ngIf="loadingAiPriorities"></div>
+          </button>
+          <button class="btn btn-secondary btn-sm" (click)="generateAiRisks()" [disabled]="loadingAiRisks">
+            <span *ngIf="!loadingAiRisks">Predict Risks</span>
+            <div class="spinner" *ngIf="loadingAiRisks"></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty hint -->
+      <div class="ai-hint" *ngIf="!aiInsight && !aiPriorities && !aiRisks && !loadingAiSummary && !loadingAiPriorities && !loadingAiRisks">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l1.9 5.8L20 9.7l-5.1 3.5L17 19l-5-3.6L7 19l2.1-5.8L4 9.7l6.1-1.9z"></path>
+        </svg>
+        <p>Generate an AI summary or let the assistant rank your open tasks by urgency.</p>
+      </div>
+
+      <!-- Summary result -->
+      <div class="ai-insight" *ngIf="aiInsight">
+        <div class="ai-insight-top">
+          <span class="ai-health-badge" [ngClass]="getHealthClass(aiInsight.healthStatus)">{{ aiInsight.healthHeadline }}</span>
+          <span class="ai-source-chip" title="Source of the analysis">{{ aiInsight.source }}</span>
+        </div>
+        <p class="ai-summary-text">{{ aiInsight.summary }}</p>
+        <div class="ai-metrics">
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.completionRate }}%</span><span class="aim-lbl">Completion</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.inProgressTasks }}</span><span class="aim-lbl">In Progress</span></div>
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiInsight.overdueTasks > 0">{{ aiInsight.overdueTasks }}</span><span class="aim-lbl">Overdue</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.todoTasks }}</span><span class="aim-lbl">Backlog</span></div>
+        </div>
+        <div class="ai-recos" *ngIf="aiInsight.recommendations.length">
+          <h5>Recommendations</h5>
+          <ul>
+            <li *ngFor="let r of aiInsight.recommendations">{{ r }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Priorities result -->
+      <div class="ai-priorities" *ngIf="aiPriorities">
+        <p class="ai-advice">{{ aiPriorities.overallAdvice }}</p>
+        <div class="ai-prio-list" *ngIf="aiPriorities.suggestions.length">
+          <div class="ai-prio-row" *ngFor="let s of aiPriorities.suggestions">
+            <div class="aip-score" [ngClass]="getUrgencyClass(s.urgencyScore)">{{ s.urgencyScore }}</div>
+            <div class="aip-main">
+              <div class="aip-head">
+                <span class="aip-name">{{ s.taskName }}</span>
+                <span class="aip-change" *ngIf="s.changeRecommended">
+                  <span class="aip-from" [ngClass]="getPriorityClass(s.currentPriority)">{{ s.currentPriority }}</span>
+                  →
+                  <span class="aip-to" [ngClass]="getPriorityClass(s.suggestedPriority)">{{ s.suggestedPriority }}</span>
+                </span>
+                <span class="aip-keep" *ngIf="!s.changeRecommended">Keep {{ s.currentPriority }}</span>
+              </div>
+              <span class="aip-reason">{{ s.reason }}</span>
+              <span class="aip-assignee" *ngIf="s.assignedToName">Assigned to {{ s.assignedToName }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Risk prediction result -->
+      <div class="ai-risks" *ngIf="aiRisks">
+        <div class="ai-insight-top">
+          <span class="ai-health-badge" [ngClass]="getRiskClass(aiRisks.projectRiskLevel)">{{ aiRisks.headline }}</span>
+          <span class="ai-source-chip" title="Source of the analysis">{{ aiRisks.source }}</span>
+        </div>
+        <p class="ai-summary-text">{{ aiRisks.summary }}</p>
+        <div class="ai-metrics">
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.atRiskCount > 0">{{ aiRisks.atRiskCount }}</span><span class="aim-lbl">At Risk</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiRisks.totalOpenTasks }}</span><span class="aim-lbl">Open Tasks</span></div>
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.projectSlipDays > 0">{{ aiRisks.projectSlipDays }}</span><span class="aim-lbl">Slip (days)</span></div>
+          <div class="ai-metric"><span class="aim-val aim-date">{{ aiRisks.predictedProjectCompletion || '—' }}</span><span class="aim-lbl">Proj. Finish</span></div>
+        </div>
+        <div class="ai-risk-list" *ngIf="aiRisks.risks.length">
+          <div class="ai-risk-row" *ngFor="let r of aiRisks.risks">
+            <span class="air-badge" [ngClass]="getRiskClass(r.riskLevel)">{{ r.riskLevel }}</span>
+            <div class="air-main">
+              <div class="air-head">
+                <span class="air-name">{{ r.taskName }}</span>
+                <span class="air-slip" *ngIf="r.predictedSlipDays > 0">+{{ r.predictedSlipDays }}d late</span>
+              </div>
+              <span class="air-reason">{{ r.reason }}</span>
+              <span class="air-meta">{{ r.progress }}% done<span *ngIf="r.deadline"> · due {{ r.deadline }}</span><span *ngIf="r.predictedCompletionDate"> · ETA {{ r.predictedCompletionDate }}</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Team Members Section ───────────────────────────────────────────── -->
     <div class="glass-panel pd-section">
       <div class="section-header">
@@ -416,7 +581,13 @@
               </td>
               <td class="deadline-cell">{{ t.deadline || '—' }}</td>
               <td>
-                <div style="display:flex; justify-content:flex-end;">
+                <div style="display:flex; justify-content:flex-end; gap:6px;">
+                  <button class="checklist-task-btn" (click)="openChecklist(t)" title="Sub-tasks / checklist">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 11 12 14 22 4"></polyline>
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                  </button>
                   <button class="del-task-btn" (click)="deleteTask(t.id)" title="Delete Task">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="3 6 5 6 21 6"></polyline>
@@ -682,5 +853,110 @@
       <button type="button" class="btn btn-secondary" (click)="closeUnassignModal()">Cancel</button>
       <button type="button" class="btn btn-danger" (click)="submitUnassignUser()">Remove Member</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CHECKLIST / SUB-TASKS MODAL ═══════════════════ -->
+<div class="modal-backdrop" *ngIf="showChecklistModal" (click)="closeChecklist()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()" style="max-width:520px;">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <h3>Sub-tasks</h3>
+        <span class="modal-subtitle">Checklist for <strong>{{ checklistTask?.name }}</strong></span>
+      </div>
+      <button class="modal-close-btn" (click)="closeChecklist()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Progress roll-up -->
+    <div class="checklist-progress" *ngIf="checklistItems.length > 0">
+      <div class="cl-prog-track"><div class="cl-prog-fill" [style.width.%]="checklistProgress"></div></div>
+      <span class="cl-prog-label">{{ checklistDoneCount }}/{{ checklistItems.length }} done · {{ checklistProgress }}%</span>
+    </div>
+
+    <div class="checklist-body">
+      <div class="checklist-loading" *ngIf="loadingChecklist"><div class="spinner"></div></div>
+
+      <div class="checklist-items" *ngIf="!loadingChecklist && checklistItems.length > 0">
+        <div class="cl-item" *ngFor="let item of checklistItems" [class.done]="item.completed">
+          <label class="cl-check">
+            <input type="checkbox" [checked]="item.completed" (change)="toggleChecklistItem(item)" />
+            <span class="cl-box"></span>
+          </label>
+          <span class="cl-title">{{ item.title }}</span>
+          <button class="cl-del" (click)="deleteChecklistItem(item)" title="Remove">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="checklist-empty" *ngIf="!loadingChecklist && checklistItems.length === 0">
+        <span>No sub-tasks yet. Add the first one below.</span>
+      </div>
+    </div>
+
+    <form class="checklist-add" (submit)="addChecklistItem(); $event.preventDefault()">
+      <input type="text" [(ngModel)]="newChecklistTitle" name="newChecklistTitle"
+             placeholder="Add a sub-task and press Enter" maxlength="500" />
+      <button type="submit" class="btn btn-primary" [disabled]="savingChecklistItem || !newChecklistTitle.trim()">
+        <span *ngIf="!savingChecklistItem">Add</span>
+        <div class="spinner" *ngIf="savingChecklistItem"></div>
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ TEAM CHAT MODAL ═══════════════════ -->
+<div class="modal-backdrop" *ngIf="showChatModal" (click)="closeChat()">
+  <div class="glass-panel modal-card chat-card animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon users-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+      <div class="modal-title-group">
+        <h3>Team Chat</h3>
+        <span class="modal-subtitle">Project channel · <strong>{{ project?.name }}</strong></span>
+      </div>
+      <button class="modal-close-btn" (click)="closeChat()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="chat-thread">
+      <div class="chat-loading" *ngIf="loadingChat"><div class="spinner"></div></div>
+
+      <div class="chat-empty" *ngIf="!loadingChat && chatMessages.length === 0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <span>No messages yet. Start the conversation with your team.</span>
+      </div>
+
+      <div class="chat-msg" *ngFor="let m of chatMessages" [class.own]="isOwnMessage(m)">
+        <div class="chat-bubble">
+          <span class="chat-sender" *ngIf="!isOwnMessage(m)">{{ m.senderName }}</span>
+          <span class="chat-text">{{ m.content }}</span>
+          <span class="chat-time">{{ m.createdAt | date:'MMM d, h:mm a' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <form class="chat-compose" (submit)="sendChat(); $event.preventDefault()">
+      <input type="text" [(ngModel)]="chatInput" name="chatInput"
+             placeholder="Message the team…" maxlength="2000" autocomplete="off" />
+      <button type="submit" class="btn btn-primary" [disabled]="sendingChat || !chatInput.trim()">
+        <svg *ngIf="!sendingChat" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+        <div class="spinner" *ngIf="sendingChat"></div>
+      </button>
+    </form>
   </div>
 </div>
