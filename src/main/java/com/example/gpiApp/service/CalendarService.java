@@ -439,6 +439,131 @@ public class CalendarService {
     }
 
     // ===========================
+    // SYNC MANAGEMENT
+    // ===========================
+
+    /** True only when integration is enabled in config AND the Google client bean was built. */
+    private boolean isGoogleReady() {
+        return googleCalendar != null && googleCalendarConfig.isCalendarEnabled();
+    }
+
+    @Transactional(readOnly = true)
+    public CalendarSyncStatusDTO getSyncStatus(Long userId) {
+        List<CalendarEvent> events = userId != null
+                ? calendarEventRepository.findByUserId(userId)
+                : calendarEventRepository.findAll();
+        long synced = events.stream().filter(e -> Boolean.TRUE.equals(e.getIsSynced())).count();
+        return CalendarSyncStatusDTO.builder()
+                .enabled(isGoogleReady())
+                .calendarId(googleCalendarConfig.getDefaultCalendarId())
+                .totalEvents(events.size())
+                .syncedEvents(synced)
+                .unsyncedEvents(events.size() - synced)
+                .build();
+    }
+
+    /** Actually performs a single-event push (replaces the old no-op controller stub). */
+    @Transactional
+    public ApiResponse<CalendarEventDTO> syncEventById(Long id) {
+        if (!isGoogleReady()) {
+            return ApiResponse.error("Google Calendar is not configured");
+        }
+        return calendarEventRepository.findById(id)
+                .map(event -> {
+                    try {
+                        syncEventToGoogle(event);
+                        return ApiResponse.success("Event synced to Google Calendar", convertToDTO(event));
+                    } catch (IOException e) {
+                        log.error("Failed to sync event {} to Google Calendar", id, e);
+                        return ApiResponse.<CalendarEventDTO>error("Failed to sync event: " + e.getMessage());
+                    }
+                })
+                .orElse(ApiResponse.error("Event not found"));
+    }
+
+    /** Push every not-yet-synced event for the user to Google Calendar. */
+    @Transactional
+    public CalendarSyncResultDTO pushAllToGoogle(Long userId) {
+        if (!isGoogleReady()) {
+            return CalendarSyncResultDTO.builder()
+                    .enabled(false)
+                    .message("Google Calendar is not configured. Set google.calendar.enabled=true and provide a credentials file.")
+                    .build();
+        }
+        int pushed = 0, skipped = 0, failed = 0;
+        for (CalendarEvent event : calendarEventRepository.findByUserId(userId)) {
+            if (Boolean.TRUE.equals(event.getIsSynced())) { skipped++; continue; }
+            try {
+                syncEventToGoogle(event);
+                pushed++;
+            } catch (Exception e) {
+                failed++;
+                log.error("Failed to push event {} to Google Calendar", event.getId(), e);
+            }
+        }
+        return CalendarSyncResultDTO.builder()
+                .enabled(true).pushed(pushed).skipped(skipped).failed(failed)
+                .message("Pushed " + pushed + " event(s) to Google Calendar"
+                        + (skipped > 0 ? ", " + skipped + " already synced" : "")
+                        + (failed > 0 ? ", " + failed + " failed" : "") + ".")
+                .build();
+    }
+
+    /** Import Google Calendar events in the window into the local DB, de-duplicated by google event id. */
+    @Transactional
+    public CalendarSyncResultDTO importFromGoogle(Long userId, LocalDateTime start, LocalDateTime end) {
+        if (!isGoogleReady()) {
+            return CalendarSyncResultDTO.builder()
+                    .enabled(false)
+                    .message("Google Calendar is not configured. Set google.calendar.enabled=true and provide a credentials file.")
+                    .build();
+        }
+        allUsers user = userId != null ? userRepository.findById(userId).orElse(null) : null;
+        int imported = 0, skipped = 0, failed = 0;
+        try {
+            for (CalendarEventDTO dto : fetchEventsFromGoogle(start, end)) {
+                try {
+                    if (dto.getGoogleEventId() == null
+                            || calendarEventRepository.findByGoogleEventId(dto.getGoogleEventId()).isPresent()) {
+                        skipped++;
+                        continue;
+                    }
+                    CalendarEvent event = CalendarEvent.builder()
+                            .googleEventId(dto.getGoogleEventId())
+                            .googleCalendarId(googleCalendarConfig.getDefaultCalendarId())
+                            .title(dto.getTitle() != null ? dto.getTitle() : "(untitled)")
+                            .description(dto.getDescription())
+                            .startTime(dto.getStartTime())
+                            .endTime(dto.getEndTime())
+                            .allDay(Boolean.TRUE.equals(dto.getAllDay()))
+                            .eventType(CalendarEvent.EventType.CUSTOM)
+                            .location(dto.getLocation())
+                            .user(user)
+                            .color(EVENT_COLORS.get(CalendarEvent.EventType.CUSTOM))
+                            .isSynced(true)
+                            .build();
+                    calendarEventRepository.save(event);
+                    imported++;
+                } catch (Exception e) {
+                    failed++;
+                    log.error("Failed to import Google event {}", dto.getGoogleEventId(), e);
+                }
+            }
+        } catch (IOException e) {
+            return CalendarSyncResultDTO.builder()
+                    .enabled(true)
+                    .message("Failed to fetch from Google Calendar: " + e.getMessage())
+                    .build();
+        }
+        return CalendarSyncResultDTO.builder()
+                .enabled(true).imported(imported).skipped(skipped).failed(failed)
+                .message("Imported " + imported + " event(s) from Google Calendar"
+                        + (skipped > 0 ? ", " + skipped + " already present" : "")
+                        + (failed > 0 ? ", " + failed + " failed" : "") + ".")
+                .build();
+    }
+
+    // ===========================
     // HELPER METHODS
     // ===========================
 

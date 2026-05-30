@@ -51,6 +51,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/auth/**",
+                    "/actuator/health",
+                    "/actuator/info",
                     "/error",
                     "/css/**",
                     "/js/**",
@@ -92,6 +94,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/support-tickets/my").authenticated()
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/support-tickets").authenticated()
                 .requestMatchers("/api/support-tickets/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PROJECT_MANAGER")
+                // AI assistant - insights and prioritisation for managers and admins
+                .requestMatchers("/api/ai/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PROJECT_MANAGER")
+                // Advanced analytics for managers and admins
+                .requestMatchers("/api/analytics/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PROJECT_MANAGER")
+                // Two-factor enrolment — any authenticated user manages their own
+                .requestMatchers("/api/2fa/**").authenticated()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

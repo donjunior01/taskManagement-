@@ -306,3 +306,21 @@ CREATE TABLE IF NOT EXISTS `user_notification_preferences` (
     FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE CASCADE,
     UNIQUE KEY `unique_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Two-factor authentication columns on allUsers (CDC Lot 4).
+-- MySQL has no ADD COLUMN IF NOT EXISTS; spring.sql.init.continue-on-error=true makes the
+-- duplicate-column error on subsequent startups harmless.
+ALTER TABLE `allUsers` ADD COLUMN `two_factor_enabled` BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE `allUsers` ADD COLUMN `two_factor_secret` VARCHAR(255);
+
+-- Create task_checklist_items table (sub-tasks / checklists)
+CREATE TABLE IF NOT EXISTS `task_checklist_items` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `task_id` BIGINT NOT NULL,
+    `title` VARCHAR(500) NOT NULL,
+    `completed` BOOLEAN NOT NULL DEFAULT FALSE,
+    `position` INT NOT NULL DEFAULT 0,
+    `created_at` DATETIME,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

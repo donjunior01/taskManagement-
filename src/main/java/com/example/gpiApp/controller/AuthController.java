@@ -35,6 +35,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
+    private final com.example.gpiApp.service.TotpService totpService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
@@ -61,6 +62,19 @@ public class AuthController {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getEmail(), loginRequest.getPassword())
             );
+
+            // Two-factor challenge: password is correct, now require a valid TOTP code.
+            if (user.isTwoFactorEnabled()) {
+                String code = loginRequest.getCode();
+                if (code == null || code.trim().isEmpty()) {
+                    // Tell the client to prompt for the authenticator code, then resubmit.
+                    return ResponseEntity.ok(java.util.Map.of("twoFactorRequired", true));
+                }
+                if (!totpService.verifyCode(user.getTwoFactorSecret(), code)) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(ApiResponse.error("Invalid authentication code"));
+                }
+            }
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String jwt = jwtUtil.generateToken(authentication);

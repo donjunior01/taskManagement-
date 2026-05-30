@@ -117,17 +117,37 @@ public class CalendarController {
     }
 
     @PostMapping("/{id}/sync")
-    public ResponseEntity<ApiResponse<String>> syncEventToGoogle(@PathVariable Long id) {
-        try {
-            ApiResponse<CalendarEventDTO> eventResponse = calendarService.getEventById(id);
-            if (!eventResponse.isSuccess()) {
-                return ResponseEntity.ok(ApiResponse.error("Event not found"));
-            }
-            // The sync is handled in the service
-            return ResponseEntity.ok(ApiResponse.success("Event synced to Google Calendar", null));
-        } catch (Exception e) {
-            return ResponseEntity.ok(ApiResponse.error("Failed to sync event: " + e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<CalendarEventDTO>> syncEventToGoogle(@PathVariable Long id) {
+        return ResponseEntity.ok(calendarService.syncEventById(id));
+    }
+
+    /** Whether Google Calendar sync is configured, plus this user's synced/unsynced counts. */
+    @GetMapping("/google/status")
+    public ResponseEntity<ApiResponse<CalendarSyncStatusDTO>> getSyncStatus(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = getUserIdFromDetails(userDetails);
+        return ResponseEntity.ok(ApiResponse.success("Sync status retrieved", calendarService.getSyncStatus(userId)));
+    }
+
+    /** Push all of the current user's unsynced events to Google Calendar. */
+    @PostMapping("/google/sync-all")
+    public ResponseEntity<ApiResponse<CalendarSyncResultDTO>> syncAllToGoogle(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = getUserIdFromDetails(userDetails);
+        CalendarSyncResultDTO result = calendarService.pushAllToGoogle(userId);
+        return ResponseEntity.ok(ApiResponse.success(result.getMessage(), result));
+    }
+
+    /** Import Google Calendar events in the given window into the local calendar. */
+    @PostMapping("/google/import")
+    public ResponseEntity<ApiResponse<CalendarSyncResultDTO>> importFromGoogle(
+            @RequestParam String start,
+            @RequestParam String end,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = getUserIdFromDetails(userDetails);
+        CalendarSyncResultDTO result = calendarService.importFromGoogle(
+                userId, parseDateTime(start), parseDateTime(end));
+        return ResponseEntity.ok(ApiResponse.success(result.getMessage(), result));
     }
 
     // Create calendar events from entities
