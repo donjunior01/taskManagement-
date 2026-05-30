@@ -1,3 +1,8 @@
+# Secrets — never commit Google service-account keys
+google-credentials.json
+**/google-credentials.json
+*-service-account*.json
+
 # Maven
 target/
 pom.xml.tag
