@@ -1,0 +1,49 @@
+# Full local stack: MySQL + Spring Boot backend + Angular (nginx) frontend.
+#   docker compose up --build
+# Frontend: http://localhost:4200   Backend/Swagger: http://localhost:8073/swagger-ui.html
+#
+# Pass your Claude key through the environment to enable live AI:
+#   ANTHROPIC_API_KEY=sk-ant-... docker compose up --build
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: project_management
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # Override the dev (localhost:3307) datasource to reach the mysql service.
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/project_management?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      # Let Hibernate create the schema in the fresh container DB; data.sql then seeds it.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # Optional — enables live AI assistant when provided by the host.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - "8073:8073"
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+
+volumes:
+  mysql-data:
