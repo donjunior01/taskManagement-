@@ -357,6 +357,7 @@
 
         <div class="form-group">
           <label for="eventNotes">Description / Notes</label>
+          <app-ai-describe [type]="'EVENT'" [title]="newEvent.title" (generated)="newEvent.notes = $event"></app-ai-describe>
           <textarea id="eventNotes" name="eventNotes" rows="3" [(ngModel)]="newEvent.notes" placeholder="Outline agenda, setup targets, or attach invite pins..."></textarea>
         </div>
 

@@ -79,6 +79,51 @@
       </div>
     </div>
 
+    <!-- Quick Summary Charts -->
+    <div class="charts-row" *ngIf="stats.totalTasks > 0">
+      <!-- Task Status Distribution (donut) -->
+      <div class="glass-panel chart-card animate-scale-in">
+        <div class="section-header">
+          <h3>Task Status Breakdown</h3>
+        </div>
+        <div class="donut-wrap">
+          <svg viewBox="0 0 36 36" class="donut-chart">
+            <circle class="donut-track" cx="18" cy="18" r="15.915" fill="none" stroke-width="3.6"></circle>
+            <circle *ngFor="let d of donutSegments"
+                    [ngClass]="d.seg.cls"
+                    cx="18" cy="18" r="15.915" fill="none" stroke-width="3.6"
+                    pathLength="100"
+                    [attr.stroke-dasharray]="d.dash"
+                    [attr.transform]="'rotate(' + d.rotation + ' 18 18)'"></circle>
+            <text x="18" y="18.6" class="donut-center">{{ stats.totalTasks }}</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="legend-item" *ngFor="let s of statusChart">
+              <span class="legend-dot" [ngClass]="s.cls"></span>
+              <span class="legend-label">{{ s.label }}</span>
+              <span class="legend-count">{{ s.count }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Priority Distribution (bars) -->
+      <div class="glass-panel chart-card animate-scale-in">
+        <div class="section-header">
+          <h3>Priority Distribution</h3>
+        </div>
+        <div class="bars-chart">
+          <div class="bar-row" *ngFor="let p of priorityChart">
+            <span class="bar-label">{{ p.label }}</span>
+            <div class="bar-track">
+              <div class="bar-fill" [ngClass]="p.cls" [style.width.%]="p.pct"></div>
+            </div>
+            <span class="bar-count">{{ p.count }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Workspace Layout -->
     <div class="dashboard-columns">
       <!-- LEFT COLUMN: Tasks and Workspaces -->

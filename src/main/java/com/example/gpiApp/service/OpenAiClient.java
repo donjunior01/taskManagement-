@@ -12,39 +12,39 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * Thin client for the Anthropic Messages API ({@code POST /v1/messages}), used by the
- * AI assistant. Talks raw HTTP via Spring {@link RestClient} — no SDK dependency.
+ * OpenAI API client for GPT-4o ({@code POST /v1/chat/completions}), the primary LLM
+ * provider in the fallback chain. Mirrored on seruca's approach: thin REST client
+ * via Spring {@link RestClient}, no SDK dependency.
  * <p>
- * The system prompt is sent as a cache-controlled text block so repeated calls with the
- * same prompt are eligible for prompt caching. Every call is best-effort: if the API key
- * is absent, the request fails, or the response is malformed, {@link #complete} returns an
- * empty {@link Optional} and the caller falls back to its rule-based engine.
+ * System prompts are sent as the first message with role "system". Every call is best-effort:
+ * if the API key is absent, the request fails, or the response is malformed,
+ * {@link #complete} returns an empty {@link Optional} and the caller falls back to Claude,
+ * then Gemini, then rule-based engine.
  */
 @Component
-public class ClaudeAiClient {
+public class OpenAiClient {
 
-    private static final Logger log = LoggerFactory.getLogger(ClaudeAiClient.class);
+    private static final Logger log = LoggerFactory.getLogger(OpenAiClient.class);
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final String apiKey;
-    private final String apiVersion;
     private final String model;
     private final int maxTokens;
 
-    public ClaudeAiClient(
-            @Value("${anthropic.api.key:}") String apiKey,
-            @Value("${anthropic.api.base-url:https://api.anthropic.com}") String baseUrl,
-            @Value("${anthropic.api.version:2023-06-01}") String apiVersion,
-            @Value("${anthropic.api.model:claude-haiku-4-5}") String model,
-            @Value("${anthropic.api.max-tokens:1024}") int maxTokens,
-            @Value("${anthropic.api.timeout-ms:20000}") int timeoutMs) {
+    public OpenAiClient(
+            @Value("${openai.api.key:}") String apiKey,
+            @Value("${openai.api.base-url:https://api.openai.com/v1}") String baseUrl,
+            @Value("${openai.api.model:gpt-4o}") String model,
+            @Value("${openai.api.max-tokens:1024}") int maxTokens,
+            @Value("${openai.api.timeout-ms:20000}") int timeoutMs) {
         this.apiKey = apiKey;
-        this.apiVersion = apiVersion;
         this.model = model;
         this.maxTokens = maxTokens;
 
@@ -65,7 +65,7 @@ public class ClaudeAiClient {
     /**
      * Send a single-turn message and return the model's text response.
      *
-     * @param systemPrompt static instruction text (cache-controlled for prompt caching)
+     * @param systemPrompt static instruction text
      * @param userContent  the per-request user message (project/task data)
      * @return the response text, or empty on any failure / when disabled
      */
@@ -76,16 +76,15 @@ public class ClaudeAiClient {
         try {
             String body = buildRequestBody(systemPrompt, userContent);
             String response = restClient.post()
-                    .uri("/v1/messages")
-                    .header("x-api-key", apiKey)
-                    .header("anthropic-version", apiVersion)
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(body)
                     .retrieve()
                     .body(String.class);
             return extractText(response);
         } catch (Exception e) {
-            log.warn("Claude API call failed, falling back to rule-based engine: {}", e.getMessage());
+            log.warn("OpenAI API call failed, falling back to Claude: {}", e.getMessage());
             return Optional.empty();
         }
     }
@@ -95,7 +94,7 @@ public class ClaudeAiClient {
      * "assistant". The final turn should be the latest user message. Returns the
      * model's reply text, or empty on any failure / when disabled.
      */
-    public Optional<String> chat(String systemPrompt, java.util.List<java.util.Map<String, String>> turns) {
+    public Optional<String> chat(String systemPrompt, List<Map<String, String>> turns) {
         if (!isEnabled() || turns == null || turns.isEmpty()) {
             return Optional.empty();
         }
@@ -104,14 +103,17 @@ public class ClaudeAiClient {
             root.put("model", model);
             root.put("max_tokens", maxTokens);
 
-            ArrayNode system = root.putArray("system");
-            ObjectNode sysBlock = system.addObject();
-            sysBlock.put("type", "text");
-            sysBlock.put("text", systemPrompt);
-            sysBlock.putObject("cache_control").put("type", "ephemeral");
-
             ArrayNode messages = root.putArray("messages");
-            for (java.util.Map<String, String> turn : turns) {
+
+            // Add system prompt as the first message.
+            if (systemPrompt != null && !systemPrompt.isBlank()) {
+                ObjectNode sysMsg = messages.addObject();
+                sysMsg.put("role", "system");
+                sysMsg.put("content", systemPrompt);
+            }
+
+            // Add all turns.
+            for (Map<String, String> turn : turns) {
                 String role = turn.getOrDefault("role", "user");
                 String content = turn.getOrDefault("content", "");
                 if (content == null || content.isBlank()) continue;
@@ -120,19 +122,19 @@ public class ClaudeAiClient {
                 m.put("role", role);
                 m.put("content", content);
             }
+
             if (messages.isEmpty()) return Optional.empty();
 
             String response = restClient.post()
-                    .uri("/v1/messages")
-                    .header("x-api-key", apiKey)
-                    .header("anthropic-version", apiVersion)
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(objectMapper.writeValueAsString(root))
                     .retrieve()
                     .body(String.class);
             return extractText(response);
         } catch (Exception e) {
-            log.warn("Claude chat call failed, falling back: {}", e.getMessage());
+            log.warn("OpenAI chat call failed, falling back to Claude: {}", e.getMessage());
             return Optional.empty();
         }
     }
@@ -142,14 +144,16 @@ public class ClaudeAiClient {
         root.put("model", model);
         root.put("max_tokens", maxTokens);
 
-        // System prompt as an array with a cache_control breakpoint (prompt caching).
-        ArrayNode system = root.putArray("system");
-        ObjectNode sysBlock = system.addObject();
-        sysBlock.put("type", "text");
-        sysBlock.put("text", systemPrompt);
-        sysBlock.putObject("cache_control").put("type", "ephemeral");
-
         ArrayNode messages = root.putArray("messages");
+
+        // Add system prompt.
+        if (systemPrompt != null && !systemPrompt.isBlank()) {
+            ObjectNode sysMsg = messages.addObject();
+            sysMsg.put("role", "system");
+            sysMsg.put("content", systemPrompt);
+        }
+
+        // Add user message.
         ObjectNode userMsg = messages.addObject();
         userMsg.put("role", "user");
         userMsg.put("content", userContent);
@@ -157,24 +161,18 @@ public class ClaudeAiClient {
         return objectMapper.writeValueAsString(root);
     }
 
-    /** Pull the concatenated text from the Messages API response envelope. */
+    /** Pull the text from the OpenAI response envelope. */
     private Optional<String> extractText(String response) throws Exception {
         if (response == null || response.isBlank()) {
             return Optional.empty();
         }
         JsonNode root = objectMapper.readTree(response);
-        JsonNode content = root.path("content");
-        if (!content.isArray() || content.isEmpty()) {
+        JsonNode choices = root.path("choices");
+        if (!choices.isArray() || choices.isEmpty()) {
             return Optional.empty();
         }
-        StringBuilder text = new StringBuilder();
-        for (JsonNode block : content) {
-            if ("text".equals(block.path("type").asText())) {
-                text.append(block.path("text").asText());
-            }
-        }
-        String result = text.toString().trim();
-        return result.isEmpty() ? Optional.empty() : Optional.of(result);
+        String text = choices.path(0).path("message").path("content").asText("").trim();
+        return text.isEmpty() ? Optional.empty() : Optional.of(text);
     }
 
     /** Reusable accessor so callers can reuse the shared mapper for parsing model JSON. */

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -26,7 +26,7 @@ interface TaskStats {
   templateUrl: './project-detail.html',
   styleUrls: ['./project-detail.scss']
 })
-export class PmProjectDetailComponent implements OnInit {
+export class PmProjectDetailComponent implements OnInit, OnDestroy {
   projectId: number = 0;
   managerId: number = 0;
   project: Project | null = null;
@@ -82,6 +82,8 @@ export class PmProjectDetailComponent implements OnInit {
   loadingAiSummary = false;
   loadingAiPriorities = false;
   loadingAiRisks = false;
+  generatingTaskDesc = false;
+  generatingProjectDesc = false;
 
   // ── Checklist / sub-tasks ──────────────────────────────────────────────────
   showChecklistModal = false;
@@ -97,6 +99,8 @@ export class PmProjectDetailComponent implements OnInit {
   chatInput = '';
   loadingChat = false;
   sendingChat = false;
+  private chatPollHandle: any = null;
+  private readonly CHAT_POLL_MS = 7000;
 
   constructor(
     private route: ActivatedRoute,
@@ -159,6 +163,7 @@ export class PmProjectDetailComponent implements OnInit {
     this.taskService.getTasksByProject(this.projectId, 0, 100).subscribe({
       next: (response: any) => {
         this.tasks = response?.data || [];
+        this.invalidateGanttCache();
         this.computeTaskStats();
         this.loadingTasks = false;
         this.cdr.detectChanges();
@@ -658,29 +663,44 @@ export class PmProjectDetailComponent implements OnInit {
   }
 
   // ── Gantt / timeline ─────────────────────────────────────────────────────────
+  // Cache to prevent ExpressionChangedAfterItHasBeenCheckedError from floating-point rounding.
+  private cachedGanttRange: { start: number; end: number } | null = null;
+  private cachedGanttMonths: { label: string; left: number }[] = [];
+  private cachedGanttBars: Map<number | undefined, { left: number; width: number }> = new Map();
+  private lastTasksLength = 0;
+  private lastTodayPct = 0;
+
   /** Overall date window spanning the project and all task bars. */
   get ganttRange(): { start: number; end: number } {
-    const dates: number[] = [];
-    if (this.project?.startDate) dates.push(new Date(this.project.startDate).getTime());
-    if (this.project?.endDate) dates.push(new Date(this.project.endDate).getTime());
-    this.tasks.forEach(t => {
-      if (t.createdAt) dates.push(new Date(t.createdAt).getTime());
-      if (t.deadline) dates.push(new Date(t.deadline).getTime());
-    });
-    if (dates.length === 0) {
-      const now = Date.now();
-      return { start: now, end: now + 30 * 86400000 };
+    if (!this.cachedGanttRange) {
+      const dates: number[] = [];
+      if (this.project?.startDate) dates.push(new Date(this.project.startDate).getTime());
+      if (this.project?.endDate) dates.push(new Date(this.project.endDate).getTime());
+      this.tasks.forEach(t => {
+        if (t.createdAt) dates.push(new Date(t.createdAt).getTime());
+        if (t.deadline) dates.push(new Date(t.deadline).getTime());
+      });
+      if (dates.length === 0) {
+        const now = Date.now();
+        this.cachedGanttRange = { start: now, end: now + 30 * 86400000 };
+      } else {
+        let min = Math.min(...dates);
+        let max = Math.max(...dates);
+        if (max <= min) max = min + 7 * 86400000;
+        // Pad ~3% each side so end bars aren't flush against the edge.
+        const pad = (max - min) * 0.03;
+        this.cachedGanttRange = { start: min - pad, end: max + pad };
+      }
     }
-    let min = Math.min(...dates);
-    let max = Math.max(...dates);
-    if (max <= min) max = min + 7 * 86400000;
-    // Pad ~3% each side so end bars aren't flush against the edge.
-    const pad = (max - min) * 0.03;
-    return { start: min - pad, end: max + pad };
+    return this.cachedGanttRange;
   }
 
   /** Left offset and width (in %) of a task's bar within the gantt range. */
   ganttBar(task: Task): { left: number; width: number } {
+    const taskId = task.id;
+    if (this.cachedGanttBars.has(taskId)) {
+      return this.cachedGanttBars.get(taskId)!;
+    }
     const r = this.ganttRange;
     const total = r.end - r.start || 1;
     const bStart = task.createdAt ? new Date(task.createdAt).getTime()
@@ -688,19 +708,27 @@ export class PmProjectDetailComponent implements OnInit {
     const bEnd = task.deadline ? new Date(task.deadline).getTime() : r.end;
     const s = Math.max(bStart, r.start);
     const e = Math.max(s + 86400000, Math.min(bEnd, r.end)); // at least ~1 day wide
-    const left = ((s - r.start) / total) * 100;
-    const width = Math.min(100 - left, ((e - s) / total) * 100);
-    return { left, width };
+    const left = Math.round(((s - r.start) / total) * 10000) / 100; // Round to 2 decimals
+    const width = Math.round(Math.min(100 - left, ((e - s) / total) * 100) * 10000) / 100; // Round to 2 decimals
+    const result = { left, width };
+    this.cachedGanttBars.set(taskId, result);
+    return result;
   }
 
   get ganttTodayPct(): number {
     const r = this.ganttRange;
     const total = r.end - r.start || 1;
-    return ((Date.now() - r.start) / total) * 100;
+    const pct = Math.round(((Date.now() - r.start) / total) * 10000) / 100; // Round to 2 decimals
+    this.lastTodayPct = pct;
+    return pct;
   }
 
   /** Month gridline labels positioned across the range. */
   get ganttMonths(): { label: string; left: number }[] {
+    // Return cached value to prevent expression change detection errors
+    if (this.cachedGanttMonths.length > 0) {
+      return this.cachedGanttMonths;
+    }
     const r = this.ganttRange;
     const total = r.end - r.start || 1;
     const out: { label: string; left: number }[] = [];
@@ -708,13 +736,21 @@ export class PmProjectDetailComponent implements OnInit {
     d.setDate(1);
     let guard = 0;
     while (d.getTime() <= r.end && guard++ < 60) {
-      const left = ((d.getTime() - r.start) / total) * 100;
+      const left = Math.round(((d.getTime() - r.start) / total) * 10000) / 100; // Round to 2 decimals
       if (left >= 0 && left <= 100) {
         out.push({ label: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), left });
       }
       d.setMonth(d.getMonth() + 1);
     }
+    this.cachedGanttMonths = out;
     return out;
+  }
+
+  /** Invalidate Gantt cache when tasks or project dates change. */
+  private invalidateGanttCache(): void {
+    this.cachedGanttRange = null;
+    this.cachedGanttMonths = [];
+    this.cachedGanttBars.clear();
   }
 
   // ── Checklist / sub-tasks ──────────────────────────────────────────────────
@@ -810,27 +846,73 @@ export class PmProjectDetailComponent implements OnInit {
     return Math.round((this.checklistDoneCount / this.checklistItems.length) * 100);
   }
 
+  // ── AI description generation ──────────────────────────────────────────────
+  generateTaskDescription(): void {
+    const name = this.taskForm.name?.trim();
+    if (!name || this.generatingTaskDesc) return;
+    this.generatingTaskDesc = true;
+    this.aiService.generateDescription('TASK', name, this.project?.name).subscribe({
+      next: (desc) => {
+        if (desc) this.taskForm.description = desc;
+        this.generatingTaskDesc = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.generatingTaskDesc = false;
+        this.toast.show('Could not generate a description.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  generateProjectDescription(): void {
+    const name = this.editForm.name?.trim();
+    if (!name || this.generatingProjectDesc) return;
+    this.generatingProjectDesc = true;
+    this.aiService.generateDescription('PROJECT', name).subscribe({
+      next: (desc) => {
+        if (desc) this.editForm.description = desc;
+        this.generatingProjectDesc = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.generatingProjectDesc = false;
+        this.toast.show('Could not generate a description.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   // ── Team chat (project group chat) ─────────────────────────────────────────
   openChat(): void {
     this.showChatModal = true;
-    this.loadChat();
+    this.loadChat(true);
+    this.startChatPolling();
   }
 
   closeChat(): void {
     this.showChatModal = false;
+    this.stopChatPolling();
   }
 
-  loadChat(): void {
+  /**
+   * Loads the project group conversation. When `showSpinner` is false the
+   * thread is refreshed silently (used by the background poll) so the panel
+   * stays synchronised with the rest of the team without flickering.
+   */
+  loadChat(showSpinner = false): void {
     if (!this.projectId) return;
-    this.loadingChat = true;
+    if (showSpinner) this.loadingChat = true;
     this.messageService.getMessagesByProject(this.projectId).subscribe({
       next: (response: any) => {
-        this.chatMessages = response?.data || response || [];
+        const incoming: Message[] = response?.data || response || [];
+        this.mergeChatMessages(incoming);
         this.loadingChat = false;
         this.cdr.detectChanges();
       },
       error: () => {
-        this.chatMessages = [];
+        // Keep whatever is already on screen; never wipe the thread on a
+        // transient failure and never log the user out for a chat refresh.
         this.loadingChat = false;
         this.cdr.detectChanges();
       }
@@ -841,17 +923,21 @@ export class PmProjectDetailComponent implements OnInit {
     const content = this.chatInput.trim();
     if (!content || !this.projectId || this.sendingChat) return;
     this.sendingChat = true;
-    this.messageService.sendMessage({ projectId: this.projectId, content }).subscribe({
+    this.messageService.sendMessage({
+      senderId: this.managerId,
+      projectId: this.projectId,
+      content
+    }).subscribe({
       next: (response: any) => {
-        const msg = response?.data || response;
-        if (msg) this.chatMessages.push(msg);
+        const msg: Message | undefined = response?.data || response;
+        if (msg && msg.id) this.mergeChatMessages([msg]);
         this.chatInput = '';
         this.sendingChat = false;
         this.cdr.detectChanges();
       },
       error: () => {
         this.sendingChat = false;
-        this.toast.show('Could not send the message.', 'error');
+        this.toast.show('Could not send the message. Please try again.', 'error');
         this.cdr.detectChanges();
       }
     });
@@ -859,5 +945,41 @@ export class PmProjectDetailComponent implements OnInit {
 
   isOwnMessage(m: Message): boolean {
     return m.senderId === this.managerId;
+  }
+
+  /** Merge the latest server snapshot into the thread, de-duplicating by id. */
+  private mergeChatMessages(incoming: Message[]): void {
+    if (!Array.isArray(incoming) || incoming.length === 0) return;
+    const seen = new Set(this.chatMessages.map(m => m.id).filter(id => id != null));
+    let changed = false;
+    for (const msg of incoming) {
+      if (msg.id != null && !seen.has(msg.id)) {
+        this.chatMessages.push(msg);
+        seen.add(msg.id);
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.chatMessages.sort((a, b) =>
+        (a.createdAt || '').localeCompare(b.createdAt || ''));
+    }
+  }
+
+  private startChatPolling(): void {
+    this.stopChatPolling();
+    this.chatPollHandle = setInterval(() => {
+      if (this.showChatModal) this.loadChat(false);
+    }, this.CHAT_POLL_MS);
+  }
+
+  private stopChatPolling(): void {
+    if (this.chatPollHandle) {
+      clearInterval(this.chatPollHandle);
+      this.chatPollHandle = null;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.stopChatPolling();
   }
 }

@@ -24,14 +24,16 @@ export const authInterceptor = (request: HttpRequest<unknown>, next: HttpHandler
 
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 || error.status === 403 || error.status === 500) {
+      // Only a genuine 401 (invalid/expired credentials) should clear the session
+      // and bounce the user to the login page. A 403 (authenticated but not allowed)
+      // or a 500 (server error) must NOT destroy the session — otherwise a single
+      // failing request, e.g. sending a chat message, logs the user out unexpectedly.
+      if (error.status === 401 && !isAuthEndpoint) {
         localStorage.removeItem('jwt_token');
         localStorage.removeItem('user_id');
         localStorage.removeItem('user_email');
         localStorage.removeItem('user_roles');
-        if (!isAuthEndpoint) {
-          router.navigate(['/login']);
-        }
+        router.navigate(['/login']);
       }
       return throwError(() => error);
     })

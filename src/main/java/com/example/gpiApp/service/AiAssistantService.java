@@ -79,6 +79,7 @@ public class AiAssistantService {
 
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
+    private final OpenAiClient openAiClient;
     private final ClaudeAiClient claudeClient;
 
     // ── Public API ───────────────────────────────────────────────────────────
@@ -229,8 +230,11 @@ public class AiAssistantService {
                 node.put("progress", t.getProgress() != null ? t.getProgress() : 0);
                 node.put("deadline", t.getDeadline() != null ? t.getDeadline().toString() : null);
             }
-            Optional<String> response = claudeClient.complete(
-                    SUMMARY_SYSTEM_PROMPT, mapper.writeValueAsString(payload));
+            String payloadJson = mapper.writeValueAsString(payload);
+            Optional<String> response = openAiClient.complete(
+                    SUMMARY_SYSTEM_PROMPT, payloadJson)
+                    .or(() -> claudeClient.complete(
+                            SUMMARY_SYSTEM_PROMPT, payloadJson));
             if (response.isEmpty()) return Optional.empty();
 
             JsonNode json = parseJsonObject(response.get(), mapper);
@@ -387,8 +391,11 @@ public class AiAssistantService {
                 node.put("suggestedPriority", s.getSuggestedPriority());
                 node.put("urgencyScore", s.getUrgencyScore());
             }
-            Optional<String> response = claudeClient.complete(
-                    PRIORITIES_SYSTEM_PROMPT, mapper.writeValueAsString(payload));
+            String payloadJson = mapper.writeValueAsString(payload);
+            Optional<String> response = openAiClient.complete(
+                    PRIORITIES_SYSTEM_PROMPT, payloadJson)
+                    .or(() -> claudeClient.complete(
+                            PRIORITIES_SYSTEM_PROMPT, payloadJson));
             if (response.isEmpty()) return Optional.empty();
 
             JsonNode json = parseJsonObject(response.get(), mapper);
@@ -686,8 +693,11 @@ public class AiAssistantService {
                 node.put("progress", r.getProgress());
                 node.put("deadline", r.getDeadline());
             }
-            Optional<String> response = claudeClient.complete(
-                    RISK_SYSTEM_PROMPT, mapper.writeValueAsString(payload));
+            String payloadJson = mapper.writeValueAsString(payload);
+            Optional<String> response = openAiClient.complete(
+                    RISK_SYSTEM_PROMPT, payloadJson)
+                    .or(() -> claudeClient.complete(
+                            RISK_SYSTEM_PROMPT, payloadJson));
             if (response.isEmpty()) return Optional.empty();
             JsonNode json = parseJsonObject(response.get(), mapper);
             if (json == null || !json.hasNonNull("summary")) return Optional.empty();

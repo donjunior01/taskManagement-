@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
@@ -42,7 +42,7 @@ export interface ChatMessage {
   templateUrl: './messages.html',
   styleUrls: ['./messages.scss']
 })
-export class UserMessagesComponent implements OnInit {
+export class UserMessagesComponent implements OnInit, OnDestroy {
   developerId: number = 0;
   developerName: string = 'Developer';
 
@@ -57,6 +57,15 @@ export class UserMessagesComponent implements OnInit {
   searchQuery: string = '';
   loadingContacts: boolean = true;
   sendingMessage: boolean = false;
+
+  // Group-chat synchronisation
+  private confirmedServerIds = new Set<number>();
+  private threadPollHandle: any = null;
+  private readonly THREAD_POLL_MS = 7000;
+  // Per-group unread badge tracking (last-read message id is kept per user per
+  // project in localStorage, since group messages have no per-user read state).
+  private unreadPollHandle: any = null;
+  private readonly UNREAD_POLL_MS = 15000;
 
   // Attachment and Voice Note setups
   showAttachMenu: boolean = false;
@@ -130,6 +139,71 @@ export class UserMessagesComponent implements OnInit {
       this.selectDefaultContact();
     }
     this.filteredContacts = [...this.contacts];
+
+    // Compute unread badges immediately, then keep them fresh on an interval so
+    // new group messages light up the counter even while viewing another group.
+    this.refreshUnreadCounts();
+    this.startUnreadPolling();
+  }
+
+  /** Recomputes the unread badge for every group the user is not viewing. */
+  private refreshUnreadCounts(): void {
+    for (const contact of this.contacts) {
+      const projectId = contact.id;
+      this.messageService.getMessagesByProject(projectId).subscribe({
+        next: (response: any) => {
+          const messages: any[] = response?.data || (Array.isArray(response) ? response : []);
+          // The currently open group is always considered read.
+          if (this.selectedContact && this.selectedContact.id === projectId) {
+            contact.unreadCount = 0;
+            if (messages.length) this.setLastReadId(projectId, this.maxId(messages));
+          } else {
+            const lastRead = this.getLastReadId(projectId);
+            contact.unreadCount = messages.filter(
+              m => m.id != null && m.id > lastRead && m.senderId !== this.developerId).length;
+          }
+          const last = messages.length ? messages[messages.length - 1] : null;
+          if (last) {
+            contact.lastMessageText = `${last.senderName || 'Team'}: ${last.content}`;
+            contact.lastMessageTime = last.createdAt
+              ? new Date(last.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {}
+      });
+    }
+  }
+
+  private startUnreadPolling(): void {
+    this.stopUnreadPolling();
+    this.unreadPollHandle = setInterval(() => this.refreshUnreadCounts(), this.UNREAD_POLL_MS);
+  }
+
+  private stopUnreadPolling(): void {
+    if (this.unreadPollHandle) {
+      clearInterval(this.unreadPollHandle);
+      this.unreadPollHandle = null;
+    }
+  }
+
+  private lastReadKey(projectId: number): string {
+    return `msg_lastread_${this.developerId}_${projectId}`;
+  }
+
+  private getLastReadId(projectId: number): number {
+    const v = localStorage.getItem(this.lastReadKey(projectId));
+    return v ? Number(v) : 0;
+  }
+
+  private setLastReadId(projectId: number, id: number): void {
+    if (id > this.getLastReadId(projectId)) {
+      localStorage.setItem(this.lastReadKey(projectId), String(id));
+    }
+  }
+
+  private maxId(messages: any[]): number {
+    return messages.reduce((mx, m) => (m.id != null && m.id > mx ? m.id : mx), 0);
   }
 
   private selectDefaultContact(): void {
@@ -141,9 +215,19 @@ export class UserMessagesComponent implements OnInit {
   selectContact(contact: ChatContact): void {
     this.selectedContact = contact;
     contact.unreadCount = 0; // Clear unread count
+    // Reset sync state for the newly opened group conversation.
+    this.confirmedServerIds.clear();
+    this.messageThread = [];
     this.loadMessageThread(contact.id);
+    this.startThreadPolling(contact.id);
   }
 
+  /**
+   * Loads/refreshes the project group conversation. Server messages are merged
+   * by id (never wiping locally-added attachment/voice notes and never
+   * duplicating a message that is already on screen), so the panel stays in
+   * sync with the rest of the team as new messages arrive.
+   */
   loadMessageThread(projectId: number): void {
     const contact = this.contacts.find(c => c.id === projectId);
     if (!contact) return;
@@ -151,23 +235,84 @@ export class UserMessagesComponent implements OnInit {
     this.messageService.getMessagesByProject(projectId).subscribe({
       next: (response: any) => {
         const messages = (response && response.data) ? response.data : (Array.isArray(response) ? response : []);
-        this.messageThread = messages.map((m: any) => ({
-          id: m.id || 0,
-          senderId: m.senderId || 0,
-          senderName: m.senderName || 'Team Member',
-          text: m.content,
-          timestamp: m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
-          isSelf: m.senderId === this.developerId,
-          status: m.isRead ? 'READ' : 'DELIVERED'
-        }));
+        this.mergeServerMessages(projectId, messages);
+        // Viewing a group marks it read up to its latest message.
+        if (this.selectedContact && this.selectedContact.id === projectId && messages.length) {
+          this.setLastReadId(projectId, this.maxId(messages));
+          contact.unreadCount = 0;
+        }
         this.cdr.detectChanges();
       },
-      error: () => {
-        this.messageThread = [];
-      }
+      // Keep whatever is already on screen on a transient failure.
+      error: () => {}
     });
 
     this.applyContactsFilters();
+  }
+
+  /** Merge a server snapshot into the active thread without dups or flicker. */
+  private mergeServerMessages(projectId: number, messages: any[]): void {
+    if (!this.selectedContact || this.selectedContact.id !== projectId) return;
+    if (!Array.isArray(messages)) return;
+
+    let appended = false;
+    for (const m of messages) {
+      const id = m.id;
+      if (id == null || this.confirmedServerIds.has(id)) continue;
+
+      // If this is our own message echoed back (an optimistic bubble awaiting
+      // confirmation), adopt the real id instead of adding a duplicate.
+      const pending = this.messageThread.find(
+        x => x.isSelf && (x as any)._pending && x.text === m.content);
+      if (pending) {
+        pending.id = id;
+        (pending as any)._pending = false;
+        pending.status = 'DELIVERED';
+        this.confirmedServerIds.add(id);
+        continue;
+      }
+
+      this.confirmedServerIds.add(id);
+      this.messageThread.push({
+        id,
+        senderId: m.senderId || 0,
+        senderName: m.senderName || 'Team Member',
+        text: m.content,
+        timestamp: m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+        isSelf: m.senderId === this.developerId,
+        status: m.isRead ? 'READ' : 'DELIVERED'
+      });
+      appended = true;
+    }
+
+    if (appended) {
+      const last = this.messageThread[this.messageThread.length - 1];
+      if (last) {
+        this.selectedContact.lastMessageText = `${last.senderName}: ${last.text}`;
+        this.selectedContact.lastMessageTime = last.timestamp;
+      }
+    }
+  }
+
+  private startThreadPolling(projectId: number): void {
+    this.stopThreadPolling();
+    this.threadPollHandle = setInterval(() => {
+      if (this.selectedContact && this.selectedContact.id === projectId) {
+        this.loadMessageThread(projectId);
+      }
+    }, this.THREAD_POLL_MS);
+  }
+
+  private stopThreadPolling(): void {
+    if (this.threadPollHandle) {
+      clearInterval(this.threadPollHandle);
+      this.threadPollHandle = null;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.stopThreadPolling();
+    this.stopUnreadPolling();
   }
 
   applyContactsFilters(): void {
@@ -192,8 +337,9 @@ export class UserMessagesComponent implements OnInit {
     const currentText = this.newMessageText.trim();
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+    const projectId = this.selectedContact.id;
     const newMsg: ChatMessage = {
-      id: this.messageThread.length + 1,
+      id: 0,
       senderId: this.developerId,
       senderName: this.developerName,
       text: currentText,
@@ -201,19 +347,33 @@ export class UserMessagesComponent implements OnInit {
       isSelf: true,
       status: 'SENT'
     };
+    // Marks this bubble as awaiting server confirmation so the next poll adopts
+    // its real id rather than appending a duplicate.
+    (newMsg as any)._pending = true;
 
     const newMsgObj: Message = {
       senderId: this.developerId,
-      projectId: this.selectedContact.id,
+      projectId,
       content: currentText
     };
 
     this.messageService.sendMessage(newMsgObj).subscribe({
-      next: (m) => {
-        newMsg.id = m.id || newMsg.id;
+      next: (response: any) => {
+        // Backend returns an ApiResponse wrapper { success, message, data }.
+        const saved = response?.data || response;
+        if (saved && saved.id != null) {
+          newMsg.id = saved.id;
+          (newMsg as any)._pending = false;
+          this.confirmedServerIds.add(saved.id);
+        }
         newMsg.status = 'DELIVERED';
+        this.cdr.detectChanges();
       },
-      error: () => {}
+      error: () => {
+        newMsg.status = 'SENT';
+        this.triggerToast('Message could not be delivered. Retrying on next refresh.', 'error');
+        this.cdr.detectChanges();
+      }
     });
 
     this.messageThread.push(newMsg);
@@ -222,16 +382,6 @@ export class UserMessagesComponent implements OnInit {
     // Update last message in sidebar contact
     this.selectedContact.lastMessageText = `${this.developerName}: ${currentText}`;
     this.selectedContact.lastMessageTime = timeStr;
-
-    // Simulate delivery checklist checkmarks
-    setTimeout(() => {
-      newMsg.status = 'DELIVERED';
-    }, 800);
-
-    setTimeout(() => {
-      newMsg.status = 'READ';
-    }, 1800);
-
   }
 
   // ================= TOAST FEEDBACK SYSTEM =================

@@ -106,6 +106,17 @@ public class NotificationService {
         );
     }
 
+    public void notifyComment(Long recipientId, String commenterName, String taskName, Long taskId) {
+        createNotification(
+                recipientId,
+                "New Comment",
+                commenterName + " commented on task: " + taskName,
+                Notification.NotificationType.COMMENT,
+                taskId,
+                "TASK"
+        );
+    }
+
     public void notifyTaskAssigned(Long userId, String taskName, Long taskId) {
         createNotification(
                 userId,

@@ -416,6 +416,7 @@
           </div>
           <div class="form-group">
             <label for="projDesc">Project Description</label>
+            <app-ai-describe [type]="'PROJECT'" [title]="projectForm.name" (generated)="projectForm.description = $event"></app-ai-describe>
             <textarea id="projDesc" rows="3" [(ngModel)]="projectForm.description" name="description" placeholder="Launch operational parameters..."></textarea>
           </div>
           <div class="form-group">

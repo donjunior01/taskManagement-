@@ -178,9 +178,25 @@
             </div>
           </div>
 
+          <!-- AI guidance panel -->
+          <div class="tab-panel-widget ai-guidance-widget">
+            <div class="ai-guidance-head">
+              <h5>AI Guidance — how to approach this task</h5>
+              <button type="button" class="btn-ai-generate" (click)="getTaskGuidance(task)"
+                      [disabled]="task.loadingGuidance">
+                <span *ngIf="!task.loadingGuidance">{{ task.aiGuidance ? 'Regenerate' : '✨ Get guidance' }}</span>
+                <span *ngIf="task.loadingGuidance">Thinking…</span>
+              </button>
+            </div>
+            <p class="empty-tab-msg" *ngIf="!task.aiGuidance && !task.loadingGuidance">
+              Ask the assistant to explain this task and propose a step-by-step plan based on its description.
+            </p>
+            <pre class="ai-guidance-text" *ngIf="task.aiGuidance">{{ task.aiGuidance }}</pre>
+          </div>
+
           <!-- Triple breakdown logs grids -->
           <div class="breakdown-dashboard-tabs">
-            
+
             <!-- Tab 1: Submissions History -->
             <div class="tab-panel-widget">
               <h5>Submissions History</h5>

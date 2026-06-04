@@ -156,6 +156,7 @@
       </div>
       <div class="form-group">
         <label>Description</label>
+        <app-ai-describe [type]="'PROJECT'" [title]="addForm.name" (generated)="addForm.description = $event"></app-ai-describe>
         <textarea rows="3" [(ngModel)]="addForm.description" name="description" placeholder="Outline milestones and delivery targets..."></textarea>
       </div>
       <div class="form-row-2">

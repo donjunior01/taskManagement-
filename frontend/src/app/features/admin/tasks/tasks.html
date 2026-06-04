@@ -229,6 +229,7 @@
 
       <div class="form-group">
         <label>Deliverable Specifications</label>
+        <app-ai-describe [type]="'TASK'" [title]="addForm.name" (generated)="addForm.description = $event"></app-ai-describe>
         <textarea rows="3" placeholder="Explain tasks goals, target benchmarks, and resolution rules..." [(ngModel)]="addForm.description" name="description"></textarea>
       </div>
 
@@ -321,6 +322,7 @@
 
       <div class="form-group">
         <label>Deliverable Specifications</label>
+        <app-ai-describe [type]="'TASK'" [title]="editForm.name" (generated)="editForm.description = $event"></app-ai-describe>
         <textarea rows="3" [(ngModel)]="editForm.description" name="description"></textarea>
       </div>
 

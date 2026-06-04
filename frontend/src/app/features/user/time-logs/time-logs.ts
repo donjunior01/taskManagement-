@@ -74,60 +74,46 @@ export class UserTimeLogsComponent implements OnInit {
 
   loadData(): void {
     this.loading = true;
+    // Load the user's tasks first (needed for the log form and to resolve
+    // task/project names), then fetch the real time logs.
+    this.taskService.getTasksByUser(this.developerId, 0, 100).subscribe({
+      next: (res: any) => {
+        this.myTasks = res?.data || res?.content || (Array.isArray(res) ? res : []);
+        this.fetchTimeLogs();
+      },
+      error: () => {
+        this.myTasks = [];
+        this.fetchTimeLogs();
+      }
+    });
+  }
 
-    // Load real time logs from API
+  /** Loads only real, persisted time logs from the backend. */
+  private fetchTimeLogs(): void {
     this.timeLogService.getMyTimeLogs().subscribe({
       next: (response: any) => {
-        let logs: TimeLog[] = [];
-        if (Array.isArray(response)) {
-          logs = response;
-        } else if (response && Array.isArray(response.content)) {
-          logs = response.content;
-        } else if (response && Array.isArray(response.data)) {
-          logs = response.data;
-        } else if (response && response.logs && Array.isArray(response.logs)) {
-          logs = response.logs;
-        }
-
-        if (logs && logs.length > 0) {
-          this.timeLogsList = logs.map(l => ({
-            id: l.id!,
-            taskName: `Task #${l.taskId}`,
-            projectName: 'Workspace',
-            hours: l.hours || (l as any).hoursSpent || 0,
+        const logs: any[] = response?.data || response?.content
+          || (Array.isArray(response) ? response : []);
+        this.timeLogsList = (logs || []).map(l => {
+          const matched = this.myTasks.find(t => t.id === l.taskId);
+          return {
+            id: l.id,
+            taskName: l.taskName || matched?.name || `Task #${l.taskId}`,
+            projectName: matched?.projectName || 'Workspace',
+            hours: l.hoursSpent ?? l.hours ?? 0,
             notes: l.description || '',
-            date: l.date || (l as any).logDate || ''
-          }));
-          this.calculateTelemetry();
-        }
-
-        // Also fetch user's tasks to populate form selection
-        this.taskService.getTasksByUser(this.developerId, 0, 100).subscribe({
-          next: (res: any) => {
-            if (res && Array.isArray(res.data)) {
-              this.myTasks = res.data;
-            } else if (res && Array.isArray(res.content)) {
-              this.myTasks = res.content;
-            } else if (Array.isArray(res)) {
-              this.myTasks = res;
-            }
-            this.generateCalendar();
-            this.cdr.detectChanges();
-          },
-          error: () => {
-            this.generateCalendar();
-            this.cdr.detectChanges();
-          }
+            date: l.logDate || l.date || ''
+          } as TimeLogEntry;
         });
-
+        this.calculateTelemetry();
+        this.generateCalendar();
         this.loading = false;
         this.cdr.detectChanges();
       },
       error: () => {
         this.timeLogsList = [];
-        this.myTasks = [];
-        this.generateCalendar();
         this.calculateTelemetry();
+        this.generateCalendar();
         this.loading = false;
         this.cdr.detectChanges();
       }
@@ -135,36 +121,58 @@ export class UserTimeLogsComponent implements OnInit {
   }
 
   openLogModal(): void {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = this.toDateStr(new Date());
     this.logForm = { taskId: this.myTasks.length > 0 ? this.myTasks[0].id! : 0, hours: 1, date: todayStr, description: '' };
     this.showLogModal = true;
+  }
+
+  /**
+   * Formats a Date to a local YYYY-MM-DD string. Using toISOString() here would
+   * convert to UTC and, for timezones ahead of UTC, roll the date back a day —
+   * which made logs appear on the wrong calendar cell.
+   */
+  private toDateStr(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   closeLogModal(): void { this.showLogModal = false; }
 
   submitLog(): void {
-    if (!this.logForm.hours || !this.logForm.date) return;
+    if (!this.logForm.taskId) {
+      this.triggerToast('Please select a task.', 'error');
+      return;
+    }
+    if (!this.logForm.hours || this.logForm.hours <= 0 || !this.logForm.date) {
+      this.triggerToast('Please enter valid hours and a date.', 'error');
+      return;
+    }
     this.submittingLog = true;
     const payload: any = {
       taskId: Number(this.logForm.taskId),
-      hours: this.logForm.hours,
-      date: this.logForm.date,
       hoursSpent: this.logForm.hours,
       logDate: this.logForm.date,
       description: this.logForm.description
     };
     this.timeLogService.createTimeLog(payload).subscribe({
       next: (createdResponse: any) => {
+        if (createdResponse && createdResponse.success === false) {
+          this.submittingLog = false;
+          this.triggerToast(createdResponse.message || 'Failed to create time log.', 'error');
+          this.cdr.detectChanges();
+          return;
+        }
         const created = (createdResponse && createdResponse.data) ? createdResponse.data : createdResponse;
-        const loggedHours = created.hours || created.hoursSpent || this.logForm.hours;
-        const loggedDate = created.date || created.logDate || this.logForm.date;
+        const matched = this.myTasks.find(t => t.id === (created.taskId || this.logForm.taskId));
         this.timeLogsList.unshift({
           id: created.id || Math.max(0, ...this.timeLogsList.map(l => l.id)) + 1,
-          taskName: `Task #${created.taskId || this.logForm.taskId}`,
-          projectName: 'Workspace',
-          hours: loggedHours,
+          taskName: created.taskName || matched?.name || `Task #${created.taskId || this.logForm.taskId}`,
+          projectName: matched?.projectName || 'Workspace',
+          hours: created.hoursSpent ?? created.hours ?? this.logForm.hours,
           notes: created.description || this.logForm.description,
-          date: loggedDate
+          date: created.logDate || created.date || this.logForm.date
         });
         this.calculateTelemetry();
         this.generateCalendar();
@@ -174,14 +182,8 @@ export class UserTimeLogsComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: () => {
-        // Fallback: add locally
-        const newId = Math.max(0, ...this.timeLogsList.map(l => l.id)) + 1;
-        this.timeLogsList.unshift({ id: newId, taskName: `Task #${this.logForm.taskId}`, projectName: 'Workspace', hours: this.logForm.hours, notes: this.logForm.description, date: this.logForm.date });
-        this.calculateTelemetry();
-        this.generateCalendar();
         this.submittingLog = false;
-        this.showLogModal = false;
-        this.triggerToast('Time log added locally.');
+        this.triggerToast('Failed to create time log. Please try again.', 'error');
         this.cdr.detectChanges();
       }
     });
@@ -221,41 +223,8 @@ export class UserTimeLogsComponent implements OnInit {
     });
   }
 
-  private triggerToast(msg: string): void {
-    this.toast.show(msg, 'success');
-  }
-
-  private generateTimeLogs(): void {
-    this.timeLogsList = [];
-    let idCounter = 1;
-
-    // Simulate logs from assigned tasks
-    this.myTasks.forEach(task => {
-      if (task.totalHoursLogged && task.totalHoursLogged > 0) {
-        // Distribute hours into entries
-        const entryHours = Math.min(task.totalHoursLogged, 4);
-        this.timeLogsList.push({
-          id: idCounter++,
-          taskName: task.name,
-          projectName: task.projectName || 'Active Workspace',
-          hours: entryHours,
-          notes: `Implemented requirements and checked local testing pipelines for ${task.name}.`,
-          date: task.deadline ? this.getPreviousDateStr(task.deadline, 1) : new Date().toISOString().split('T')[0]
-        });
-
-        if (task.totalHoursLogged > 4) {
-          this.timeLogsList.push({
-            id: idCounter++,
-            taskName: task.name,
-            projectName: task.projectName || 'Active Workspace',
-            hours: task.totalHoursLogged - entryHours,
-            notes: `Initial schema mapping and local boilerplate code setup.`,
-            date: task.deadline ? this.getPreviousDateStr(task.deadline, 2) : new Date().toISOString().split('T')[0]
-          });
-        }
-      }
-    });
-
+  private triggerToast(msg: string, type: 'success' | 'error' = 'success'): void {
+    this.toast.show(msg, type);
   }
 
   private calculateTelemetry(): void {
@@ -305,8 +274,8 @@ export class UserTimeLogsComponent implements OnInit {
     }
 
     // Default select today
-    const todayStr = new Date().toISOString().split('T')[0];
-    const todayDay = this.calendarDays.find(d => d.date.toISOString().split('T')[0] === todayStr);
+    const todayStr = this.toDateStr(new Date());
+    const todayDay = this.calendarDays.find(d => this.toDateStr(d.date) === todayStr);
     if (todayDay) {
       this.selectedDay = todayDay;
     } else if (this.calendarDays.length > 0) {
@@ -315,8 +284,8 @@ export class UserTimeLogsComponent implements OnInit {
   }
 
   private createCalendarDay(date: Date, isCurrentMonth: boolean): CalendarDay {
-    const dateStr = date.toISOString().split('T')[0];
-    const todayStr = new Date().toISOString().split('T')[0];
+    const dateStr = this.toDateStr(date);
+    const todayStr = this.toDateStr(new Date());
 
     // Find deadlines for this date
     const deadlines = this.myTasks.filter(t => t.deadline === dateStr);
@@ -353,12 +322,6 @@ export class UserTimeLogsComponent implements OnInit {
   // Formatting helper
   getMonthYearLabel(): string {
     return `${this.monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
-  }
-
-  private getPreviousDateStr(baseDateStr: string, daysAgo: number): string {
-    const d = new Date(baseDateStr);
-    d.setDate(d.getDate() - daysAgo);
-    return d.toISOString().split('T')[0];
   }
 
 }

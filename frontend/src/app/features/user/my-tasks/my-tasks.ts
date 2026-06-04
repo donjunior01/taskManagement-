@@ -8,6 +8,8 @@ import { DeliverableService } from '../../../core/services/deliverable.service';
 import { CommentService, Comment } from '../../../core/services/comment.service';
 import { FileService } from '../../../core/services/file.service';
 import { MessageService, Message } from '../../../core/services/message.service';
+import { TimeLogService } from '../../../core/services/time-log.service';
+import { AiAssistantService } from '../../../core/services/ai-assistant.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 export interface DeveloperTaskDetail extends Task {
@@ -15,6 +17,8 @@ export interface DeveloperTaskDetail extends Task {
   timeLogs?: { date: string; hours: number; notes: string }[];
   comments?: { sender: string; message: string; date: string; isManager: boolean }[];
   submissions?: { fileName: string; date: string; size: string; status: string }[];
+  aiGuidance?: string;
+  loadingGuidance?: boolean;
 }
 
 @Component({
@@ -71,10 +75,29 @@ export class UserMyTasksComponent implements OnInit {
     private commentService: CommentService,
     private fileService: FileService,
     private messageService: MessageService,
+    private timeLogService: TimeLogService,
+    private aiService: AiAssistantService,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private toast: ToastService
   ) {}
+
+  getTaskGuidance(task: DeveloperTaskDetail): void {
+    if (!task.id || task.loadingGuidance) return;
+    task.loadingGuidance = true;
+    this.aiService.getTaskGuidance(task.id).subscribe({
+      next: (res) => {
+        task.aiGuidance = res?.reply || 'No guidance available.';
+        task.loadingGuidance = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        task.loadingGuidance = false;
+        this.triggerToast('Could not get AI guidance. Please try again.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
@@ -167,6 +190,30 @@ export class UserMyTasksComponent implements OnInit {
 
   toggleAccordion(task: DeveloperTaskDetail): void {
     task.expanded = !task.expanded;
+    // Pull the real, persisted time logs so the "Logged Hours Sheets" tab stays
+    // in sync with what the Time Logs page shows.
+    if (task.expanded) {
+      this.loadTaskTimeLogs(task);
+    }
+  }
+
+  /** Loads the real time logs for a task from the backend (same source as the Time Logs page). */
+  loadTaskTimeLogs(task: DeveloperTaskDetail): void {
+    if (!task.id) return;
+    this.timeLogService.getTimeLogsByTask(task.id).subscribe({
+      next: (response: any) => {
+        const logs: any[] = response?.data || response?.content
+          || (Array.isArray(response) ? response : []);
+        task.timeLogs = logs.map(l => ({
+          date: l.logDate || l.date || '',
+          hours: l.hoursSpent ?? l.hours ?? 0,
+          notes: l.description || ''
+        }));
+        task.totalHoursLogged = task.timeLogs.reduce((sum, x) => sum + (x.hours || 0), 0);
+        this.cdr.detectChanges();
+      },
+      error: () => { this.cdr.detectChanges(); }
+    });
   }
 
   // LOG HOURS MODAL ACTIONS
@@ -194,37 +241,40 @@ export class UserMyTasksComponent implements OnInit {
     }
 
     this.submittingLog = true;
+    const task = this.selectedTaskForLog;
+    const hours = this.logForm.hours;
+    const notes = this.logForm.notes.trim();
 
-    // Emulate API latency
-    setTimeout(() => {
-      this.submittingLog = false;
-      this.showLogModal = false;
+    // Persist the time log to the backend (real save, not a simulated delay).
+    const payload: any = {
+      taskId: task.id,
+      hoursSpent: hours,
+      logDate: new Date().toISOString().split('T')[0],
+      description: notes
+    };
 
-      const currentLogged = this.selectedTaskForLog?.totalHoursLogged || 0;
-      const nextLogged = currentLogged + this.logForm.hours;
-
-      // Update the progress in backend (simulated progress updates)
-      this.taskService.updateTaskProgress(this.selectedTaskForLog!.id!, this.selectedTaskForLog!.progress || 0, this.selectedTaskForLog!.status).subscribe({
-        next: () => {
-          this.triggerToast(`Logged ${this.logForm.hours} hours successfully!`, 'success');
-          this.appendLocalLog(this.selectedTaskForLog!, this.logForm.hours, this.logForm.notes);
-        },
-        error: () => {
-          // Fallback optimistic updates
-          this.triggerToast(`Logged ${this.logForm.hours} hours successfully!`, 'success');
-          this.appendLocalLog(this.selectedTaskForLog!, this.logForm.hours, this.logForm.notes);
+    this.timeLogService.createTimeLog(payload).subscribe({
+      next: (response: any) => {
+        if (response && response.success === false) {
+          this.submittingLog = false;
+          this.triggerToast(response.message || 'Failed to log hours.', 'error');
+          this.cdr.detectChanges();
+          return;
         }
-      });
-    }, 1000);
-  }
-
-  private appendLocalLog(task: DeveloperTaskDetail, hours: number, notes: string): void {
-    task.totalHoursLogged = (task.totalHoursLogged || 0) + hours;
-    if (!task.timeLogs) task.timeLogs = [];
-    task.timeLogs.unshift({
-      date: new Date().toISOString().split('T')[0],
-      hours,
-      notes
+        // Re-sync the task's logged hours from the backend so the Logged Hours
+        // Sheets tab matches the Time Logs page exactly.
+        this.loadTaskTimeLogs(task);
+        this.submittingLog = false;
+        this.showLogModal = false;
+        this.selectedTaskForLog = null;
+        this.triggerToast(`Logged ${hours} hours successfully!`, 'success');
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.submittingLog = false;
+        this.triggerToast('Failed to log hours. Please try again.', 'error');
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -350,6 +400,11 @@ export class UserMyTasksComponent implements OnInit {
     const text = this.activeCommentText[task.id || 0];
     if (!text || !text.trim()) return;
 
+    if (!task.id) {
+      this.triggerToast('Cannot add a comment to an unsaved task.', 'error');
+      return;
+    }
+
     const trimmedText = text.trim();
 
     const newComment: Comment = {
@@ -382,8 +437,14 @@ export class UserMyTasksComponent implements OnInit {
     };
 
     this.commentService.createComment(newComment).subscribe({
-      next: (savedComment) => {
-        addLocalComment(savedComment.content);
+      next: (response: any) => {
+        // Backend returns an ApiResponse wrapper { success, message, data }.
+        if (response && response.success === false) {
+          this.triggerToast(response.message || 'Failed to save comment.', 'error');
+          this.cdr.detectChanges();
+          return;
+        }
+        addLocalComment(trimmedText);
         syncToMessageGroup();
         this.triggerToast('Comment added!', 'success');
         this.cdr.detectChanges();

@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS `comments` (
     `attachment_url` VARCHAR(500),
     `attachment_name` VARCHAR(255),
     `created_at` DATETIME,
+    `updated_at` DATETIME,
     PRIMARY KEY (`id`),
     FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE CASCADE
@@ -222,9 +223,17 @@ CREATE TABLE IF NOT EXISTS `support_tickets` (
 -- Add subject column to messages table if not exists
 -- ALTER TABLE `messages` ADD COLUMN IF NOT EXISTS `subject` VARCHAR(255);
 
--- Add attachment columns to comments table if not exists
-ALTER TABLE `comments` ADD COLUMN IF NOT EXISTS `attachment_url` VARCHAR(500);
-ALTER TABLE `comments` ADD COLUMN IF NOT EXISTS `attachment_name` VARCHAR(255);
+-- Add attachment columns to comments table.
+-- MySQL has no ADD COLUMN IF NOT EXISTS; spring.sql.init.continue-on-error=true makes the
+-- duplicate-column error on subsequent startups harmless.
+ALTER TABLE `comments` ADD COLUMN `attachment_url` VARCHAR(500);
+ALTER TABLE `comments` ADD COLUMN `attachment_name` VARCHAR(255);
+
+-- Add updated_at column to comments table (Comment entity maps updatedAt; a database
+-- created before this column existed would 500 on every insert/select).
+-- MySQL has no ADD COLUMN IF NOT EXISTS; spring.sql.init.continue-on-error=true makes the
+-- duplicate-column error on subsequent startups harmless.
+ALTER TABLE `comments` ADD COLUMN `updated_at` DATETIME;
 
 -- Performance indexes for frequently queried columns
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);

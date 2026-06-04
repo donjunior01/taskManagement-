@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService, Project, ProjectRequest } from '../../../core/services/project.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -9,7 +10,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-pm-projects',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
   templateUrl: './projects.html',
   styleUrls: ['./projects.scss']
 })

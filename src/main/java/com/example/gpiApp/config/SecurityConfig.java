@@ -94,7 +94,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/support-tickets/my").authenticated()
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/support-tickets").authenticated()
                 .requestMatchers("/api/support-tickets/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PROJECT_MANAGER")
-                // AI assistant - insights and prioritisation for managers and admins
+                // Conversational AI assistant — available to any authenticated user
+                // (developers need task guidance and Q&A too). Declared BEFORE the
+                // manager-only rule so these specific paths win the match.
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/ai/chat").authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/ai/generate-description").authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/ai/tasks/*/guidance").authenticated()
+                // AI insights and prioritisation remain manager/admin only
                 .requestMatchers("/api/ai/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PROJECT_MANAGER")
                 // Advanced analytics for managers and admins
                 .requestMatchers("/api/analytics/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PROJECT_MANAGER")

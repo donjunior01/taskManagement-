@@ -693,7 +693,14 @@
         <input type="text" [(ngModel)]="taskForm.name" name="name" placeholder="e.g. Implement authentication module" required />
       </div>
       <div class="form-group">
-        <label>Description</label>
+        <label class="label-with-action">
+          Description
+          <button type="button" class="btn-ai-generate" (click)="generateTaskDescription()"
+                  [disabled]="generatingTaskDesc || !taskForm.name.trim()" title="Generate a description with AI">
+            <span *ngIf="!generatingTaskDesc">✨ Generate with AI</span>
+            <span *ngIf="generatingTaskDesc">Generating…</span>
+          </button>
+        </label>
         <textarea rows="2" [(ngModel)]="taskForm.description" name="description" placeholder="Describe the task scope and deliverables..."></textarea>
       </div>
       <div class="form-row">
@@ -755,7 +762,14 @@
         <input type="text" [(ngModel)]="editForm.name" name="name" required />
       </div>
       <div class="form-group">
-        <label>Business Description</label>
+        <label class="label-with-action">
+          Business Description
+          <button type="button" class="btn-ai-generate" (click)="generateProjectDescription()"
+                  [disabled]="generatingProjectDesc || !editForm.name.trim()" title="Generate a description with AI">
+            <span *ngIf="!generatingProjectDesc">✨ Generate with AI</span>
+            <span *ngIf="generatingProjectDesc">Generating…</span>
+          </button>
+        </label>
         <textarea rows="3" [(ngModel)]="editForm.description" name="description"></textarea>
       </div>
       <div class="form-row">

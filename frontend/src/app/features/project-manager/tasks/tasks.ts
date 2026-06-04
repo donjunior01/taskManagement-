@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
 import { ProjectService, Project } from '../../../core/services/project.service';
 import { UserService, User } from '../../../core/services/user.service';
@@ -10,7 +11,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-pm-tasks',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
   templateUrl: './tasks.html',
   styleUrls: ['./tasks.scss']
 })
@@ -74,7 +75,9 @@ export class PmTasksComponent implements OnInit {
     private projectService: ProjectService,
     private userService: UserService,
     private authService: AuthService,
-    private toast: ToastService
+    private toast: ToastService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -216,18 +219,27 @@ export class PmTasksComponent implements OnInit {
       return;
     }
 
-    this.submittingCreate = true;
+    this.ngZone.run(() => {
+      this.submittingCreate = true;
+      this.cdr.markForCheck();
+    });
     this.taskService.createTask(this.createForm).subscribe({
       next: (created) => {
-        this.submittingCreate = false;
-        this.showCreateModal = false;
+        this.ngZone.run(() => {
+          this.submittingCreate = false;
+          this.showCreateModal = false;
+          this.cdr.markForCheck();
+        });
         this.triggerToast(`Delegated task "${created.name}" successfully!`, 'success');
         this.loadTasks();
       },
       error: (err) => {
         console.warn('API task creation offline, triggering simulated fallback:', err);
-        this.submittingCreate = false;
-        this.showCreateModal = false;
+        this.ngZone.run(() => {
+          this.submittingCreate = false;
+          this.showCreateModal = false;
+          this.cdr.markForCheck();
+        });
 
         // Simulated task creation
         const selectedProj = this.projectsList.find(p => p.id === Number(this.createForm.projectId));
@@ -253,6 +265,7 @@ export class PmTasksComponent implements OnInit {
 
         this.allTasks.push(mockTask);
         this.applyFilters();
+        this.cdr.markForCheck();
         this.triggerToast(`Optimistic Delegation: Mapped task "${mockTask.name}" successfully!`, 'success');
       }
     });
@@ -289,18 +302,27 @@ export class PmTasksComponent implements OnInit {
       return;
     }
 
-    this.submittingEdit = true;
+    this.ngZone.run(() => {
+      this.submittingEdit = true;
+      this.cdr.markForCheck();
+    });
     this.taskService.updateTask(this.selectedTask.id, this.editForm).subscribe({
       next: (updated) => {
-        this.submittingEdit = false;
-        this.showEditModal = false;
+        this.ngZone.run(() => {
+          this.submittingEdit = false;
+          this.showEditModal = false;
+          this.cdr.markForCheck();
+        });
         this.triggerToast(`Updated specs for "${updated.name}" successfully!`, 'success');
         this.loadTasks();
       },
       error: (err) => {
         console.warn('API task update offline, triggering simulated fallback:', err);
-        this.submittingEdit = false;
-        this.showEditModal = false;
+        this.ngZone.run(() => {
+          this.submittingEdit = false;
+          this.showEditModal = false;
+          this.cdr.markForCheck();
+        });
 
         const selectedProj = this.projectsList.find(p => p.id === Number(this.editForm.projectId));
         const selectedDev = this.developersList.find(d => d.id === Number(this.editForm.assignedToId));

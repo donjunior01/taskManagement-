@@ -1,9 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { TaskService, Task } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { CalendarService, CalendarEvent as ApiCalendarEvent } from '../../../core/services/calendar.service';
+import { CalendarService, CalendarEvent as ApiCalendarEvent, CalendarSyncStatus } from '../../../core/services/calendar.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 export interface CalendarEvent {
@@ -28,7 +29,7 @@ export interface DaySchedule {
 @Component({
   selector: 'app-user-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, FormsModule, DatePipe, AiDescribeButtonComponent],
   templateUrl: './calendar.html',
   styleUrls: ['./calendar.scss']
 })
@@ -76,6 +77,11 @@ export class UserCalendarComponent implements OnInit {
   dragSourceDay: DaySchedule | null = null;
   dragOverDay: DaySchedule | null = null;
 
+  // Google Calendar sync
+  syncStatus: CalendarSyncStatus | null = null;
+  syncing: boolean = false;
+  importing: boolean = false;
+
   constructor(
     private taskService: TaskService,
     private authService: AuthService,
@@ -90,6 +96,69 @@ export class UserCalendarComponent implements OnInit {
       this.developerId = user.id;
     }
     this.loadData();
+    this.loadSyncStatus();
+  }
+
+  // ── Google Calendar sync ─────────────────────────────────────────────────────
+
+  loadSyncStatus(): void {
+    this.calendarService.getSyncStatus().subscribe({
+      next: (res: any) => {
+        this.syncStatus = res?.data || res;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.syncStatus = null; }
+    });
+  }
+
+  syncAllToGoogle(): void {
+    if (this.syncing) return;
+    this.syncing = true;
+    this.calendarService.syncAllToGoogle().subscribe({
+      next: (res: any) => {
+        const result = res?.data || res;
+        this.syncing = false;
+        if (result?.enabled) {
+          this.triggerToast(result.message || 'Synced to Google Calendar.', 'success');
+        } else {
+          this.triggerToast(result?.message || 'Google Calendar is not configured.', 'error');
+        }
+        this.loadSyncStatus();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.syncing = false;
+        this.triggerToast('Sync failed. Please try again.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  importFromGoogle(): void {
+    if (this.importing) return;
+    this.importing = true;
+    // Import a 6-month window around today.
+    const start = new Date(); start.setMonth(start.getMonth() - 1);
+    const end = new Date(); end.setMonth(end.getMonth() + 5);
+    this.calendarService.importFromGoogle(start.toISOString(), end.toISOString()).subscribe({
+      next: (res: any) => {
+        const result = res?.data || res;
+        this.importing = false;
+        if (result?.enabled) {
+          this.triggerToast(result.message || 'Imported from Google Calendar.', 'success');
+          this.loadData();
+        } else {
+          this.triggerToast(result?.message || 'Google Calendar is not configured.', 'error');
+        }
+        this.loadSyncStatus();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.importing = false;
+        this.triggerToast('Import failed. Please try again.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   loadData(): void {
@@ -112,41 +181,66 @@ export class UserCalendarComponent implements OnInit {
 
   fetchCalendarEvents(): void {
     this.calendarService.getUserEvents().subscribe({
-      next: (events: ApiCalendarEvent[]) => {
-        if (events && events.length > 0) {
-          this.eventsList = events.map(e => {
-            const startDate = new Date(e.startTime);
-            return {
-              id: e.id || Date.now(),
-              title: e.title,
-              projectName: this.projectsList[0] || 'General',
-              time: startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              type: 'MEETING',
-              priority: 'MEDIUM',
-              notes: `${e.description || ''}|DATE:${startDate.toISOString().split('T')[0]}`,
-              originalEvent: e
-            };
-          });
-          this.extractProjects();
-          this.buildAllViews();
-          this.loading = false;
-          this.cdr.detectChanges();
-        } else {
-          this.eventsList = [];
-          this.extractProjects();
-          this.buildAllViews();
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+      next: (response: any) => {
+        const events: ApiCalendarEvent[] = Array.isArray(response)
+          ? response
+          : (response?.data || response?.content || []);
+        const apiEvents = events.map(e => {
+          const startDate = new Date(e.startTime);
+          return {
+            id: e.id || Date.now(),
+            title: e.title,
+            projectName: this.projectsList[0] || 'General',
+            time: startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            type: 'MEETING' as const,
+            priority: 'MEDIUM' as const,
+            notes: `${e.description || ''}|DATE:${this.toDateStr(startDate)}`,
+            originalEvent: e
+          } as CalendarEvent;
+        });
+        this.eventsList = [...apiEvents, ...this.buildTaskEvents()];
+        this.extractProjects();
+        this.buildAllViews();
+        this.loading = false;
+        this.cdr.detectChanges();
       },
       error: () => {
-        this.eventsList = [];
+        // Even when there are no custom calendar events, still surface task deadlines.
+        this.eventsList = [...this.buildTaskEvents()];
         this.extractProjects();
         this.buildAllViews();
         this.loading = false;
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /** Turns the user's assigned tasks into all-day deadline events on the calendar. */
+  private buildTaskEvents(): CalendarEvent[] {
+    return this.myTasks
+      .filter(t => !!t.deadline)
+      .map(t => ({
+        // Synthetic negative id keeps task markers distinct from real calendar events.
+        id: -(t.id || 0) - 1000000,
+        title: t.name,
+        projectName: t.projectName || 'General',
+        time: 'All day',
+        type: 'DEADLINE' as const,
+        priority: (['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].includes((t.priority || '').toUpperCase())
+          ? (t.priority as string).toUpperCase() : 'MEDIUM') as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
+        notes: `Task deadline${t.status ? ' · ' + t.status : ''}|DATE:${t.deadline}`
+      } as CalendarEvent));
+  }
+
+  /**
+   * Local YYYY-MM-DD (avoids the UTC roll-back that toISOString() causes for
+   * timezones ahead of UTC, which would place events on the wrong day).
+   */
+  private toDateStr(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   private extractProjects(): void {
@@ -284,7 +378,7 @@ export class UserCalendarComponent implements OnInit {
   }
 
   createDaySchedule(date: Date, isCurrentMonth: boolean): DaySchedule {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = this.toDateStr(date);
     const dayEvents = this.eventsList.filter(e => {
       if (e.notes && e.notes.includes('|DATE:')) {
         const parts = e.notes.split('|DATE:');
@@ -296,7 +390,7 @@ export class UserCalendarComponent implements OnInit {
       date,
       dayOfMonth: date.getDate(),
       isCurrentMonth,
-      isToday: new Date().toISOString().split('T')[0] === dateStr,
+      isToday: this.toDateStr(new Date()) === dateStr,
       events: dayEvents
     };
   }
@@ -324,12 +418,9 @@ export class UserCalendarComponent implements OnInit {
   // ── Drag & Drop ───────────────────────────────────────────────────────────────
 
   onDragStart(event: DragEvent, calEvent: CalendarEvent, day: DaySchedule): void {
-    this.draggedEvent = calEvent;
-    this.dragSourceDay = day;
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', String(calEvent.id));
-    }
+    // Drag-to-reschedule is disabled: users must not change task due dates by
+    // dragging events on the calendar. Block the drag from starting.
+    event.preventDefault();
   }
 
   onDragOver(event: DragEvent, day: DaySchedule): void {
@@ -364,7 +455,7 @@ export class UserCalendarComponent implements OnInit {
   }
 
   private syncEventMove(ev: CalendarEvent, source: DaySchedule, target: DaySchedule): void {
-    const newDateStr = target.date.toISOString().split('T')[0];
+    const newDateStr = this.toDateStr(target.date);
 
     // Update notes date
     if (ev.notes.includes('|DATE:')) {
@@ -466,7 +557,7 @@ export class UserCalendarComponent implements OnInit {
     if (!this.newEvent.title.trim() || !this.selectedDay) return;
     this.savingEvent = true;
 
-    const dStr = this.selectedDay!.date.toISOString().split('T')[0];
+    const dStr = this.toDateStr(this.selectedDay!.date);
     const timeParts = this.newEvent.time.match(/(\d+):(\d+) (\w+)/);
     let hours = 9; let mins = 0;
     if (timeParts) {

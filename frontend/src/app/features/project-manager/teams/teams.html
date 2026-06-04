@@ -288,6 +288,7 @@
         </div>
         <div class="form-group">
           <label for="teamDesc">Description</label>
+          <app-ai-describe [type]="'TEAM'" [title]="teamForm.name" (generated)="teamForm.description = $event"></app-ai-describe>
           <textarea id="teamDesc" name="teamDesc" rows="3" [(ngModel)]="teamForm.description" placeholder="Team purpose and scope..."></textarea>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { forkJoin, of } from 'rxjs';
 import { ProjectService, Project } from '../../../core/services/project.service';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
@@ -12,7 +13,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-pm-deliverables',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
   templateUrl: './deliverables.html',
   styleUrl: './deliverables.scss',
 })

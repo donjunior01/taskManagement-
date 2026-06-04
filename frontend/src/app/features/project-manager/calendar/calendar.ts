@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { ProjectService } from '../../../core/services/project.service';
 import { TaskService } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -29,7 +30,7 @@ export interface DaySchedule {
 @Component({
   selector: 'app-pm-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
   templateUrl: './calendar.html',
   styleUrls: ['./calendar.scss']
 })

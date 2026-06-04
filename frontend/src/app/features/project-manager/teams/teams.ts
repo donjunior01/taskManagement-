@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { UserService, User } from '../../../core/services/user.service';
 import { ProjectService, Project } from '../../../core/services/project.service';
 import { TaskService, Task } from '../../../core/services/task.service';
@@ -18,7 +19,7 @@ export interface DeveloperTeamMember extends User {
 @Component({
   selector: 'app-pm-teams',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
   templateUrl: './teams.html',
   styleUrls: ['./teams.scss']
 })

@@ -282,10 +282,11 @@
         <!-- Description -->
         <div class="form-group">
           <label for="taskDesc">Deliverable Task Description</label>
-          <textarea 
-            id="taskDesc" 
-            name="taskDesc" 
-            rows="3" 
+          <app-ai-describe [type]="'TASK'" [title]="createForm.name" (generated)="createForm.description = $event"></app-ai-describe>
+          <textarea
+            id="taskDesc"
+            name="taskDesc"
+            rows="3"
             [(ngModel)]="createForm.description"
             placeholder="Provide task delivery criteria, context, or checklist targets..."
           ></textarea>
@@ -401,10 +402,11 @@
         <!-- Description -->
         <div class="form-group">
           <label for="editTaskDesc">Deliverable Task Description</label>
-          <textarea 
-            id="editTaskDesc" 
-            name="editTaskDesc" 
-            rows="3" 
+          <app-ai-describe [type]="'TASK'" [title]="editForm.name" (generated)="editForm.description = $event"></app-ai-describe>
+          <textarea
+            id="editTaskDesc"
+            name="editTaskDesc"
+            rows="3"
             [(ngModel)]="editForm.description"
           ></textarea>
         </div>

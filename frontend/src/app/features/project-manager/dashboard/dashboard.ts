@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -85,7 +85,8 @@ export class PmDashboardComponent implements OnInit {
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private reportService: ReportService,
-    private toast: ToastService
+    private toast: ToastService,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -103,11 +104,16 @@ export class PmDashboardComponent implements OnInit {
     // 1. Load stats
     this.dashboardService.getManagerStats().subscribe({
       next: (data: any) => {
-        this.stats = data && data.data ? data.data : (data || this.stats);
-        this.loadProjects();
+        this.ngZone.run(() => {
+          this.stats = data && data.data ? data.data : (data || this.stats);
+          this.cdr.markForCheck();
+          this.loadProjects();
+        });
       },
       error: () => {
-        this.loadProjects();
+        this.ngZone.run(() => {
+          this.loadProjects();
+        });
       }
     });
   }
@@ -115,12 +121,18 @@ export class PmDashboardComponent implements OnInit {
   loadProjects(): void {
     this.projectService.getProjectsByManager(this.managerId, 0, 10).subscribe({
       next: (response: any) => {
-        this.projectsList = response && response.data ? response.data : [];
-        this.loadUpcomingDeadlines();
+        this.ngZone.run(() => {
+          this.projectsList = response && response.data ? response.data : [];
+          this.cdr.markForCheck();
+          this.loadUpcomingDeadlines();
+        });
       },
       error: () => {
-        this.projectsList = [];
-        this.loadUpcomingDeadlines();
+        this.ngZone.run(() => {
+          this.projectsList = [];
+          this.cdr.markForCheck();
+          this.loadUpcomingDeadlines();
+        });
       }
     });
   }
@@ -129,35 +141,40 @@ export class PmDashboardComponent implements OnInit {
   loadUpcomingDeadlines(): void {
     this.taskService.getOverdueTasks().subscribe({
       next: (tasks: Task[]) => {
-        try {
-          if (tasks && tasks.length > 0) {
-            this.upcomingDeadlines = tasks.slice(0, 6).map(task => {
-              const deadline = task.deadline ? new Date(task.deadline) : null;
-              const today = new Date();
-              const tomorrow = new Date(today);
-              tomorrow.setDate(tomorrow.getDate() + 1);
-              let dueDate = 'No Date';
-              let dueDateClass = 'future';
-              if (deadline) {
-                if (deadline.toDateString() === today.toDateString()) { dueDate = 'Today'; dueDateClass = 'today'; }
-                else if (deadline.toDateString() === tomorrow.toDateString()) { dueDate = 'Tomorrow'; dueDateClass = 'tomorrow'; }
-                else if (deadline < today) { dueDate = 'Overdue'; dueDateClass = 'today'; }
-                else { dueDate = deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); dueDateClass = 'future'; }
-              }
-              return { taskName: task.name, projectName: task.projectName || 'Workspace Project', dueDate, dueDateClass, assigneeName: task.assignedToName };
-            });
-          } else {
+        this.ngZone.run(() => {
+          try {
+            if (tasks && tasks.length > 0) {
+              this.upcomingDeadlines = tasks.slice(0, 6).map(task => {
+                const deadline = task.deadline ? new Date(task.deadline) : null;
+                const today = new Date();
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                let dueDate = 'No Date';
+                let dueDateClass = 'future';
+                if (deadline) {
+                  if (deadline.toDateString() === today.toDateString()) { dueDate = 'Today'; dueDateClass = 'today'; }
+                  else if (deadline.toDateString() === tomorrow.toDateString()) { dueDate = 'Tomorrow'; dueDateClass = 'tomorrow'; }
+                  else if (deadline < today) { dueDate = 'Overdue'; dueDateClass = 'today'; }
+                  else { dueDate = deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); dueDateClass = 'future'; }
+                }
+                return { taskName: task.name, projectName: task.projectName || 'Workspace Project', dueDate, dueDateClass, assigneeName: task.assignedToName };
+              });
+            } else {
+              this.upcomingDeadlines = [];
+            }
+          } catch (e) {
             this.upcomingDeadlines = [];
           }
-        } catch (e) {
-          this.upcomingDeadlines = [];
-        } finally {
+          this.cdr.markForCheck();
           this.loadTeamActivity();
-        }
+        });
       },
       error: () => {
-        this.upcomingDeadlines = [];
-        this.loadTeamActivity();
+        this.ngZone.run(() => {
+          this.upcomingDeadlines = [];
+          this.cdr.markForCheck();
+          this.loadTeamActivity();
+        });
       }
     });
   }
@@ -166,31 +183,36 @@ export class PmDashboardComponent implements OnInit {
   loadTeamActivity(): void {
     this.activityLogService.getAllActivityLogs().subscribe({
       next: (logs: ActivityLog[]) => {
-        try {
-          if (logs && logs.length > 0) {
-            this.activitiesList = logs.slice(0, 6).map(log => ({
-              id: log.id,
-              developerName: log.user?.firstName
-                ? `${log.user.firstName} ${log.user.lastName || ''}`.trim()
-                : (log.user?.username || `User #${log.userId}`),
-              action: this.formatAction(log.action, log.entityType),
-              taskName: log.details || log.entityType || 'workspace item',
-              timestamp: this.formatTimestamp(log.timestamp),
-              details: log.entityType,
-              activityType: log.action
-            }));
-          } else {
+        this.ngZone.run(() => {
+          try {
+            if (logs && logs.length > 0) {
+              this.activitiesList = logs.slice(0, 6).map(log => ({
+                id: log.id,
+                developerName: log.user?.firstName
+                  ? `${log.user.firstName} ${log.user.lastName || ''}`.trim()
+                  : (log.user?.username || `User #${log.userId}`),
+                action: this.formatAction(log.action, log.entityType),
+                taskName: log.details || log.entityType || 'workspace item',
+                timestamp: this.formatTimestamp(log.timestamp),
+                details: log.entityType,
+                activityType: log.action
+              }));
+            } else {
+              this.activitiesList = [];
+            }
+          } catch (e) {
             this.activitiesList = [];
           }
-        } catch (e) {
-          this.activitiesList = [];
-        } finally {
+          this.cdr.markForCheck();
           this.loadSubmissions();
-        }
+        });
       },
       error: () => {
-        this.activitiesList = [];
-        this.loadSubmissions();
+        this.ngZone.run(() => {
+          this.activitiesList = [];
+          this.cdr.markForCheck();
+          this.loadSubmissions();
+        });
       }
     });
   }
@@ -224,9 +246,11 @@ export class PmDashboardComponent implements OnInit {
   }
 
   loadSubmissions(): void {
-    this.pendingSubmissions = [];
-    this.loading = false;
-    this.cdr.detectChanges();
+    this.ngZone.run(() => {
+      this.pendingSubmissions = [];
+      this.loading = false;
+      this.cdr.markForCheck();
+    });
   }
 
   // Action: Open Review Dialog
@@ -260,19 +284,22 @@ export class PmDashboardComponent implements OnInit {
   }
 
   private finalizeReviewUI(): void {
-    this.submittingReview = false;
-    this.showReviewModal = false;
-    if (this.selectedSubmission) {
-      if (this.reviewStatus === 'APPROVED') {
-        this.triggerToast(`Successfully approved deliverable for "${this.selectedSubmission.taskName}"!`, 'success');
-        this.stats.completedTasks++;
-        this.stats.activeTasks = Math.max(0, this.stats.activeTasks - 1);
-        this.stats.taskCompletionRate = Math.round((this.stats.completedTasks / this.stats.totalTasks) * 100);
-      } else {
-        this.triggerToast(`Sent back task "${this.selectedSubmission.taskName}" for refinements.`, 'success');
+    this.ngZone.run(() => {
+      this.submittingReview = false;
+      this.showReviewModal = false;
+      if (this.selectedSubmission) {
+        if (this.reviewStatus === 'APPROVED') {
+          this.triggerToast(`Successfully approved deliverable for "${this.selectedSubmission.taskName}"!`, 'success');
+          this.stats.completedTasks++;
+          this.stats.activeTasks = Math.max(0, this.stats.activeTasks - 1);
+          this.stats.taskCompletionRate = Math.round((this.stats.completedTasks / this.stats.totalTasks) * 100);
+        } else {
+          this.triggerToast(`Sent back task "${this.selectedSubmission.taskName}" for refinements.`, 'success');
+        }
+        this.pendingSubmissions = this.pendingSubmissions.filter(s => s.id !== this.selectedSubmission?.id);
       }
-      this.pendingSubmissions = this.pendingSubmissions.filter(s => s.id !== this.selectedSubmission?.id);
-    }
+      this.cdr.markForCheck();
+    });
   }
 
   getActivityNodeClass(activity: WorkspaceActivity): object {

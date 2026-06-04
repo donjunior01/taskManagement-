@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
 import { ProjectService, Project } from '../../../core/services/project.service';
 import { UserService, User } from '../../../core/services/user.service';
@@ -9,7 +10,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-admin-tasks',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
   templateUrl: './tasks.html',
   styleUrls: ['./tasks.scss']
 })

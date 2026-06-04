@@ -26,6 +26,7 @@ public class CommentService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ActivityLogService activityLogService;
+    private final NotificationService notificationService;
     
     @Transactional(readOnly = true)
     public PagedResponse<CommentDTO> getAllComments(int page, int size) {
@@ -52,6 +53,10 @@ public class CommentService {
     public ApiResponse<CommentDTO> createComment(CommentRequestDTO request, Long userId) {
         if (userId == null) {
             return ApiResponse.error("User not authenticated");
+        }
+
+        if (request.getTaskId() == null) {
+            return ApiResponse.error("Task ID is required");
         }
 
         Task task = taskRepository.findById(request.getTaskId())
@@ -83,6 +88,22 @@ public class CommentService {
             savedComment.getId(),
             null
         );
+
+        // Notify the people involved in the task (assignee + creator), excluding
+        // whoever wrote the comment, so a Comments & Revisions message is surfaced
+        // in their notification bell.
+        String commenterName = user.getFirstName() + " " + user.getLastName();
+        java.util.Set<Long> recipientIds = new java.util.HashSet<>();
+        if (task.getAssignedTo() != null) recipientIds.add(task.getAssignedTo().getId());
+        if (task.getCreatedBy() != null) recipientIds.add(task.getCreatedBy().getId());
+        recipientIds.remove(userId);
+        for (Long recipientId : recipientIds) {
+            try {
+                notificationService.notifyComment(recipientId, commenterName, task.getName(), task.getId());
+            } catch (Exception ignored) {
+                // A notification failure must never break comment creation.
+            }
+        }
 
         return ApiResponse.success("Comment created successfully", convertToDTO(savedComment));
     }

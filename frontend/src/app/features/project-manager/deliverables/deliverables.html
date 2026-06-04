@@ -244,11 +244,12 @@
         <!-- Description -->
         <div class="form-group">
           <label for="delDesc">Scope Description</label>
-          <textarea 
-            id="delDesc" 
-            name="delDesc" 
-            rows="3" 
-            [(ngModel)]="newEvent.description" 
+          <app-ai-describe [type]="'DELIVERABLE'" [title]="newEvent.name" (generated)="newEvent.description = $event"></app-ai-describe>
+          <textarea
+            id="delDesc"
+            name="delDesc"
+            rows="3"
+            [(ngModel)]="newEvent.description"
             placeholder="Outline task details, milestones, and deliverable targets..."
           ></textarea>
         </div>
@@ -381,10 +382,11 @@
         <!-- Description -->
         <div class="form-group">
           <label for="editDelDesc">Scope Description</label>
-          <textarea 
-            id="editDelDesc" 
-            name="editDelDesc" 
-            rows="3" 
+          <app-ai-describe [type]="'DELIVERABLE'" [title]="newEvent.name" (generated)="newEvent.description = $event"></app-ai-describe>
+          <textarea
+            id="editDelDesc"
+            name="editDelDesc"
+            rows="3"
             [(ngModel)]="newEvent.description"
           ></textarea>
         </div>
