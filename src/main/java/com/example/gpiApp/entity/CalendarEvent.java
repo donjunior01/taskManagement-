@@ -69,6 +69,10 @@ public class CalendarEvent {
     @Builder.Default
     private Boolean isSynced = false;
 
+    /** Links all per-recipient copies of one distributed event so edits/deletes propagate. Null for personal events. */
+    @Column(name = "series_id")
+    private String seriesId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

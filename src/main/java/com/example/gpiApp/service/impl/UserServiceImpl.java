@@ -27,11 +27,46 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
+    private final com.example.gpiApp.service.SystemSettingsService systemSettingsService;
+    private final com.example.gpiApp.service.EmailService emailService;
+    private final com.example.gpiApp.repository.ProjectRepository projectRepository;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, NotificationService notificationService) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, NotificationService notificationService,
+                           com.example.gpiApp.service.SystemSettingsService systemSettingsService,
+                           com.example.gpiApp.service.EmailService emailService,
+                           com.example.gpiApp.repository.ProjectRepository projectRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.notificationService = notificationService;
+        this.systemSettingsService = systemSettingsService;
+        this.emailService = emailService;
+        this.projectRepository = projectRepository;
+    }
+
+    @Override
+    @Transactional
+    public java.util.Map<String, String> resetUserPassword(Long id) {
+        allUsers user = userRepository.findById(id)
+                .orElseThrow(() -> new com.example.gpiApp.exception.ResourceNotFoundException("User not found with id " + id));
+        String tempPassword = systemSettingsService.generateCompliantPassword();
+        user.setPassword(passwordEncoder.encode(tempPassword));
+        userRepository.save(user);
+
+        // Best-effort email (no-op/logged when mail is disabled).
+        try { emailService.sendPasswordResetEmail(user.getEmail(), tempPassword); } catch (Exception ignore) { }
+
+        // In-app notification for the user.
+        try {
+            notificationService.createNotification(user.getId(),
+                    "Mot de passe réinitialisé",
+                    "Un administrateur a réinitialisé votre mot de passe. Vérifiez votre e-mail pour le mot de passe temporaire, puis modifiez-le.",
+                    com.example.gpiApp.entity.Notification.NotificationType.SYSTEM, null, null);
+        } catch (Exception ignore) { }
+
+        java.util.Map<String, String> result = new java.util.HashMap<>();
+        result.put("email", user.getEmail());
+        result.put("temporaryPassword", tempPassword);
+        return result;
     }
 
     @Override
@@ -265,6 +300,15 @@ public class UserServiceImpl implements UserService {
         userDTO.setRole(allUsers.getRole());
         userDTO.setFullName(allUsers.getFirstName() + " " + allUsers.getLastName());
         userDTO.setActive(allUsers.isActive());
+        userDTO.setCreatedAt(allUsers.getCreatedAt());
+        // Admins oversee everything → show the total project count; everyone else → their own projects.
+        try {
+            userDTO.setProjectCount(allUsers.getRole() == Role.ADMIN
+                    ? projectRepository.count()
+                    : projectRepository.countProjectsByUser(allUsers.getId()));
+        } catch (Exception e) {
+            userDTO.setProjectCount(0L);
+        }
         return userDTO;
     }
 

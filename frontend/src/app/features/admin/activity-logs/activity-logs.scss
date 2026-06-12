@@ -830,3 +830,30 @@
   from { opacity: 0; transform: translateX(24px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
+/* ── Prototype activity table ── */
+.logs-table-wrap { border: none; }
+.logs-table-wrap .data-table { font-size: 13px; }
+.log-row { cursor: pointer; }
+.log-row .nowrap { white-space: nowrap; }
+.log-row .muted { color: var(--text-muted); }
+.log-row .details-cell { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.module-chip {
+  font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: var(--radius-full);
+  background: var(--bg-subtle); color: var(--text-secondary); white-space: nowrap;
+}
+.module-chip.security { background: var(--danger-bg); color: var(--danger-text); }
+.module-chip.data_mutation { background: var(--primary-bg); color: var(--primary); }
+.module-chip.system { background: var(--bg-subtle); color: var(--text-muted); }
+
+.action-badge {
+  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
+  background: var(--bg-subtle); color: var(--text-secondary); white-space: nowrap; text-transform: uppercase; letter-spacing: .3px;
+}
+.action-badge.créé, .action-badge.created, .action-badge.create { background: var(--success-bg); color: var(--success-text); }
+.action-badge.modifié, .action-badge.updated, .action-badge.update { background: var(--warning-bg); color: var(--warning-text); }
+.action-badge.supprimé, .action-badge.deleted, .action-badge.delete { background: var(--danger-bg); color: var(--danger-text); }
+.action-badge.exporté, .action-badge.export { background: var(--primary-bg); color: var(--primary); }
+
+.btn-clear { height: 38px; }

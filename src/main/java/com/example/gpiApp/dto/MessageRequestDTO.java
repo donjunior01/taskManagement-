@@ -16,8 +16,14 @@ public class MessageRequestDTO {
     private Long projectId;    // For project team messages (optional if recipientId is set)
     
     private String subject;    // Optional subject line
-    
+
     @NotBlank(message = "Message content is required")
     private String content;
+
+    // Optional attachment metadata (file already uploaded via /api/files/upload).
+    private String attachmentUrl;
+    private String attachmentName;
+    private String attachmentType;
+    private String attachmentSize;
 }
 

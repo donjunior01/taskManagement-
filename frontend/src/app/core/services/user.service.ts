@@ -11,6 +11,8 @@ export interface User {
   role?: string;
   userType?: string;
   isActive?: boolean;
+  createdAt?: string;
+  projectCount?: number;
 }
 
 export interface UserRequest {
@@ -90,5 +92,10 @@ export class UserService {
 
   changePassword(passwordData: any): Observable<any> {
     return this.apiService.post<any>('/users/change-password', passwordData);
+  }
+
+  /** Admin: reset a user's password to a policy-compliant temporary value and email it. */
+  resetUserPassword(id: number): Observable<any> {
+    return this.apiService.post<any>(`/users/${id}/reset-password`, {});
   }
 }

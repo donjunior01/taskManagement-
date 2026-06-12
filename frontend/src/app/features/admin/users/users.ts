@@ -2,6 +2,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService, User, UserRequest } from '../../../core/services/user.service';
+import { AdminSecurityService } from '../../../core/services/admin-security.service';
+import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
@@ -27,6 +29,14 @@ export class AdminUsersComponent implements OnInit {
   // Filters State
   searchTerm: string = '';
   roleFilter: string = ''; // '', 'ADMIN', 'PROJECT_MANAGER', 'USER'
+  statusFilter: string = ''; // '', 'ACTIVE', 'INACTIVE'
+
+  // Bulk selection
+  selected = new Set<number>();
+
+  // Derived data (no dedicated user fields → computed from real sources)
+  private lastLoginMap = new Map<string, string>();   // username/email → last successful login date
+  private projectCountMap = new Map<number, number>(); // userId → projects managed/joined
 
   // Modals Visibility
   showAddModal: boolean = false;
@@ -59,12 +69,52 @@ export class AdminUsersComponent implements OnInit {
 
   constructor(
     private userService: UserService,
+    private security: AdminSecurityService,
+    private projectService: ProjectService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService
   ) {}
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadAuxData();
+  }
+
+  /** Builds the "last connection" and "projects per user" maps from real backend data. */
+  loadAuxData(): void {
+    // Last successful login per user (from login-attempts journal)
+    this.security.getLoginAttempts().subscribe({
+      next: (list: any) => {
+        const raw: any[] = Array.isArray(list) ? list : (list?.data ?? []);
+        const m = new Map<string, string>();
+        raw.filter(a => a.success).forEach(a => {
+          const key = (a.username || '').toLowerCase();
+          if (!key) return;
+          const prev = m.get(key);
+          if (!prev || new Date(a.attemptedAt) > new Date(prev)) m.set(key, a.attemptedAt);
+        });
+        this.lastLoginMap = m;
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
+
+    // Projects per user (managed + membership) from the projects list
+    this.projectService.getAllProjects(0, 500).subscribe({
+      next: (r: any) => {
+        const list: any[] = r && r.data ? r.data : (Array.isArray(r) ? r : []);
+        const m = new Map<number, number>();
+        const bump = (id: any) => { if (id != null) m.set(Number(id), (m.get(Number(id)) || 0) + 1); };
+        list.forEach(p => {
+          bump(p.managerId);
+          const members = p.members || p.memberIds || p.team?.members || [];
+          (Array.isArray(members) ? members : []).forEach((mem: any) => bump(typeof mem === 'number' ? mem : mem?.id ?? mem?.userId));
+        });
+        this.projectCountMap = m;
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
   }
 
   loadUsers(): void {
@@ -113,7 +163,128 @@ export class AdminUsersComponent implements OnInit {
       result = result.filter(u => u.role === this.roleFilter || u.userType === this.roleFilter);
     }
 
+    // Status filter
+    if (this.statusFilter === 'ACTIVE') {
+      result = result.filter(u => u.isActive !== false);
+    } else if (this.statusFilter === 'INACTIVE') {
+      result = result.filter(u => u.isActive === false);
+    }
+
     this.filteredUsers = result;
+  }
+
+  // ─── Display helpers (prototype-aligned) ───
+  getInitials(u: User): string {
+    const f = u.firstName?.[0] ?? '';
+    const l = u.lastName?.[0] ?? '';
+    return (`${f}${l}`.toUpperCase()) || (u.username?.[0]?.toUpperCase() ?? '?');
+  }
+
+  roleOf(u: User): string {
+    return (u.role || u.userType || 'USER').replace('ROLE_', '');
+  }
+
+  roleLabel(u: User): string {
+    switch (this.roleOf(u)) {
+      case 'ADMIN':           return 'Administrateur';
+      case 'PROJECT_MANAGER': return 'Chef de Projet';
+      default:                return 'Collaborateur';
+    }
+  }
+
+  roleTone(u: User): string {
+    switch (this.roleOf(u)) {
+      case 'ADMIN':           return 'navy';
+      case 'PROJECT_MANAGER': return 'brand';
+      default:                return 'purple';
+    }
+  }
+
+  lastLogin(u: User): string {
+    const v = this.lastLoginMap.get((u.username || '').toLowerCase())
+           ?? this.lastLoginMap.get((u.email || '').toLowerCase())
+           ?? (u as any).lastLogin ?? (u as any).lastLoginAt;
+    if (!v) return 'Jamais connecté';
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) +
+           ' · ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  projectCount(u: User): number {
+    // Prefer the backend-computed count (managed + team membership; total for admins),
+    // falling back to the client-side managed-project count.
+    const v = (u as any).projectCount ?? (u.id != null ? this.projectCountMap.get(u.id) : undefined);
+    return v ?? 0;
+  }
+
+  // ─── Bulk selection ───
+  isSelected(id?: number): boolean { return id != null && this.selected.has(id); }
+
+  toggleSelect(id?: number): void {
+    if (id == null) return;
+    this.selected.has(id) ? this.selected.delete(id) : this.selected.add(id);
+  }
+
+  get allVisibleSelected(): boolean {
+    return this.filteredUsers.length > 0 && this.filteredUsers.every(u => u.id != null && this.selected.has(u.id));
+  }
+
+  toggleSelectAll(): void {
+    if (this.allVisibleSelected) {
+      this.filteredUsers.forEach(u => u.id != null && this.selected.delete(u.id));
+    } else {
+      this.filteredUsers.forEach(u => u.id != null && this.selected.add(u.id));
+    }
+  }
+
+  clearSelection(): void { this.selected.clear(); }
+
+  private selectedUsers(): User[] {
+    return this.usersList.filter(u => u.id != null && this.selected.has(u.id));
+  }
+
+  bulkSetActive(target: boolean): void {
+    const targets = this.selectedUsers().filter(u => (u.isActive !== false) !== target);
+    if (targets.length === 0) { this.triggerToast('Aucun changement à appliquer.', 'error'); return; }
+    let done = 0;
+    targets.forEach(u => {
+      this.userService.toggleUserStatus(u.id!).subscribe({
+        next: () => { const i = this.usersList.findIndex(x => x.id === u.id); if (i !== -1) this.usersList[i].isActive = target; done++; if (done === targets.length) { this.applyClientFilters(); this.cdr.detectChanges(); } },
+        error: () => { const i = this.usersList.findIndex(x => x.id === u.id); if (i !== -1) this.usersList[i].isActive = target; done++; if (done === targets.length) { this.applyClientFilters(); this.cdr.detectChanges(); } }
+      });
+    });
+    this.triggerToast(`${targets.length} compte(s) ${target ? 'activé(s)' : 'désactivé(s)'}.`, 'success');
+    this.clearSelection();
+  }
+
+  bulkDelete(): void {
+    const targets = this.selectedUsers();
+    if (targets.length === 0) return;
+    targets.forEach(u => this.userService.deleteUser(u.id!).subscribe({ error: () => {} }));
+    this.usersList = this.usersList.filter(u => !(u.id != null && this.selected.has(u.id)));
+    this.totalElements = Math.max(0, this.totalElements - targets.length);
+    this.triggerToast(`${targets.length} compte(s) supprimé(s).`, 'success');
+    this.clearSelection();
+    this.applyClientFilters();
+  }
+
+  exportCsv(): void {
+    const rows = [['Nom', 'Email', 'Rôle', 'Statut', 'Dernière connexion']];
+    this.filteredUsers.forEach(u => rows.push([
+      `${u.firstName} ${u.lastName}`,
+      u.email,
+      this.roleLabel(u),
+      u.isActive !== false ? 'Actif' : 'Inactif',
+      this.lastLogin(u)
+    ]));
+    const csv = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'utilisateurs.csv'; a.click();
+    URL.revokeObjectURL(url);
+    this.triggerToast('Export CSV généré.', 'success');
   }
 
   onFilterChange(): void {
@@ -202,7 +373,7 @@ export class AdminUsersComponent implements OnInit {
   // Onboard Action (Create User)
   submitAddUser(): void {
     if (!this.addUserForm.username || !this.addUserForm.email || !this.addUserForm.password || !this.addUserForm.firstName || !this.addUserForm.lastName) {
-      this.triggerToast('Please fill out all mandatory credentials fields.', 'error');
+      this.triggerToast('Veuillez remplir tous les champs d\'identification obligatoires.', 'error');
       return;
     }
 
@@ -211,27 +382,12 @@ export class AdminUsersComponent implements OnInit {
       next: (newUser) => {
         this.submitting = false;
         this.showAddModal = false;
-        this.triggerToast(`Successfully onboarded account for ${newUser.firstName} ${newUser.lastName}!`, 'success');
+        this.triggerToast(`Compte créé avec succès pour ${newUser.firstName} ${newUser.lastName} !`, 'success');
         this.loadUsers();
       },
       error: (err) => {
         this.submitting = false;
-        console.error('API Error during user creation, applying simulation updates:', err);
-        // Fallback simulation
-        this.showAddModal = false;
-        const newMockUser: User = {
-          id: this.usersList.length + 1,
-          username: this.addUserForm.username,
-          email: this.addUserForm.email,
-          firstName: this.addUserForm.firstName,
-          lastName: this.addUserForm.lastName,
-          role: this.addUserForm.role,
-          isActive: true
-        };
-        this.usersList = [newMockUser, ...this.usersList];
-        this.totalElements++;
-        this.applyClientFilters();
-        this.triggerToast(`Optimistic onboarding: Created account for ${this.addUserForm.firstName}!`, 'success');
+        this.triggerToast(err?.error?.message || 'Échec de la création du compte.', 'error');
       }
     });
   }
@@ -241,7 +397,7 @@ export class AdminUsersComponent implements OnInit {
     if (!this.selectedUser || !this.selectedUser.id) return;
     
     if (!this.editUserForm.username || !this.editUserForm.email || !this.editUserForm.firstName || !this.editUserForm.lastName) {
-      this.triggerToast('All details fields must be entered correctly.', 'error');
+      this.triggerToast('Tous les champs de détails doivent être correctement renseignés.', 'error');
       return;
     }
 
@@ -250,27 +406,12 @@ export class AdminUsersComponent implements OnInit {
       next: (updatedUser) => {
         this.submitting = false;
         this.showEditModal = false;
-        this.triggerToast(`Successfully updated account details for ${updatedUser.firstName}!`, 'success');
+        this.triggerToast(`Détails du compte mis à jour avec succès pour ${updatedUser.firstName} !`, 'success');
         this.loadUsers();
       },
       error: (err) => {
         this.submitting = false;
-        console.error('API Error updating profile, executing local updates:', err);
-        // Optimistic local update
-        this.showEditModal = false;
-        const index = this.usersList.findIndex(u => u.id === this.selectedUser?.id);
-        if (index !== -1) {
-          this.usersList[index] = {
-            ...this.usersList[index],
-            username: this.editUserForm.username,
-            email: this.editUserForm.email,
-            firstName: this.editUserForm.firstName,
-            lastName: this.editUserForm.lastName,
-            role: this.editUserForm.role
-          };
-          this.applyClientFilters();
-        }
-        this.triggerToast(`Optimistic update: Saved details for ${this.editUserForm.firstName}!`, 'success');
+        this.triggerToast(err?.error?.message || 'Échec de la mise à jour du compte.', 'error');
       }
     });
   }
@@ -284,18 +425,12 @@ export class AdminUsersComponent implements OnInit {
       next: () => {
         this.submitting = false;
         this.showDeleteModal = false;
-        this.triggerToast(`Account for ${this.selectedUser?.firstName} has been deleted permanently.`, 'success');
+        this.triggerToast(`Le compte de ${this.selectedUser?.firstName} a été supprimé définitivement.`, 'success');
         this.loadUsers();
       },
       error: (err) => {
         this.submitting = false;
-        console.error('API Error during account deletion, running local simulation:', err);
-        // Local simulation
-        this.showDeleteModal = false;
-        this.usersList = this.usersList.filter(u => u.id !== this.selectedUser?.id);
-        this.totalElements--;
-        this.applyClientFilters();
-        this.triggerToast(`Optimistic delete: Removed account for ${this.selectedUser?.firstName}!`, 'success');
+        this.triggerToast(err?.error?.message || 'Échec de la suppression du compte.', 'error');
       }
     });
   }
@@ -323,42 +458,38 @@ export class AdminUsersComponent implements OnInit {
           this.applyClientFilters();
         }
         this.triggerToast(
-          `Account for ${user?.firstName} ${user?.lastName} has been ${newState ? 'Activated' : 'Suspended'} successfully.`,
+          `Le compte de ${user?.firstName} ${user?.lastName} a été ${newState ? 'activé' : 'suspendu'} avec succès.`,
           'success'
         );
         this.selectedUser = null;
       },
       error: (err: any) => {
-        // If the dedicated PATCH endpoint returns 404 (backend not restarted yet),
-        // or if the Angular errorInterceptor translated it to a 404-based string,
-        // fall back to an optimistic UI toggle state.
-        const is404 = err?.status === 404 || 
-                      (typeof err === 'string' && (err.includes('404') || err.includes('No static resource') || err.includes('code 404')));
+        this.submitting = false;
+        this.showStatusModal = false;
+        this.cdr.detectChanges();
+        this.triggerToast(err?.error?.message || 'Échec du changement de statut. Veuillez réessayer.', 'error');
+        this.selectedUser = null;
+      }
+    });
+  }
 
-        if (is404) {
-          console.warn('PATCH /status endpoint not available (404), applying offline fallback UI toggle...');
-          this.submitting = false;
-          this.showStatusModal = false;
-          this.cdr.detectChanges();
-          const newActiveState = !wasActive;
-          const index = this.usersList.findIndex(u => u.id === userId);
-          if (index !== -1) {
-            this.usersList[index].isActive = newActiveState;
-            this.applyClientFilters();
-          }
-          this.triggerToast(
-            `Account for ${user?.firstName} ${user?.lastName} status toggled to ${newActiveState ? 'Activated' : 'Suspended'}. (Restart backend to persist.)`,
-            'success'
-          );
-          this.selectedUser = null;
-        } else {
-          this.submitting = false;
-          console.error('API Error toggling status:', err);
-          this.showStatusModal = false;
-          this.cdr.detectChanges();
-          this.triggerToast('Failed to toggle status. Please try again.', 'error');
-          this.selectedUser = null;
-        }
+  resetPassword(u: User): void {
+    if (!u.id) return;
+    this.userService.resetUserPassword(u.id).subscribe({
+      next: (res: any) => {
+        const data = res?.data ?? res;
+        const temp = data?.temporaryPassword;
+        // Email is sent server-side when mail is configured; the temp password is also
+        // returned so the admin can relay it if e-mail delivery is disabled.
+        this.triggerToast(
+          temp
+            ? `Mot de passe réinitialisé pour ${u.firstName}. Mot de passe temporaire : ${temp} (envoyé à ${u.email}).`
+            : `Mot de passe réinitialisé et envoyé à ${u.email}.`,
+          'success'
+        );
+      },
+      error: (err: any) => {
+        this.triggerToast(err?.error?.message || 'Échec de la réinitialisation du mot de passe.', 'error');
       }
     });
   }

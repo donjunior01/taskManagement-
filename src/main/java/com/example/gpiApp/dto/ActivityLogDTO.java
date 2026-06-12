@@ -18,6 +18,7 @@ public class ActivityLogDTO {
     private String description;
     private Long userId;
     private String userName;
+    private String userRole;
     private String entityType;
     private Long entityId;
     private String ipAddress;

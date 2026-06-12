@@ -110,6 +110,36 @@ public class EmailService {
         }
     }
 
+    /**
+     * Email a user their reset temporary password. When mail is disabled (default), this is a no-op
+     * that just logs — the admin still sees the temporary password returned by the API.
+     */
+    @Async
+    public void sendPasswordResetEmail(String recipientEmail, String temporaryPassword) {
+        if (!emailEnabled) {
+            log.info("Email service is disabled. Skipping password-reset email to {}.", recipientEmail);
+            return;
+        }
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(recipientEmail);
+            message.setSubject("Réinitialisation de votre mot de passe — TaskMaster Pro");
+            message.setText(
+                    "Bonjour,\n\n" +
+                    "Votre mot de passe a été réinitialisé par un administrateur.\n\n" +
+                    "Mot de passe temporaire : " + temporaryPassword + "\n\n" +
+                    "Veuillez vous connecter avec ce mot de passe puis le modifier immédiatement " +
+                    "depuis votre profil.\n\n" +
+                    "Cordialement,\n" +
+                    "L'équipe TaskMaster Pro");
+            mailSender.send(message);
+            log.info("Password-reset email sent to {}.", recipientEmail);
+        } catch (Exception e) {
+            log.error("Failed to send password-reset email to {}: {}", recipientEmail, e.getMessage());
+        }
+    }
+
     @Async
     public void sendProjectUpdateNotification(String projectName, String updateType, String recipientEmail) {
         if (!emailEnabled) {

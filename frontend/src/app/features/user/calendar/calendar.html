@@ -2,7 +2,7 @@
   <!-- Loading State Spinner -->
   <div class="spinner-wrapper" *ngIf="loading">
     <div class="spinner"></div>
-    <span>Decrypting scheduler pipelines...</span>
+    <span>Chargement de l'agenda...</span>
   </div>
 
   <!-- Google Calendar sync bar -->
@@ -18,22 +18,22 @@
         <span class="gcal-title">Google Calendar</span>
         <span class="gcal-status" *ngIf="syncStatus">
           <ng-container *ngIf="syncStatus.enabled; else gcalOff">
-            <span class="gcal-dot on"></span>Connected · {{ syncStatus.syncedEvents }}/{{ syncStatus.totalEvents }} events synced
+            <span class="gcal-dot on"></span>Connecté · {{ syncStatus.syncedEvents }}/{{ syncStatus.totalEvents }} événements synchronisés
           </ng-container>
           <ng-template #gcalOff>
-            <span class="gcal-dot off"></span>Not configured — set up Google credentials to enable sync
+            <span class="gcal-dot off"></span>Non configuré — configurez vos identifiants Google pour activer la synchronisation
           </ng-template>
         </span>
       </div>
     </div>
     <div class="gcal-actions">
       <button class="btn-gcal" (click)="syncAllToGoogle()" [disabled]="syncing || importing">
-        <span *ngIf="!syncing">Push to Google</span>
-        <span *ngIf="syncing">Syncing…</span>
+        <span *ngIf="!syncing">Envoyer vers Google</span>
+        <span *ngIf="syncing">Synchronisation…</span>
       </button>
       <button class="btn-gcal btn-gcal-secondary" (click)="importFromGoogle()" [disabled]="syncing || importing">
-        <span *ngIf="!importing">Import from Google</span>
-        <span *ngIf="importing">Importing…</span>
+        <span *ngIf="!importing">Importer depuis Google</span>
+        <span *ngIf="importing">Importation…</span>
       </button>
     </div>
   </div>
@@ -53,7 +53,7 @@
                 <polyline points="15 18 9 12 15 6"></polyline>
               </svg>
             </button>
-            <button class="btn-today" (click)="goToToday()">Today</button>
+            <button class="btn-today" (click)="goToToday()">Aujourd'hui</button>
             <button class="btn-nav" (click)="nextPeriod()">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="9 18 15 12 9 6"></polyline>
@@ -64,9 +64,9 @@
 
         <div class="header-right">
           <div class="view-switcher">
-            <button class="btn-switch" [ngClass]="{ active: viewMode === 'month' }" (click)="setView('month')">Month</button>
-            <button class="btn-switch" [ngClass]="{ active: viewMode === 'week'  }" (click)="setView('week')">Week</button>
-            <button class="btn-switch" [ngClass]="{ active: viewMode === 'day'   }" (click)="setView('day')">Day</button>
+            <button class="btn-switch" [ngClass]="{ active: viewMode === 'month' }" (click)="setView('month')">Mois</button>
+            <button class="btn-switch" [ngClass]="{ active: viewMode === 'week'  }" (click)="setView('week')">Semaine</button>
+            <button class="btn-switch" [ngClass]="{ active: viewMode === 'day'   }" (click)="setView('day')">Jour</button>
           </div>
         </div>
       </div>
@@ -74,7 +74,7 @@
       <!-- ══ MONTH VIEW ══ -->
       <div class="glass-panel calendar-grid-card" *ngIf="viewMode === 'month'">
         <div class="calendar-weekdays-row">
-          <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+          <span>DIM</span><span>LUN</span><span>MAR</span><span>MER</span><span>JEU</span><span>VEN</span><span>SAM</span>
         </div>
         <div class="calendar-grid-cells">
           <div
@@ -109,7 +109,7 @@
                 <span class="event-title-tag">{{ ev.title }}</span>
               </div>
               <span class="more-events-indicator" *ngIf="day.events.length > 3">
-                +{{ day.events.length - 3 }} more
+                +{{ day.events.length - 3 }} de plus
               </span>
             </div>
           </div>
@@ -154,8 +154,8 @@
       <div class="glass-panel day-view-card" *ngIf="viewMode === 'day'">
         <div class="day-view-date-banner">
           <span class="day-view-dayname">{{ selectedDay?.date | date:'EEEE' }}</span>
-          <span class="day-view-date">{{ selectedDay?.date | date:'MMMM d, yyyy' }}</span>
-          <span class="day-view-today-badge" *ngIf="selectedDay?.isToday">Today</span>
+          <span class="day-view-date">{{ selectedDay?.date | date:'d MMMM yyyy' }}</span>
+          <span class="day-view-today-badge" *ngIf="selectedDay?.isToday">Aujourd'hui</span>
         </div>
         <div class="day-view-timeline">
           <div class="day-hour-row" *ngFor="let hour of hourSlots">
@@ -192,7 +192,7 @@
     <div class="calendar-sidebar-col">
       <!-- Create Event Button -->
       <button class="btn-create-event" (click)="openAddModal()">
-        + Create Event
+        + Créer un événement
       </button>
 
       <!-- Mini Calendar (always visible) -->
@@ -209,7 +209,7 @@
           </div>
         </div>
         <div class="mini-cal-days-header">
-          <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+          <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
         </div>
         <div class="mini-cal-grid">
           <span
@@ -230,7 +230,7 @@
       <!-- Upcoming Events -->
       <div class="glass-panel upcoming-events-card">
         <div class="upcoming-header">
-          <h3>Upcoming</h3>
+          <h3>À venir</h3>
         </div>
         <div class="upcoming-list">
           <div class="upcoming-item-wrapper" *ngFor="let ev of eventsList.slice(0, 5)">
@@ -245,7 +245,7 @@
             </div>
           </div>
           <div class="empty-upcoming" *ngIf="eventsList.length === 0">
-            <p>No upcoming schedules recorded.</p>
+            <p>Aucun événement programmé à venir.</p>
           </div>
         </div>
       </div>
@@ -259,8 +259,8 @@
   <div class="glass-panel modal-card add-event-modal animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="header-titles">
-        <span class="modal-label">Scheduler Entry</span>
-        <h3>Schedule Custom Event</h3>
+        <span class="modal-label">Planification</span>
+        <h3>Planifier un événement personnalisé</h3>
       </div>
       <button class="modal-close-btn" (click)="closeAddModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -273,11 +273,11 @@
     <form (ngSubmit)="saveCustomEvent()" #eventForm="ngForm">
       <div class="modal-body">
         <div class="form-group">
-          <label for="eventTitle">Event Title / Name</label>
-          <input type="text" id="eventTitle" name="eventTitle" [(ngModel)]="newEvent.title" placeholder="e.g. Frontend Sync Review" required />
+          <label for="eventTitle">Titre / Nom de l'événement</label>
+          <input type="text" id="eventTitle" name="eventTitle" [(ngModel)]="newEvent.title" placeholder="ex. : Revue de synchronisation frontend" required />
         </div>
         <div class="form-group">
-          <label for="eventProject">Project Scope</label>
+          <label for="eventProject">Portée du projet</label>
           <div class="select-wrapper">
             <select id="eventProject" name="eventProject" [(ngModel)]="newEvent.projectName" required>
               <option *ngFor="let proj of projectsList" [value]="proj">{{ proj }}</option>
@@ -286,45 +286,45 @@
         </div>
         <div class="modal-row-grid">
           <div class="form-group">
-            <label for="eventTime">Start Time</label>
-            <input type="text" id="eventTime" name="eventTime" [(ngModel)]="newEvent.time" placeholder="e.g. 02:00 PM" required />
+            <label for="eventTime">Heure de début</label>
+            <input type="text" id="eventTime" name="eventTime" [(ngModel)]="newEvent.time" placeholder="ex. : 14h00" required />
           </div>
           <div class="form-group">
-            <label for="eventPriority">Priority Rank</label>
+            <label for="eventPriority">Niveau de priorité</label>
             <div class="select-wrapper">
               <select id="eventPriority" name="eventPriority" [(ngModel)]="newEvent.priority">
-                <option value="CRITICAL">Critical</option>
-                <option value="HIGH">High</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="LOW">Low</option>
+                <option value="CRITICAL">Critique</option>
+                <option value="HIGH">Haute</option>
+                <option value="MEDIUM">Moyenne</option>
+                <option value="LOW">Basse</option>
               </select>
             </div>
           </div>
         </div>
         <div class="form-group">
-          <label for="eventType">Event Type</label>
+          <label for="eventType">Type d'événement</label>
           <div class="select-wrapper">
             <select id="eventType" name="eventType" [(ngModel)]="newEvent.type">
-              <option value="MEETING">Team Meeting</option>
-              <option value="MILESTONE">General Milestone</option>
-              <option value="DEADLINE">Milestone Deadline</option>
+              <option value="MEETING">Réunion d'équipe</option>
+              <option value="MILESTONE">Jalon général</option>
+              <option value="DEADLINE">Date limite du jalon</option>
             </select>
           </div>
         </div>
         <div class="form-group">
           <label for="eventNotes">Description / Notes</label>
           <app-ai-describe [type]="'EVENT'" [title]="newEvent.title" (generated)="newEvent.notes = $event"></app-ai-describe>
-          <textarea id="eventNotes" name="eventNotes" rows="3" [(ngModel)]="newEvent.notes" placeholder="Outline agenda, setup targets, or attach invite pins..."></textarea>
+          <textarea id="eventNotes" name="eventNotes" rows="3" [(ngModel)]="newEvent.notes" placeholder="Décrivez l'ordre du jour, fixez les objectifs, ou insérez le lien de la réunion..."></textarea>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Annuler</button>
         <button type="submit" class="btn btn-primary" [disabled]="savingEvent || !eventForm.form.valid">
           <svg *ngIf="savingEvent" class="spinner" viewBox="0 0 24 24">
             <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
           </svg>
-          <span>{{ savingEvent ? 'Scheduling event...' : 'Schedule Event' }}</span>
+          <span>{{ savingEvent ? 'Planification...' : 'Planifier l\'événement' }}</span>
         </button>
       </div>
     </form>

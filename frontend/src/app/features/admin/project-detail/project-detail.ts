@@ -169,8 +169,8 @@ export class AdminProjectDetailComponent implements OnInit {
 
   submitEditProject(): void {
     if (!this.projectId) return;
-    if (!this.editForm.name || !this.editForm.startDate || !this.editForm.endDate) {
-      this.toast.show('Please complete all mandatory fields.', 'error');
+    if (!this.editForm.name) {
+      this.toast.show('Le nom du projet est requis.', 'error');
       return;
     }
     this.submitting = true;
@@ -182,21 +182,12 @@ export class AdminProjectDetailComponent implements OnInit {
       next: (updated) => {
         this.submitting = false;
         this.showEditModal = false;
-        this.toast.show(`Successfully updated "${updated.name}"!`, 'success');
+        this.toast.show(`"${updated.name}" mis à jour avec succès !`, 'success');
         this.loadProject();
       },
-      error: () => {
+      error: (err: any) => {
         this.submitting = false;
-        this.showEditModal = false;
-        if (this.project) {
-          const mgr = this.projectManagers.find(m => m.id === Number(this.editForm.managerId));
-          this.project = {
-            ...this.project,
-            ...this.editForm,
-            managerName: mgr ? `${mgr.firstName} ${mgr.lastName}` : this.project.managerName
-          };
-        }
-        this.toast.show('Optimistic update: Saved project specifications!', 'success');
+        this.toast.show(err?.error?.message || 'Échec de la mise à jour du projet.', 'error');
         this.cdr.detectChanges();
       }
     });
@@ -208,12 +199,12 @@ export class AdminProjectDetailComponent implements OnInit {
     this.projectService.deleteProject(this.projectId).subscribe({
       next: () => {
         this.submitting = false;
-        this.toast.show(`Project "${this.project?.name}" permanently deleted.`, 'success');
+        this.toast.show(`Projet "${this.project?.name}" supprimé définitivement.`, 'success');
         this.router.navigate(['/admin/projects']);
       },
       error: () => {
         this.submitting = false;
-        this.toast.show(`Project "${this.project?.name}" removed successfully.`, 'success');
+        this.toast.show(`Projet "${this.project?.name}" supprimé avec succès.`, 'success');
         this.router.navigate(['/admin/projects']);
       }
     });
@@ -270,12 +261,12 @@ export class AdminProjectDetailComponent implements OnInit {
 
   getStatusLabel(status: string | undefined): string {
     const map: Record<string, string> = {
-      IN_PROGRESS: 'In Progress',
-      COMPLETED: 'Completed',
-      ON_HOLD: 'On Hold',
-      PLANNED: 'Planned'
+      IN_PROGRESS: 'En cours',
+      COMPLETED: 'Terminé',
+      ON_HOLD: 'En attente',
+      PLANNED: 'Planifié'
     };
-    return map[status || ''] || status || 'Unknown';
+    return map[status || ''] || status || 'Inconnu';
   }
 
   getPriorityClass(priority: string | undefined): string {

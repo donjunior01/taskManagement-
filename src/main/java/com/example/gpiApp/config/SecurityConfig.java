@@ -106,6 +106,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/analytics/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PROJECT_MANAGER")
                 // Two-factor enrolment — any authenticated user manages their own
                 .requestMatchers("/api/2fa/**").authenticated()
+                // System settings — readable by any authenticated user (app name/policy),
+                // writable by admins only (also guarded by @PreAuthorize on the methods).
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/settings/**").authenticated()
+                .requestMatchers("/api/settings/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

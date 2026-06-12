@@ -47,15 +47,27 @@ public class ProjectService {
     public PagedResponse<ProjectDTO> getAllProjects(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         PageRequest pageable = PageRequest.of(page, size, sort);
-        Page<Project> projectPage = projectRepository.findAll(pageable);
-        
+        Page<Project> projectPage = projectRepository.findAllActive(pageable);
+
         List<ProjectDTO> projectDTOs = projectPage.getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-        
+
         return PagedResponse.of(projectDTOs, projectPage.getNumber(), projectPage.getSize(),
                 projectPage.getTotalElements(), projectPage.getTotalPages(),
                 projectPage.isFirst(), projectPage.isLast());
+    }
+
+    /** Archive or unarchive a project (admin action). Archived projects drop out of the default lists. */
+    @Transactional
+    public ApiResponse<ProjectDTO> setArchived(Long id, boolean archived) {
+        return projectRepository.findById(id)
+                .map(project -> {
+                    project.setArchived(archived);
+                    Project saved = projectRepository.save(project);
+                    return ApiResponse.success(archived ? "Project archived" : "Project unarchived", convertToDTO(saved));
+                })
+                .orElse(ApiResponse.error("Project not found"));
     }
     
     @Transactional(readOnly = true)
@@ -270,6 +282,7 @@ public class ProjectService {
                 .endDate(project.getEndDate())
                 .status(project.getStatus())
                 .progress(project.getProgress())
+                .archived(project.getArchived())
                 .taskCount(project.getTasks() != null ? project.getTasks().size() : 0)
                 .teamCount((int) (project.getTeams() != null ? 
                         project.getTeams().stream()

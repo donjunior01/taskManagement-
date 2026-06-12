@@ -25,7 +25,7 @@
           </div>
           <input 
             type="text" 
-            placeholder="Search or start new chat" 
+            placeholder="Rechercher ou démarrer une discussion" 
             [(ngModel)]="searchQuery" 
             (ngModelChange)="onSearchChange()"
           />
@@ -83,7 +83,7 @@
 
           <!-- Empty search contacts -->
           <div class="empty-contacts" *ngIf="filteredContacts.length === 0">
-            <p>No chats found.</p>
+            <p>Aucune discussion trouvée.</p>
           </div>
         </div>
       </div>
@@ -102,7 +102,7 @@
             <div class="contact-meta">
               <h4>{{ selectedContact.name }}</h4>
               <div class="status-row">
-                <span>{{ selectedContact.online ? 'online' : 'last seen recently' }}</span>
+                <span>{{ selectedContact.online ? 'en ligne' : 'vu récemment' }}</span>
               </div>
             </div>
           </div>
@@ -118,7 +118,7 @@
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
-              <span>Messages are end-to-end encrypted. No one outside of this chat, not even TaskMaster, can read them.</span>
+              <span>Les messages sont chiffrés de bout en bout. Personne en dehors de cette discussion, pas même TaskMaster, ne peut les lire.</span>
             </div>
 
             <!-- Messages Stream list -->
@@ -130,7 +130,7 @@
               <div class="message-bubble" [ngClass]="{ 'bubble-media-wrapper': message.attachmentType === 'IMAGE' || message.attachmentType === 'VIDEO' }">
                 
                 <!-- Premium Hover Trash Delete Button -->
-                <button class="msg-delete-btn" (click)="deleteMessage(message.id)" title="Delete message">
+                <button class="msg-delete-btn" (click)="deleteMessage(message.id)" title="Supprimer le message">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -142,7 +142,8 @@
 
                 <!-- 1. IMAGE Attachment Bubble -->
                 <div class="attachment-image-container" *ngIf="message.attachmentType === 'IMAGE'">
-                  <img [src]="message.attachmentUrl" class="bubble-image-preview" alt="Image attachment" />
+                  <img *ngIf="message.attachmentUrl" [src]="message.attachmentUrl" class="bubble-image-preview" alt="Image attachment" (click)="previewAttachment(message)" style="cursor:zoom-in" />
+                  <div class="img-uploading" *ngIf="!message.attachmentUrl">Chargement…</div>
                   <div class="media-overlay-meta" *ngIf="message.text">
                     <p class="message-text media-caption">{{ message.text }}</p>
                   </div>
@@ -171,7 +172,7 @@
                       <p class="doc-name">{{ message.attachmentName }}</p>
                       <span class="doc-size">{{ message.attachmentSize }}</span>
                     </div>
-                    <button class="doc-download-btn" title="Download">
+                    <button class="doc-download-btn" title="Télécharger" (click)="downloadAttachment(message)">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
@@ -245,10 +246,10 @@
         <!-- Media Upload (Photos, Videos) -->
         <input 
           type="file" 
-          #mediaInput 
-          style="display: none" 
-          accept="image/*,video/*"
-          (change)="handleMediaSelected($event)" 
+          #mediaInput
+          style="display: none"
+          accept=".jpg,.jpeg,.png,.gif"
+          (change)="handleMediaSelected($event)"
         />
         <!-- Document Upload -->
         <input 
@@ -285,7 +286,7 @@
                           <polyline points="21 15 16 10 5 21"></polyline>
                         </svg>
                       </span>
-                      <span>Photos & Videos</span>
+                      <span>Photo / Image</span>
                     </button>
                     <button class="dropdown-item" (click)="docInput.click()">
                       <span class="icon-circle doc-color">
@@ -298,12 +299,24 @@
                     </button>
                   </div>
                 </div>
+
+                <!-- Emoji btn -->
+                <div class="emoji-btn-wrapper">
+                  <button class="action-btn" title="Emoji" (click)="toggleEmojiPanel()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line>
+                    </svg>
+                  </button>
+                  <div class="emoji-panel animate-fade-in-up" *ngIf="showEmojiPanel">
+                    <button class="emoji-item" *ngFor="let e of emojis" (click)="insertEmoji(e)">{{ e }}</button>
+                  </div>
+                </div>
               </div>
 
               <!-- Text input -->
               <input
                 type="text"
-                placeholder="Type a message"
+                placeholder="Tapez un message"
                 [(ngModel)]="newMessageText"
                 (keyup.enter)="sendMessage()"
               />
@@ -312,7 +325,7 @@
               <div class="footer-icons-right">
                 <button
                   class="action-btn btn-send-arrow"
-                  [title]="newMessageText.trim() ? 'Send message' : 'Record voice note'"
+                  [title]="newMessageText.trim() ? 'Envoyer le message' : 'Enregistrer une note vocale'"
                   (click)="newMessageText.trim() ? sendMessage() : startVoiceRecording()"
                 >
                   <svg *ngIf="newMessageText.trim()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -334,7 +347,7 @@
           <ng-container *ngIf="recordingVoice">
             <div class="voice-recorder-active-wrapper">
               <div class="recorder-left-timer">
-                <button class="btn-discard" (click)="cancelVoiceRecording()" title="Discard recording">
+                <button class="btn-discard" (click)="cancelVoiceRecording()" title="Annuler l'enregistrement">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -344,10 +357,10 @@
                 <span class="recording-timer">{{ voiceTimer }}</span>
               </div>
               <div class="recorder-center-status">
-                <span class="recording-hint">Recording simulated voice note...</span>
+                <span class="recording-hint">Enregistrement d'une note vocale simulée...</span>
               </div>
               <div class="recorder-right-send">
-                <button class="btn-send-voice" (click)="sendVoiceRecording()" title="Send voice note">
+                <button class="btn-send-voice" (click)="sendVoiceRecording()" title="Envoyer la note vocale">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
@@ -368,14 +381,14 @@
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
           </div>
-          <h3>TaskMaster Web Messenger</h3>
-          <p>Send and receive messages without keeping your phone online. Use TaskMaster on up to 4 linked devices simultaneously.</p>
+          <h3>Messagerie Web TaskMaster</h3>
+          <p>Envoyez et recevez des messages sans garder votre téléphone en ligne. Utilisez TaskMaster sur jusqu'à 4 appareils connectés simultanément.</p>
           <div class="landing-footer">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
-            <span>End-to-end encrypted inside corporate sockets.</span>
+            <span>Chiffré de bout en bout au sein du réseau d'entreprise.</span>
           </div>
         </div>
       </div>

@@ -19,15 +19,20 @@ export class ToastComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.sub = this.toastService.toasts$.subscribe(toast => {
-      const entry = { ...toast, exiting: false };
-      this.toasts.push(entry);
-      this.cdr.detectChanges();
+      // Defer to a fresh macrotask so we never run change detection *inside* the caller's
+      // CD/event cycle (which triggers NG0100 ExpressionChangedAfterItHasBeenCheckedError
+      // on the component that fired the toast, e.g. a button's [disabled] binding).
+      setTimeout(() => {
+        const entry = { ...toast, exiting: false };
+        this.toasts.push(entry);
+        this.cdr.detectChanges();
 
-      // Start exit animation at 2700ms, remove at 3000ms
-      const exitTimer = setTimeout(() => this.dismiss(toast.id), 2700);
-      const removeTimer = setTimeout(() => this.remove(toast.id), 3000);
-      this.timers.set(toast.id, exitTimer);
-      this.timers.set(toast.id + 100000, removeTimer);
+        // Start exit animation at 2700ms, remove at 3000ms
+        const exitTimer = setTimeout(() => this.dismiss(toast.id), 2700);
+        const removeTimer = setTimeout(() => this.remove(toast.id), 3000);
+        this.timers.set(toast.id, exitTimer);
+        this.timers.set(toast.id + 100000, removeTimer);
+      });
     });
   }
 

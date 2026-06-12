@@ -1,356 +1,183 @@
-<div class="settings-container animate-fade-in-up">
-  <!-- Governance Greeting Area -->
-  <div class="settings-header">
-    <div class="header-text">
-      <h2>System Settings & Health</h2>
-      <p>Configure global corporate parameters, enforce security gates, and audit real-time engine telemetry.</p>
-    </div>
+<div class="cfg-wrap">
+
+  <!-- Tabs -->
+  <div class="cfg-tabs glass-panel">
+    <button *ngFor="let t of tabs" class="cfg-tab" [class.active]="activeTab === t.id" (click)="activeTab = t.id">
+      <svg *ngIf="t.id === 'general'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+      <svg *ngIf="t.id === 'security'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>
+      <svg *ngIf="t.id === 'notifications'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      <svg *ngIf="t.id === 'integrations'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-5"></path><path d="M15 8V2"></path><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"></path><path d="M9 8V2"></path></svg>
+      <svg *ngIf="t.id === 'backup'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg>
+      <span>{{ t.label }}</span>
+    </button>
   </div>
 
-  <!-- Primary Double-Column Layout Grid -->
-  <div class="settings-grid">
-    
-    <!-- LEFT SIDE: Corporate Settings Configurator Form -->
-    <div class="glass-panel form-card">
-      <div class="card-header">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-        <h3>Corporate Configurator</h3>
+  <!-- ═══ Général ═══ -->
+  <div class="glass-panel cfg-card" *ngIf="activeTab === 'general'">
+    <div class="cfg-grid">
+      <div class="cfg-field">
+        <label>Nom de l'application</label>
+        <input type="text" [(ngModel)]="appName" />
       </div>
-      
-      <form (ngSubmit)="saveConfiguration()" #settingsForm="ngForm">
-        <!-- Allowed Domains constraint -->
-        <div class="form-group">
-          <label for="allowedDomains">Allowed Email Domains</label>
-          <input 
-            type="text" 
-            id="allowedDomains" 
-            name="allowedDomains" 
-            [(ngModel)]="allowedEmailDomains" 
-            placeholder="e.g. corp.net, company.com"
-            required
-          />
-          <span class="help-text">Restricts registrations and invites to this comma-separated domain list.</span>
+      <div class="cfg-field">
+        <label>Langue par défaut</label>
+        <select [(ngModel)]="defaultLanguage"><option>Français</option><option>English</option></select>
+      </div>
+      <div class="cfg-field">
+        <label>Fuseau horaire</label>
+        <select [(ngModel)]="timezone"><option>Europe/Paris (UTC+1)</option><option>UTC</option></select>
+      </div>
+      <div class="cfg-field">
+        <label>Taille max de téléversement (Mo)</label>
+        <input type="number" min="1" max="100" [(ngModel)]="maxFileUploadSize" />
+        <span class="hint">S'applique aux livrables et aux pièces jointes de la messagerie (max 100 Mo)</span>
+      </div>
+      <div class="cfg-field">
+        <label>Logo</label>
+        <div class="upload-drop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>
+          Cliquer pour téléverser
         </div>
+      </div>
+    </div>
+    <div class="cfg-foot"><button class="btn btn-primary" (click)="saveGeneral()" [disabled]="submitting">Enregistrer les modifications</button></div>
+  </div>
 
-        <div class="form-row-2">
-          <!-- Max File Upload Size -->
-          <div class="form-group">
-            <label for="maxUploadSize">Max File Attachment (MB)</label>
-            <input 
-              type="number" 
-              id="maxUploadSize" 
-              name="maxUploadSize" 
-              [(ngModel)]="maxFileUploadSize" 
-              min="1" 
-              max="500"
-              required
-            />
-            <span class="help-text">Upper threshold limit for documents/deliverables.</span>
-          </div>
-
-          <!-- Session Timeout -->
-          <div class="form-group">
-            <label for="idleTimeout">Session Idle Timeout (Min)</label>
-            <input 
-              type="number" 
-              id="idleTimeout" 
-              name="idleTimeout" 
-              [(ngModel)]="idleTimeoutMinutes" 
-              min="5" 
-              max="1440"
-              required
-            />
-            <span class="help-text">Minutes before standard session logout.</span>
-          </div>
+  <!-- ═══ Sécurité ═══ -->
+  <div class="glass-panel cfg-card" *ngIf="activeTab === 'security'">
+    <div class="cfg-grid">
+      <div class="cfg-field">
+        <label>Durée de validité JWT</label>
+        <input type="number" [(ngModel)]="jwtValidity" />
+        <span class="hint">En minutes</span>
+      </div>
+      <div class="cfg-field">
+        <label>Tentatives max avant verrouillage</label>
+        <input type="number" [(ngModel)]="maxAttempts" />
+      </div>
+      <div class="cfg-field">
+        <label>Durée du verrouillage</label>
+        <input type="number" [(ngModel)]="lockoutDuration" />
+        <span class="hint">En minutes</span>
+      </div>
+      <div class="cfg-field">
+        <label>Double authentification (2FA)</label>
+        <div class="toggle-line">
+          <button type="button" class="switch" [class.on]="twoFaEnabled" (click)="twoFaEnabled ? null : startTwoFaSetup()"><span></span></button>
+          <span>{{ twoFaEnabled ? 'Activée pour les administrateurs' : 'Désactivée' }}</span>
         </div>
+      </div>
+    </div>
 
-        <!-- Security Action Toggles -->
-        <div class="security-toggles">
-          <h4>Security & Event Triggers</h4>
-          
-          <div class="toggle-item">
-            <div class="toggle-text">
-              <span class="toggle-title">Enforce MFA Authentication</span>
-              <span class="toggle-desc">Mandates dual-factor confirmation for administrative logins.</span>
-            </div>
-            <label class="switch-toggle">
-              <input type="checkbox" name="mfaEnforce" [(ngModel)]="mfaRequirement" />
-              <span class="switch-slider"></span>
-            </label>
-          </div>
+    <!-- 2FA setup / disable inline -->
+    <div class="twofa-setup" *ngIf="twoFaSetup">
+      <p class="hint">Scannez le QR code dans votre application puis saisissez le code à 6 chiffres.</p>
+      <div class="twofa-row">
+        <input type="text" maxlength="6" placeholder="000000" [(ngModel)]="twoFaCode" />
+        <button class="btn btn-primary btn-sm" (click)="confirmEnableTwoFa()" [disabled]="twoFaBusy">Vérifier et activer</button>
+        <button class="btn btn-secondary btn-sm" (click)="cancelTwoFaSetup()">Annuler</button>
+      </div>
+    </div>
+    <div class="twofa-setup" *ngIf="twoFaEnabled">
+      <div class="twofa-row">
+        <input type="text" maxlength="6" placeholder="Code actuel" [(ngModel)]="twoFaCode" />
+        <button class="btn btn-secondary btn-sm" (click)="disableTwoFa()" [disabled]="twoFaBusy">Désactiver la 2FA</button>
+      </div>
+    </div>
 
-          <div class="toggle-item">
-            <div class="toggle-text">
-              <span class="toggle-title">SMTP Deliverable Notification</span>
-              <span class="toggle-desc">Automatically emails assignees upon task allocation triggers.</span>
-            </div>
-            <label class="switch-toggle">
-              <input type="checkbox" name="emailOnCreate" [(ngModel)]="emailNotificationOnCreate" />
-              <span class="switch-slider"></span>
-            </label>
-          </div>
+    <div class="cfg-section">
+      <h3>Politique de mot de passe</h3>
+      <div class="cfg-field">
+        <label>Longueur minimale : {{ passwordMinLength }} caractères</label>
+        <input type="range" min="8" max="24" [(ngModel)]="passwordMinLength" class="range" />
+      </div>
+      <div class="policy-row"><span>Majuscule obligatoire</span><button type="button" class="switch" [class.on]="pwUpper" (click)="pwUpper = !pwUpper"><span></span></button></div>
+      <div class="policy-row"><span>Chiffre obligatoire</span><button type="button" class="switch" [class.on]="pwDigit" (click)="pwDigit = !pwDigit"><span></span></button></div>
+      <div class="policy-row"><span>Caractère spécial obligatoire</span><button type="button" class="switch" [class.on]="pwSpecial" (click)="pwSpecial = !pwSpecial"><span></span></button></div>
+      <div class="cfg-field" style="margin-top:14px;">
+        <label>Expiration MDP</label>
+        <input type="number" [(ngModel)]="passwordExpiry" />
+        <span class="hint">0 = jamais</span>
+      </div>
+    </div>
+    <div class="cfg-foot"><button class="btn btn-primary" (click)="saveSecurity()" [disabled]="submitting">Enregistrer la politique</button></div>
+  </div>
 
-          <div class="toggle-item">
-            <div class="toggle-text">
-              <span class="toggle-title">System Activity Log Audits</span>
-              <span class="toggle-desc">Emails administrators when database items are permanently destroyed.</span>
-            </div>
-            <label class="switch-toggle">
-              <input type="checkbox" name="emailOnDelete" [(ngModel)]="emailNotificationOnDelete" />
-              <span class="switch-slider"></span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Action Button -->
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary" [disabled]="submitting || !settingsForm.form.valid">
-            <svg *ngIf="submitting" class="spinner" viewBox="0 0 24 24">
-              <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
-            </svg>
-            <span>{{ submitting ? 'Saving Configuration...' : 'Save Configuration' }}</span>
+  <!-- ═══ Notifications ═══ -->
+  <div class="glass-panel cfg-card" *ngIf="activeTab === 'notifications'">
+    <h3>Configuration SMTP</h3>
+    <div class="cfg-grid">
+      <div class="cfg-field"><label>Host</label><input type="text" [(ngModel)]="smtp.host" /></div>
+      <div class="cfg-field"><label>Port</label><input type="number" [(ngModel)]="smtp.port" /></div>
+      <div class="cfg-field"><label>Username</label><input type="text" [(ngModel)]="smtp.username" /></div>
+      <div class="cfg-field"><label>Password</label><input type="password" [(ngModel)]="smtp.password" /></div>
+      <div class="cfg-field"><label>Adresse expéditeur</label><input type="text" [(ngModel)]="smtp.sender" /></div>
+      <div class="cfg-field">
+        <label>Statut connexion</label>
+        <div class="toggle-line">
+          <span class="badge badge-success">● Connecté</span>
+          <button class="btn btn-secondary btn-sm" (click)="testSmtp()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            Tester
           </button>
         </div>
-      </form>
+      </div>
     </div>
-
-    <!-- RIGHT SIDE: Engine Health, Uptime Telemetry & Quick Maintenance -->
-    <div class="right-column-wrapper">
-      
-      <!-- Upper Glass Panel: Engine Health Vitals -->
-      <div class="glass-panel telemetry-card">
-        <div class="card-header">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-          </svg>
-          <h3>Engine Live Telemetry</h3>
-          <span class="live-indicator">LIVE</span>
-        </div>
-
-        <div class="telemetry-grid">
-          
-          <!-- CPU Utilization Vital -->
-          <div class="telemetry-item">
-            <div class="item-header">
-              <span class="metric-label">CPU Load</span>
-              <span class="metric-value" [ngClass]="{ critical: cpuUtilization > 80, high: cpuUtilization > 60 }">
-                {{ cpuUtilization }}%
-              </span>
-            </div>
-            <div class="progress-track">
-              <div class="progress-bar" [style.width.%]="cpuUtilization" [ngClass]="{ critical: cpuUtilization > 80, high: cpuUtilization > 60 }"></div>
-            </div>
-          </div>
-
-          <!-- Memory Allocation Vital -->
-          <div class="telemetry-item">
-            <div class="item-header">
-              <span class="metric-label">RAM Allocated</span>
-              <span class="metric-value">{{ ramUtilization }}%</span>
-            </div>
-            <div class="progress-track">
-              <div class="progress-bar ram-color" [style.width.%]="ramUtilization"></div>
-            </div>
-          </div>
-
-          <!-- Database Latency Vital -->
-          <div class="metric-pair-row">
-            <div class="pair-card">
-              <span class="pair-label">DB Latency</span>
-              <span class="pair-value" [ngClass]="{ slow: databaseLatency > 15 }">{{ databaseLatency }}ms</span>
-            </div>
-            <div class="pair-card">
-              <span class="pair-label">Redis Cache</span>
-              <span class="pair-value">{{ redisLatency }}ms</span>
-            </div>
-          </div>
-
-          <!-- Sessions & Uptime Summary -->
-          <div class="telemetry-summary">
-            <div class="summary-row">
-              <span class="summary-label">Active Users Sessions</span>
-              <span class="summary-value text-indigo">{{ activeSessionsCount }} users</span>
-            </div>
-            <div class="summary-row">
-              <span class="summary-label">Gateway Engine Uptime</span>
-              <span class="summary-value">{{ apiUptime }}</span>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Lower Glass Panel: Administrative Operations actions -->
-      <div class="glass-panel actions-card">
-        <div class="card-header">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-            <line x1="6" y1="6" x2="6.01" y2="6"></line>
-            <line x1="6" y1="18" x2="6.01" y2="18"></line>
-          </svg>
-          <h3>System Operations</h3>
-        </div>
-
-        <div class="operations-actions">
-          
-          <!-- Toggle Maintenance Mode -->
-          <div class="op-row">
-            <div class="op-desc">
-              <span class="op-title">Enforce Maintenance Gate</span>
-              <span class="op-details">Halts corporate API endpoint responses for normal employees.</span>
-            </div>
-            <label class="switch-toggle danger-switch">
-              <input type="checkbox" [(ngModel)]="maintenanceMode" (change)="toggleMaintenanceMode()" />
-              <span class="switch-slider"></span>
-            </label>
-          </div>
-
-          <!-- Flush Caches action -->
-          <div class="action-buttons-group">
-            <button class="btn btn-secondary op-action-btn" (click)="clearRedisCache()" [disabled]="clearingCache">
-              <svg *ngIf="clearingCache" class="spinner" viewBox="0 0 24 24">
-                <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
-              </svg>
-              <span>{{ clearingCache ? 'Purging Caches...' : 'Purge Redis Caches' }}</span>
-            </button>
-
-            <!-- Cold Backup action -->
-            <button class="btn btn-secondary op-action-btn" (click)="triggerColdBackup()" [disabled]="backingUp">
-              <svg *ngIf="backingUp" class="spinner" viewBox="0 0 24 24">
-                <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
-              </svg>
-              <span>{{ backingUp ? 'Archiving Database...' : 'Run Database Backup' }}</span>
-            </button>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Two-Factor Authentication Panel -->
-      <div class="glass-panel security-card" style="margin-top: 1.5rem;">
-        <div class="card-header">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-          <h3>Two-Factor Authentication</h3>
-        </div>
-
-        <div class="security-body twofa-body">
-          <!-- Enabled state -->
-          @if (twoFaEnabled) {
-            <p class="twofa-status on"><span class="twofa-dot on"></span>2FA is <strong>enabled</strong> on your account.</p>
-            <p class="twofa-hint">To disable it, enter a current code from your authenticator app.</p>
-            <div class="twofa-inline">
-              <input type="text" [(ngModel)]="twoFaCode" name="disableCode" maxlength="6" inputmode="numeric" placeholder="6-digit code" />
-              <button class="btn-2fa danger" (click)="disableTwoFa()" [disabled]="twoFaBusy">Disable 2FA</button>
-            </div>
-          } @else if (twoFaSetup) {
-            <!-- Setup in progress -->
-            <p class="twofa-hint">Add this account to your authenticator app, then enter the generated code to activate.</p>
-            <div class="twofa-secret">
-              <span class="twofa-label">Secret key</span>
-              <code>{{ twoFaSetup.secret }}</code>
-            </div>
-            <div class="twofa-secret">
-              <span class="twofa-label">otpauth URI</span>
-              <code class="twofa-uri">{{ twoFaSetup.otpauthUri }}</code>
-            </div>
-            <div class="twofa-inline">
-              <input type="text" [(ngModel)]="twoFaCode" name="enableCode" maxlength="6" inputmode="numeric" placeholder="6-digit code" />
-              <button class="btn-2fa primary" (click)="confirmEnableTwoFa()" [disabled]="twoFaBusy || !twoFaCode.trim()">Verify & Enable</button>
-              <button class="btn-2fa ghost" (click)="cancelTwoFaSetup()" [disabled]="twoFaBusy">Cancel</button>
-            </div>
-          } @else {
-            <!-- Disabled, no setup -->
-            <p class="twofa-status off"><span class="twofa-dot off"></span>2FA is <strong>not enabled</strong>.</p>
-            <p class="twofa-hint">Add a second factor (TOTP) for stronger account security.</p>
-            <button class="btn-2fa primary" (click)="startTwoFaSetup()" [disabled]="twoFaBusy">Set up 2FA</button>
-          }
-        </div>
-      </div>
-
-      <!-- Security Governance Panel -->
-      <div class="glass-panel security-card" style="margin-top: 1.5rem;">
-        <div class="card-header">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-          </svg>
-          <h3>Security Governance</h3>
-        </div>
-
-        <div class="security-body">
-          <!-- Metrics -->
-          @if (securityMetrics) {
-            <div class="metric-pair-row" style="margin-bottom: 1.5rem;">
-              <div class="pair-card">
-                <span class="pair-label">Total Attempts</span>
-                <span class="pair-value">{{ securityMetrics.totalAttempts }}</span>
-              </div>
-              <div class="pair-card">
-                <span class="pair-label">Failed Attempts</span>
-                <span class="pair-value" [ngClass]="{'danger': securityMetrics.failedAttempts > 0}">{{ securityMetrics.failedAttempts }}</span>
-              </div>
-            </div>
-          }
-
-          <!-- Pending Resets -->
-          <div class="resets-section" style="margin-bottom: 1.5rem;">
-            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">Pending Password Resets</h4>
-            @if (pendingResets.length === 0) {
-              <p style="font-size: 0.85rem; color: var(--text-tertiary);">No pending requests.</p>
-            } @else {
-              <div class="list-container" style="max-height: 150px; overflow-y: auto;">
-                @for (reset of pendingResets; track reset.id) {
-                  <div class="list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <div>
-                      <span style="font-weight: 500; font-size: 0.9rem;">{{ reset.username }}</span>
-                      <br/>
-                      <span style="font-size: 0.75rem; color: var(--text-tertiary);">{{ reset.requestedAt | date:'short' }}</span>
-                    </div>
-                    <div class="actions">
-                      <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.5rem;" (click)="approveReset(reset.id)">Approve</button>
-                      <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" (click)="rejectReset(reset.id)">Reject</button>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Login Attempts -->
-          <div class="attempts-section">
-            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">Recent Login Attempts</h4>
-            <div class="list-container" style="max-height: 150px; overflow-y: auto; margin-bottom: 1rem;">
-              @for (attempt of loginAttempts; track attempt.id) {
-                <div class="list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                  <div>
-                    <span style="font-weight: 500; font-size: 0.9rem;">{{ attempt.username }}</span>
-                    <br/>
-                    <span style="font-size: 0.75rem; color: var(--text-tertiary);">IP: {{ attempt.ipAddress }} | {{ attempt.attemptedAt | date:'shortTime' }}</span>
-                  </div>
-                  <div>
-                    <span class="status-badge" [ngClass]="attempt.success ? 'success' : 'danger'" style="font-size: 0.75rem; padding: 0.2rem 0.4rem; border-radius: 4px;">
-                      {{ attempt.success ? 'SUCCESS' : 'FAILED' }}
-                    </span>
-                  </div>
-                </div>
-              }
-            </div>
-            
-            <button class="btn btn-secondary" style="width: 100%; border-color: var(--danger); color: var(--danger);" (click)="clearLoginAttempts()">
-              Clear Login Attempts Log
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <div class="cfg-section">
+      <h3>Déclencheurs de notification</h3>
+      <div class="policy-row" *ngFor="let n of notifTriggers"><span>{{ n.label }}</span><button type="button" class="switch" [class.on]="n.on" (click)="n.on = !n.on"><span></span></button></div>
     </div>
+    <div class="cfg-foot"><button class="btn btn-primary" (click)="saveNotifications()" [disabled]="submitting">Enregistrer les notifications</button></div>
+  </div>
 
+  <!-- ═══ Intégrations ═══ -->
+  <div class="glass-panel cfg-card" *ngIf="activeTab === 'integrations'">
+    <div class="integ-head"><h3>Google Calendar</h3><span class="badge" [class.badge-success]="googleConnected" [class.badge-slate]="!googleConnected">{{ googleStatusLabel }}</span></div>
+    <div class="cfg-grid">
+      <div class="cfg-field"><label>Client ID</label><input type="text" value="827341***-***.apps.googleusercontent.com" readonly /></div>
+      <div class="cfg-field"><label>Client Secret</label><input type="password" value="••••••••••••" readonly /></div>
+    </div>
+    <div style="margin-top:14px;"><button class="btn btn-secondary" (click)="reconnectGoogle()">Reconnecter Google Calendar</button></div>
+
+    <div class="cfg-section">
+      <h3>Intégrations à venir</h3>
+      <div class="integ-grid">
+        <div class="integ-card" *ngFor="let s of ['Slack','Microsoft Teams','Outlook']"><span>{{ s }}</span><span class="badge badge-slate">Bientôt</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Sauvegarde & Maintenance ═══ -->
+  <div class="glass-panel cfg-card" *ngIf="activeTab === 'backup'">
+    <div class="backup-banner">
+      <div>
+        <div class="bb-title">Dernière sauvegarde</div>
+        <div class="bb-sub">03 juin 2026 à 02:00 — 1,4 Go</div>
+      </div>
+      <span class="badge badge-success">● Réussie</span>
+    </div>
+    <div class="backup-actions">
+      <button class="btn btn-primary" (click)="triggerColdBackup()" [disabled]="backingUp">Lancer une sauvegarde manuelle</button>
+      <button class="btn btn-secondary">Télécharger la dernière</button>
+    </div>
+    <div class="cfg-field" style="max-width:320px; margin-top:18px;">
+      <label>Rétention des sauvegardes</label>
+      <select [(ngModel)]="backupRetention"><option>30 jours</option><option>7 jours</option><option>14 jours</option><option>90 jours</option></select>
+    </div>
+    <div class="cfg-foot"><button class="btn btn-primary" (click)="saveBackup()" [disabled]="submitting">Enregistrer la sauvegarde</button></div>
+
+    <div class="cfg-section">
+      <div class="maint-row">
+        <div>
+          <div class="bb-title">Mode maintenance</div>
+          <div class="bb-sub">Désactive l'accès utilisateur (les admins gardent l'accès)</div>
+        </div>
+        <button type="button" class="switch" [class.on]="maintenanceMode" (click)="maintenanceMode = !maintenanceMode; toggleMaintenanceMode()"><span></span></button>
+      </div>
+      <button class="btn btn-danger-soft" (click)="clearRedisCache()" [disabled]="clearingCache">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
+        Vider le cache système
+      </button>
+    </div>
   </div>
 </div>
-

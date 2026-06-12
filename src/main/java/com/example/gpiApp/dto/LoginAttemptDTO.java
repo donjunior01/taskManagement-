@@ -17,6 +17,7 @@ public class LoginAttemptDTO {
     private String username;
     private String email;
     private LoginAttempt.LoginStatus status;
+    private boolean success; // convenience flag for clients (status == SUCCESS)
     private String ipAddress;
     private String userAgent;
     private String reason;

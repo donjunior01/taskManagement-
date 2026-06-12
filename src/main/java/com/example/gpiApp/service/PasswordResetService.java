@@ -21,50 +21,54 @@ public class PasswordResetService {
     private final PasswordResetRequestRepository passwordResetRequestRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
-    
+    private final com.example.gpiApp.repository.UserService userService;
+
     @Transactional
     public ApiResponse<PasswordResetRequestDTO> createPasswordResetRequest(String email, String reason) {
-        // Check if user exists
-        allUsers user = userRepository.findByEmail(email)
-                .orElse(null);
-        
-        if (user == null) {
-            // Don't reveal if user exists for security
-            return ApiResponse.success("If the email exists, a password reset request has been sent to the administrator", null);
+        if (email == null || email.isBlank()) {
+            return ApiResponse.error("Veuillez saisir une adresse e-mail.");
         }
-        
-        // Check for existing pending request
-        passwordResetRequestRepository.findByEmailAndStatus(email, PasswordResetRequest.RequestStatus.PENDING)
-                .ifPresent(existing -> {
-                    throw new RuntimeException("A pending password reset request already exists for this email");
-                });
-        
+        allUsers user = userRepository.findByEmail(email).orElse(null);
+
+        // Per requirement: tell the user clearly whether the account exists, and only notify
+        // admins when it does.
+        if (user == null) {
+            return ApiResponse.error("Aucun compte n'est associé à cette adresse e-mail.");
+        }
+
+        // A pending request already exists → don't create a duplicate.
+        if (passwordResetRequestRepository.findByEmailAndStatus(email, PasswordResetRequest.RequestStatus.PENDING).isPresent()) {
+            return ApiResponse.success("Une demande de réinitialisation est déjà en attente pour cet e-mail. Un administrateur la traitera.", null);
+        }
+
         PasswordResetRequest request = PasswordResetRequest.builder()
                 .email(email)
                 .reason(reason)
                 .status(PasswordResetRequest.RequestStatus.PENDING)
                 .user(user)
                 .build();
-        
+
         PasswordResetRequest savedRequest = passwordResetRequestRepository.save(request);
-        
-        // Notify all admins
+
+        // Notify all admins so they can approve the reset.
         List<allUsers> admins = userRepository.findByRole(allUsers.Role.ADMIN);
         for (allUsers admin : admins) {
             notificationService.createNotification(
                 admin.getId(),
-                "Password Reset Request",
-                String.format("User %s (%s) has requested a password reset. Reason: %s", 
-                    user.getFirstName() + " " + user.getLastName(), 
+                "Demande de réinitialisation de mot de passe",
+                String.format("%s (%s) a demandé la réinitialisation de son mot de passe.%s",
+                    user.getFirstName() + " " + user.getLastName(),
                     email,
-                    reason != null && !reason.isEmpty() ? reason : "No reason provided"),
+                    reason != null && !reason.isEmpty() ? " Motif : " + reason : ""),
                 Notification.NotificationType.SYSTEM,
                 savedRequest.getId(),
                 "PASSWORD_RESET_REQUEST"
             );
         }
-        
-        return ApiResponse.success("Password reset request submitted successfully. An administrator will review your request.", convertToDTO(savedRequest));
+
+        return ApiResponse.success(
+            "Votre demande a été envoyée à l'administrateur. Une fois approuvée, vous recevrez votre nouveau mot de passe par e-mail.",
+            convertToDTO(savedRequest));
     }
     
     @Transactional(readOnly = true)
@@ -86,22 +90,20 @@ public class PasswordResetService {
         request.setStatus(PasswordResetRequest.RequestStatus.APPROVED);
         request.setProcessedBy(admin);
         request.setProcessedAt(java.time.LocalDateTime.now());
-        
+
         PasswordResetRequest savedRequest = passwordResetRequestRepository.save(request);
-        
-        // Notify user
+
+        // Actually reset the password to a policy-compliant temporary value and e-mail it to the user.
+        // (resetUserPassword also posts an in-app notification and sends the e-mail.)
         if (request.getUser() != null) {
-            notificationService.createNotification(
-                request.getUser().getId(),
-                "Password Reset Approved",
-                "Your password reset request has been approved. Please contact your administrator for the new password.",
-                Notification.NotificationType.SYSTEM,
-                savedRequest.getId(),
-                "PASSWORD_RESET_REQUEST"
-            );
+            try {
+                userService.resetUserPassword(request.getUser().getId());
+            } catch (Exception e) {
+                return ApiResponse.error("La demande a été approuvée mais la réinitialisation a échoué : " + e.getMessage());
+            }
         }
-        
-        return ApiResponse.success("Password reset request approved", convertToDTO(savedRequest));
+
+        return ApiResponse.success("Demande approuvée. Un nouveau mot de passe a été envoyé à l'utilisateur par e-mail.", convertToDTO(savedRequest));
     }
     
     @Transactional

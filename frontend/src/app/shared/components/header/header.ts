@@ -1,12 +1,21 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { NotificationPreferencesService, NotificationPreference } from '../../../core/services/notification-preferences.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { MessageService } from '../../../core/services/message.service';
+import { BadgeCountsService } from '../../../core/services/badge-counts.service';
+import { ProjectService } from '../../../core/services/project.service';
+import { TaskService } from '../../../core/services/task.service';
+import { TeamService } from '../../../core/services/team.service';
+import { DeliverableService } from '../../../core/services/deliverable.service';
+
+interface SearchResult { type: 'project' | 'task' | 'deliverable' | 'user' | 'team'; id?: number; label: string; sub?: string; route: any[]; query?: any; }
+interface SearchGroup { title: string; items: SearchResult[]; }
 
 export interface DisplayNotification {
   id: number;
@@ -35,6 +44,12 @@ export interface DisplayConversation {
 export class HeaderComponent implements OnInit {
   currentUser: any;
 
+  // Dynamic page title (mirrors prototype top bar)
+  pageTitle: string = 'Tableau de bord';
+
+  // Current date shown under the PM page title (prototype top bar)
+  currentDate: string = '';
+
   // Notifications
   showNotifications: boolean = false;
   unreadCount: number = 0;
@@ -44,6 +59,17 @@ export class HeaderComponent implements OnInit {
   showMessages: boolean = false;
   unreadMessagesCount: number = 0;
   conversationsList: DisplayConversation[] = [];
+
+  // Quick search
+  searchQuery = '';
+  searchFocused = false;
+  searchGroups: SearchGroup[] = [];
+  private searchLoaded = false;
+  private sProjects: any[] = [];
+  private sTasks: any[] = [];
+  private sUsers: any[] = [];
+  private sTeams: any[] = [];
+  private sDeliverables: any[] = [];
 
   // Profile dropdown & modals
   showProfileDropdown: boolean = false;
@@ -57,6 +83,7 @@ export class HeaderComponent implements OnInit {
 
   profileForm: any = { firstName: '', lastName: '', email: '' };
   passwordForm: any = { oldPassword: '', newPassword: '', confirmPassword: '' };
+  private currentUsername = '';
   prefsForm: NotificationPreference = {
     emailNotifications: true,
     pushNotifications: true,
@@ -73,9 +100,65 @@ export class HeaderComponent implements OnInit {
     private prefsService: NotificationPreferencesService,
     private notificationService: NotificationService,
     private messageService: MessageService,
+    private badges: BadgeCountsService,
+    private projectService: ProjectService,
+    private taskService: TaskService,
+    private teamService: TeamService,
+    private deliverableService: DeliverableService,
     private cdr: ChangeDetectorRef
   ) {
     this.currentUser = this.authService.getCurrentUser();
+    this.pageTitle = this.titleForUrl(this.router.url);
+    this.currentDate = this.frenchDate();
+    this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe((e: any) => {
+        this.pageTitle = this.titleForUrl(e.urlAfterRedirects || e.url);
+        this.cdr.detectChanges();
+      });
+  }
+
+  /** Maps the active route to its prototype page title (French). */
+  private titleForUrl(url: string): string {
+    const u = (url || '').split('?')[0];
+    const map: { key: string; title: string }[] = [
+      { key: '/admin/dashboard', title: 'Tableau de bord' },
+      { key: '/admin/users', title: 'Gestion des utilisateurs' },
+      { key: '/admin/projects', title: 'Supervision des projets' },
+      { key: '/admin/teams', title: 'Équipes' },
+      { key: '/admin/security-log', title: 'Journal de sécurité' },
+      { key: '/admin/login-attempts', title: 'Tentatives de connexion' },
+      { key: '/admin/activity-logs', title: "Journal d'activité" },
+      { key: '/admin/reports', title: 'Rapports globaux' },
+      { key: '/admin/performance', title: 'Performance' },
+      { key: '/admin/settings', title: 'Configuration système' },
+      { key: '/admin/support', title: 'Gestion du support' },
+      { key: '/admin/api-docs', title: 'Documentation API' },
+      { key: '/pm/dashboard', title: 'Tableau de bord' },
+      { key: '/pm/analytics', title: 'Analytique' },
+      { key: '/pm/projects', title: 'Projets' },
+      { key: '/pm/tasks', title: 'Tâches' },
+      { key: '/pm/teams', title: 'Équipes' },
+      { key: '/pm/deliverables', title: 'Livrables' },
+      { key: '/pm/calendar', title: 'Calendrier' },
+      { key: '/pm/reports', title: 'Rapports' },
+      { key: '/pm/messages', title: 'Messages' },
+      { key: '/pm/support', title: 'Support' },
+      { key: '/user/dashboard', title: 'Tableau de bord' },
+      { key: '/user/my-tasks', title: 'Mes tâches' },
+      { key: '/user/deliverables', title: 'Mes livrables' },
+      { key: '/user/time-logs', title: 'Temps de travail' },
+      { key: '/user/messages', title: 'Messages' },
+      { key: '/user/calendar', title: 'Calendrier' },
+      { key: '/user/notifications', title: 'Notifications' },
+      { key: '/user/support', title: 'Support' }
+    ];
+    const hit = map.find(m => u.startsWith(m.key));
+    return hit ? hit.title : 'Administration';
+  }
+
+  goToSecurity(): void {
+    this.router.navigate(['/admin/security-log']);
   }
 
   ngOnInit(): void {
@@ -86,7 +169,11 @@ export class HeaderComponent implements OnInit {
         email: this.currentUser.email
       };
       this.loadPreferences();
+      this.loadProfile();
     }
+    // Badge numbers are driven by the shared service (synced with sidebar + pages).
+    this.badges.notifications$.subscribe(n => { this.unreadCount = n; this.cdr.detectChanges(); });
+    this.badges.messages$.subscribe(n => { this.unreadMessagesCount = n; this.cdr.detectChanges(); });
     this.loadNotifications();
     if (!this.isAdmin()) {
       this.loadConversations();
@@ -109,6 +196,82 @@ export class HeaderComponent implements OnInit {
       this.showProfileDropdown = false;
       this.cdr.detectChanges();
     }
+    if (!target.closest('.quick-search') && this.searchFocused) {
+      this.searchFocused = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // ─── Quick search (PM: projets/tâches/livrables · Admin: projets/tâches/utilisateurs/équipes) ───
+  onSearchFocus(): void { this.searchFocused = true; this.loadSearchData(); }
+
+  private loadSearchData(): void {
+    if (this.searchLoaded) return;
+    this.searchLoaded = true;
+    const managerId = this.currentUser?.id || 0;
+
+    if (this.isAdmin()) {
+      this.projectService.getAllProjects(0, 200).subscribe({ next: (r: any) => { this.sProjects = r?.data || []; this.onSearch(); }, error: () => {} });
+      this.taskService.getAllTasks(0, 300).subscribe({ next: (r: any) => { this.sTasks = r?.data || []; this.onSearch(); }, error: () => {} });
+      this.userService.getAllUsers(0, 300).subscribe({ next: (r: any) => { this.sUsers = r?.data || []; this.onSearch(); }, error: () => {} });
+      this.teamService.getAllTeams().subscribe({ next: (r: any) => { this.sTeams = Array.isArray(r) ? r : (r?.data || []); this.onSearch(); }, error: () => {} });
+    } else if (this.isProjectManager()) {
+      this.projectService.getProjectsByManager(managerId, 0, 200).subscribe({
+        next: (r: any) => {
+          this.sProjects = r?.data || [];
+          const pids = this.sProjects.map((p: any) => p.id);
+          this.taskService.getAllTasks(0, 400).subscribe({ next: (tr: any) => { const all = tr?.data || []; this.sTasks = pids.length ? all.filter((t: any) => pids.includes(t.projectId)) : all; this.onSearch(); }, error: () => {} });
+          this.onSearch();
+        },
+        error: () => {}
+      });
+      this.deliverableService.getAllDeliverables().subscribe({ next: (r: any) => { this.sDeliverables = Array.isArray(r) ? r : (r?.data || []); this.onSearch(); }, error: () => {} });
+    }
+  }
+
+  onSearch(): void {
+    const q = this.searchQuery.toLowerCase().trim();
+    if (!q) { this.searchGroups = []; return; }
+    const groups: SearchGroup[] = [];
+    const inc = (s?: string) => (s || '').toLowerCase().includes(q);
+
+    const projects = this.sProjects.filter(p => inc(p.name)).slice(0, 5)
+      .map(p => ({ type: 'project' as const, id: p.id, label: p.name, sub: this.statusFr(p.status), route: this.isAdmin() ? ['/admin/projects'] : ['/pm/projects', p.id] }));
+    if (projects.length) groups.push({ title: 'Projets', items: projects });
+
+    const tasks = this.sTasks.filter(t => inc(t.name) || inc(t.projectName)).slice(0, 5)
+      .map(t => ({ type: 'task' as const, id: t.id, label: t.name, sub: t.projectName, route: this.isAdmin() ? ['/admin/tasks'] : ['/pm/tasks'], query: this.isAdmin() ? undefined : { focus: t.id } }));
+    if (tasks.length) groups.push({ title: 'Tâches', items: tasks });
+
+    if (this.isProjectManager()) {
+      const dels = this.sDeliverables.filter(d => inc(d.fileName) || inc(d.taskName)).slice(0, 5)
+        .map(d => ({ type: 'deliverable' as const, id: d.id, label: d.fileName, sub: d.taskName, route: ['/pm/deliverables'] }));
+      if (dels.length) groups.push({ title: 'Livrables', items: dels });
+    }
+
+    if (this.isAdmin()) {
+      const users = this.sUsers.filter(u => inc(u.firstName) || inc(u.lastName) || inc(u.email)).slice(0, 5)
+        .map(u => ({ type: 'user' as const, id: u.id, label: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email, sub: u.email, route: ['/admin/users'] }));
+      if (users.length) groups.push({ title: 'Utilisateurs', items: users });
+      const teams = this.sTeams.filter(t => inc(t.name)).slice(0, 5)
+        .map(t => ({ type: 'team' as const, id: t.id, label: t.name, sub: t.description, route: ['/admin/teams'] }));
+      if (teams.length) groups.push({ title: 'Équipes', items: teams });
+    }
+
+    this.searchGroups = groups;
+    this.cdr.detectChanges();
+  }
+
+  goResult(r: SearchResult): void {
+    this.searchFocused = false;
+    this.searchQuery = '';
+    this.searchGroups = [];
+    this.router.navigate(r.route, r.query ? { queryParams: r.query } : {});
+  }
+
+  private statusFr(s?: string): string {
+    const map: Record<string, string> = { ACTIVE: 'Actif', IN_PROGRESS: 'En cours', PLANNED: 'Planifié', ON_HOLD: 'En pause', COMPLETED: 'Terminé', CANCELLED: 'Annulé' };
+    return map[(s || '').toUpperCase()] || 'Projet';
   }
 
   // ─── Notifications ───
@@ -120,7 +283,7 @@ export class HeaderComponent implements OnInit {
           : (response?.data ?? response?.content ?? response?.notifications ?? []);
 
         this.notificationsList = raw.map(n => this.mapNotification(n));
-        this.unreadCount = this.notificationsList.filter(n => !n.isRead).length;
+        this.badges.setNotifications(this.notificationsList.filter(n => !n.isRead).length);
         this.cdr.detectChanges();
       },
       error: () => {}
@@ -129,7 +292,7 @@ export class HeaderComponent implements OnInit {
     this.notificationService.getUnreadCount().subscribe({
       next: (count: any) => {
         const n = typeof count === 'number' ? count : (count?.data ?? count?.count ?? 0);
-        if (n > 0) { this.unreadCount = n; this.cdr.detectChanges(); }
+        if (n > 0) { this.badges.setNotifications(n); this.cdr.detectChanges(); }
       },
       error: () => {}
     });
@@ -178,14 +341,14 @@ export class HeaderComponent implements OnInit {
     event.stopPropagation();
     if (notif.isRead) return;
     notif.isRead = true;
-    this.unreadCount = Math.max(0, this.unreadCount - 1);
+    this.badges.decNotifications(1);
     this.notificationService.markAsRead(notif.id).subscribe({ error: () => {} });
     this.cdr.detectChanges();
   }
 
   markAllAsRead(): void {
     this.notificationsList.forEach(n => n.isRead = true);
-    this.unreadCount = 0;
+    this.badges.setNotifications(0);
     this.notificationService.markAllAsRead().subscribe({ error: () => {} });
     this.cdr.detectChanges();
   }
@@ -199,7 +362,7 @@ export class HeaderComponent implements OnInit {
           : (response?.data ?? response?.content ?? []);
 
         this.conversationsList = raw.map(m => this.mapConversation(m));
-        this.unreadMessagesCount = this.conversationsList.filter(c => !c.isRead).length;
+        this.badges.setMessages(this.conversationsList.filter(c => !c.isRead).length);
         this.cdr.detectChanges();
       },
       error: () => {}
@@ -208,7 +371,7 @@ export class HeaderComponent implements OnInit {
     this.messageService.getUnreadCount().subscribe({
       next: (count: any) => {
         const n = typeof count === 'number' ? count : (count?.data ?? count?.count ?? 0);
-        if (n > 0) { this.unreadMessagesCount = n; this.cdr.detectChanges(); }
+        if (n > 0) { this.badges.setMessages(n); this.cdr.detectChanges(); }
       },
       error: () => {}
     });
@@ -239,7 +402,7 @@ export class HeaderComponent implements OnInit {
   openConversation(conv: DisplayConversation): void {
     if (!conv.isRead) {
       conv.isRead = true;
-      this.unreadMessagesCount = Math.max(0, this.unreadMessagesCount - 1);
+      this.badges.decMessages(1);
       this.messageService.markConversationAsRead(conv.senderId).subscribe({ error: () => {} });
     }
     this.showMessages = false;
@@ -248,7 +411,7 @@ export class HeaderComponent implements OnInit {
 
   markAllMessagesRead(): void {
     this.conversationsList.forEach(c => c.isRead = true);
-    this.unreadMessagesCount = 0;
+    this.badges.setMessages(0);
     this.cdr.detectChanges();
   }
 
@@ -297,7 +460,31 @@ export class HeaderComponent implements OnInit {
   getDisplayName(): string {
     return this.currentUser?.firstName
       ? `${this.currentUser.firstName} ${this.currentUser.lastName}`
-      : 'User';
+      : 'Utilisateur';
+  }
+
+  /** Top-bar menu shows the user's first name (falls back to the email handle). */
+  getFirstName(): string {
+    return this.currentUser?.firstName?.trim()
+      || this.currentUser?.email?.split('@')[0]
+      || 'Mon compte';
+  }
+
+  /** Loads the real profile (first/last name, email, username) to populate the menu + forms. */
+  private loadProfile(): void {
+    if (!this.currentUser?.id) return;
+    this.userService.getUserProfile(this.currentUser.id).subscribe({
+      next: (p: any) => {
+        const u = p?.data || p;
+        if (!u) return;
+        this.currentUsername = u.username || '';
+        this.currentUser = { ...this.currentUser, firstName: u.firstName, lastName: u.lastName, email: u.email };
+        this.authService.updateCurrentUser({ firstName: u.firstName, lastName: u.lastName, email: u.email });
+        this.profileForm = { firstName: u.firstName, lastName: u.lastName, email: u.email };
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
   }
 
   getDisplayTitle(): string {
@@ -305,19 +492,42 @@ export class HeaderComponent implements OnInit {
   }
 
   getDisplayRole(): string {
-    if (!this.currentUser?.role) return 'User Workspace';
+    if (!this.currentUser?.role) return 'Espace Utilisateur';
     const role = this.currentUser.role.replace('ROLE_', '');
     switch (role) {
-      case 'ADMIN':           return 'Administrator';
-      case 'PROJECT_MANAGER': return 'Project Manager';
-      case 'USER':            return 'Developer Workspace';
+      case 'ADMIN':           return 'Administrateur';
+      case 'PROJECT_MANAGER': return 'Chef de Projet';
+      case 'USER':            return 'Espace Collaborateur';
       default:                return role;
     }
+  }
+
+  getUserInitials(): string {
+    const f = this.currentUser?.firstName?.[0] ?? '';
+    const l = this.currentUser?.lastName?.[0] ?? '';
+    const initials = `${f}${l}`.toUpperCase();
+    return initials || (this.currentUser?.email?.[0]?.toUpperCase() ?? 'U');
   }
 
   isAdmin(): boolean {
     if (!this.currentUser?.role) return false;
     return this.currentUser.role.replace('ROLE_', '') === 'ADMIN';
+  }
+
+  isProjectManager(): boolean {
+    if (!this.currentUser?.role) return false;
+    return this.currentUser.role.replace('ROLE_', '') === 'PROJECT_MANAGER';
+  }
+
+  isUser(): boolean {
+    if (!this.currentUser?.role) return false;
+    return this.currentUser.role.replace('ROLE_', '') === 'USER';
+  }
+
+  /** Long French date, capitalised — e.g. "Vendredi 5 juin 2026". */
+  private frenchDate(): string {
+    const d = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    return d.charAt(0).toUpperCase() + d.slice(1);
   }
 
   toggleProfileDropdown(): void {
@@ -340,21 +550,31 @@ export class HeaderComponent implements OnInit {
   closeProfileModal(): void { this.showProfileModal = false; }
 
   saveProfile(): void {
+    if (!this.profileForm.firstName?.trim() || !this.profileForm.email?.trim()) {
+      this.triggerToast('Le prénom et l\'email sont requis.');
+      return;
+    }
     this.submitting = true;
-    this.userService.updateUserProfile(this.currentUser.id, this.profileForm).subscribe({
+    const payload = {
+      username: this.currentUsername || this.profileForm.email,
+      email: this.profileForm.email,
+      firstName: this.profileForm.firstName,
+      lastName: this.profileForm.lastName,
+      role: this.currentUser?.role
+    };
+    this.userService.updateUserProfile(this.currentUser.id, payload).subscribe({
       next: () => {
         this.submitting = false;
         this.showProfileModal = false;
-        this.triggerToast('Profile updated successfully.');
-        this.currentUser = { ...this.currentUser, ...this.profileForm };
-        localStorage.setItem('user', JSON.stringify(this.currentUser));
+        this.currentUser = { ...this.currentUser, firstName: payload.firstName, lastName: payload.lastName, email: payload.email };
+        this.authService.updateCurrentUser({ firstName: payload.firstName, lastName: payload.lastName, email: payload.email });
+        this.triggerToast('Profil mis à jour avec succès.');
+        this.cdr.detectChanges();
       },
-      error: () => {
+      error: (err: any) => {
         this.submitting = false;
-        this.showProfileModal = false;
-        this.triggerToast('Profile updated locally.');
-        this.currentUser = { ...this.currentUser, ...this.profileForm };
-        localStorage.setItem('user', JSON.stringify(this.currentUser));
+        this.triggerToast(err?.error?.message || err?.error?.error || 'Échec de la mise à jour du profil.');
+        this.cdr.detectChanges();
       }
     });
   }
@@ -368,21 +588,34 @@ export class HeaderComponent implements OnInit {
   closePasswordModal(): void { this.showPasswordModal = false; }
 
   changePassword(): void {
+    if (!this.passwordForm.oldPassword || !this.passwordForm.newPassword) {
+      this.triggerToast('Veuillez remplir tous les champs.');
+      return;
+    }
     if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-      this.triggerToast('New passwords do not match.');
+      this.triggerToast('Les nouveaux mots de passe ne correspondent pas.');
+      return;
+    }
+    if (this.passwordForm.newPassword.length < 4) {
+      this.triggerToast('Le nouveau mot de passe doit comporter au moins 4 caractères.');
       return;
     }
     this.submitting = true;
-    this.userService.changePassword(this.passwordForm).subscribe({
-      next: () => {
+    // Backend expects { currentPassword, newPassword }.
+    this.userService.changePassword({
+      currentPassword: this.passwordForm.oldPassword,
+      newPassword: this.passwordForm.newPassword
+    }).subscribe({
+      next: (res: any) => {
         this.submitting = false;
+        if (res && res.success === false) { this.triggerToast(res.message || 'Échec du changement de mot de passe.'); return; }
         this.showPasswordModal = false;
-        this.triggerToast('Password changed successfully.');
+        this.passwordForm = { oldPassword: '', newPassword: '', confirmPassword: '' };
+        this.triggerToast('Mot de passe modifié avec succès.');
       },
-      error: () => {
+      error: (err: any) => {
         this.submitting = false;
-        this.showPasswordModal = false;
-        this.triggerToast('Password updated locally.');
+        this.triggerToast(err?.error?.message || 'Le mot de passe actuel est incorrect.');
       }
     });
   }
@@ -400,19 +633,18 @@ export class HeaderComponent implements OnInit {
       next: () => {
         this.submitting = false;
         this.showPrefsModal = false;
-        this.triggerToast('Notification preferences saved.');
+        this.triggerToast('Préférences de notification enregistrées.');
       },
       error: () => {
         this.prefsService.createPreferences(this.prefsForm).subscribe({
           next: () => {
             this.submitting = false;
             this.showPrefsModal = false;
-            this.triggerToast('Notification preferences created.');
+            this.triggerToast('Préférences de notification créées.');
           },
-          error: () => {
+          error: (err: any) => {
             this.submitting = false;
-            this.showPrefsModal = false;
-            this.triggerToast('Preferences saved locally.');
+            this.triggerToast(err?.error?.message || 'Échec de l\'enregistrement des préférences.');
           }
         });
       }
@@ -421,8 +653,8 @@ export class HeaderComponent implements OnInit {
 
   deletePreferences(): void {
     this.prefsService.deleteMyPreferences().subscribe({
-      next: () => { this.showPrefsModal = false; this.triggerToast('Preferences deleted.'); },
-      error: () => { this.showPrefsModal = false; this.triggerToast('Preferences deleted locally.'); }
+      next: () => { this.showPrefsModal = false; this.triggerToast('Préférences supprimées.'); },
+      error: () => { this.showPrefsModal = false; this.triggerToast('Préférences supprimées localement.'); }
     });
   }
 

@@ -45,9 +45,10 @@ export class AiAssistantWidgetComponent implements AfterViewChecked {
     const roles = this.auth.getUserRoles();
     if (roles.includes('ROLE_ADMIN')) {
       return [
+        'How do I use my admin dashboard?',
+        'How do I create a user or reset their password?',
         'Give me an overview of all projects and their status',
-        'Which projects are at risk or overdue?',
-        'Summarise overall team workload and activity'
+        'Which projects are at risk or overdue?'
       ];
     }
     if (roles.includes('ROLE_PROJECT_MANAGER')) {

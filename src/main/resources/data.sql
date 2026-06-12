@@ -122,17 +122,18 @@ INSERT IGNORE INTO time_logs (id, task_id, user_id, hours, log_date, description
 -- DELIVERABLES (10 deliverables)
 -- ===================================
 
-INSERT IGNORE INTO deliverables (id, task_id, submitted_by_id, file_name, file_path, status, submitted_at, reviewed_at, reviewed_by_id, feedback, created_at, updated_at) VALUES
-(100, 100, 103, 'akwa_tower_report.pdf', '/uploads/akwa_tower_report.pdf', 'APPROVED', NOW(), NOW(), 101, 'Excellent documentation', NOW(), NOW()),
-(101, 101, 104, 'network_config.xlsx', '/uploads/network_config.xlsx', 'PENDING', NOW(), NULL, NULL, NULL, NOW(), NOW()),
-(102, 102, 105, 'momo_api_docs.pdf', '/uploads/momo_api_docs.pdf', 'APPROVED', NOW(), NOW(), 101, 'Comprehensive API docs', NOW(), NOW()),
-(103, 103, 107, 'portal_mockups.fig', '/uploads/portal_mockups.fig', 'APPROVED', NOW(), NOW(), 102, 'Beautiful design', NOW(), NOW()),
-(104, 105, 104, 'datacenter_photos.zip', '/uploads/datacenter_photos.zip', 'PENDING', NOW(), NULL, NULL, NULL, NOW(), NOW()),
-(105, 106, 106, 'fiber_route.kml', '/uploads/fiber_route.kml', 'REJECTED', NOW(), NOW(), 101, 'Route needs revision', NOW(), NOW()),
-(106, 107, 108, '5g_training.mp4', '/uploads/5g_training.mp4', 'APPROVED', NOW(), NOW(), 102, 'Very informative', NOW(), NOW()),
-(107, 108, 105, 'fraud_model.pkl', '/uploads/fraud_model.pkl', 'PENDING', NOW(), NULL, NULL, NULL, NOW(), NOW()),
-(108, 100, 103, 'site_photos.zip', '/uploads/site_photos.zip', 'PENDING', NOW(), NULL, NULL, NULL, NOW(), NOW()),
-(109, 102, 105, 'test_results.pdf', '/uploads/test_results.pdf', 'PENDING', NOW(), NULL, NULL, NULL, NOW(), NOW());
+-- NOTE: No mock deliverables are seeded — they referenced files that don't exist on disk,
+-- so their downloads always failed. The statements below purge any previously-seeded mock
+-- rows (matched by their exact placeholder paths) and any empty-file rows created by earlier
+-- bugs, on every startup. Real user uploads (paths like /uploads/<timestamp>_<uuid>.<ext>)
+-- are never matched, so they are preserved.
+DELETE FROM deliverables WHERE file_path IN (
+    '/uploads/akwa_tower_report.pdf', '/uploads/network_config.xlsx', '/uploads/momo_api_docs.pdf',
+    '/uploads/portal_mockups.fig', '/uploads/datacenter_photos.zip', '/uploads/fiber_route.kml',
+    '/uploads/5g_training.mp4', '/uploads/fraud_model.pkl', '/uploads/site_photos.zip',
+    '/uploads/test_results.pdf'
+);
+DELETE FROM deliverables WHERE file_path IS NULL OR TRIM(file_path) = '' OR file_name IS NULL OR TRIM(file_name) = '';
 
 -- ===================================
 -- MESSAGES (10 messages)

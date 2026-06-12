@@ -34,8 +34,11 @@ export class DeliverableService {
 
   constructor(private apiService: ApiService) {}
 
+  // List endpoints are paginated server-side (default size=10); request a large page so the UI shows everything.
+  private readonly bulk = '?page=0&size=500';
+
   getAllDeliverables(): Observable<Deliverable[]> {
-    return this.apiService.get<any>(this.basePath).pipe(
+    return this.apiService.get<any>(`${this.basePath}${this.bulk}`).pipe(
       map(r => r && r.data ? r.data : [])
     );
   }
@@ -47,13 +50,13 @@ export class DeliverableService {
   }
 
   getDeliverablesByUser(userId: number): Observable<Deliverable[]> {
-    return this.apiService.get<any>(`${this.basePath}/user/${userId}`).pipe(
+    return this.apiService.get<any>(`${this.basePath}/user/${userId}${this.bulk}`).pipe(
       map(r => r && r.data ? r.data : [])
     );
   }
 
   getDeliverablesByTask(taskId: number): Observable<Deliverable[]> {
-    return this.apiService.get<any>(`${this.basePath}/task/${taskId}`).pipe(
+    return this.apiService.get<any>(`${this.basePath}/task/${taskId}${this.bulk}`).pipe(
       map(r => r && r.data ? r.data : [])
     );
   }
@@ -71,7 +74,7 @@ export class DeliverableService {
   }
 
   getMyDeliverables(): Observable<Deliverable[]> {
-    return this.apiService.get<any>(`${this.basePath}/my`).pipe(
+    return this.apiService.get<any>(`${this.basePath}/my${this.bulk}`).pipe(
       map(r => r && r.data ? r.data : [])
     );
   }

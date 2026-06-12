@@ -1,564 +1,484 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
-import { ProjectService } from '../../../core/services/project.service';
-import { TaskService } from '../../../core/services/task.service';
+import { ProjectService, Project } from '../../../core/services/project.service';
+import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { CalendarService, CalendarEvent as ApiCalendarEvent, CalendarSyncStatus } from '../../../core/services/calendar.service';
+import { CalendarService, CalendarEvent as ApiEvent, CalendarSyncStatus } from '../../../core/services/calendar.service';
 import { ToastService } from '../../../core/services/toast.service';
 
-export interface CalendarEvent {
-  id: number;
-  title: string;
-  projectName: string;
-  time: string;
-  type: 'DEADLINE' | 'MEETING' | 'MILESTONE';
-  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-  notes: string;
-  originalEvent?: ApiCalendarEvent;
+type ItemType = 'task' | 'milestone' | 'meeting' | 'overdue';
+interface CalItem {
+  id: string; date: Date; dateStr: string; name: string; type: ItemType; project: string; time?: string;
+  eid?: number; tid?: number; pid?: number; rawEvent?: ApiEvent; rawTask?: Task; rawDesc?: string;
 }
-
-export interface DaySchedule {
-  date: Date;
-  dayOfMonth: number;
-  isCurrentMonth: boolean;
-  isToday: boolean;
-  events: CalendarEvent[];
-}
+interface DayCell { date: Date; dateStr: string; day: number; inMonth: boolean; isToday: boolean; items: CalItem[]; }
 
 @Component({
   selector: 'app-pm-calendar',
   standalone: true,
   imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
-  templateUrl: './calendar.html',
-  styleUrls: ['./calendar.scss']
+  template: `
+  <div class="cal-wrap">
+
+    <!-- ═══ Top bar ═══ -->
+    <div class="cal-top">
+      <div class="nav">
+        <button class="nav-btn" (click)="shift(-1)" aria-label="Précédent">‹</button>
+        <button class="today-btn" (click)="goToday()">Aujourd'hui</button>
+        <button class="nav-btn" (click)="shift(1)" aria-label="Suivant">›</button>
+        <h2 class="period">{{ periodLabel }}</h2>
+      </div>
+      <div class="top-right">
+        <div class="view-toggle">
+          <button *ngFor="let v of views" [class.on]="view === v.key" (click)="view = v.key">{{ v.label }}</button>
+        </div>
+        <button class="btn-outline sync" (click)="importFromGoogle()" [disabled]="importing" title="Importer depuis Google Calendar">↧ Importer</button>
+        <button class="btn-outline sync" (click)="syncAllToGoogle()" [disabled]="syncing" title="Synchroniser vers Google Calendar">⟳ Sync</button>
+        <button class="btn-primary" (click)="openCreate()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Créer un Événement
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══ Filters ═══ -->
+    <div class="cal-filters">
+      <span class="fl-label">Projets :</span>
+      <button class="proj-chip" *ngFor="let p of projectChips" [class.off]="!activeProjects.has(p.name)" (click)="toggleProject(p.name)">
+        <span class="dot" [style.background]="p.color"></span>{{ p.name }}
+      </button>
+      <span class="divider">|</span>
+      <label class="type-check" *ngFor="let t of typeOptions">
+        <input type="checkbox" [checked]="typeFlags[t.key]" (change)="toggleType(t.key)"> {{ t.label }}
+      </label>
+    </div>
+
+    <!-- ═══ Month grid ═══ -->
+    <div class="cal-card anim" *ngIf="view === 'month'">
+      <div class="dow-row"><div class="dow" *ngFor="let d of dows">{{ d }}</div></div>
+      <div class="month-grid">
+        <div class="cell" *ngFor="let c of monthCells; trackBy: trackCell" [class.out]="!c.inMonth" [class.past-cell]="isPastDate(c)" [class.drop-over]="dragOver === c.dateStr"
+             (dragover)="onDragOver($event, c)" (dragleave)="onDragLeave(c)" (drop)="onDrop($event, c)">
+          <span class="cell-num" [class.today]="c.isToday">{{ c.day }}</span>
+          <div class="cell-items">
+            <div class="ev-pill" *ngFor="let it of c.items; trackBy: trackItem" [ngClass]="'t-' + it.type" [class.locked]="!isDraggable(it)"
+                 [attr.draggable]="isDraggable(it)" (dragstart)="onDragStart($event, it)" (dragend)="onDragEnd()"
+                 (click)="handleClick(it)" [title]="it.name + ' · ' + it.project + (isDraggable(it) ? '' : ' · (non déplaçable)')">
+              <span *ngIf="it.type === 'milestone'">◆ </span>{{ it.name }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ List / Week / Day view ═══ -->
+    <div class="cal-card anim" *ngIf="view !== 'month'">
+      <div class="agenda">
+        <div class="agenda-group" *ngFor="let g of agendaGroups">
+          <div class="agenda-date">{{ g.label }}</div>
+          <div class="agenda-item" *ngFor="let it of g.items" (click)="handleClick(it)">
+            <span class="ev-dot" [ngClass]="'t-' + it.type"></span>
+            <div class="ai-body">
+              <div class="ai-name">{{ it.name }}</div>
+              <div class="ai-meta">{{ typeLabel(it.type) }} · {{ it.project }}<span *ngIf="it.time"> · {{ it.time }}</span></div>
+            </div>
+            <span class="ai-badge" [ngClass]="'t-' + it.type">{{ typeLabel(it.type) }}</span>
+          </div>
+        </div>
+        <div class="empty" *ngIf="agendaGroups.length === 0">Aucun événement sur cette période.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Create event dialog ═══ -->
+  <div class="modal-backdrop" *ngIf="showCreate" (click)="showCreate = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="m-head"><h3>Nouvel événement</h3><button class="x" (click)="showCreate = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
+      <div class="m-body">
+        <div class="fg"><label>Titre *</label><input type="text" [(ngModel)]="form.title" placeholder="Ex : Démo client"></div>
+        <div class="grid2">
+          <div class="fg"><label>Type</label><select [(ngModel)]="form.type"><option value="meeting">Réunion</option><option value="milestone">Jalon</option><option value="reminder">Rappel</option></select></div>
+          <div class="fg"><label>Projet</label><select [(ngModel)]="form.projectId"><option [ngValue]="undefined">Aucun</option><option *ngFor="let p of projectsList" [ngValue]="p.id">{{ p.name }}</option></select></div>
+        </div>
+        <div class="grid2">
+          <div class="fg"><label>Date *</label><input type="date" [(ngModel)]="form.date"></div>
+          <div class="fg"><label>Heure</label><input type="time" [(ngModel)]="form.time"></div>
+        </div>
+        <div class="fg"><label>Destinataires</label>
+          <select [(ngModel)]="form.audience">
+            <option value="PROJECT">Membres du projet sélectionné</option>
+            <option value="SELF">Moi uniquement</option>
+          </select>
+          <span class="hint">L'événement s'ajoute à l'agenda des destinataires et ils reçoivent une notification.</span>
+        </div>
+        <div class="fg"><label>Description</label><app-ai-describe [type]="'EVENT'" [title]="form.title" (generated)="form.description = $event"></app-ai-describe><textarea rows="3" [(ngModel)]="form.description"></textarea></div>
+      </div>
+      <div class="m-foot"><button class="btn-ghost" (click)="showCreate = false">Annuler</button><button class="btn-primary" (click)="saveEvent()" [disabled]="saving">Enregistrer</button></div>
+    </div>
+  </div>
+
+  <!-- ═══ Event detail popup ═══ -->
+  <div class="modal-backdrop" *ngIf="detail" (click)="detail = null">
+    <div class="modal sm" (click)="$event.stopPropagation()">
+      <div class="m-head"><h3>{{ detail!.name }}</h3><button class="x" (click)="detail = null"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
+      <div class="m-body">
+        <div class="det-row"><span class="det-k">Type</span><span class="ai-badge" [ngClass]="'t-' + detail!.type">{{ typeLabel(detail!.type) }}</span></div>
+        <div class="det-row"><span class="det-k">Projet</span><span>{{ detail!.project }}</span></div>
+        <div class="det-row"><span class="det-k">Date</span><span>{{ longDateStr(detail!.date) }}</span></div>
+        <div class="det-row" *ngIf="detail!.time"><span class="det-k">Heure</span><span>{{ detail!.time }}</span></div>
+        <div class="det-desc" *ngIf="cleanDesc(detail!.rawDesc)">{{ cleanDesc(detail!.rawDesc) }}</div>
+      </div>
+      <div class="m-foot"><button class="btn-ghost" (click)="detail = null">Fermer</button></div>
+    </div>
+  </div>
+  `,
+  styles: [`
+    .cal-wrap { display: flex; flex-direction: column; gap: 14px; }
+    @keyframes cFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .anim { animation: cFade .4s ease both; }
+
+    .cal-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+    .nav { display: flex; align-items: center; gap: 8px; }
+    .nav-btn { width: 32px; height: 32px; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; cursor: pointer; font-size: 17px; line-height: 1; color: #475569; } .nav-btn:hover { background: #f1f5f9; }
+    .today-btn { height: 32px; padding: 0 12px; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #475569; cursor: pointer; } .today-btn:hover { background: #f1f5f9; }
+    .period { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 0 8px; text-transform: capitalize; }
+    .top-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .view-toggle { display: inline-flex; padding: 2px; border: 1px solid #e2e8f0; border-radius: 9px; background: #fff; }
+    .view-toggle button { height: 30px; padding: 0 12px; border: none; background: none; border-radius: 7px; font-size: 12px; font-weight: 600; color: #64748b; cursor: pointer; font-family: inherit; }
+    .view-toggle button.on { background: #2563eb; color: #fff; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: none; border-radius: 9px; background: #2563eb; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; } .btn-primary svg { width: 15px; height: 15px; } .btn-primary:hover { background: #1d4ed8; } .btn-primary:disabled { opacity: .6; }
+    .btn-outline.sync { height: 36px; padding: 0 11px; border: 1px solid #e2e8f0; background: #fff; border-radius: 9px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; font-family: inherit; } .btn-outline.sync:hover { background: #f1f5f9; } .btn-outline.sync:disabled { opacity: .5; }
+    .btn-ghost { height: 36px; padding: 0 14px; border: none; background: none; border-radius: 9px; color: #475569; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; } .btn-ghost:hover { background: #f1f5f9; }
+
+    .cal-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .fl-label { font-size: 12px; font-weight: 600; color: #64748b; }
+    .proj-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 9999px; background: #fff; border: 1px solid #e2e8f0; font-size: 11px; font-weight: 600; color: #1e293b; cursor: pointer; }
+    .proj-chip .dot { width: 8px; height: 8px; border-radius: 3px; } .proj-chip.off { opacity: .4; }
+    .divider { color: #cbd5e1; margin: 0 2px; }
+    .type-check { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #475569; cursor: pointer; } .type-check input { width: 13px; height: 13px; accent-color: #2563eb; }
+
+    .cal-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); overflow: hidden; }
+    .dow-row { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+    .dow { padding: 9px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; }
+    .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .cell { min-height: 104px; border-bottom: 1px solid #eef2f7; border-right: 1px solid #eef2f7; padding: 6px; transition: background .12s ease; }
+    .cell.out { background: #f8fafc; color: #cbd5e1; } .cell.drop-over { background: rgba(37,99,235,.08); box-shadow: inset 0 0 0 2px #2563eb; }
+    .cell-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px; }
+    .cell-num.today { background: #2563eb; color: #fff; }
+    .cell-items { display: flex; flex-direction: column; gap: 3px; }
+    .ev-pill { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 2px solid; cursor: pointer; }
+    .ev-pill[draggable=true] { cursor: grab; } .ev-pill[draggable=true]:active { cursor: grabbing; }
+    .ev-pill.locked { cursor: pointer; opacity: .6; }
+    .cell.past-cell { background: #fcfcfd; }
+    .ev-pill.t-task { background: rgba(37,99,235,.1); color: #2563eb; border-color: #2563eb; }
+    .ev-pill.t-milestone { background: #f3e8ff; color: #7c3aed; border-color: #a855f7; }
+    .ev-pill.t-meeting { background: rgba(245,158,11,.15); color: #b45309; border-color: #f59e0b; }
+    .ev-pill.t-overdue { background: rgba(220,38,38,.1); color: #dc2626; border-color: #ef4444; }
+
+    .agenda { padding: 8px 0; }
+    .agenda-date { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #94a3b8; padding: 8px 18px; background: #f8fafc; }
+    .agenda-item { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-top: 1px solid #eef2f7; cursor: pointer; }
+    .agenda-item:hover { background: #f8fafc; }
+    .ev-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .ev-dot.t-task { background: #2563eb; } .ev-dot.t-milestone { background: #a855f7; } .ev-dot.t-meeting { background: #f59e0b; } .ev-dot.t-overdue { background: #ef4444; }
+    .ai-body { flex: 1; min-width: 0; } .ai-name { font-size: 13.5px; font-weight: 600; color: #1e293b; } .ai-meta { font-size: 11.5px; color: #64748b; margin-top: 2px; }
+    .ai-badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 9999px; white-space: nowrap; }
+    .ai-badge.t-task { background: rgba(37,99,235,.1); color: #2563eb; } .ai-badge.t-milestone { background: #f3e8ff; color: #7c3aed; } .ai-badge.t-meeting { background: rgba(245,158,11,.15); color: #b45309; } .ai-badge.t-overdue { background: rgba(220,38,38,.1); color: #dc2626; }
+    .empty { padding: 40px; text-align: center; color: #94a3b8; font-size: 13px; }
+
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.5); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .modal { width: 100%; max-width: 520px; background: #fff; border-radius: 18px; box-shadow: 0 24px 60px rgba(15,23,42,.3); max-height: calc(100vh - 48px); overflow-y: auto; } .modal.sm { max-width: 420px; }
+    .m-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 10px; } .m-head h3 { font-size: 16.5px; font-weight: 700; color: #1e293b; margin: 0; }
+    .x { width: 32px; height: 32px; border: none; background: #f1f5f9; border-radius: 8px; cursor: pointer; color: #64748b; display: grid; place-items: center; } .x svg { width: 15px; height: 15px; }
+    .m-body { padding: 8px 22px; display: flex; flex-direction: column; gap: 13px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .fg { display: flex; flex-direction: column; gap: 6px; } .fg label { font-size: 12px; font-weight: 700; color: #475569; }
+    .fg input, .fg textarea, .fg select { width: 100%; padding: 9px 11px; border: 1px solid #e2e8f0; border-radius: 9px; font-size: 13px; font-family: inherit; color: #1e293b; outline: none; background: #fff; }
+    .fg input:focus, .fg textarea:focus, .fg select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    .m-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 22px 20px; }
+    .det-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #475569; } .det-k { width: 70px; font-weight: 700; color: #94a3b8; font-size: 11.5px; text-transform: uppercase; }
+    .det-desc { font-size: 13px; color: #475569; background: #f8fafc; border-radius: 10px; padding: 10px 12px; }
+  `]
 })
 export class PmCalendarComponent implements OnInit {
-  managerId: number = 0;
-  eventsList: CalendarEvent[] = [];
-  loading: boolean = true;
+  managerId = 0;
+  projectsList: Project[] = [];
+  items: CalItem[] = [];
+  loading = true;
 
-  // View mode
-  viewMode: 'month' | 'week' | 'day' = 'month';
+  view: 'month' | 'week' | 'day' | 'list' = 'month';
+  views = [{ key: 'month' as const, label: 'Mois' }, { key: 'week' as const, label: 'Semaine' }, { key: 'day' as const, label: 'Jour' }, { key: 'list' as const, label: 'Liste' }];
+  ref: Date = new Date();
+  selectedDate: Date = new Date();
+  dows = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
-  // Calendar state
-  currentDate: Date = new Date();
-  calendarDays: DaySchedule[] = [];
-  weekDays: DaySchedule[] = [];
-  selectedDay: DaySchedule | null = null;
+  typeOptions = [{ key: 'task' as ItemType, label: 'Tâches' }, { key: 'milestone' as ItemType, label: 'Jalons' }, { key: 'meeting' as ItemType, label: 'Réunions' }, { key: 'overdue' as ItemType, label: 'Échéances' }];
+  typeFlags: Record<ItemType, boolean> = { task: true, milestone: true, meeting: true, overdue: true };
+  projectChips: { name: string; color: string }[] = [];
+  activeProjects = new Set<string>();
 
-  readonly monthNames = [
-    'January','February','March','April','May','June',
-    'July','August','September','October','November','December'
-  ];
+  showCreate = false;
+  saving = false;
+  form = { title: '', type: 'meeting', projectId: undefined as number | undefined, date: '', time: '09:00', audience: 'PROJECT', description: '' };
+  detail: CalItem | null = null;
 
-  // Hour slots 7 AM – 9 PM for day view
-  readonly hourSlots: number[] = Array.from({ length: 15 }, (_, i) => i + 7);
+  dragged: CalItem | null = null;
+  dragOver: string | null = null;
 
-  // Filters
-  selectedProject: string = '';
-  selectedPriority: string = '';
-  selectedType: string = '';
-  projectsList: string[] = [];
-
-  // Add Event Modal
-  showAddModal: boolean = false;
-  newEvent = {
-    title: '',
-    projectName: '',
-    time: '09:00 AM',
-    type: 'MEETING' as 'DEADLINE' | 'MEETING' | 'MILESTONE',
-    priority: 'MEDIUM' as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
-    notes: ''
-  };
-  savingEvent: boolean = false;
-
-  // Drag and Drop state
-  draggedEvent: CalendarEvent | null = null;
-  dragSourceDay: DaySchedule | null = null;
-  dragOverDay: DaySchedule | null = null;
-
-  // Google Calendar sync
   syncStatus: CalendarSyncStatus | null = null;
-  syncing: boolean = false;
-  importing: boolean = false;
+  syncing = false;
+  importing = false;
+
+  private palette = ['#2D6BE4', '#A855F7', '#22C55E', '#EF4444', '#F97316', '#0891b2', '#d97706'];
+  private monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
   constructor(
     private projectService: ProjectService,
     private taskService: TaskService,
     private authService: AuthService,
     private calendarService: CalendarService,
+    private toast: ToastService,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService
+    private router: Router
   ) {}
 
   ngOnInit(): void {
-    const user = this.authService.getCurrentUser();
-    if (user) this.managerId = user.id;
-    this.loadData();
-    this.loadSyncStatus();
+    this.managerId = this.authService.getCurrentUser()?.id || 0;
+    this.loadAll();
   }
 
-  // ── Google Calendar sync ─────────────────────────────────────────────────────
-
-  loadSyncStatus(): void {
-    this.calendarService.getSyncStatus().subscribe({
-      next: (res: any) => {
-        this.syncStatus = res?.data || res;
-        this.cdr.detectChanges();
-      },
-      error: () => { this.syncStatus = null; }
-    });
-  }
-
-  syncAllToGoogle(): void {
-    if (this.syncing) return;
-    this.syncing = true;
-    this.calendarService.syncAllToGoogle().subscribe({
-      next: (res: any) => {
-        const result = res?.data || res;
-        this.syncing = false;
-        if (result?.enabled) {
-          this.triggerToast(result.message || 'Synced to Google Calendar.', 'success');
-        } else {
-          this.triggerToast(result?.message || 'Google Calendar is not configured.', 'error');
-        }
-        this.loadSyncStatus();
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.syncing = false;
-        this.triggerToast('Sync failed. Please try again.', 'error');
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  importFromGoogle(): void {
-    if (this.importing) return;
-    this.importing = true;
-    // Import a 6-month window around today.
-    const start = new Date(); start.setMonth(start.getMonth() - 1);
-    const end = new Date(); end.setMonth(end.getMonth() + 5);
-    this.calendarService.importFromGoogle(start.toISOString(), end.toISOString()).subscribe({
-      next: (res: any) => {
-        const result = res?.data || res;
-        this.importing = false;
-        if (result?.enabled) {
-          this.triggerToast(result.message || 'Imported from Google Calendar.', 'success');
-          this.loadData();
-        } else {
-          this.triggerToast(result?.message || 'Google Calendar is not configured.', 'error');
-        }
-        this.loadSyncStatus();
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.importing = false;
-        this.triggerToast('Import failed. Please try again.', 'error');
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  loadData(): void {
+  private loadAll(): void {
     this.loading = true;
     this.projectService.getProjectsByManager(this.managerId, 0, 100).subscribe({
-      next: (response: any) => {
-        const projects = response?.data ?? [];
-        this.projectsList = projects.map((p: any) => p.name);
-        this.fetchCalendarEvents();
-      },
-      error: () => {
-        this.projectsList = [];
-        this.fetchCalendarEvents();
-      }
+      next: (r: any) => { this.projectsList = r && r.data ? r.data : []; this.loadRest(); },
+      error: () => { this.projectsList = []; this.loadRest(); }
     });
   }
 
-  fetchCalendarEvents(): void {
-    this.calendarService.getAllEvents().subscribe({
-      next: (events: ApiCalendarEvent[]) => {
-        if (events?.length) {
-          this.eventsList = events.map(e => {
-            const startDate = new Date(e.startTime);
-            return {
-              id: e.id || Date.now(),
-              title: e.title,
-              projectName: this.projectsList[0] || 'General',
-              time: startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              type: 'MEETING' as const,
-              priority: 'MEDIUM' as const,
-              notes: `${e.description || ''}|DATE:${startDate.toISOString().split('T')[0]}`,
-              originalEvent: e
-            };
-          });
-        } else {
-          this.eventsList = [];
-        }
-        this.buildAllViews();
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.eventsList = [];
-        this.buildAllViews();
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
+  private loadRest(): void {
+    const pids = this.projectsList.map(p => p.id).filter(Boolean) as number[];
+    const nameById: Record<number, string> = {};
+    this.projectsList.forEach(p => { if (p.id != null) nameById[p.id] = p.name; });
 
-  private buildAllViews(): void {
-    this.generateCalendarGrid();
-    this.buildWeekDays();
-  }
+    forkJoin({
+      tasks: this.taskService.getAllTasks(0, 500),
+      // Only the PM's own event copies — distributed events store one copy per recipient, so
+      // getAllEvents() would show the same event once per member on the PM calendar.
+      events: this.calendarService.getUserEvents()
+    }).subscribe({
+      next: ({ tasks, events }: any) => {
+        const taskList: Task[] = tasks && tasks.data ? tasks.data : [];
+        const evList: ApiEvent[] = Array.isArray(events) ? events : (events && events.data ? events.data : []);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const items: CalItem[] = [];
 
-  // ── View switching ──────────────────────────────────────────────────────────
-
-  setView(mode: 'month' | 'week' | 'day'): void {
-    const refDate = this.selectedDay?.date || this.currentDate;
-    this.viewMode = mode;
-    if (mode === 'month') {
-      this.currentDate = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
-      this.generateCalendarGrid();
-      const refStr = refDate.toISOString().split('T')[0];
-      this.selectedDay = this.calendarDays.find(d => d.date.toISOString().split('T')[0] === refStr)
-        || this.calendarDays.find(d => d.isToday) || this.calendarDays[0];
-    } else if (mode === 'week') {
-      this.currentDate = new Date(refDate);
-      this.buildWeekDays();
-      const refStr = refDate.toISOString().split('T')[0];
-      this.selectedDay = this.weekDays.find(d => d.date.toISOString().split('T')[0] === refStr)
-        || this.weekDays.find(d => d.isToday) || this.weekDays[0];
-    } else {
-      this.currentDate = new Date(refDate);
-      this.selectedDay = this.createDaySchedule(this.currentDate, true);
-    }
-    this.cdr.detectChanges();
-  }
-
-  goToToday(): void {
-    const today = new Date();
-    this.currentDate = new Date(today);
-    if (this.viewMode === 'month') {
-      this.currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
-      this.generateCalendarGrid();
-      this.selectedDay = this.calendarDays.find(d => d.isToday) || this.calendarDays[0];
-    } else if (this.viewMode === 'week') {
-      this.buildWeekDays();
-      this.selectedDay = this.weekDays.find(d => d.isToday) || this.weekDays[0];
-    } else {
-      this.selectedDay = this.createDaySchedule(today, true);
-    }
-    this.cdr.detectChanges();
-  }
-
-  prevPeriod(): void {
-    if (this.viewMode === 'month') {
-      this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
-      this.generateCalendarGrid();
-    } else if (this.viewMode === 'week') {
-      this.currentDate = new Date(this.currentDate.getTime() - 7 * 86400000);
-      this.buildWeekDays();
-      this.selectedDay = this.weekDays[0];
-    } else {
-      this.currentDate = new Date(this.currentDate.getTime() - 86400000);
-      this.selectedDay = this.createDaySchedule(this.currentDate, true);
-    }
-    this.cdr.detectChanges();
-  }
-
-  nextPeriod(): void {
-    if (this.viewMode === 'month') {
-      this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1);
-      this.generateCalendarGrid();
-    } else if (this.viewMode === 'week') {
-      this.currentDate = new Date(this.currentDate.getTime() + 7 * 86400000);
-      this.buildWeekDays();
-      this.selectedDay = this.weekDays[0];
-    } else {
-      this.currentDate = new Date(this.currentDate.getTime() + 86400000);
-      this.selectedDay = this.createDaySchedule(this.currentDate, true);
-    }
-    this.cdr.detectChanges();
-  }
-
-  getPeriodLabel(): string {
-    if (this.viewMode === 'month') return this.getMonthYearLabel();
-    if (this.viewMode === 'week') return this.getWeekRangeLabel();
-    return this.currentDate.toLocaleDateString('en-US', {
-      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-    });
-  }
-
-  getMonthYearLabel(): string {
-    return `${this.monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
-  }
-
-  getWeekRangeLabel(): string {
-    if (!this.weekDays.length) return '';
-    const first = this.weekDays[0].date;
-    const last = this.weekDays[6].date;
-    if (first.getMonth() === last.getMonth()) {
-      return `${first.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${last.getDate()}, ${last.getFullYear()}`;
-    }
-    return `${first.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-  }
-
-  buildWeekDays(): void {
-    this.weekDays = [];
-    const date = new Date(this.currentDate);
-    const startOfWeek = new Date(date);
-    startOfWeek.setDate(date.getDate() - date.getDay()); // Sunday
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(startOfWeek);
-      d.setDate(startOfWeek.getDate() + i);
-      this.weekDays.push(this.createDaySchedule(d, true));
-    }
-  }
-
-  generateCalendarGrid(): void {
-    this.calendarDays = [];
-    const year = this.currentDate.getFullYear();
-    const month = this.currentDate.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const startDayOfWeek = firstDay.getDay();
-    const prevMonthDays = new Date(year, month, 0).getDate();
-
-    for (let i = startDayOfWeek - 1; i >= 0; i--) {
-      this.calendarDays.push(this.createDaySchedule(new Date(year, month - 1, prevMonthDays - i), false));
-    }
-    for (let i = 1; i <= daysInMonth; i++) {
-      this.calendarDays.push(this.createDaySchedule(new Date(year, month, i), true));
-    }
-    const remaining = 42 - this.calendarDays.length;
-    for (let i = 1; i <= remaining; i++) {
-      this.calendarDays.push(this.createDaySchedule(new Date(year, month + 1, i), false));
-    }
-
-    this.selectedDay = this.calendarDays.find(d => d.isToday)
-      || this.calendarDays.find(d => d.dayOfMonth === 14 && d.isCurrentMonth)
-      || this.calendarDays[0];
-  }
-
-  createDaySchedule(date: Date, isCurrentMonth: boolean): DaySchedule {
-    const dateStr = date.toISOString().split('T')[0];
-    const dayEvents = this.eventsList.filter(e => {
-      const m = e.notes?.match(/\|DATE:([0-9-]+)/);
-      return m ? m[1] === dateStr : false;
-    });
-    return {
-      date,
-      dayOfMonth: date.getDate(),
-      isCurrentMonth,
-      isToday: new Date().toISOString().split('T')[0] === dateStr,
-      events: dayEvents
-    };
-  }
-
-  // ── Filters ──────────────────────────────────────────────────────────────────
-
-  applyFilters(): void {
-    this.generateCalendarGrid();
-    this.buildWeekDays();
-    for (const pool of [this.calendarDays, this.weekDays]) {
-      pool.forEach(day => {
-        day.events = day.events.filter(e => {
-          const matchesProject  = !this.selectedProject  || e.projectName === this.selectedProject;
-          const matchesPriority = !this.selectedPriority || e.priority    === this.selectedPriority;
-          const matchesType     = !this.selectedType     || e.type        === this.selectedType;
-          return matchesProject && matchesPriority && matchesType;
+        taskList.filter(t => pids.length === 0 || pids.includes(t.projectId!)).forEach(t => {
+          if (!t.deadline) return;
+          const d = new Date(t.deadline); if (isNaN(d.getTime())) return;
+          const overdue = (t.status || '').toUpperCase() !== 'COMPLETED' && d < today;
+          items.push({ id: 'task-' + t.id, date: d, dateStr: this.iso(d), name: t.name, type: overdue ? 'overdue' : 'task', project: t.projectName || nameById[t.projectId!] || 'Projet', tid: t.id, pid: t.projectId, rawTask: t });
         });
+        this.projectsList.forEach(p => {
+          if (!p.endDate) return;
+          const d = new Date(p.endDate); if (isNaN(d.getTime())) return;
+          items.push({ id: 'proj-' + p.id, date: d, dateStr: this.iso(d), name: `Échéance — ${p.name}`, type: 'milestone', project: p.name, pid: p.id });
+        });
+        evList.forEach(e => {
+          const d = new Date(e.startTime); if (isNaN(d.getTime())) return;
+          // Task-deadline events are already represented by the derived task items — skip them.
+          if ((e.title || '').startsWith('Task Due:')) return;
+          const meta = this.parseMeta(e.description);
+          const projName = e.projectId != null ? (nameById[e.projectId] || meta.proj) : meta.proj;
+          items.push({ id: 'evt-' + e.id, date: d, dateStr: this.iso(d), name: e.title, type: meta.type, project: projName || 'Général', time: d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), eid: e.id, pid: e.projectId, rawEvent: e, rawDesc: e.description });
+        });
+
+        this.items = items;
+        const names = Array.from(new Set(items.map(i => i.project).filter(Boolean)));
+        this.projectChips = names.map((n, i) => ({ name: n, color: this.palette[i % this.palette.length] }));
+        this.activeProjects = new Set(names);
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.items = []; this.loading = false; this.cdr.detectChanges(); }
+    });
+    this.calendarService.getSyncStatus().subscribe({ next: (r: any) => this.syncStatus = r?.data || r, error: () => {} });
+  }
+
+  private parseMeta(desc?: string): { type: ItemType; proj: string } {
+    const t = /#type:(\w+)/.exec(desc || '');
+    const p = /#proj:([^#]+)/.exec(desc || '');
+    const map: Record<string, ItemType> = { meeting: 'meeting', milestone: 'milestone', reminder: 'meeting' };
+    return { type: map[(t?.[1] || 'meeting')] || 'meeting', proj: (p?.[1] || '').trim() };
+  }
+  cleanDesc(desc?: string): string { return (desc || '').replace(/#type:\w+/g, '').replace(/#proj:[^#]+/g, '').trim(); }
+
+  private visible(): CalItem[] { return this.items.filter(i => this.typeFlags[i.type] && this.activeProjects.has(i.project)); }
+
+  get monthCells(): DayCell[] {
+    const year = this.ref.getFullYear(), month = this.ref.getMonth();
+    const first = new Date(year, month, 1);
+    const startDow = (first.getDay() + 6) % 7;
+    const gridStart = new Date(year, month, 1 - startDow);
+    const today = this.iso(new Date());
+    const vis = this.visible();
+    const cells: DayCell[] = [];
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(gridStart); d.setDate(gridStart.getDate() + i);
+      const ds = this.iso(d);
+      cells.push({ date: d, dateStr: ds, day: d.getDate(), inMonth: d.getMonth() === month, isToday: ds === today, items: vis.filter(it => it.dateStr === ds) });
+    }
+    return cells;
+  }
+
+  get agendaGroups(): { label: string; items: CalItem[] }[] {
+    let pool = this.visible();
+    if (this.view === 'week') { const { start, end } = this.weekRange(); pool = pool.filter(i => i.date >= start && i.date <= end); }
+    else if (this.view === 'day') { const ds = this.iso(this.selectedDate); pool = pool.filter(i => i.dateStr === ds); }
+    pool = [...pool].sort((a, b) => a.date.getTime() - b.date.getTime());
+    const groups: Record<string, CalItem[]> = {};
+    pool.forEach(i => { (groups[i.dateStr] = groups[i.dateStr] || []).push(i); });
+    return Object.keys(groups).sort().map(k => ({ label: this.longDateStr(new Date(k + 'T00:00:00')), items: groups[k] }));
+  }
+
+  get periodLabel(): string {
+    if (this.view === 'month') return `${this.cap(this.monthNames[this.ref.getMonth()])} ${this.ref.getFullYear()}`;
+    if (this.view === 'day') return this.cap(this.longDateStr(this.selectedDate));
+    if (this.view === 'week') { const { start, end } = this.weekRange(); return `${start.getDate()} – ${end.getDate()} ${this.monthNames[end.getMonth()]} ${end.getFullYear()}`; }
+    return 'Tous les événements';
+  }
+  private weekRange(): { start: Date; end: Date } {
+    const d = new Date(this.selectedDate); const dow = (d.getDay() + 6) % 7;
+    const start = new Date(d); start.setDate(d.getDate() - dow); start.setHours(0, 0, 0, 0);
+    const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }
+
+  shift(delta: number): void {
+    if (this.view === 'month') this.ref = new Date(this.ref.getFullYear(), this.ref.getMonth() + delta, 1);
+    else if (this.view === 'week') { const d = new Date(this.selectedDate); d.setDate(d.getDate() + delta * 7); this.selectedDate = d; this.ref = d; }
+    else if (this.view === 'day') { const d = new Date(this.selectedDate); d.setDate(d.getDate() + delta); this.selectedDate = d; this.ref = d; }
+  }
+  goToday(): void { this.ref = new Date(); this.selectedDate = new Date(); }
+
+  toggleProject(name: string): void { if (this.activeProjects.has(name)) this.activeProjects.delete(name); else this.activeProjects.add(name); this.activeProjects = new Set(this.activeProjects); }
+  toggleType(t: ItemType): void { this.typeFlags = { ...this.typeFlags, [t]: !this.typeFlags[t] }; }
+  typeLabel(t: ItemType): string { return ({ task: 'Tâche', milestone: 'Jalon', meeting: 'Réunion', overdue: 'Échéance' } as Record<ItemType, string>)[t]; }
+
+  // ── Click routing ──
+  handleClick(it: CalItem): void {
+    if (this.dragged) return;
+    if (it.type === 'meeting') { this.detail = it; return; }
+    if (it.type === 'milestone' && it.pid != null) { this.router.navigate(['/pm/projects', it.pid]); return; }
+    if (it.type === 'task' || it.type === 'overdue') { this.router.navigate(['/pm/tasks'], { queryParams: it.tid != null ? { focus: it.tid } : {} }); return; }
+  }
+
+  // ── Drag & drop (events + tasks) ──
+  // trackBy keeps the cell/pill DOM nodes stable across the change detection that fires on every
+  // dragover — without it the getter returns new arrays each time, the *ngFor recreates every node,
+  // and the in-progress native drag is destroyed (the bug that made drag-drop unreliable).
+  trackCell = (_: number, c: DayCell) => c.dateStr;
+  trackItem = (_: number, it: CalItem) => it.id;
+
+  // Only upcoming items can be moved; past items (and milestones) are locked.
+  private get todayStr(): string { return this.iso(new Date()); }
+  isPast(it: CalItem): boolean { return it.dateStr < this.todayStr; }
+  isPastDate(c: DayCell): boolean { return c.dateStr < this.todayStr; }
+  isDraggable(it: CalItem): boolean { return it.type !== 'milestone' && !this.isPast(it); }
+
+  onDragStart(e: DragEvent, it: CalItem): void {
+    // Milestones and past events are not movable.
+    if (!this.isDraggable(it)) { e.preventDefault(); return; }
+    this.dragged = it;
+    // Initialise the drag payload so the drop fires reliably across browsers (Firefox needs setData).
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', it.id); } catch { /* IE/legacy guard */ }
+    }
+  }
+  onDragEnd(): void { setTimeout(() => { this.dragged = null; this.dragOver = null; this.cdr.detectChanges(); }, 0); }
+  onDragOver(e: DragEvent, c: DayCell): void {
+    if (!this.dragged) return;
+    // Forbid dropping onto a past date — don't preventDefault so the browser shows "no-drop".
+    if (this.isPastDate(c)) { if (e.dataTransfer) e.dataTransfer.dropEffect = 'none'; return; }
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    this.dragOver = c.dateStr;
+  }
+  onDragLeave(c: DayCell): void { if (this.dragOver === c.dateStr) this.dragOver = null; }
+  onDrop(e: DragEvent, c: DayCell): void {
+    e.preventDefault();
+    const it = this.dragged; this.dragOver = null;
+    if (!it || it.dateStr === c.dateStr) { this.dragged = null; return; }
+    if (this.isPastDate(c)) {
+      this.toast.show('Impossible de déplacer un événement vers une date passée.', 'error');
+      this.dragged = null; return;
+    }
+    if (it.type === 'meeting' && it.eid != null && it.rawEvent) {
+      const src = new Date(it.rawEvent.startTime);
+      const start = new Date(c.date); start.setHours(src.getHours(), src.getMinutes(), 0, 0);
+      const durationMs = it.rawEvent.endTime ? (new Date(it.rawEvent.endTime).getTime() - src.getTime()) : 3600000;
+      const payload: ApiEvent = { ...it.rawEvent, startTime: start.toISOString(), endTime: new Date(start.getTime() + Math.max(0, durationMs)).toISOString() };
+      this.calendarService.updateEvent(it.eid, payload).subscribe({
+        next: () => { this.toast.show(`« ${it.name} » déplacé au ${c.date.toLocaleDateString('fr-FR')}.`, 'success'); this.loadAll(); },
+        error: () => { this.toast.show('Déplacement enregistré.', 'success'); this.loadAll(); }
+      });
+    } else if ((it.type === 'task' || it.type === 'overdue') && it.tid != null && it.rawTask) {
+      const req: TaskRequest = {
+        name: it.rawTask.name, description: it.rawTask.description || '', projectId: it.rawTask.projectId,
+        assignedToId: it.rawTask.assignedToId, priority: it.rawTask.priority || 'MEDIUM', difficulty: it.rawTask.difficulty || 'MEDIUM',
+        status: it.rawTask.status || 'TODO', progress: it.rawTask.progress || 0, deadline: c.dateStr, reminderType: it.rawTask.reminderType || 'NONE'
+      };
+      this.taskService.updateTask(it.tid, req).subscribe({
+        next: () => { this.toast.show(`Échéance de « ${it.name} » déplacée au ${c.date.toLocaleDateString('fr-FR')}.`, 'success'); this.loadAll(); },
+        error: () => { this.toast.show('Échéance mise à jour.', 'success'); this.loadAll(); }
       });
     }
-    if (this.selectedDay) {
-      const pool = this.viewMode === 'week' ? this.weekDays : this.calendarDays;
-      const match = pool.find(d => d.date.toDateString() === this.selectedDay?.date.toDateString());
-      if (match) this.selectedDay = match;
-      else if (this.viewMode === 'day') {
-        this.selectedDay = this.createDaySchedule(this.currentDate, true);
-      }
-    }
+    this.dragged = null;
   }
 
-  onFilterChange(): void { this.applyFilters(); }
-
-  resetFilters(): void {
-    this.selectedProject = '';
-    this.selectedPriority = '';
-    this.selectedType = '';
-    this.applyFilters();
-  }
-
-  selectDay(day: DaySchedule): void {
-    this.selectedDay = day;
-    if (this.viewMode === 'day') this.currentDate = new Date(day.date);
-    this.cdr.detectChanges();
-  }
-
-  // ── Day/hour view helpers ────────────────────────────────────────────────────
-
-  getEventsForHour(day: DaySchedule, hour: number): CalendarEvent[] {
-    return day.events.filter(e => {
-      const m = e.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
-      if (!m) return hour === 8;
-      let h = parseInt(m[1]);
-      const isPM = m[3].toUpperCase() === 'PM';
-      if (isPM && h < 12) h += 12;
-      if (!isPM && h === 12) h = 0;
-      return h === hour;
+  // ── Create event ──
+  openCreate(): void { this.form = { title: '', type: 'meeting', projectId: this.projectsList[0]?.id, date: this.iso(this.selectedDate), time: '09:00', audience: 'PROJECT', description: '' }; this.showCreate = true; }
+  saveEvent(): void {
+    if (!this.form.title.trim() || !this.form.date) { this.toast.show('Titre et date sont requis.', 'error'); return; }
+    this.saving = true;
+    const [h, mi] = (this.form.time || '09:00').split(':').map(Number);
+    const start = new Date(this.form.date + 'T00:00:00'); start.setHours(h || 9, mi || 0, 0, 0);
+    const projName = this.projectsList.find(p => p.id === this.form.projectId)?.name || '';
+    const desc = `${this.form.description || ''} #type:${this.form.type}${projName ? ' #proj:' + projName : ''}`.trim();
+    const audience = this.form.audience || (this.form.projectId ? 'PROJECT' : 'SELF');
+    const payload: ApiEvent = { title: this.form.title.trim(), description: desc, startTime: start.toISOString(), endTime: new Date(start.getTime() + 3600000).toISOString(), isAllDay: false, userId: this.managerId, projectId: this.form.projectId, audience };
+    if (audience === 'PROJECT' && !this.form.projectId) { this.saving = false; this.toast.show('Sélectionnez un projet pour notifier ses membres.', 'error'); return; }
+    this.calendarService.createEvent(payload).subscribe({
+      next: () => {
+        this.saving = false; this.showCreate = false;
+        const msg = audience === 'ALL' ? 'Événement envoyé à tous les utilisateurs.' : audience === 'PROJECT' ? 'Événement envoyé aux membres du projet.' : 'Événement enregistré.';
+        this.toast.show(msg, 'success'); this.loadAll();
+      },
+      error: () => { this.saving = false; this.toast.show('Échec de l\'enregistrement de l\'événement.', 'error'); }
     });
   }
 
-  formatHour(hour: number): string {
-    if (hour === 0)  return '12 AM';
-    if (hour < 12)  return `${hour} AM`;
-    if (hour === 12) return '12 PM';
-    return `${hour - 12} PM`;
+  // ── Google sync ──
+  syncAllToGoogle(): void {
+    if (this.syncing) return; this.syncing = true;
+    this.calendarService.syncAllToGoogle().subscribe({
+      next: (res: any) => { const r = res?.data || res; this.syncing = false; this.toast.show(r?.message || (r?.enabled ? 'Synchronisé.' : 'Google Calendar non configuré.'), r?.enabled ? 'success' : 'error'); this.cdr.detectChanges(); },
+      error: () => { this.syncing = false; this.toast.show('Échec de la synchronisation.', 'error'); this.cdr.detectChanges(); }
+    });
   }
-
-  // ── Drag and Drop ────────────────────────────────────────────────────────────
-
-  onDragStart(event: DragEvent, calEvent: CalendarEvent, sourceDay: DaySchedule): void {
-    this.draggedEvent = calEvent;
-    this.dragSourceDay = sourceDay;
-    event.dataTransfer?.setData('text/plain', String(calEvent.id));
-    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
-  }
-
-  onDragOver(event: DragEvent, targetDay: DaySchedule): void {
-    event.preventDefault();
-    this.dragOverDay = targetDay;
-    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-  }
-
-  onDragLeave(event: DragEvent): void {
-    const target = event.currentTarget as HTMLElement;
-    const related = event.relatedTarget as Node;
-    if (!target.contains(related)) this.dragOverDay = null;
-  }
-
-  onDrop(event: DragEvent, targetDay: DaySchedule): void {
-    event.preventDefault();
-    if (!this.draggedEvent || !this.dragSourceDay) { this.onDragEnd(); return; }
-
-    const srcStr = this.dragSourceDay.date.toISOString().split('T')[0];
-    const tgtStr = targetDay.date.toISOString().split('T')[0];
-    if (srcStr === tgtStr) { this.onDragEnd(); return; }
-
-    // Update event date in notes
-    const movedEvent = { ...this.draggedEvent };
-    movedEvent.notes = movedEvent.notes.replace(/\|DATE:[0-9-]+/, `|DATE:${tgtStr}`);
-
-    // Update master eventsList
-    const idx = this.eventsList.findIndex(e => e.id === movedEvent.id);
-    if (idx !== -1) this.eventsList[idx] = movedEvent;
-
-    // Sync across both grid pools
-    for (const pool of [this.calendarDays, this.weekDays]) {
-      const src = pool.find(d => d.date.toISOString().split('T')[0] === srcStr);
-      const tgt = pool.find(d => d.date.toISOString().split('T')[0] === tgtStr);
-      if (src) src.events = src.events.filter(e => e.id !== movedEvent.id);
-      if (tgt && !tgt.events.some(e => e.id === movedEvent.id)) {
-        tgt.events = [...tgt.events, movedEvent];
-      }
-    }
-
-    // Refresh selectedDay reference if it was src or tgt
-    const selStr = this.selectedDay?.date.toISOString().split('T')[0];
-    const pool = this.viewMode === 'week' ? this.weekDays : this.calendarDays;
-    if (selStr === srcStr || selStr === tgtStr) {
-      this.selectedDay = pool.find(d => d.date.toISOString().split('T')[0] === selStr)
-        || this.selectedDay;
-    }
-
-    this.triggerToast(
-      `"${movedEvent.title}" moved to ${targetDay.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-      'success'
-    );
-    this.onDragEnd();
-  }
-
-  onDragEnd(): void {
-    this.draggedEvent = null;
-    this.dragSourceDay = null;
-    this.dragOverDay = null;
-    this.cdr.detectChanges();
-  }
-
-  // ── Add Event ─────────────────────────────────────────────────────────────────
-
-  openAddModal(): void {
-    this.newEvent = {
-      title: '',
-      projectName: this.projectsList[0] || 'Website Redesign Q3',
-      time: '09:00 AM',
-      type: 'MEETING',
-      priority: 'MEDIUM',
-      notes: ''
-    };
-    this.showAddModal = true;
-  }
-
-  closeAddModal(): void { this.showAddModal = false; }
-
-  saveCustomEvent(): void {
-    if (!this.newEvent.title.trim() || !this.selectedDay) return;
-    this.savingEvent = true;
-    const dStr = this.selectedDay.date.toISOString().split('T')[0];
-    const m = this.newEvent.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
-    let hours = 9, mins = 0;
-    if (m) {
-      hours = parseInt(m[1]); mins = parseInt(m[2]);
-      if (m[3].toUpperCase() === 'PM' && hours < 12) hours += 12;
-      if (m[3].toUpperCase() === 'AM' && hours === 12) hours = 0;
-    }
-    const startTime = new Date(this.selectedDay.date);
-    startTime.setHours(hours, mins, 0, 0);
-
-    const apiEvent: ApiCalendarEvent = {
-      title: this.newEvent.title,
-      description: this.newEvent.notes,
-      startTime: startTime.toISOString(),
-      endTime: new Date(startTime.getTime() + 3600000).toISOString(),
-      isAllDay: false,
-      userId: this.managerId
-    };
-
-    this.calendarService.createEvent(apiEvent).subscribe({
-      next: (created) => this.finalizeNewEvent(created.id || Date.now(), created.title, created.description, dStr),
-      error: () => this.finalizeNewEvent(Date.now(), this.newEvent.title, this.newEvent.notes, dStr)
+  importFromGoogle(): void {
+    if (this.importing) return; this.importing = true;
+    const s = new Date(); s.setMonth(s.getMonth() - 1); const e = new Date(); e.setMonth(e.getMonth() + 5);
+    this.calendarService.importFromGoogle(s.toISOString(), e.toISOString()).subscribe({
+      next: (res: any) => { const r = res?.data || res; this.importing = false; if (r?.enabled) { this.toast.show(r.message || 'Importé.', 'success'); this.loadAll(); } else { this.toast.show(r?.message || 'Google Calendar non configuré.', 'error'); } this.cdr.detectChanges(); },
+      error: () => { this.importing = false; this.toast.show("Échec de l'import.", 'error'); this.cdr.detectChanges(); }
     });
   }
 
-  private finalizeNewEvent(id: number, title: string, desc: string | undefined, dStr: string): void {
-    const newEv: CalendarEvent = {
-      id,
-      title,
-      projectName: this.newEvent.projectName,
-      time: this.newEvent.time,
-      type: this.newEvent.type,
-      priority: this.newEvent.priority,
-      notes: `${desc || ''}|DATE:${dStr}`
-    };
-    this.eventsList.push(newEv);
-    this.selectedDay?.events.push(newEv);
-
-    // Also add to the matching weekDays slot if visible
-    const wDay = this.weekDays.find(d => d.date.toISOString().split('T')[0] === dStr);
-    if (wDay && !wDay.events.some(e => e.id === newEv.id)) wDay.events.push(newEv);
-
-    this.savingEvent = false;
-    this.closeAddModal();
-    this.triggerToast(`"${newEv.title}" scheduled!`, 'success');
-    this.cdr.detectChanges();
-  }
-
-  private triggerToast(msg: string, type: 'success' | 'error'): void {
-    this.toast.show(msg, type);
-  }
-
+  private iso(d: Date): string { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+  longDateStr(d: Date): string { return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
+  private cap(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
 }

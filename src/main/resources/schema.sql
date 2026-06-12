@@ -333,3 +333,74 @@ CREATE TABLE IF NOT EXISTS `task_checklist_items` (
     PRIMARY KEY (`id`),
     FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- System settings (admin configuration: General + Security). Single-row table (id = 1).
+CREATE TABLE IF NOT EXISTS `system_settings` (
+    `id` BIGINT NOT NULL,
+    `app_name` VARCHAR(120) NOT NULL DEFAULT 'TaskMaster Pro',
+    `default_language` VARCHAR(40) NOT NULL DEFAULT 'Français',
+    `timezone` VARCHAR(60) NOT NULL DEFAULT 'Europe/Paris (UTC+1)',
+    `jwt_validity_minutes` INT NOT NULL DEFAULT 1440,
+    `max_login_attempts` INT NOT NULL DEFAULT 5,
+    `lockout_duration_minutes` INT NOT NULL DEFAULT 15,
+    `password_min_length` INT NOT NULL DEFAULT 12,
+    `password_require_uppercase` BOOLEAN NOT NULL DEFAULT TRUE,
+    `password_require_digit` BOOLEAN NOT NULL DEFAULT TRUE,
+    `password_require_special` BOOLEAN NOT NULL DEFAULT TRUE,
+    `password_expiry_days` INT NOT NULL DEFAULT 90,
+    `two_factor_required_admins` BOOLEAN NOT NULL DEFAULT FALSE,
+    `maintenance_mode` BOOLEAN NOT NULL DEFAULT FALSE,
+    `smtp_host` VARCHAR(120) DEFAULT 'smtp.gpi.app',
+    `smtp_port` INT DEFAULT 587,
+    `smtp_username` VARCHAR(120) DEFAULT 'noreply@gpi.app',
+    `smtp_password` VARCHAR(255) DEFAULT '',
+    `smtp_sender` VARCHAR(160) DEFAULT 'TaskMaster Pro <noreply@gpi.app>',
+    `notify_on_registration` BOOLEAN NOT NULL DEFAULT TRUE,
+    `notify_on_task_assigned` BOOLEAN NOT NULL DEFAULT FALSE,
+    `notify_on_deliverable_submitted` BOOLEAN NOT NULL DEFAULT TRUE,
+    `notify_on_suspicious_login` BOOLEAN NOT NULL DEFAULT TRUE,
+    `notify_on_project_overdue` BOOLEAN NOT NULL DEFAULT TRUE,
+    `backup_retention_days` INT NOT NULL DEFAULT 30,
+    `updated_at` DATETIME,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `system_settings` (`id`) VALUES (1) ON DUPLICATE KEY UPDATE `id` = `id`;
+
+-- Additive columns for system_settings rows created before the Notifications/Backup tabs
+-- existed (duplicate-column errors are harmless: spring.sql.init.continue-on-error=true).
+ALTER TABLE `system_settings` ADD COLUMN `smtp_host` VARCHAR(120) DEFAULT 'smtp.gpi.app';
+ALTER TABLE `system_settings` ADD COLUMN `smtp_port` INT DEFAULT 587;
+ALTER TABLE `system_settings` ADD COLUMN `smtp_username` VARCHAR(120) DEFAULT 'noreply@gpi.app';
+ALTER TABLE `system_settings` ADD COLUMN `smtp_password` VARCHAR(255) DEFAULT '';
+ALTER TABLE `system_settings` ADD COLUMN `smtp_sender` VARCHAR(160) DEFAULT 'TaskMaster Pro <noreply@gpi.app>';
+ALTER TABLE `system_settings` ADD COLUMN `notify_on_registration` BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE `system_settings` ADD COLUMN `notify_on_task_assigned` BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE `system_settings` ADD COLUMN `notify_on_deliverable_submitted` BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE `system_settings` ADD COLUMN `notify_on_suspicious_login` BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE `system_settings` ADD COLUMN `notify_on_project_overdue` BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE `system_settings` ADD COLUMN `backup_retention_days` INT NOT NULL DEFAULT 30;
+
+-- Archive flag for projects (admin "archive" action). Harmless duplicate-column error on re-run.
+ALTER TABLE `projects` ADD COLUMN `archived` BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Blocked IP addresses (admin security console). Logins from these IPs are refused.
+CREATE TABLE IF NOT EXISTS `blocked_ips` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `ip_address` VARCHAR(64) NOT NULL,
+    `reason` VARCHAR(255),
+    `blocked_at` DATETIME,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_blocked_ip` (`ip_address`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Link per-recipient copies of a distributed calendar event (PM events sent to project members).
+ALTER TABLE `calendar_events` ADD COLUMN `series_id` VARCHAR(64);
+
+ALTER TABLE `system_settings` ADD COLUMN `max_file_upload_mb` INT NOT NULL DEFAULT 100;
+
+-- Message attachments (group chat / messaging). Duplicate-column errors harmless on re-run.
+ALTER TABLE `messages` ADD COLUMN `attachment_url` VARCHAR(500);
+ALTER TABLE `messages` ADD COLUMN `attachment_name` VARCHAR(255);
+ALTER TABLE `messages` ADD COLUMN `attachment_type` VARCHAR(30);
+ALTER TABLE `messages` ADD COLUMN `attachment_size` VARCHAR(40);

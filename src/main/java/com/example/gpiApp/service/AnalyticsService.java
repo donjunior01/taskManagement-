@@ -1,13 +1,22 @@
 package com.example.gpiApp.service;
 
+import com.example.gpiApp.dto.analytics.AdminReportsDTO;
 import com.example.gpiApp.dto.analytics.ManagerAnalyticsDTO;
 import com.example.gpiApp.dto.analytics.MemberWorkloadDTO;
 import com.example.gpiApp.dto.analytics.WeeklyPointDTO;
+import com.example.gpiApp.entity.LoginAttempt;
 import com.example.gpiApp.entity.Project;
+import com.example.gpiApp.entity.SupportTicket;
 import com.example.gpiApp.entity.Task;
+import com.example.gpiApp.entity.Team;
+import com.example.gpiApp.entity.TimeLog;
 import com.example.gpiApp.entity.allUsers;
+import com.example.gpiApp.repository.LoginAttemptRepository;
 import com.example.gpiApp.repository.ProjectRepository;
+import com.example.gpiApp.repository.SupportTicketRepository;
 import com.example.gpiApp.repository.TaskRepository;
+import com.example.gpiApp.repository.TeamRepository;
+import com.example.gpiApp.repository.TimeLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,13 +24,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Computes portfolio analytics for a project manager: delivery KPIs (on-time rate,
@@ -36,8 +50,14 @@ public class AnalyticsService {
     private static final int TREND_WEEKS = 8;
     private static final DateTimeFormatter WEEK_LABEL = DateTimeFormatter.ofPattern("MMM d");
 
+    private static final Locale FR = Locale.FRENCH;
+
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
+    private final SupportTicketRepository supportTicketRepository;
+    private final TimeLogRepository timeLogRepository;
+    private final LoginAttemptRepository loginAttemptRepository;
+    private final TeamRepository teamRepository;
 
     @Transactional(readOnly = true)
     public ManagerAnalyticsDTO getManagerAnalytics(Long managerId) {
@@ -47,6 +67,208 @@ public class AnalyticsService {
             tasks.addAll(taskRepository.findByProject(p));
         }
         return build(projects.size(), tasks);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  Admin "Rapports" — portfolio-wide analytics from real persisted data
+    // ──────────────────────────────────────────────────────────────────────
+    @Transactional(readOnly = true)
+    public AdminReportsDTO getAdminReports() {
+        List<Project> projects = projectRepository.findAll();
+        List<Task> tasks = taskRepository.findAll();
+        List<SupportTicket> tickets = supportTicketRepository.findAll();
+        List<TimeLog> timeLogs = timeLogRepository.findAll();
+        List<LoginAttempt> attempts = loginAttemptRepository.findAll();
+        List<Team> teams = teamRepository.findAll();
+
+        LocalDate today = LocalDate.now();
+
+        // ── Executive KPIs ──
+        long totalTasks = tasks.size();
+        long completedTasks = countStatus(tasks, Task.TaskStatus.COMPLETED);
+        double completionRate = totalTasks > 0 ? round1((double) completedTasks / totalTasks * 100) : 0;
+
+        long completedWithDeadline = 0, onTime = 0;
+        for (Task t : tasks) {
+            if (t.getStatus() != Task.TaskStatus.COMPLETED) continue;
+            LocalDate finished = completionDate(t);
+            if (t.getDeadline() != null && finished != null) {
+                completedWithDeadline++;
+                if (!finished.isAfter(t.getDeadline())) onTime++;
+            }
+        }
+        double onTimeRate = completedWithDeadline > 0 ? round1((double) onTime / completedWithDeadline * 100) : 0;
+
+        double totalHours = round1(timeLogs.stream()
+                .filter(l -> l.getHoursSpent() != null).mapToDouble(TimeLog::getHoursSpent).sum());
+
+        long ticketsTotal = tickets.size();
+        long ticketsResolved = tickets.stream()
+                .filter(t -> t.getStatus() == SupportTicket.Status.RESOLVED || t.getStatus() == SupportTicket.Status.CLOSED)
+                .count();
+        double resolvedRate = ticketsTotal > 0 ? round1((double) ticketsResolved / ticketsTotal * 100) : 0;
+        double supportSatisfaction = round1(resolvedRate / 100 * 5);
+
+        double avgResolutionHours = round1(tickets.stream()
+                .filter(t -> t.getResolvedAt() != null && t.getCreatedAt() != null)
+                .mapToLong(t -> ChronoUnit.HOURS.between(t.getCreatedAt(), t.getResolvedAt()))
+                .filter(h -> h >= 0).average().orElse(0));
+
+        return AdminReportsDTO.builder()
+                .completionRate(completionRate)
+                .onTimeRate(onTimeRate)
+                .totalHours(totalHours)
+                .supportSatisfaction(supportSatisfaction)
+                .resolvedRate(resolvedRate)
+                .avgResolutionHours(avgResolutionHours)
+                .statusOverTime(statusOverTime(projects, today))
+                .burndown(burndown(tasks, today))
+                .dau(dau(attempts, today))
+                .resolutionTrend(resolutionTrend(tickets, today))
+                .topPerformers(topPerformers(tasks))
+                .teamLoad(teamLoad(teams, tasks))
+                .ticketsByCategory(ticketsByPriority(tickets))
+                .generatedAt(LocalDateTime.now())
+                .build();
+    }
+
+    /** Projects bucketed by creation month over the last 12 months, split by current status. */
+    private List<AdminReportsDTO.MonthStatusDTO> statusOverTime(List<Project> projects, LocalDate today) {
+        List<AdminReportsDTO.MonthStatusDTO> out = new ArrayList<>();
+        YearMonth current = YearMonth.from(today);
+        for (int back = 11; back >= 0; back--) {
+            YearMonth ym = current.minusMonths(back);
+            long encours = 0, termine = 0, retard = 0;
+            for (Project p : projects) {
+                if (p.getCreatedAt() == null) continue;
+                if (!YearMonth.from(p.getCreatedAt().toLocalDate()).equals(ym)) continue;
+                boolean completed = p.getStatus() == Project.ProjectStatus.COMPLETED;
+                boolean overdue = !completed && p.getEndDate() != null && p.getEndDate().isBefore(today);
+                if (completed) termine++;
+                else if (overdue) retard++;
+                else encours++;
+            }
+            out.add(AdminReportsDTO.MonthStatusDTO.builder()
+                    .mois(capitalize(ym.getMonth().getDisplayName(TextStyle.SHORT, FR)))
+                    .encours(encours).termine(termine).retard(retard).build());
+        }
+        return out;
+    }
+
+    /** Remaining open tasks per day over the last 14 days (real) vs an ideal linear burndown. */
+    private List<AdminReportsDTO.BurndownPointDTO> burndown(List<Task> tasks, LocalDate today) {
+        int days = 14;
+        long[] remaining = new long[days];
+        for (int i = 0; i < days; i++) {
+            LocalDate day = today.minusDays(days - 1 - i);
+            long open = 0;
+            for (Task t : tasks) {
+                if (t.getCreatedAt() == null) continue;
+                if (t.getCreatedAt().toLocalDate().isAfter(day)) continue; // not created yet
+                LocalDate done = t.getStatus() == Task.TaskStatus.COMPLETED ? completionDate(t) : null;
+                boolean closedByThen = done != null && !done.isAfter(day);
+                if (!closedByThen) open++;
+            }
+            remaining[i] = open;
+        }
+        long start = remaining[0];
+        List<AdminReportsDTO.BurndownPointDTO> out = new ArrayList<>();
+        for (int i = 0; i < days; i++) {
+            long ideal = Math.round(start * (1.0 - (double) i / (days - 1)));
+            out.add(AdminReportsDTO.BurndownPointDTO.builder()
+                    .jour("J" + (i + 1)).ideal(ideal).reel(remaining[i]).build());
+        }
+        return out;
+    }
+
+    /** Distinct successful logins per day over the last 30 days. */
+    private List<AdminReportsDTO.DauPointDTO> dau(List<LoginAttempt> attempts, LocalDate today) {
+        int days = 30;
+        List<AdminReportsDTO.DauPointDTO> out = new ArrayList<>();
+        for (int i = 0; i < days; i++) {
+            LocalDate day = today.minusDays(days - 1 - i);
+            Set<String> users = new HashSet<>();
+            for (LoginAttempt a : attempts) {
+                if (a.getStatus() != LoginAttempt.LoginStatus.SUCCESS || a.getAttemptedAt() == null) continue;
+                if (!a.getAttemptedAt().toLocalDate().equals(day)) continue;
+                String key = a.getUser() != null ? "u" + a.getUser().getId()
+                        : (a.getEmail() != null ? a.getEmail() : a.getUsername());
+                if (key != null) users.add(key);
+            }
+            out.add(AdminReportsDTO.DauPointDTO.builder().jour(i + 1).dau(users.size()).build());
+        }
+        return out;
+    }
+
+    /** % of tickets created each month (last 12) that are now resolved/closed. */
+    private List<AdminReportsDTO.MonthRateDTO> resolutionTrend(List<SupportTicket> tickets, LocalDate today) {
+        List<AdminReportsDTO.MonthRateDTO> out = new ArrayList<>();
+        YearMonth current = YearMonth.from(today);
+        for (int back = 11; back >= 0; back--) {
+            YearMonth ym = current.minusMonths(back);
+            long created = 0, resolved = 0;
+            for (SupportTicket t : tickets) {
+                if (t.getCreatedAt() == null) continue;
+                if (!YearMonth.from(t.getCreatedAt().toLocalDate()).equals(ym)) continue;
+                created++;
+                if (t.getStatus() == SupportTicket.Status.RESOLVED || t.getStatus() == SupportTicket.Status.CLOSED) resolved++;
+            }
+            double taux = created > 0 ? round1((double) resolved / created * 100) : 0;
+            out.add(AdminReportsDTO.MonthRateDTO.builder()
+                    .mois(capitalize(ym.getMonth().getDisplayName(TextStyle.SHORT, FR))).taux(taux).build());
+        }
+        return out;
+    }
+
+    /** Top members by number of completed tasks. */
+    private List<AdminReportsDTO.PerformerDTO> topPerformers(List<Task> tasks) {
+        Map<String, Long> byMember = new LinkedHashMap<>();
+        for (Task t : tasks) {
+            if (t.getStatus() != Task.TaskStatus.COMPLETED || t.getAssignedTo() == null) continue;
+            byMember.merge(displayName(t.getAssignedTo()), 1L, Long::sum);
+        }
+        return byMember.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(6)
+                .map(e -> AdminReportsDTO.PerformerDTO.builder().nom(e.getKey()).taches(e.getValue()).build())
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /** Per-team load = open tasks assigned to its members. */
+    private List<AdminReportsDTO.TeamLoadDTO> teamLoad(List<Team> teams, List<Task> tasks) {
+        List<AdminReportsDTO.TeamLoadDTO> out = new ArrayList<>();
+        for (Team team : teams) {
+            Set<Long> memberIds = new HashSet<>();
+            if (team.getMembers() != null) team.getMembers().forEach(m -> memberIds.add(m.getId()));
+            long open = tasks.stream()
+                    .filter(t -> t.getStatus() != Task.TaskStatus.COMPLETED && t.getAssignedTo() != null)
+                    .filter(t -> memberIds.contains(t.getAssignedTo().getId()))
+                    .count();
+            out.add(AdminReportsDTO.TeamLoadDTO.builder().equipe(team.getName()).charge(open).build());
+        }
+        out.sort(Comparator.comparingLong(AdminReportsDTO.TeamLoadDTO::getCharge).reversed());
+        return out.size() > 6 ? out.subList(0, 6) : out;
+    }
+
+    /** Support tickets grouped by priority (the real categorical field). */
+    private List<AdminReportsDTO.CategoryCountDTO> ticketsByPriority(List<SupportTicket> tickets) {
+        Map<SupportTicket.Priority, String> labels = new LinkedHashMap<>();
+        labels.put(SupportTicket.Priority.URGENT, "Urgente");
+        labels.put(SupportTicket.Priority.HIGH, "Haute");
+        labels.put(SupportTicket.Priority.MEDIUM, "Moyenne");
+        labels.put(SupportTicket.Priority.LOW, "Faible");
+        List<AdminReportsDTO.CategoryCountDTO> out = new ArrayList<>();
+        labels.forEach((prio, label) -> {
+            long count = tickets.stream().filter(t -> t.getPriority() == prio).count();
+            if (count > 0) out.add(AdminReportsDTO.CategoryCountDTO.builder().name(label).value(count).build());
+        });
+        return out;
+    }
+
+    private String capitalize(String s) {
+        if (s == null || s.isEmpty()) return s;
+        String c = s.replace(".", "");
+        return c.substring(0, 1).toUpperCase(FR) + c.substring(1);
     }
 
     private ManagerAnalyticsDTO build(int projectCount, List<Task> tasks) {

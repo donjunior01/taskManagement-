@@ -45,5 +45,8 @@ public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Lo
     List<CalendarEvent> findUpcomingEventsByUserId(@Param("userId") Long userId, @Param("now") LocalDateTime now);
 
     void deleteByEntityTypeAndEntityId(String entityType, Long entityId);
+
+    /** All per-recipient copies of one distributed event. */
+    List<CalendarEvent> findBySeriesId(String seriesId);
 }
 

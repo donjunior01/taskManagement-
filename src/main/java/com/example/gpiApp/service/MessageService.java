@@ -51,8 +51,12 @@ public class MessageService {
     public ApiResponse<MessageDTO> sendMessage(MessageRequestDTO request, Long senderId) {
         Message message = new Message();
         message.setContent(request.getContent());
+        message.setAttachmentUrl(request.getAttachmentUrl());
+        message.setAttachmentName(request.getAttachmentName());
+        message.setAttachmentType(request.getAttachmentType());
+        message.setAttachmentSize(request.getAttachmentSize());
         message.setIsRead(false);
-        
+
         userRepository.findById(senderId)
                 .ifPresent(message::setSender);
         
@@ -243,6 +247,10 @@ public class MessageService {
                 .content(message.getContent())
                 .isRead(message.getIsRead())
                 .createdAt(message.getCreatedAt())
+                .attachmentUrl(message.getAttachmentUrl())
+                .attachmentName(message.getAttachmentName())
+                .attachmentType(message.getAttachmentType())
+                .attachmentSize(message.getAttachmentSize())
                 .build();
     }
 }

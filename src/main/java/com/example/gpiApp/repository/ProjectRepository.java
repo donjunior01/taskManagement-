@@ -15,16 +15,25 @@ import java.util.List;
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     
     Page<Project> findByStatus(Project.ProjectStatus status, Pageable pageable);
-    
+
     Page<Project> findByManager(allUsers manager, Pageable pageable);
-    
+
     List<Project> findByManager(allUsers manager);
-    
-    @Query("SELECT p FROM Project p WHERE p.manager.id = :managerId")
+
+    /** Default list excludes archived projects. */
+    @Query("SELECT p FROM Project p WHERE p.archived = false OR p.archived IS NULL")
+    Page<Project> findAllActive(Pageable pageable);
+
+    @Query("SELECT p FROM Project p WHERE p.manager.id = :managerId AND (p.archived = false OR p.archived IS NULL)")
     Page<Project> findByManagerId(@Param("managerId") Long managerId, Pageable pageable);
     
     @Query("SELECT COUNT(p) FROM Project p WHERE p.status = :status")
     Long countByStatus(@Param("status") Project.ProjectStatus status);
+
+    /** Distinct projects a user works on — as manager OR as a member of one of the project's teams. */
+    @Query("SELECT COUNT(DISTINCT p) FROM Project p LEFT JOIN p.teams t LEFT JOIN t.members m " +
+           "WHERE (p.archived = false OR p.archived IS NULL) AND (p.manager.id = :userId OR m.id = :userId)")
+    long countProjectsByUser(@Param("userId") Long userId);
     
     @Query("SELECT DISTINCT p FROM Project p LEFT JOIN p.teams t LEFT JOIN t.members m " +
            "WHERE (p.manager.id = :userId OR m.id = :userId) " +

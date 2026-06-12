@@ -26,6 +26,7 @@ public class LoginAttemptService {
     
     private final LoginAttemptRepository loginAttemptRepository;
     private final UserRepository userRepository;
+    private final com.example.gpiApp.repository.BlockedIpRepository blockedIpRepository;
     
     @Transactional
     public void logLoginAttempt(String username, String email, LoginAttempt.LoginStatus status, 
@@ -82,21 +83,73 @@ public class LoginAttemptService {
         metrics.put("successfulLogins", todaySuccessful != null ? todaySuccessful : 0L);
         metrics.put("activeSessions", activeSessions != null ? activeSessions : 0L);
         metrics.put("securityAlerts", (long) recentFailed.size());
-        
+
+        // Keys consumed by the admin frontend (SecurityMetrics)
+        long blockedIps = recentFailed.stream()
+                .map(LoginAttempt::getIpAddress)
+                .filter(ip -> ip != null && !ip.isBlank())
+                .distinct()
+                .count();
+        metrics.put("totalAttempts", loginAttemptRepository.count());
+        metrics.put("failedAttempts", todayFailed != null ? todayFailed : 0L);
+        metrics.put("successfulAttempts", todaySuccessful != null ? todaySuccessful : 0L);
+        metrics.put("blockedIps", blockedIps);
+
         return metrics;
     }
     
+    @Transactional(readOnly = true)
+    public java.util.List<com.example.gpiApp.dto.SuspiciousIpDTO> getSuspiciousIps() {
+        java.util.List<com.example.gpiApp.dto.SuspiciousIpDTO> ips =
+                loginAttemptRepository.findSuspiciousIps(LoginAttempt.LoginStatus.FAILURE);
+        ips.forEach(ip -> {
+            ip.setCountry("Inconnu");          // no GeoIP service configured
+            // An IP is "Bloquée" only when an admin has actually blocked it; otherwise it is watched.
+            ip.setStatus(blockedIpRepository.existsByIpAddress(ip.getIpAddress()) ? "Bloquée" : "Surveillée");
+        });
+        return ips;
+    }
+
+    // ── IP blocking (admin security console) ──────────────────────────────────
+    @Transactional
+    public com.example.gpiApp.entity.BlockedIp blockIp(String ipAddress, String reason) {
+        if (ipAddress == null || ipAddress.isBlank()) {
+            throw new IllegalArgumentException("IP address is required");
+        }
+        return blockedIpRepository.findByIpAddress(ipAddress).orElseGet(() ->
+                blockedIpRepository.save(com.example.gpiApp.entity.BlockedIp.builder()
+                        .ipAddress(ipAddress)
+                        .reason(reason != null ? reason : "Bloquée depuis la console de sécurité")
+                        .build()));
+    }
+
+    @Transactional
+    public void unblockIp(String ipAddress) {
+        if (ipAddress != null) blockedIpRepository.deleteByIpAddress(ipAddress);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isIpBlocked(String ipAddress) {
+        return ipAddress != null && blockedIpRepository.existsByIpAddress(ipAddress);
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<com.example.gpiApp.entity.BlockedIp> getBlockedIps() {
+        return blockedIpRepository.findAll();
+    }
+
     @Transactional
     public void deleteAllLoginAttempts() {
         loginAttemptRepository.deleteAll();
     }
-    
+
     private LoginAttemptDTO convertToDTO(LoginAttempt attempt) {
         return LoginAttemptDTO.builder()
                 .id(attempt.getId())
                 .username(attempt.getUsername())
                 .email(attempt.getEmail())
                 .status(attempt.getStatus())
+                .success(attempt.getStatus() == LoginAttempt.LoginStatus.SUCCESS)
                 .ipAddress(attempt.getIpAddress())
                 .userAgent(attempt.getUserAgent())
                 .reason(attempt.getReason())

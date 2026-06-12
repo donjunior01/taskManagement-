@@ -31,14 +31,16 @@ public class TaskService {
     private final TimeLogRepository timeLogRepository;
     private final ActivityLogService activityLogService;
     private final CalendarService calendarService;
-    
+    private final NotificationService notificationService;
+
     public TaskService(TaskRepository taskRepository,
                        ProjectRepository projectRepository,
                        UserRepository userRepository,
                        CommentRepository commentRepository,
                        TimeLogRepository timeLogRepository,
                        ActivityLogService activityLogService,
-                       CalendarService calendarService) {
+                       CalendarService calendarService,
+                       NotificationService notificationService) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
@@ -46,6 +48,21 @@ public class TaskService {
         this.timeLogRepository = timeLogRepository;
         this.activityLogService = activityLogService;
         this.calendarService = calendarService;
+        this.notificationService = notificationService;
+    }
+
+    /** Notify an assignee that a task has landed on their plate (and calendar). */
+    private void notifyAssignee(Task task) {
+        if (task.getAssignedTo() == null) return;
+        try {
+            String when = task.getDeadline() != null ? " (échéance le " + task.getDeadline() + ")" : "";
+            notificationService.createNotification(
+                    task.getAssignedTo().getId(),
+                    "Nouvelle tâche assignée",
+                    "La tâche « " + task.getName() + " » vous a été assignée" + when + ". Elle apparaît sur votre calendrier.",
+                    com.example.gpiApp.entity.Notification.NotificationType.TASK_ASSIGNED,
+                    task.getId(), "TASK");
+        } catch (Exception ignore) { }
     }
     
     @Transactional(readOnly = true)
@@ -113,13 +130,18 @@ public class TaskService {
             )
         );
         
-        // Create calendar event for task deadline
+        // Create the deadline calendar event on the ASSIGNEE's calendar (so it loads for them,
+        // like a distributed event), falling back to the creator when unassigned.
         try {
-            calendarService.createTaskCalendarEvent(savedTask, createdById);
+            Long calendarUserId = savedTask.getAssignedTo() != null ? savedTask.getAssignedTo().getId() : createdById;
+            calendarService.createTaskCalendarEvent(savedTask, calendarUserId);
         } catch (Exception e) {
             log.warn("Failed to create calendar event for task {}: {}", savedTask.getId(), e.getMessage());
         }
-        
+
+        // Notify the assignee.
+        notifyAssignee(savedTask);
+
         return ApiResponse.success("Task created successfully", convertToDTO(savedTask));
     }
     
@@ -128,7 +150,8 @@ public class TaskService {
         return taskRepository.findById(id)
                 .map(task -> {
                     Project oldProject = task.getProject();
-                    
+                    Long oldAssigneeId = task.getAssignedTo() != null ? task.getAssignedTo().getId() : null;
+
                     task.setName(request.getName());
                     task.setDescription(request.getDescription());
                     if (request.getPriority() != null) task.setPriority(request.getPriority());
@@ -170,13 +193,19 @@ public class TaskService {
                         )
                     );
                     
-                    // Update calendar event for task deadline
+                    // Update calendar event for task deadline (recreated on the assignee's calendar)
                     try {
                         calendarService.updateTaskCalendarEvent(updatedTask);
                     } catch (Exception e) {
                         log.warn("Failed to update calendar event for task {}: {}", updatedTask.getId(), e.getMessage());
                     }
-                    
+
+                    // Notify the assignee if the task was newly assigned or reassigned to them.
+                    Long newAssigneeId = updatedTask.getAssignedTo() != null ? updatedTask.getAssignedTo().getId() : null;
+                    if (newAssigneeId != null && !newAssigneeId.equals(oldAssigneeId)) {
+                        notifyAssignee(updatedTask);
+                    }
+
                     return ApiResponse.success("Task updated successfully", convertToDTO(updatedTask));
                 })
                 .orElse(ApiResponse.error("Task not found"));

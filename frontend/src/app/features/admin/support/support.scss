@@ -792,3 +792,44 @@
     color: var(--text-primary);
   }
 }
+
+/* ── Prototype: status tabs + count line + resolve action ── */
+.tickets-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  .strong { font-weight: 700; color: var(--text-primary); }
+  .text-danger { color: var(--danger); font-weight: 600; }
+}
+
+.status-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+
+  .status-tab {
+    height: 32px;
+    padding: 0 14px;
+    border: none;
+    background: none;
+    border-radius: var(--radius-md);
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--t-fast, .15s);
+
+    &:hover { background: var(--bg-subtle); color: var(--text-primary); }
+    &.active { background: var(--primary); color: #fff; }
+  }
+}
+
+.btn-action.btn-resolve:hover {
+  background: var(--success-bg);
+  color: var(--success);
+}

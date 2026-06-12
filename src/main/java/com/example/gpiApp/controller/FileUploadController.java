@@ -32,8 +32,8 @@ public class FileUploadController {
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
-    @Value("${app.upload.max-size:10485760}") // 10MB default
-    private long maxFileSize;
+    // Injected via Lombok @RequiredArgsConstructor. Effective per-upload limit is admin-configurable.
+    private final com.example.gpiApp.service.SystemSettingsService systemSettingsService;
 
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(
             "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", 
@@ -53,10 +53,12 @@ public class FileUploadController {
                         .body(ApiResponse.error("Please select a file to upload"));
             }
 
-            // Check file size (10MB limit)
+            // Check file size against the admin-configured limit.
+            long maxFileSize = systemSettingsService.getMaxUploadBytes();
             if (file.getSize() > maxFileSize) {
+                long maxMb = maxFileSize / (1024 * 1024);
                 return ResponseEntity.badRequest()
-                        .body(ApiResponse.error("File size exceeds maximum limit of 10MB"));
+                        .body(ApiResponse.error("La taille du fichier dépasse la limite de " + maxMb + " Mo."));
             }
 
             // Check file extension

@@ -32,4 +32,10 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long
 
     @Query("SELECT COUNT(DISTINCT l.user.id) FROM LoginAttempt l WHERE l.status = :status AND l.attemptedAt >= :since AND l.user IS NOT NULL")
     Long countActiveSessionsSince(@Param("since") LocalDateTime since, @Param("status") LoginAttempt.LoginStatus status);
+
+    /** Suspicious IPs: failed attempts grouped by IP address (most attempts first). */
+    @Query("SELECT new com.example.gpiApp.dto.SuspiciousIpDTO(l.ipAddress, COUNT(l), MAX(l.attemptedAt), COUNT(DISTINCT l.username)) " +
+           "FROM LoginAttempt l WHERE l.status = :status AND l.ipAddress IS NOT NULL AND l.ipAddress <> '' " +
+           "GROUP BY l.ipAddress ORDER BY COUNT(l) DESC")
+    List<com.example.gpiApp.dto.SuspiciousIpDTO> findSuspiciousIps(@Param("status") LoginAttempt.LoginStatus status);
 }

@@ -3,8 +3,8 @@
   <!-- Header Title block -->
   <div class="support-header">
     <div class="header-text">
-      <h2>Help & Support Center</h2>
-      <p>Get quick answers to common questions or open a ticket with our support engineering team.</p>
+      <h2>Centre d'aide et de support</h2>
+      <p>Obtenez des réponses rapides aux questions courantes ou ouvrez un ticket auprès de notre équipe de support.</p>
     </div>
   </div>
 
@@ -17,9 +17,9 @@
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
       </div>
-      <h3>Live Support Chat</h3>
-      <p>Speak to our workspace engineering staff in real time.</p>
-      <a href="javascript:void(0)" class="contact-link text-blue">Start Live Chat &rarr;</a>
+      <h3>Chat de support en direct</h3>
+      <p>Échangez en temps réel avec notre équipe technique.</p>
+      <a href="javascript:void(0)" class="contact-link text-blue">Démarrer le chat &rarr;</a>
     </div>
 
     <!-- Card 2: Email -->
@@ -30,8 +30,8 @@
           <polyline points="22,6 12,13 2,6"></polyline>
         </svg>
       </div>
-      <h3>Email Support</h3>
-      <p>Drop our helpdesk an inquiry. Avg response: 2 hours.</p>
+      <h3>Support par e-mail</h3>
+      <p>Envoyez votre demande à notre support. Réponse moyenne : 2 heures.</p>
       <a href="mailto:support@taskmaster.com" class="contact-link text-green">support@taskmaster.com</a>
     </div>
 
@@ -44,8 +44,8 @@
           </path>
         </svg>
       </div>
-      <h3>Helpdesk Line</h3>
-      <p>Speak directly with a support agent for critical needs.</p>
+      <h3>Ligne d'assistance</h3>
+      <p>Parlez directement à un agent de support pour les besoins critiques.</p>
       <span class="contact-number text-orange">+237 699-226-444</span>
     </div>
   </div>
@@ -61,7 +61,7 @@
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
-        <h3>Frequently Asked Questions</h3>
+        <h3>Questions fréquentes</h3>
       </div>
 
       <div class="faq-accordion-list">
@@ -90,28 +90,28 @@
             <line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
-          <h3>Active Tickets</h3>
+          <h3>Tickets actifs</h3>
         </div>
         <button class="btn-create-ticket" (click)="openTicketModal()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="plus-icon">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          <span>Open Ticket</span>
+          <span>Ouvrir un ticket</span>
         </button>
       </div>
 
       <!-- Tickets listing -->
       <div class="tickets-vertical-list">
         <div class="empty-tickets" *ngIf="tickets.length === 0">
-          <p>No active support tickets found.</p>
+          <p>Aucun ticket de support actif.</p>
         </div>
 
         <div class="ticket-card animate-scale-in" *ngFor="let tkt of tickets">
           <div class="ticket-top">
             <span class="ticket-code">{{ tkt.id }}</span>
             <span class="ticket-status-badge" [ngClass]="tkt.status.toLowerCase()">
-              {{ tkt.status === 'OPEN' ? 'Open' : (tkt.status === 'IN_PROGRESS' ? 'In Progress' : 'Resolved') }}
+              {{ tkt.status === 'OPEN' ? 'Ouvert' : (tkt.status === 'IN_PROGRESS' ? 'En cours' : 'Résolu') }}
             </span>
           </div>
 
@@ -120,7 +120,7 @@
 
           <div class="ticket-meta">
             <span class="ticket-priority-badge" [ngClass]="tkt.priority.toLowerCase()">
-              {{ tkt.priority }} Priority
+              Priorité {{ priorityLabel(tkt.priority) }}
             </span>
             <span class="ticket-date">{{ tkt.date }}</span>
           </div>
@@ -136,8 +136,8 @@
   <div class="glass-panel modal-card ticket-modal animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="header-titles">
-        <span class="modal-label">Support Helpdesk Entry</span>
-        <h3>Open Helpdesk Support Ticket</h3>
+        <span class="modal-label">Demande au support</span>
+        <h3>Ouvrir un ticket de support</h3>
       </div>
       <button class="modal-close-btn" (click)="closeTicketModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -153,35 +153,35 @@
 
         <!-- Subject -->
         <div class="form-group">
-          <label for="subject">Ticket Subject / Title</label>
+          <label for="subject">Sujet / titre du ticket</label>
           <input type="text" id="subject" name="subject" [(ngModel)]="ticketSubject"
-            placeholder="e.g. Export CSV formatting is misaligned" required />
+            placeholder="ex. : Le format de l'export CSV est décalé" required />
         </div>
 
         <!-- Row Grid for Category & Priority -->
         <div class="modal-row-grid">
           <!-- Category -->
           <div class="form-group">
-            <label for="category">Support Category</label>
+            <label for="category">Catégorie</label>
             <div class="select-wrapper">
               <select id="category" name="category" [(ngModel)]="ticketCategory">
-                <option value="General">General Question</option>
-                <option value="Task Board">Task Board / Backlog</option>
-                <option value="Reporting Bug">Reporting Bug</option>
-                <option value="Account/Access">Account / Permissions</option>
+                <option value="General">Question générale</option>
+                <option value="Task Board">Tableau des tâches</option>
+                <option value="Reporting Bug">Signaler un bug</option>
+                <option value="Account/Access">Compte / Permissions</option>
               </select>
             </div>
           </div>
 
           <!-- Priority -->
           <div class="form-group">
-            <label for="priority">Severity Rank</label>
+            <label for="priority">Niveau de priorité</label>
             <div class="select-wrapper">
               <select id="priority" name="priority" [(ngModel)]="ticketPriority">
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="URGENT">Urgent</option>
+                <option value="LOW">Faible</option>
+                <option value="MEDIUM">Moyenne</option>
+                <option value="HIGH">Haute</option>
+                <option value="URGENT">Urgente</option>
               </select>
             </div>
           </div>
@@ -189,24 +189,23 @@
 
         <!-- Description -->
         <div class="form-group">
-          <label for="description">Detailed Description</label>
+          <label for="description">Description détaillée</label>
           <textarea id="description" name="description" rows="4" [(ngModel)]="ticketDescription"
-            placeholder="Outline step-by-step what occurred, any error messages, or what you were attempting to achieve..."
+            placeholder="Décrivez étape par étape ce qui s'est passé, les messages d'erreur, ou ce que vous tentiez de faire…"
             required></textarea>
         </div>
 
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeTicketModal()">Cancel</button>
+        <button type="button" class="btn btn-secondary" (click)="closeTicketModal()">Annuler</button>
         <button type="submit" class="btn btn-primary" [disabled]="submittingTicket || !ticketForm.form.valid">
           <svg *ngIf="submittingTicket" class="spinner" viewBox="0 0 24 24">
             <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
           </svg>
-          <span>{{ submittingTicket ? 'Submitting ticket...' : 'Submit Support Ticket' }}</span>
+          <span>{{ submittingTicket ? 'Envoi du ticket…' : 'Envoyer le ticket' }}</span>
         </button>
       </div>
     </form>
   </div>
 </div>
-

@@ -1,465 +1,188 @@
-<div class="dashboard-wrapper">
-  <!-- Header Greeting Area -->
-  <div class="dashboard-header animate-fade-in-up">
-    <div class="header-text">
-      <h2>System Operations Control</h2>
-      <p>Workspace governance, active deliverables, and structural metrics.</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-secondary" (click)="showAddUserModal = true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-          <circle cx="8.5" cy="7" r="4"></circle>
-          <line x1="20" y1="8" x2="20" y2="14"></line>
-          <line x1="23" y1="11" x2="17" y2="11"></line>
-        </svg>
-        <span>Register Account</span>
-      </button>
-      <button class="btn btn-primary" (click)="showCreateProjectModal = true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        <span>Launch Project</span>
-      </button>
-    </div>
-  </div>
+<div class="dash-wrap">
 
-  <!-- Metric Statistics Cards Grid -->
-  <div class="metrics-grid animate-fade-in-up">
-    <!-- Card 1: Total Tasks -->
-    <div class="metric-card glass-panel shimmer-hover">
-      <div class="card-glow"></div>
-      <div class="metric-details">
-        <span class="metric-label">System Tasks</span>
-        <h3 class="metric-value">{{ stats.totalTasks }}</h3>
-        <span class="metric-subtext">Active operational deliverables</span>
+  <!-- ═══ KPI tiles (6) ═══ -->
+  <div class="kpi-grid">
+    <div class="kpi-card" *ngFor="let k of kpis">
+      <div class="kpi-head">
+        <div class="kpi-icon" [ngClass]="'tone-' + k.tone">
+          <svg *ngIf="k.icon === 'users'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <svg *ngIf="k.icon === 'folder'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path><path d="M2 10h20"></path></svg>
+          <svg *ngIf="k.icon === 'checks'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 5h8"></path><path d="M13 12h8"></path><path d="M13 19h8"></path><path d="m3 17 2 2 4-4"></path><path d="m3 7 2 2 4-4"></path></svg>
+          <svg *ngIf="k.icon === 'shield'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+          <svg *ngIf="k.icon === 'life'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line></svg>
+          <svg *ngIf="k.icon === 'activity'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg>
+        </div>
+        <span class="pulse-dot" *ngIf="k.pulse"></span>
       </div>
-      <div class="metric-icon task-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 11l3 3L22 4"></path>
-          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-        </svg>
-      </div>
-    </div>
-
-    <!-- Card 2: Total Projects -->
-    <div class="metric-card glass-panel shimmer-hover">
-      <div class="card-glow"></div>
-      <div class="metric-details">
-        <span class="metric-label">Total Projects</span>
-        <h3 class="metric-value">{{ stats.totalProjects }}</h3>
-        <span class="metric-subtext">Coordinated workspaces</span>
-      </div>
-      <div class="metric-icon project-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-          <polyline points="2 17 12 22 22 17"></polyline>
-          <polyline points="2 12 12 17 22 12"></polyline>
-        </svg>
-      </div>
-    </div>
-
-    <!-- Card 3: Total Users -->
-    <div class="metric-card glass-panel shimmer-hover">
-      <div class="card-glow"></div>
-      <div class="metric-details">
-        <span class="metric-label">Active Users</span>
-        <h3 class="metric-value">{{ stats.totalUsers }}</h3>
-        <span class="metric-subtext">Authorized accounts</span>
-      </div>
-      <div class="metric-icon user-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-          <circle cx="9" cy="7" r="4"></circle>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-        </svg>
-      </div>
-    </div>
-
-    <!-- Card 4: Radial Completion Rate -->
-    <div class="metric-card glass-panel rate-card shimmer-hover">
-      <div class="card-glow"></div>
-      <div class="metric-details">
-        <span class="metric-label">Completion Velocity</span>
-        <h3 class="metric-value">{{ stats.taskCompletionRate }}%</h3>
-        <span class="metric-subtext">Overall operational throughput</span>
-      </div>
-      <div class="radial-gauge">
-        <svg class="progress-circle" viewBox="0 0 36 36">
-          <path class="circle-bg"
-            d="M18 2.0845
-              a 15.9155 15.9155 0 0 1 0 31.831
-              a 15.9155 15.9155 0 0 1 0 -31.831"
-          />
-          <path class="circle-stroke"
-            [attr.stroke-dasharray]="stats.taskCompletionRate + ', 100'"
-            d="M18 2.0845
-              a 15.9155 15.9155 0 0 1 0 31.831
-              a 15.9155 15.9155 0 0 1 0 -31.831"
-          />
-        </svg>
+      <div class="kpi-value">{{ k.value }}</div>
+      <div class="kpi-label">{{ k.label }}</div>
+      <div class="kpi-delta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg>
+        {{ k.delta }}
       </div>
     </div>
   </div>
 
-  <!-- Charts Grid Section -->
-  <div class="charts-grid animate-fade-in-up" style="animation-delay: 0.1s;">
-    
-    <!-- Chart 1: Project Status Distribution -->
-    <div class="chart-card glass-panel">
-      <div class="chart-header">
-        <h4>Project Distribution</h4>
+  <!-- ═══ Charts row ═══ -->
+  <div class="charts-row">
+
+    <!-- Activité Utilisateurs -->
+    <div class="dash-card">
+      <div class="card-head">
+        <div><h3>Activité Utilisateurs</h3><span class="sub">30 derniers jours</span></div>
+        <span class="badge badge-primary">Temps réel</span>
       </div>
-      <div class="chart-body project-distribution">
-        <div class="dist-bars">
-          <div class="dist-item">
-            <div class="dist-label">
-              <span>Active</span>
-              <span class="val">{{ projectDistribution.active }}</span>
-            </div>
-            <div class="dist-track"><div class="dist-fill active" [style.width.%]="(projectDistribution.active / stats.totalProjects) * 100"></div></div>
+      <div class="card-body">
+        <div class="xy-chart area-wrap">
+          <div class="y-axis"><span *ngFor="let t of actYTicks">{{ t }}</span></div>
+          <div class="plot area-plot" (mousemove)="onAreaMove($event)" (mouseleave)="actHover = null">
+            <div class="gridline" *ngFor="let t of actYTicks" [style.top.%]="(1 - t/actMax)*100"></div>
+            <svg class="xy-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="dg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--primary)" stop-opacity=".40"></stop><stop offset="100%" stop-color="var(--primary)" stop-opacity="0"></stop></linearGradient>
+                <linearGradient id="dg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity=".30"></stop><stop offset="100%" stop-color="var(--accent)" stop-opacity="0"></stop></linearGradient>
+              </defs>
+              <path [attr.d]="inscArea" fill="url(#dg2)"></path>
+              <path [attr.d]="connArea" fill="url(#dg1)"></path>
+              <polyline [attr.points]="inscLine" fill="none" stroke="var(--accent)" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"></polyline>
+              <polyline [attr.points]="connLine" fill="none" stroke="var(--primary)" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"></polyline>
+            </svg>
+            <ng-container *ngIf="actHover">
+              <div class="cursor-line" [style.left.%]="actHover.leftPct"></div>
+              <div class="cursor-dot insc" [style.left.%]="actHover.leftPct" [style.top.%]="actHover.inscTop"></div>
+              <div class="cursor-dot conn" [style.left.%]="actHover.leftPct" [style.top.%]="actHover.connTop"></div>
+              <div class="float-tip" [style.left.%]="actHover.leftPct" [class.flip]="actHover.leftPct > 62">
+                <div class="tip-title">{{ actHover.label }}</div>
+                <div class="tip-row"><span class="tdot" style="background:var(--primary)"></span>Connexions : <b>{{ actHover.conn }}</b></div>
+                <div class="tip-row"><span class="tdot" style="background:var(--accent)"></span>Inscriptions : <b>{{ actHover.insc }}</b></div>
+              </div>
+            </ng-container>
           </div>
-          <div class="dist-item">
-            <div class="dist-label">
-              <span>Completed</span>
-              <span class="val">{{ projectDistribution.completed }}</span>
-            </div>
-            <div class="dist-track"><div class="dist-fill completed" [style.width.%]="(projectDistribution.completed / stats.totalProjects) * 100"></div></div>
-          </div>
-          <div class="dist-item">
-            <div class="dist-label">
-              <span>Planned</span>
-              <span class="val">{{ projectDistribution.planned }}</span>
-            </div>
-            <div class="dist-track"><div class="dist-fill planned" [style.width.%]="(projectDistribution.planned / stats.totalProjects) * 100"></div></div>
-          </div>
-          <div class="dist-item">
-            <div class="dist-label">
-              <span>On Hold</span>
-              <span class="val">{{ projectDistribution.onHold }}</span>
-            </div>
-            <div class="dist-track"><div class="dist-fill onhold" [style.width.%]="(projectDistribution.onHold / stats.totalProjects) * 100"></div></div>
-          </div>
+          <div class="x-axis"><span *ngFor="let t of actXTicks" [style.left.%]="(t.i/(activityData.length-1))*100">{{ t.label }}</span></div>
+        </div>
+        <div class="chart-legend">
+          <span class="lg"><i class="dot" style="background:var(--primary)"></i> Connexions</span>
+          <span class="lg"><i class="dot" style="background:var(--accent)"></i> Inscriptions</span>
         </div>
       </div>
     </div>
 
-    <!-- Chart 2: User Growth Trend -->
-    <div class="chart-card glass-panel">
-      <div class="chart-header">
-        <h4>User Growth</h4>
-        <span class="growth-badge">+{{ stats.newUsersThisMonth }} this month</span>
-      </div>
-      <div class="chart-body growth-chart">
-        <svg viewBox="0 0 100 40" class="sparkline" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="growthGradient" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3"></stop>
-              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"></stop>
-            </linearGradient>
-          </defs>
-          <path d="M 0 40 L 0 30 L 16 26 L 33 22 L 50 18 L 66 12 L 83 8 L 100 4 L 100 40 Z" fill="url(#growthGradient)"></path>
-          <polyline points="0 30 16 26 33 22 50 18 66 12 83 8 100 4" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-          <!-- Datapoints -->
-          <circle cx="16" cy="26" r="1.5" fill="#fff" stroke="var(--accent)" stroke-width="1"></circle>
-          <circle cx="33" cy="22" r="1.5" fill="#fff" stroke="var(--accent)" stroke-width="1"></circle>
-          <circle cx="50" cy="18" r="1.5" fill="#fff" stroke="var(--accent)" stroke-width="1"></circle>
-          <circle cx="66" cy="12" r="1.5" fill="#fff" stroke="var(--accent)" stroke-width="1"></circle>
-          <circle cx="83" cy="8" r="1.5" fill="#fff" stroke="var(--accent)" stroke-width="1"></circle>
-          <circle cx="100" cy="4" r="1.5" fill="#fff" stroke="var(--accent)" stroke-width="1"></circle>
-        </svg>
-      </div>
-    </div>
-
-    <!-- Chart 3: Support Tickets -->
-    <div class="chart-card glass-panel">
-      <div class="chart-header">
-        <h4>Support Tickets</h4>
-      </div>
-      <div class="chart-body tickets-chart">
+    <!-- Projets par Statut -->
+    <div class="dash-card">
+      <div class="card-head"><div><h3>Projets par Statut</h3><span class="sub">{{ projectStatusTotal }} projets au total</span></div></div>
+      <div class="card-body donut-split">
         <div class="donut-wrapper">
           <svg viewBox="0 0 36 36" class="donut-chart">
-            <!-- Background -->
-            <path class="donut-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f1f5f9" stroke-width="4"></path>
-            
-            <!-- Resolved (Green) -->
-            <path class="donut-segment resolved" [attr.stroke-dasharray]="(supportTickets.resolved / (supportTickets.open + supportTickets.inProgress + supportTickets.resolved) * 100) + ', 100'" stroke-dashoffset="0" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--success)" stroke-width="4"></path>
-            
-            <!-- In Progress (Blue) -->
-            <path class="donut-segment in-progress" [attr.stroke-dasharray]="(supportTickets.inProgress / (supportTickets.open + supportTickets.inProgress + supportTickets.resolved) * 100) + ', 100'" [attr.stroke-dashoffset]="-(supportTickets.resolved / (supportTickets.open + supportTickets.inProgress + supportTickets.resolved) * 100)" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--secondary)" stroke-width="4"></path>
-            
-            <!-- Open (Orange) -->
-            <path class="donut-segment open" [attr.stroke-dasharray]="(supportTickets.open / (supportTickets.open + supportTickets.inProgress + supportTickets.resolved) * 100) + ', 100'" [attr.stroke-dashoffset]="-((supportTickets.resolved + supportTickets.inProgress) / (supportTickets.open + supportTickets.inProgress + supportTickets.resolved) * 100)" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--danger)" stroke-width="4"></path>
+            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--border)" stroke-width="3.4"></circle>
+            <circle class="donut-seg" *ngFor="let s of statusDonut" cx="18" cy="18" r="15.9155" fill="none" [attr.stroke]="s.color" stroke-width="3.4" [attr.stroke-dasharray]="s.dash" [attr.stroke-dashoffset]="s.offset">
+              <title>{{ s.label }} : {{ s.value }} ({{ s.percent | number:'1.0-0' }} %)</title>
+            </circle>
           </svg>
-          <div class="donut-inner-text">
-            <span class="total">{{ supportTickets.open + supportTickets.inProgress + supportTickets.resolved }}</span>
-            <span class="label">Total</span>
+        </div>
+        <ul class="donut-legend">
+          <li *ngFor="let s of statusDonut" [title]="s.label + ' : ' + s.value + ' (' + (s.percent | number:'1.0-0') + ' %)'"><span class="dot" [style.background]="s.color"></span><span class="nm">{{ s.label }}</span><span class="vl">{{ s.value }}</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Répartition des Rôles -->
+    <div class="dash-card">
+      <div class="card-head"><div><h3>Répartition des Rôles</h3><span class="sub">{{ roleTotal }} utilisateurs</span></div></div>
+      <div class="card-body roles-body">
+        <div class="role-bar" *ngFor="let r of rolesBars" [title]="r.name + ' : ' + r.value + ' (' + r.pct + ' %)'">
+          <div class="role-top"><span class="nm">{{ r.name }}</span><span class="vl">{{ r.value }} · {{ r.pct }}%</span></div>
+          <div class="role-track"><div class="role-fill" [style.width.%]="r.pct" [style.background]="r.color"></div></div>
+        </div>
+        <div class="roles-foot">
+          <span>Nouveaux ce mois</span>
+          <span class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="18 15 12 9 6 15"></polyline></svg> +{{ stats.newUsersThisMonth }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Feeds row ═══ -->
+  <div class="feeds-row">
+
+    <!-- Alertes de Sécurité Récentes -->
+    <div class="dash-card">
+      <div class="card-head">
+        <div><h3>Alertes de Sécurité Récentes</h3><span class="sub">{{ securityFeed.length }} derniers événements</span></div>
+        <a class="head-link" routerLink="/admin/security-log">Voir tout</a>
+      </div>
+      <ul class="feed-list">
+        <li *ngFor="let a of securityFeed" class="sec-row" [ngClass]="a.severity" routerLink="/admin/security-log" title="Ouvrir le journal de sécurité">
+          <span class="sev-dot" [ngClass]="a.severity"></span>
+          <div class="sec-main">
+            <div class="sec-line">
+              <span class="sec-msg">{{ a.message }}</span>
+              <span class="sec-type" [ngClass]="a.severity">{{ a.severity === 'danger' ? 'Échec' : 'Succès' }}</span>
+            </div>
+            <div class="sec-meta">
+              <span class="m-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>{{ a.user }}</span>
+              <span class="m-ip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>{{ a.ip }}</span>
+              <span class="m-time">{{ a.time }}</span>
+            </div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"></path></svg>
+        </li>
+        <li *ngIf="securityFeed.length === 0" class="feed-empty">Aucun événement de sécurité récent.</li>
+      </ul>
+    </div>
+
+    <!-- Dernières Actions du Journal -->
+    <div class="dash-card">
+      <div class="card-head">
+        <div><h3>Dernières Actions du Journal</h3><span class="sub">Activité globale</span></div>
+        <a class="head-link" routerLink="/admin/activity-logs">Voir le journal</a>
+      </div>
+      <ul class="feed-list">
+        <li *ngFor="let l of recentActivity" class="log-row">
+          <span class="log-avatar">{{ initialsOf(l.user) }}</span>
+          <div class="log-main"><span class="log-text">{{ l.message }}</span></div>
+          <span class="log-dot" [ngClass]="l.type"></span>
+          <span class="log-time">{{ l.timestamp }}</span>
+        </li>
+        <li *ngIf="recentActivity.length === 0" class="feed-empty">Aucune activité récente.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ Tickets Support par Statut (stacked) ═══ -->
+  <div class="dash-card">
+    <div class="card-head"><div><h3>Tickets Support par Statut</h3><span class="sub">6 dernières semaines</span></div></div>
+    <div class="card-body">
+      <div class="xy-chart bars-wrap">
+        <div class="y-axis"><span *ngFor="let t of supportYTicks">{{ t }}</span></div>
+        <div class="plot bars-plot">
+          <div class="gridline" *ngFor="let t of supportYTicks" [style.top.%]="(1 - t/supportYMax)*100"></div>
+          <div class="bars">
+            <div class="bcol" *ngFor="let w of supportData; let i = index" [class.active]="barHover === w"
+                 (mouseenter)="barHover = w" (mouseleave)="barHover = null">
+              <div class="bstack">
+                <div class="bseg fermes"  [style.height.%]="(w.fermes  / supportYMax) * 100"></div>
+                <div class="bseg resolus" [style.height.%]="(w.resolus / supportYMax) * 100"></div>
+                <div class="bseg encours" [style.height.%]="(w.encours / supportYMax) * 100"></div>
+                <div class="bseg ouverts" [style.height.%]="(w.ouverts / supportYMax) * 100"></div>
+              </div>
+              <div class="float-tip bar-tip" *ngIf="barHover === w" [class.flip]="i > 3">
+                <div class="tip-title">{{ w.week }}</div>
+                <div class="tip-row"><span class="tdot" style="background:var(--warning)"></span>Ouverts : <b>{{ w.ouverts }}</b></div>
+                <div class="tip-row"><span class="tdot" style="background:var(--primary)"></span>En cours : <b>{{ w.encours }}</b></div>
+                <div class="tip-row"><span class="tdot" style="background:var(--success)"></span>Résolus : <b>{{ w.resolus }}</b></div>
+                <div class="tip-row"><span class="tdot" style="background:var(--text-muted)"></span>Fermés : <b>{{ w.fermes }}</b></div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="tickets-legend">
-          <div class="legend-item"><span class="dot open"></span> Open ({{ supportTickets.open }})</div>
-          <div class="legend-item"><span class="dot in-progress"></span> In Progress ({{ supportTickets.inProgress }})</div>
-          <div class="legend-item"><span class="dot resolved"></span> Resolved ({{ supportTickets.resolved }})</div>
-        </div>
+        <div class="x-axis bars-x"><span *ngFor="let w of supportData">{{ w.week }}</span></div>
       </div>
-    </div>
-  </div>
-
-  <!-- Task Status Pipeline -->
-  <div class="task-pipeline-grid animate-fade-in-up" style="animation-delay: 0.15s;">
-    <div class="kanban-column column-planned">
-      <div class="column-header">
-        <span class="col-dot"></span>
-        <h4>Planned</h4>
-        <span class="col-count">{{ stats.totalTasks - stats.activeTasks - stats.completedTasks - stats.overdueTasks > 0 ? stats.totalTasks - stats.activeTasks - stats.completedTasks - stats.overdueTasks : 0 }}</span>
-      </div>
-      <span class="col-stat">{{ stats.totalTasks - stats.activeTasks - stats.completedTasks - stats.overdueTasks > 0 ? stats.totalTasks - stats.activeTasks - stats.completedTasks - stats.overdueTasks : 0 }}</span>
-      <span class="col-label">tasks queued for delivery</span>
-    </div>
-
-    <div class="kanban-column column-progress">
-      <div class="column-header">
-        <span class="col-dot"></span>
-        <h4>In Progress</h4>
-        <span class="col-count">{{ stats.activeTasks }}</span>
-      </div>
-      <span class="col-stat">{{ stats.activeTasks }}</span>
-      <span class="col-label">tasks actively in execution</span>
-    </div>
-
-    <div class="kanban-column column-hold">
-      <div class="column-header">
-        <span class="col-dot"></span>
-        <h4>On Hold</h4>
-        <span class="col-count">{{ stats.overdueTasks }}</span>
-      </div>
-      <span class="col-stat">{{ stats.overdueTasks }}</span>
-      <span class="col-label">tasks suspended or overdue</span>
-    </div>
-
-    <div class="kanban-column column-done">
-      <div class="column-header">
-        <span class="col-dot"></span>
-        <h4>Completed</h4>
-        <span class="col-count">{{ stats.completedTasks }}</span>
-      </div>
-      <span class="col-stat">{{ stats.completedTasks }}</span>
-      <span class="col-label">tasks successfully delivered</span>
-    </div>
-  </div>
-
-  <!-- Primary Dashboard Section Details -->
-  <div class="dashboard-details-grid animate-fade-in-up" style="animation-delay: 0.2s;">
-    <!-- Panel 1: Recent Projects -->
-    <div class="panel glass-panel">
-      <div class="panel-header">
-        <h4>Recent Projects Workspace</h4>
-        <button class="panel-header-btn" (click)="navigateToProjects()">View All</button>
-      </div>
-      <div class="panel-body">
-        <div class="project-list">
-          @for (project of recentProjects; track project.id) {
-            <div class="project-item">
-              <div class="project-info">
-                <h5 class="project-title">{{ project.name }}</h5>
-                <p class="project-description">{{ project.description || 'No workspace parameters provided.' }}</p>
-                <div class="project-meta">
-                  <span class="meta-item manager">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                    <span>{{ project.managerName || 'Unassigned' }}</span>
-                  </span>
-                  <span class="meta-item tasks">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                      <line x1="16" y1="13" x2="8" y2="13"></line>
-                      <line x1="16" y1="17" x2="8" y2="17"></line>
-                      <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                    <span>{{ project.taskCount || 0 }} tasks</span>
-                  </span>
-                </div>
-              </div>
-              <div class="project-metrics">
-                <div class="progress-bar-container">
-                  <div class="progress-bar-header">
-                    <span class="progress-label">Progress</span>
-                    <span class="progress-value">{{ project.progress || 0 }}%</span>
-                  </div>
-                  <div class="progress-track">
-                    <div class="progress-fill" [style.width.%]="project.progress || 0"></div>
-                  </div>
-                </div>
-                <span class="status-badge" [class]="project.status?.toLowerCase()">
-                  {{ project.status }}
-                </span>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-    </div>
-
-    <!-- Panel 2: Activity Logs Timeline -->
-    <div class="panel glass-panel">
-      <div class="panel-header">
-        <h4>Workspace Operations Log</h4>
-      </div>
-      <div class="panel-body">
-        <div class="timeline">
-          @for (log of recentActivity; track log.id) {
-            <div class="timeline-item">
-              <div class="timeline-badge" [class]="log.type"></div>
-              <div class="timeline-content">
-                <p class="timeline-text">{{ log.message }}</p>
-                <div class="timeline-meta">
-                  <span class="time">{{ log.timestamp }}</span>
-                  <span class="bullet">•</span>
-                  <span class="user">{{ log.user }}</span>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
+      <div class="chart-legend">
+        <span class="lg"><i class="dot" style="background:var(--warning)"></i> Ouverts</span>
+        <span class="lg"><i class="dot" style="background:var(--primary)"></i> En cours</span>
+        <span class="lg"><i class="dot" style="background:var(--success)"></i> Résolus</span>
+        <span class="lg"><i class="dot" style="background:var(--text-muted)"></i> Fermés</span>
       </div>
     </div>
   </div>
 </div>
-
-<!-- ================= MODALS OVERLAYS ================= -->
-
-<!-- Modal 1: Register Account (Add User) -->
-@if (showAddUserModal) {
-  <div class="modal-backdrop">
-    <div class="modal-card glass-panel animate-scale-in">
-      <div class="modal-header">
-        <h3>Register New Account</h3>
-        <button class="modal-close-btn" (click)="showAddUserModal = false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form (ngSubmit)="onSubmitUser()" #userFormRef="ngForm" class="modal-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="firstName">First Name</label>
-              <input type="text" id="firstName" [(ngModel)]="userForm.firstName" name="firstName" required placeholder="John" />
-            </div>
-            <div class="form-group">
-              <label for="lastName">Last Name</label>
-              <input type="text" id="lastName" [(ngModel)]="userForm.lastName" name="lastName" required placeholder="Doe" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" [(ngModel)]="userForm.username" name="username" required placeholder="johndoe" />
-          </div>
-          <div class="form-group">
-            <label for="email">Corporate Email</label>
-            <input type="email" id="email" [(ngModel)]="userForm.email" name="email" required email placeholder="j.doe@company.com" />
-          </div>
-          <div class="form-group">
-            <label for="password">Initial Password</label>
-            <input type="password" id="password" [(ngModel)]="userForm.password" name="password" required minlength="4" placeholder="••••••••" />
-          </div>
-          <div class="form-group">
-            <label for="role">Assigned Workspace Role</label>
-            <select id="role" [(ngModel)]="userForm.role" name="role" required>
-              <option value="USER">Standard User (Employee)</option>
-              <option value="PROJECT_MANAGER">Project Manager</option>
-              <option value="ADMIN">Administrator</option>
-            </select>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="showAddUserModal = false">Cancel</button>
-            <button type="submit" [disabled]="submittingUser || userFormRef.invalid" class="btn btn-primary">
-              @if (submittingUser) {
-                <span class="spinner"></span>
-                <span>Saving...</span>
-              } @else {
-                <span>Register User</span>
-              }
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Modal 2: Launch Project -->
-@if (showCreateProjectModal) {
-  <div class="modal-backdrop">
-    <div class="modal-card glass-panel animate-scale-in">
-      <div class="modal-header">
-        <h3>Launch Operational Project</h3>
-        <button class="modal-close-btn" (click)="showCreateProjectModal = false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form (ngSubmit)="onSubmitProject()" #projectFormRef="ngForm" class="modal-form">
-          <div class="form-group">
-            <label for="projName">Project Name</label>
-            <input type="text" id="projName" [(ngModel)]="projectForm.name" name="name" required placeholder="Cloud Server Provisioning" />
-          </div>
-          <div class="form-group">
-            <label for="projDesc">Project Description</label>
-            <app-ai-describe [type]="'PROJECT'" [title]="projectForm.name" (generated)="projectForm.description = $event"></app-ai-describe>
-            <textarea id="projDesc" rows="3" [(ngModel)]="projectForm.description" name="description" placeholder="Launch operational parameters..."></textarea>
-          </div>
-          <div class="form-group">
-            <label for="projManager">Workspace Manager</label>
-            <select id="projManager" [(ngModel)]="projectForm.managerId" name="managerId">
-              <option [ngValue]="undefined">Select Project Manager</option>
-              @for (manager of projectManagers; track manager.id) {
-                <option [value]="manager.id">{{ manager.firstName }} {{ manager.lastName }}</option>
-              }
-            </select>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="startDate">Launch Date</label>
-              <input type="date" id="startDate" [(ngModel)]="projectForm.startDate" name="startDate" required />
-            </div>
-            <div class="form-group">
-              <label for="endDate">Delivery Date</label>
-              <input type="date" id="endDate" [(ngModel)]="projectForm.endDate" name="endDate" required />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="status">Initial Project Status</label>
-            <select id="status" [(ngModel)]="projectForm.status" name="status">
-              <option value="PLANNED">Planned</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="ON_HOLD">On Hold</option>
-            </select>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="showCreateProjectModal = false">Cancel</button>
-            <button type="submit" [disabled]="submittingProject || projectFormRef.invalid" class="btn btn-primary">
-              @if (submittingProject) {
-                <span class="spinner"></span>
-                <span>Launching...</span>
-              } @else {
-                <span>Launch Project</span>
-              }
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-}
-

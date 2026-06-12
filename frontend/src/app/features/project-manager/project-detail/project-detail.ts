@@ -10,6 +10,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { AiAssistantService, ProjectInsight, PrioritizationResult, RiskAssessment } from '../../../core/services/ai-assistant.service';
 import { ChecklistService, ChecklistItem } from '../../../core/services/checklist.service';
 import { MessageService, Message } from '../../../core/services/message.service';
+import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 
 interface TaskStats {
   planned: number;
@@ -22,7 +23,7 @@ interface TaskStats {
 @Component({
   selector: 'app-pm-project-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
   templateUrl: './project-detail.html',
   styleUrls: ['./project-detail.scss']
 })
@@ -212,8 +213,8 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
 
   submitEditProject(): void {
     if (!this.projectId) return;
-    if (!this.editForm.name || !this.editForm.startDate || !this.editForm.endDate) {
-      this.toast.show('Please complete all mandatory fields.', 'error');
+    if (!this.editForm.name) {
+      this.toast.show('Le nom du projet est requis.', 'error');
       return;
     }
     this.submitting = true;

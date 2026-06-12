@@ -6,6 +6,8 @@ import { UserService, User } from '../../../core/services/user.service';
 import { MessageService, Message } from '../../../core/services/message.service';
 import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { BadgeCountsService } from '../../../core/services/badge-counts.service';
+import { FileService } from '../../../core/services/file.service';
 
 export interface ChatContact {
   id: number;
@@ -74,14 +76,28 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
   voiceSeconds: number = 0;
   voiceInterval: any = null;
 
+  // Emoji picker
+  showEmojiPanel: boolean = false;
+  readonly emojis: string[] = ['😀','😁','😂','🤣','😊','😍','😎','😉','🙂','😅','🤔','😴','😮','😢','😭','😡','👍','👎','👏','🙏','🙌','💪','👀','🔥','✅','❌','⭐','💯','🎉','🚀','❤️','💙','💚','📎','📄','📁','📌','⏰','✔️','⚡'];
+
   constructor(
     private authService: AuthService,
     private userService: UserService,
     private messageService: MessageService,
     private projectService: ProjectService,
+    private badges: BadgeCountsService,
+    private fileService: FileService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService
   ) {}
+
+  toggleEmojiPanel(): void { this.showEmojiPanel = !this.showEmojiPanel; this.showAttachMenu = false; }
+  insertEmoji(e: string): void { this.newMessageText = (this.newMessageText || '') + e; this.showEmojiPanel = false; }
+
+  /** Push the page's total unread to the shared badge service (sidebar + top bar). */
+  private syncBadge(): void {
+    this.badges.setMessages(this.contacts.reduce((s, c) => s + (c.unreadCount || 0), 0));
+  }
 
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
@@ -168,6 +184,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
             contact.lastMessageTime = last.createdAt
               ? new Date(last.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
           }
+          this.syncBadge();
           this.cdr.detectChanges();
         },
         error: () => {}
@@ -215,6 +232,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
   selectContact(contact: ChatContact): void {
     this.selectedContact = contact;
     contact.unreadCount = 0; // Clear unread count
+    this.syncBadge(); // keep sidebar + top-bar counters in sync immediately
     // Reset sync state for the newly opened group conversation.
     this.confirmedServerIds.clear();
     this.messageThread = [];
@@ -273,15 +291,31 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
       }
 
       this.confirmedServerIds.add(id);
-      this.messageThread.push({
+      const hasAttach = !!m.attachmentUrl;
+      const bubble: ChatMessage = {
         id,
         senderId: m.senderId || 0,
         senderName: m.senderName || 'Team Member',
-        text: m.content,
+        // When an attachment is present, content holds the caption (or the file name).
+        text: hasAttach && m.content === m.attachmentName ? '' : (m.content || ''),
         timestamp: m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
         isSelf: m.senderId === this.developerId,
-        status: m.isRead ? 'READ' : 'DELIVERED'
-      });
+        status: m.isRead ? 'READ' : 'DELIVERED',
+        attachmentType: hasAttach ? (m.attachmentType || 'DOCUMENT') : undefined,
+        attachmentName: m.attachmentName,
+        attachmentSize: m.attachmentSize
+      };
+      if (hasAttach) {
+        (bubble as any)._serverUrl = m.attachmentUrl;
+        // Images: fetch the auth-protected blob and show it inline.
+        if ((m.attachmentType || '') === 'IMAGE') {
+          this.fileService.fetchBlob(m.attachmentUrl).subscribe({
+            next: (blob: Blob) => { bubble.attachmentUrl = URL.createObjectURL(blob); this.cdr.detectChanges(); },
+            error: () => {}
+          });
+        }
+      }
+      this.messageThread.push(bubble);
       appended = true;
     }
 
@@ -395,91 +429,94 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
   }
 
   handleMediaSelected(event: any): void {
-    this.showAttachMenu = false;
     const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate size limit: max 15MB (15 * 1024 * 1024 bytes)
-    const MAX_SIZE = 15 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
-      this.triggerToast("File too large. Photo & Video uploads are limited to 15MB.", "error");
-      event.target.value = ''; // Reset input
-      return;
-    }
-
-    const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
-    const isVideo = file.type.startsWith('video/');
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    // Create local object URL for preview
-    const fileUrl = URL.createObjectURL(file);
-
-    const newMsg: ChatMessage = {
-      id: this.messageThread.length + 1,
-      senderId: this.developerId,
-      senderName: this.developerName,
-      text: file.name,
-      timestamp: timeStr,
-      isSelf: true,
-      status: 'SENT',
-      attachmentType: isVideo ? 'VIDEO' : 'IMAGE',
-      attachmentUrl: fileUrl,
-      attachmentName: file.name,
-      attachmentSize: sizeStr
-    };
-
-    this.messageThread.push(newMsg);
-    this.cdr.detectChanges();
-
-    if (this.selectedContact) {
-      this.selectedContact.lastMessageText = `📁 Sent ${isVideo ? 'video' : 'photo'}: ${file.name}`;
-      this.selectedContact.lastMessageTime = timeStr;
-    }
-
-    this.triggerToast("Media file uploaded successfully!", "success");
-    event.target.value = ''; // Reset input
+    if (file) this.uploadAndSend(file, 'IMAGE');
+    event.target.value = '';
   }
 
   handleDocumentSelected(event: any): void {
-    this.showAttachMenu = false;
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (file) this.uploadAndSend(file, 'DOCUMENT');
+    event.target.value = '';
+  }
 
-    // Validate size limit: max 15MB
-    const MAX_SIZE = 15 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
-      this.triggerToast("File too large. Document uploads are limited to 15MB.", "error");
-      event.target.value = ''; // Reset input
-      return;
-    }
+  private humanSize(bytes: number): string {
+    return bytes >= 1024 * 1024 ? (bytes / (1024 * 1024)).toFixed(1) + ' Mo' : Math.max(1, Math.round(bytes / 1024)) + ' Ko';
+  }
 
-    const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+  /** Upload a file to the server, then persist it as a chat message attachment. */
+  private uploadAndSend(file: File, type: 'IMAGE' | 'DOCUMENT'): void {
+    this.showAttachMenu = false;
+    if (!this.selectedContact) return;
+    // Hard client cap; the backend enforces the admin-configured limit (default 100 MB).
+    const MAX = 100 * 1024 * 1024;
+    if (file.size > MAX) { this.triggerToast('Fichier trop volumineux (max 100 Mo).', 'error'); return; }
+
+    const sizeStr = this.humanSize(file.size);
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const projectId = this.selectedContact.id;
+    const caption = this.newMessageText.trim();
+    const content = caption || file.name;
 
+    // Optimistic bubble. For images we can show the local object URL right away.
     const newMsg: ChatMessage = {
-      id: this.messageThread.length + 1,
-      senderId: this.developerId,
-      senderName: this.developerName,
-      text: file.name,
-      timestamp: timeStr,
-      isSelf: true,
-      status: 'SENT',
-      attachmentType: 'DOCUMENT',
-      attachmentUrl: '#',
-      attachmentName: file.name,
-      attachmentSize: sizeStr
+      id: 0, senderId: this.developerId, senderName: this.developerName,
+      text: caption, timestamp: timeStr, isSelf: true, status: 'SENT',
+      attachmentType: type, attachmentUrl: type === 'IMAGE' ? URL.createObjectURL(file) : undefined,
+      attachmentName: file.name, attachmentSize: sizeStr
     };
-
+    (newMsg as any)._pending = true;
+    (newMsg as any)._uploading = true;
     this.messageThread.push(newMsg);
+    this.newMessageText = '';
     this.cdr.detectChanges();
 
-    if (this.selectedContact) {
-      this.selectedContact.lastMessageText = `📄 Sent document: ${file.name}`;
-      this.selectedContact.lastMessageTime = timeStr;
-    }
+    this.fileService.uploadFile(file).subscribe({
+      next: (res: any) => {
+        const url = res?.data?.fileUrl ?? res?.fileUrl;
+        if (!url) { this.messageThread = this.messageThread.filter(x => x !== newMsg); this.triggerToast('Téléversement échoué.', 'error'); this.cdr.detectChanges(); return; }
+        (newMsg as any)._uploading = false;
+        (newMsg as any)._serverUrl = url;          // the authenticated /uploads path for download
+        const msgObj: Message = {
+          senderId: this.developerId, projectId, content,
+          attachmentUrl: url, attachmentName: file.name, attachmentType: type, attachmentSize: sizeStr
+        };
+        this.messageService.sendMessage(msgObj).subscribe({
+          next: (resp: any) => {
+            const saved = resp?.data || resp;
+            if (saved?.id != null) { newMsg.id = saved.id; (newMsg as any)._pending = false; this.confirmedServerIds.add(saved.id); }
+            newMsg.status = 'DELIVERED';
+            this.cdr.detectChanges();
+          },
+          error: () => { newMsg.status = 'SENT'; this.triggerToast('Échec de l\'envoi du message.', 'error'); this.cdr.detectChanges(); }
+        });
+        if (this.selectedContact) {
+          this.selectedContact.lastMessageText = `📎 ${file.name}`;
+          this.selectedContact.lastMessageTime = timeStr;
+        }
+      },
+      error: (err: any) => {
+        this.messageThread = this.messageThread.filter(x => x !== newMsg);
+        this.triggerToast(err?.error?.message || 'Type de fichier non autorisé ou trop volumineux.', 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
-    this.triggerToast("Document uploaded successfully!", "success");
-    event.target.value = ''; // Reset input
+  /** Download a message attachment (authenticated blob fetch). */
+  downloadAttachment(message: ChatMessage): void {
+    const url = (message as any)._serverUrl || message.attachmentUrl;
+    if (!url || url === '#') { this.triggerToast('Aucun fichier à télécharger.', 'error'); return; }
+    this.fileService.downloadFile(url, message.attachmentName).subscribe({
+      next: () => this.triggerToast('Téléchargement démarré.', 'success'),
+      error: () => this.triggerToast('Échec du téléchargement.', 'error')
+    });
+  }
+  /** Open an image/PDF attachment in a new tab. */
+  previewAttachment(message: ChatMessage): void {
+    const url = (message as any)._serverUrl || message.attachmentUrl;
+    if (!url || url === '#') return;
+    this.fileService.previewFile(url).subscribe({ error: () => this.triggerToast('Impossible d\'ouvrir le fichier.', 'error') });
   }
 
   // ================= MICROPHONE VOICE RECORDING ACTIONS =================

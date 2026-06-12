@@ -43,26 +43,26 @@ export class SupportComponent implements OnInit {
   faqs: FAQItem[] = [
     {
       id: 1,
-      question: 'How do I create a new task milestone in my project board?',
-      answer: 'Navigate to the projects page, select your active project, click on the "Milestones" tab, and click "+ Add Milestone". Enter the name, date range, and select which tasks to group.',
+      question: 'Comment créer un nouveau jalon dans mon tableau de projet ?',
+      answer: 'Allez sur la page des projets, sélectionnez votre projet actif, ouvrez l\'onglet « Jalons » puis cliquez sur « + Ajouter un jalon ». Saisissez le nom, la période et choisissez les tâches à regrouper.',
       expanded: false
     },
     {
       id: 2,
-      question: 'Where can I download project analytics reports?',
-      answer: 'Go to the Reports page in the left sidebar. There you can use the "Generate New Report" form to choose report parameters, select your projects, choose PDF or CSV format, and download them immediately.',
+      question: 'Où puis-je télécharger les rapports d\'analyse de projet ?',
+      answer: 'Rendez-vous sur la page Rapports dans la barre latérale. Vous pouvez y choisir les paramètres, sélectionner vos projets, choisir le format PDF ou CSV et les exporter immédiatement.',
       expanded: false
     },
     {
       id: 3,
-      question: 'How do I reset my account password?',
-      answer: 'Click your profile avatar at the top right of the application header, select "Profile Settings", and click on the "Security" tab. Enter your old password and define a secure new password.',
+      question: 'Comment réinitialiser le mot de passe de mon compte ?',
+      answer: 'Cliquez sur votre avatar en haut à droite de l\'en-tête, ouvrez « Modifier le profil » puis l\'onglet « Sécurité ». Saisissez votre ancien mot de passe et définissez-en un nouveau, sécurisé.',
       expanded: false
     },
     {
       id: 4,
-      question: 'What is the average task velocity score calculated from?',
-      answer: 'The velocity trend calculates the speed at which your team resolves backlog items. It divides the total completed story points or task counts by the total number of days in active sprint cycles.',
+      question: 'Sur quoi se base le score de vélocité des tâches ?',
+      answer: 'La tendance de vélocité mesure la vitesse à laquelle votre équipe résout le backlog. Elle divise le nombre total de tâches terminées par le nombre de jours des cycles de sprint actifs.',
       expanded: false
     }
   ];
@@ -104,7 +104,7 @@ export class SupportComponent implements OnInit {
             category: t.category || 'General',
             priority: (t.priority || 'MEDIUM') as any,
             status: (t.status || 'OPEN') as any,
-            date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+            date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
             description: t.description || ''
           }));
           this.cdr.detectChanges();
@@ -116,6 +116,10 @@ export class SupportComponent implements OnInit {
 
   toggleFaq(faq: FAQItem): void {
     faq.expanded = !faq.expanded;
+  }
+
+  priorityLabel(p: string): string {
+    return ({ LOW: 'Faible', MEDIUM: 'Moyenne', HIGH: 'Haute', URGENT: 'Urgente' } as Record<string, string>)[(p || '').toUpperCase()] || p;
   }
 
   openTicketModal(): void {
@@ -152,7 +156,7 @@ export class SupportComponent implements OnInit {
           category: this.ticketCategory,
           priority: this.ticketPriority,
           status: 'OPEN',
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
           description: this.ticketDescription
         };
         this.tickets.unshift(newTicket);
@@ -167,7 +171,7 @@ export class SupportComponent implements OnInit {
           category: this.ticketCategory,
           priority: this.ticketPriority,
           status: 'OPEN',
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
           description: this.ticketDescription
         };
         this.tickets.unshift(newTicket);
@@ -180,7 +184,7 @@ export class SupportComponent implements OnInit {
     this.submittingTicket = false;
     this.showTicketModal = false;
     this.resetTicketForm();
-    this.toast.show(`Support Ticket ${ticketId} created successfully!`, 'success');
+    this.toast.show(`Ticket de support ${ticketId} créé avec succès !`, 'success');
     this.cdr.detectChanges();
   }
 }

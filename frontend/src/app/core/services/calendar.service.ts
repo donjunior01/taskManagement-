@@ -14,6 +14,8 @@ export interface CalendarEvent {
   projectId?: number;
   isAllDay?: boolean;
   location?: string;
+  /** Distribution target: PROJECT (members), ALL (every user), or SELF (private). */
+  audience?: string;
 }
 
 export interface CalendarSyncStatus {

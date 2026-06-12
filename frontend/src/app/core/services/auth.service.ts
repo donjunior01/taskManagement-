@@ -90,6 +90,17 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  /** Merge a partial update into the current user (e.g. after a profile edit) and persist it. */
+  updateCurrentUser(patch: Partial<User>): void {
+    const cur = this.currentUserSubject.value;
+    if (!cur) return;
+    const next = { ...cur, ...patch };
+    this.currentUserSubject.next(next);
+    if (patch.email != null) localStorage.setItem('user_email', patch.email);
+    if (patch.firstName != null) localStorage.setItem('user_first', patch.firstName);
+    if (patch.lastName != null) localStorage.setItem('user_last', patch.lastName);
+  }
+
   getUserRoles(): string[] {
     const roles = localStorage.getItem('user_roles');
     return roles ? JSON.parse(roles) : [];
@@ -108,8 +119,8 @@ export class AuthService {
       const user: User = {
         id: parseInt(userId),
         email: email,
-        firstName: '',
-        lastName: '',
+        firstName: localStorage.getItem('user_first') || '',
+        lastName: localStorage.getItem('user_last') || '',
         role: roles && roles.length > 0 ? roles[0] : 'USER'
       };
       this.currentUserSubject.next(user);

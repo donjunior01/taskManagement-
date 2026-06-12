@@ -249,7 +249,7 @@ export class AdminTasksComponent implements OnInit {
   // Form Submissions
   submitAddTask(): void {
     if (!this.addForm.name || !this.addForm.projectId || !this.addForm.assignedToId || !this.addForm.deadline) {
-      this.triggerToast('Please complete all mandatory task details.', 'error');
+      this.triggerToast('Veuillez renseigner tous les champs obligatoires de la tâche.', 'error');
       return;
     }
 
@@ -266,38 +266,13 @@ export class AdminTasksComponent implements OnInit {
       next: (newTask) => {
         this.submitting = false;
         this.showAddModal = false;
-        this.triggerToast(`Successfully registered task "${newTask.name}"!`, 'success');
+        this.triggerToast(`Tâche "${newTask.name}" enregistrée avec succès !`, 'success');
         this.loadTasks();
       },
       error: (err) => {
         this.submitting = false;
-        console.error('API task registration error, enacting simulation:', err);
-        // Offline simulation
-        this.showAddModal = false;
-        const targetProj = this.projectList.find(p => p.id === Number(this.addForm.projectId));
-        const targetUser = this.assigneeList.find(u => u.id === Number(this.addForm.assignedToId));
-        const mockNewTask: Task = {
-          id: this.tasksList.length + 1,
-          name: this.addForm.name,
-          description: this.addForm.description,
-          projectId: Number(this.addForm.projectId),
-          projectName: targetProj ? targetProj.name : 'Unknown Workspace',
-          assignedToId: Number(this.addForm.assignedToId),
-          assignedToName: targetUser ? `${targetUser.firstName} ${targetUser.lastName}` : 'Unassigned',
-          priority: this.addForm.priority,
-          difficulty: this.addForm.difficulty,
-          status: this.addForm.status,
-          progress: this.addForm.progress || 0,
-          deadline: this.addForm.deadline,
-          reminderType: this.addForm.reminderType,
-          commentCount: 0,
-          totalHoursLogged: 0,
-          createdAt: new Date().toISOString().split('T')[0]
-        };
-        this.tasksList = [mockNewTask, ...this.tasksList];
-        this.totalElements++;
-        this.applyClientFilters();
-        this.triggerToast(`Optimistic launch: Spawned task "${this.addForm.name}"!`, 'success');
+        const msg = err?.error?.message || 'Échec de la création de la tâche.';
+        this.triggerToast(msg, 'error');
       }
     });
   }
@@ -306,7 +281,7 @@ export class AdminTasksComponent implements OnInit {
     if (!this.selectedTask || !this.selectedTask.id) return;
 
     if (!this.editForm.name || !this.editForm.projectId || !this.editForm.assignedToId || !this.editForm.deadline) {
-      this.triggerToast('All mandatory task parameters are required.', 'error');
+      this.triggerToast('Tous les paramètres obligatoires de la tâche sont requis.', 'error');
       return;
     }
 
@@ -324,36 +299,13 @@ export class AdminTasksComponent implements OnInit {
       next: (updatedTask) => {
         this.submitting = false;
         this.showEditModal = false;
-        this.triggerToast(`Successfully modified details for task "${updatedTask.name}"!`, 'success');
+        this.triggerToast(`Détails de la tâche "${updatedTask.name}" modifiés avec succès !`, 'success');
         this.loadTasks();
       },
       error: (err) => {
         this.submitting = false;
-        console.error('API task update error, triggering offline simulation:', err);
-        // Simulation update
-        this.showEditModal = false;
-        const index = this.tasksList.findIndex(t => t.id === this.selectedTask?.id);
-        if (index !== -1) {
-          const targetProj = this.projectList.find(p => p.id === Number(this.editForm.projectId));
-          const targetUser = this.assigneeList.find(u => u.id === Number(this.editForm.assignedToId));
-          this.tasksList[index] = {
-            ...this.tasksList[index],
-            name: this.editForm.name,
-            description: this.editForm.description,
-            projectId: Number(this.editForm.projectId),
-            projectName: targetProj ? targetProj.name : 'Unknown Workspace',
-            assignedToId: Number(this.editForm.assignedToId),
-            assignedToName: targetUser ? `${targetUser.firstName} ${targetUser.lastName}` : 'Unassigned',
-            priority: this.editForm.priority,
-            difficulty: this.editForm.difficulty,
-            status: this.editForm.status,
-            progress: this.editForm.progress,
-            deadline: this.editForm.deadline,
-            reminderType: this.editForm.reminderType
-          };
-          this.applyClientFilters();
-        }
-        this.triggerToast(`Optimistic update: Saved details for "${this.editForm.name}"!`, 'success');
+        const msg = err?.error?.message || 'Échec de la mise à jour de la tâche.';
+        this.triggerToast(msg, 'error');
       }
     });
   }
@@ -366,18 +318,13 @@ export class AdminTasksComponent implements OnInit {
       next: () => {
         this.submitting = false;
         this.showDeleteModal = false;
-        this.triggerToast(`Task "${this.selectedTask?.name}" was destroyed permanently.`, 'success');
+        this.triggerToast(`La tâche "${this.selectedTask?.name}" a été supprimée définitivement.`, 'success');
         this.loadTasks();
       },
       error: (err) => {
         this.submitting = false;
-        console.error('API task deletion error, running simulation delete:', err);
-        // Simulation delete
-        this.showDeleteModal = false;
-        this.tasksList = this.tasksList.filter(t => t.id !== this.selectedTask?.id);
-        this.totalElements--;
-        this.applyClientFilters();
-        this.triggerToast(`Optimistic destroy: Removed task "${this.selectedTask?.name}"!`, 'success');
+        const msg = err?.error?.message || 'Échec de la suppression de la tâche.';
+        this.triggerToast(msg, 'error');
       }
     });
   }

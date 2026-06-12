@@ -1,7 +1,7 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService, LoginRequest } from '../../../core/services/auth.service';
 
 @Component({
@@ -11,12 +11,13 @@ import { AuthService, LoginRequest } from '../../../core/services/auth.service';
   templateUrl: './login.html',
   styleUrls: ['./login.scss']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginRequest: LoginRequest = {
     email: '',
     password: ''
   };
   errorMessage: string = '';
+  infoMessage: string = '';
   loading: boolean = false;
   showPassword: boolean = false;
   showSuspendedModal: boolean = false;
@@ -25,8 +26,18 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) {}
+
+  ngOnInit(): void {
+    const params = this.route.snapshot.queryParams;
+    if (params['registered'] === 'pending') {
+      this.infoMessage = 'Votre compte a été créé et est en attente d\'activation par un administrateur. Vous pourrez vous connecter une fois activé.';
+    } else if (params['expired'] === '1') {
+      this.infoMessage = 'Votre session a expiré. Veuillez vous reconnecter.';
+    }
+  }
 
   onSubmit(): void {
     if (!this.loginRequest.email || !this.loginRequest.password) {
@@ -70,9 +81,13 @@ export class LoginComponent {
         this.loading = false;
         // errorInterceptor may transform the error into a plain string
         const raw = typeof error === 'string' ? error : (error?.error?.message || error?.error?.error || error?.message || '');
-        const isSuspended = error?.status === 403 || raw.toLowerCase().includes('suspended');
+        const low = raw.toLowerCase();
+        const isSuspended = low.includes('suspended') || low.includes('suspendu');
         if (isSuspended) {
           this.showSuspendedModal = true;
+        } else if (error?.status === 403 && raw) {
+          // Pending activation, maintenance mode, etc. — show the backend's exact reason.
+          this.errorMessage = raw;
         } else if (this.twoFactorRequired) {
           this.errorMessage = 'Invalid authentication code. Please try again.';
         } else {

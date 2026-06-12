@@ -17,7 +17,12 @@ public class UserDTO {
     private String lastName;
     private allUsers.Role role;
     private String fullName;
-    
+
     @com.fasterxml.jackson.annotation.JsonProperty("isActive")
     private boolean isActive;
-} 
+
+    private java.time.LocalDateTime createdAt;
+
+    /** Number of projects this user works on (admins see the total number of projects). */
+    private Long projectCount;
+}

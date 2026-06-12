@@ -23,5 +23,9 @@ public class MessageDTO {
     private String subject;
     private Boolean isRead;
     private LocalDateTime createdAt;
+    private String attachmentUrl;
+    private String attachmentName;
+    private String attachmentType;
+    private String attachmentSize;
 }
 

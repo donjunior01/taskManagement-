@@ -14,4 +14,6 @@ public interface UserService {
     UserListResponseDTO filterUsers(String role, String status, int page, int size, String sortBy, String sortDir);
     void changePassword(String email, String currentPassword, String newPassword);
     UserResponseDTO toggleUserStatus(Long id);
+    /** Reset a user's password to a policy-compliant temporary value, email it, and return {email, temporaryPassword}. */
+    java.util.Map<String, String> resetUserPassword(Long id);
 } 

@@ -1,343 +1,429 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { DashboardService, ManagerDashboardStats } from '../../../core/services/dashboard.service';
 import { ProjectService, Project } from '../../../core/services/project.service';
-import { TaskService, Task } from '../../../core/services/task.service';
-import { ActivityLogService, ActivityLog } from '../../../core/services/activity-log.service';
+import { AnalyticsService } from '../../../core/services/analytics.service';
+import { DeliverableService } from '../../../core/services/deliverable.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ReportService } from '../../../core/services/report.service';
-import { ToastService } from '../../../core/services/toast.service';
+import { BadgeCountsService } from '../../../core/services/badge-counts.service';
 
-export interface DeliverableSubmission {
-  id: number;
-  taskName: string;
-  projectName: string;
-  taskId: number;
-  submittedBy: string;
-  submittedById: number;
-  submissionDate: string;
-  fileName: string;
-  fileSize: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  feedback?: string;
-}
-
-export interface WorkspaceActivity {
-  id: number;
-  developerName: string;
-  action: string;
-  taskName: string;
-  timestamp: string;
-  details?: string;
-  activityType?: string;
-}
-
-export interface UpcomingDeadline {
-  taskName: string;
-  projectName: string;
-  dueDate: string;
-  dueDateClass: string;
-  assigneeName?: string;
-}
+interface HealthProject { id?: number; name: string; statusLabel: string; due: string; progress: number; health: { label: string; cls: string }; }
+interface TeamLoad { name: string; fullName: string; assignees: number; completed: number; assignPct: number; donePct: number; level: string; }
+interface Milestone { name: string; project: string; date: string; dotCls: string; }
+interface PendingDeliverable { file: string; submitter: string; meta: string; initials: string; color: string; }
 
 @Component({
   selector: 'app-pm-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss']
+  imports: [CommonModule, RouterModule],
+  template: `
+  <div class="dash-wrap">
+
+    <!-- ═══ KPI cards ═══ -->
+    <div class="kpi-grid">
+      <div class="kpi-card anim" *ngFor="let k of kpis; let i = index; trackBy: trackKpi" [style.--d]="(i*0.05)+'s'">
+        <div class="kpi-text">
+          <div class="kpi-label">{{ k.label }}</div>
+          <div class="kpi-value">{{ k.value }}</div>
+        </div>
+        <div class="kpi-icon" [ngClass]="k.tint" [ngSwitch]="k.icon">
+          <svg *ngSwitchCase="'folder'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <svg *ngSwitchCase="'list'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 5h8"></path><path d="M13 12h8"></path><path d="M13 19h8"></path><path d="m3 17 2 2 4-4"></path><path d="m3 7 2 2 4-4"></path></svg>
+          <svg *ngSwitchCase="'alert'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <svg *ngSwitchCase="'users'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <svg *ngSwitchCase="'file'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 22h2a2 2 0 0 0 2-2V8l-6-6H6a2 2 0 0 0-2 2v2.85"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><circle cx="8" cy="16" r="6"></circle><path d="M8 14v2.2l1.6 1"></path></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Row 1 : Santé des projets · Charge de l'équipe ═══ -->
+    <div class="row-2">
+      <!-- Santé des projets -->
+      <div class="card anim" style="--d:.1s">
+        <div class="card-head">
+          <h2>Santé des projets</h2>
+          <a routerLink="/pm/projects" class="link">Tout voir →</a>
+        </div>
+        <div class="health-list">
+          <div class="health-item" *ngFor="let p of healthProjects">
+            <div class="hi-top">
+              <div class="hi-id">
+                <span class="hi-name">{{ p.name }}</span>
+                <span class="hi-client">{{ p.statusLabel }}</span>
+              </div>
+              <span class="health-badge" [ngClass]="p.health.cls">{{ p.health.label }}</span>
+            </div>
+            <div class="hi-meta">Échéance : {{ p.due }}</div>
+            <div class="hi-progress">
+              <div class="bar"><div class="bar-fill" [style.width.%]="animated ? p.progress : 0"></div></div>
+              <span class="pct">{{ p.progress }}%</span>
+              <a [routerLink]="['/pm/projects', p.id]" class="link sm">Voir →</a>
+            </div>
+          </div>
+          <div class="empty" *ngIf="healthProjects.length === 0">Aucun projet géré pour le moment.</div>
+        </div>
+      </div>
+
+      <!-- Charge de l'équipe -->
+      <div class="card anim" style="--d:.16s">
+        <div class="card-head">
+          <h2>Charge de l'équipe</h2>
+          <span class="muted-sm">Cette semaine</span>
+        </div>
+        <div class="team-load reveal">
+          <div class="tl-row" *ngFor="let m of teamLoad; let i = index" (mouseenter)="hoverIdx = i" (mouseleave)="hoverIdx = -1">
+            <span class="tl-name" [title]="m.fullName">{{ m.name }}</span>
+            <div class="tl-bars">
+              <div class="tl-track">
+                <div class="tl-bar" [ngClass]="'load-' + m.level" [style.width.%]="animated ? m.assignPct : 0"></div>
+                <span class="tl-val">{{ m.assignees }}</span>
+              </div>
+              <div class="tl-track">
+                <div class="tl-bar done" [style.width.%]="animated ? m.donePct : 0"></div>
+                <span class="tl-val">{{ m.completed }}</span>
+              </div>
+            </div>
+            <!-- Hover detail (like the admin dashboard charts) -->
+            <div class="tl-tip" *ngIf="hoverIdx === i">
+              <div class="tt-name">{{ m.fullName }}</div>
+              <div class="tt-row"><i class="sw" [ngClass]="m.level"></i>Assignées<b>{{ m.assignees }}</b></div>
+              <div class="tt-row"><i class="sw blue"></i>Terminées<b>{{ m.completed }}</b></div>
+              <div class="tt-row"><i class="sw" [ngClass]="m.level"></i>Charge<b>{{ levelLabel(m.level) }}</b></div>
+            </div>
+          </div>
+          <div class="empty" *ngIf="teamLoad.length === 0">Aucune donnée d'équipe.</div>
+        </div>
+        <div class="tl-legend">
+          <span class="lg"><i class="sw green"></i> Disponible</span>
+          <span class="lg"><i class="sw orange"></i> Occupé</span>
+          <span class="lg"><i class="sw red"></i> Surchargé</span>
+          <span class="lg"><i class="sw blue"></i> Terminées</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Row 2 : Jalons à venir · Livrables en attente ═══ -->
+    <div class="row-2">
+      <!-- Jalons à venir -->
+      <div class="card anim" style="--d:.22s">
+        <div class="card-head"><h2>Jalons à venir</h2></div>
+        <ol class="timeline">
+          <li class="tl-item" *ngFor="let j of milestones">
+            <span class="tl-dot" [ngClass]="j.dotCls"></span>
+            <div class="tl-line">
+              <div class="tl-info">
+                <div class="tl-title">{{ j.name }}</div>
+                <div class="tl-sub">{{ j.project }} • {{ j.date }}</div>
+              </div>
+              <svg class="tl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </div>
+          </li>
+          <li class="empty" *ngIf="milestones.length === 0">Aucun jalon à venir.</li>
+        </ol>
+      </div>
+
+      <!-- Livrables en attente -->
+      <div class="card anim" style="--d:.28s">
+        <div class="card-head">
+          <h2>Livrables en attente</h2>
+          <a routerLink="/pm/deliverables" class="link">Tout voir →</a>
+        </div>
+        <div class="deliv-list">
+          <div class="deliv-item" *ngFor="let d of pendingDeliverables">
+            <div class="deliv-avatar" [style.background]="d.color">{{ d.initials }}</div>
+            <div class="deliv-body">
+              <div class="deliv-file">{{ d.file }}</div>
+              <div class="deliv-meta">{{ d.meta }}</div>
+            </div>
+            <a routerLink="/pm/deliverables" class="btn-review">Réviser →</a>
+          </div>
+          <div class="empty" *ngIf="pendingDeliverables.length === 0">Aucun livrable en attente. 🎉</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  `,
+  styles: [`
+    .dash-wrap { display: flex; flex-direction: column; gap: 24px; }
+    @keyframes dFade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes dWipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+    .anim { animation: dFade .5s ease both; animation-delay: var(--d, 0s); }
+    .reveal { animation: dWipe .9s cubic-bezier(.4,0,.2,1) both; }
+
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 20px; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+    .card-head h2 { font-size: 15.5px; font-weight: 600; color: #1e293b; margin: 0; }
+    .link { font-size: 12px; font-weight: 500; color: #2563eb; text-decoration: none; white-space: nowrap; }
+    .link:hover { text-decoration: underline; }
+    .link.sm { font-size: 11.5px; }
+    .muted-sm { font-size: 12px; color: #64748b; }
+    .empty { padding: 22px 4px; text-align: center; color: #94a3b8; font-size: 13px; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 1024px) { .row-2 { grid-template-columns: 1fr; } }
+
+    /* KPI */
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 640px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    .kpi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .kpi-label { font-size: 12px; font-weight: 500; color: #64748b; }
+    .kpi-value { margin-top: 8px; font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1; }
+    .kpi-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; }
+    .kpi-icon svg { width: 18px; height: 18px; }
+    .kpi-icon.primary { background: rgba(37,99,235,.1); color: #2563eb; }
+    .kpi-icon.info { background: rgba(2,132,199,.1); color: #0284c7; }
+    .kpi-icon.destructive { background: rgba(220,38,38,.1); color: #dc2626; }
+    .kpi-icon.success { background: rgba(22,163,74,.1); color: #16a34a; }
+    .kpi-icon.warning { background: rgba(217,119,6,.14); color: #d97706; }
+
+    /* Santé des projets */
+    .health-list { display: flex; flex-direction: column; gap: 12px; }
+    .health-item { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; transition: background .15s ease; }
+    .health-item:hover { background: #f8fafc; }
+    .hi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .hi-id { min-width: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .hi-name { font-size: 13.5px; font-weight: 600; color: #1e293b; }
+    .hi-client { font-size: 10px; font-weight: 500; color: #2563eb; background: rgba(37,99,235,.1); padding: 2px 6px; border-radius: 5px; }
+    .hi-meta { font-size: 11.5px; color: #64748b; margin-top: 4px; }
+    .health-badge { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 9999px; white-space: nowrap; flex-shrink: 0; }
+    .health-badge.ok { background: rgba(22,163,74,.12); color: #16a34a; }
+    .health-badge.warn { background: rgba(217,119,6,.14); color: #d97706; }
+    .health-badge.danger { background: rgba(220,38,38,.1); color: #dc2626; }
+    .hi-progress { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .bar { flex: 1; height: 8px; border-radius: 9999px; background: #eef2f7; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #2563eb, #1e3a8a); transition: width .9s cubic-bezier(.4,0,.2,1); }
+    .pct { font-size: 12px; font-weight: 700; color: #1e293b; }
+
+    /* Charge de l'équipe */
+    .team-load { display: flex; flex-direction: column; gap: 14px; min-height: 220px; }
+    .tl-row { position: relative; display: grid; grid-template-columns: 72px 1fr; align-items: center; gap: 10px; cursor: default; border-radius: 8px; padding: 2px 4px; transition: background .15s ease; }
+    .tl-row:hover { background: #f8fafc; }
+    .tl-name { font-size: 12px; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tl-bars { display: flex; flex-direction: column; gap: 4px; }
+    .tl-track { display: flex; align-items: center; gap: 6px; }
+    .tl-bar { height: 11px; border-radius: 0 4px 4px 0; min-width: 2px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+    .tl-bar.load-green { background: #22c55e; } .tl-bar.load-orange { background: #f97316; } .tl-bar.load-red { background: #ef4444; }
+    .tl-bar.done { background: #2d6be4; }
+    .tl-val { font-size: 10.5px; color: #64748b; font-weight: 600; }
+    /* Hover tooltip */
+    .tl-tip { position: absolute; z-index: 20; right: 4px; bottom: calc(100% + 6px); min-width: 150px;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 24px rgba(15,23,42,.16); padding: 9px 11px; pointer-events: none; }
+    .tt-name { font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
+    .tt-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #475569; line-height: 1.7; }
+    .tt-row b { margin-left: auto; color: #1e293b; padding-left: 10px; }
+    .tt-row .sw { width: 8px; height: 8px; border-radius: 50%; }
+    .tl-legend { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 14px; }
+    .tl-legend .lg { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #64748b; }
+    .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+    .sw.green { background: #22c55e; } .sw.orange { background: #f97316; } .sw.red { background: #ef4444; } .sw.blue { background: #2d6be4; }
+
+    /* Jalons (timeline) */
+    .timeline { position: relative; list-style: none; margin: 0; padding: 0 0 0 20px; border-left: 2px solid #e2e8f0; display: flex; flex-direction: column; gap: 16px; }
+    .tl-item { position: relative; }
+    .tl-dot { position: absolute; left: -26px; top: 4px; width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 0 2px #fff; }
+    .tl-dot.atteint { background: #16a34a; } .tl-dot.manque { background: #dc2626; } .tl-dot.avenir { background: #2563eb; } .tl-dot.urgent { background: #d97706; }
+    .tl-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .tl-title { font-size: 13px; font-weight: 600; color: #1e293b; }
+    .tl-sub { font-size: 11.5px; color: #64748b; margin-top: 2px; }
+    .tl-cal { width: 16px; height: 16px; color: #94a3b8; flex-shrink: 0; }
+
+    /* Livrables en attente */
+    .deliv-list { display: flex; flex-direction: column; gap: 8px; }
+    .deliv-item { display: flex; align-items: center; gap: 12px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 11px; transition: background .15s ease; }
+    .deliv-item:hover { background: #f8fafc; }
+    .deliv-avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 700; }
+    .deliv-body { flex: 1; min-width: 0; }
+    .deliv-file { font-size: 13px; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .deliv-meta { font-size: 11.5px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .btn-review { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 12px; border-radius: 8px; background: #2563eb; color: #fff; font-size: 12px; font-weight: 600; text-decoration: none; }
+    .btn-review:hover { background: #1d4ed8; }
+  `]
 })
-export class PmDashboardComponent implements OnInit {
-  managerName: string = 'Project Manager';
-  managerId: number = 0;
+export class PmDashboardComponent implements OnInit, OnDestroy {
+  managerId = 0;
+  stats: ManagerDashboardStats = { totalTasks: 0, activeTasks: 0, completedTasks: 0, overdueTasks: 0, taskCompletionRate: 0, teamMembers: 0 };
+  activeProjects = 0;
+  healthProjects: HealthProject[] = [];
+  teamLoad: TeamLoad[] = [];
+  milestones: Milestone[] = [];
+  pendingDeliverables: PendingDeliverable[] = [];
 
-  // Dashboard Core Stats
-  stats: ManagerDashboardStats = {
-    totalTasks: 0,
-    activeTasks: 0,
-    completedTasks: 0,
-    overdueTasks: 0,
-    taskCompletionRate: 0,
-    teamMembers: 0
-  };
-
-  // Managed projects & timelines
-  projectsList: Project[] = [];
-  pendingSubmissions: DeliverableSubmission[] = [];
-  activitiesList: WorkspaceActivity[] = [];
-  upcomingDeadlines: UpcomingDeadline[] = [];
-  loading: boolean = true;
-
-  // Review Submissions Modal state
-  selectedSubmission: DeliverableSubmission | null = null;
-  showReviewModal: boolean = false;
-  reviewStatus: 'APPROVED' | 'REJECTED' = 'APPROVED';
-  pmFeedback: string = '';
-  submittingReview: boolean = false;
+  animated = false;
+  hoverIdx = -1;
+  private subs: Subscription[] = [];
 
   constructor(
     private dashboardService: DashboardService,
     private projectService: ProjectService,
-    private taskService: TaskService,
-    private activityLogService: ActivityLogService,
+    private analyticsService: AnalyticsService,
+    private deliverableService: DeliverableService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef,
-    private reportService: ReportService,
-    private toast: ToastService,
-    private ngZone: NgZone
+    private badges: BadgeCountsService,
+    private cdr: ChangeDetectorRef
   ) {}
+
+  trackKpi(_i: number, k: { label: string }): string { return k.label; }
+
+  get kpis() {
+    return [
+      { label: 'Projets Actifs', value: this.activeProjects, icon: 'folder', tint: 'primary' },
+      { label: 'Tâches En Cours', value: this.stats.activeTasks, icon: 'list', tint: 'info' },
+      { label: 'Tâches En Retard', value: this.stats.overdueTasks, icon: 'alert', tint: 'destructive' },
+      { label: "Membres d'Équipe", value: this.stats.teamMembers, icon: 'users', tint: 'success' },
+      { label: 'Livrables à Réviser', value: this.pendingDeliverables.length, icon: 'file', tint: 'warning' }
+    ];
+  }
 
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
-    if (user) {
-      this.managerId = user.id;
-      this.managerName = user.firstName ? `${user.firstName} ${user.lastName}` : 'Project Manager';
-    }
-    this.loadManagerCockpit();
+    this.managerId = user?.id || 0;
+    this.loadStats();
+    this.loadProjects();
+    this.loadTeamLoad();
+    this.loadDeliverables();
+
+    // Listen for deliverables count updates to keep dashboard list synchronized
+    this.subs.push(this.badges.deliverables$.subscribe(() => {
+      this.loadDeliverables();
+    }));
+
+    // Trigger the chart/bar load animation once the view is in.
+    setTimeout(() => { this.animated = true; this.cdr.detectChanges(); }, 90);
   }
 
-  loadManagerCockpit(): void {
-    this.loading = true;
+  ngOnDestroy(): void {
+    this.subs.forEach(s => s.unsubscribe());
+  }
 
-    // 1. Load stats
+  private loadStats(): void {
     this.dashboardService.getManagerStats().subscribe({
-      next: (data: any) => {
-        this.ngZone.run(() => {
-          this.stats = data && data.data ? data.data : (data || this.stats);
-          this.cdr.markForCheck();
-          this.loadProjects();
-        });
-      },
+      next: (d: any) => { this.stats = d && d.data ? d.data : (d || this.stats); this.cdr.detectChanges(); },
+      error: () => {}
+    });
+  }
+
+  private loadProjects(): void {
+    this.projectService.getProjectsByManager(this.managerId, 0, 20).subscribe({
+      next: (r: any) => { this.applyProjects(r && r.data ? r.data : (Array.isArray(r) ? r : [])); },
       error: () => {
-        this.ngZone.run(() => {
-          this.loadProjects();
+        this.projectService.getAllProjects(0, 20).subscribe({
+          next: (r: any) => this.applyProjects(r && r.data ? r.data : []),
+          error: () => {}
         });
       }
     });
   }
 
-  loadProjects(): void {
-    this.projectService.getProjectsByManager(this.managerId, 0, 10).subscribe({
-      next: (response: any) => {
-        this.ngZone.run(() => {
-          this.projectsList = response && response.data ? response.data : [];
-          this.cdr.markForCheck();
-          this.loadUpcomingDeadlines();
+  private applyProjects(list: Project[]): void {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const isActive = (s?: string) => !['COMPLETED', 'CANCELLED'].includes((s || '').toUpperCase());
+    this.activeProjects = list.filter(p => isActive(p.status)).length;
+
+    this.healthProjects = list.slice(0, 5).map(p => ({
+      id: p.id,
+      name: p.name,
+      statusLabel: this.statusLabel(p.status),
+      due: p.endDate ? new Date(p.endDate).toLocaleDateString('fr-FR') : '—',
+      progress: p.progress || 0,
+      health: this.health(p, today)
+    }));
+
+    // Jalons à venir = échéances de projet À VENIR (non terminées, date future),
+    // triées par date croissante, avec compte à rebours.
+    this.milestones = list
+      .filter(p => p.endDate && (p.status || '').toUpperCase() !== 'COMPLETED')
+      .map(p => ({ p, end: this.midnight(p.endDate!) }))
+      .filter(x => x.end.getTime() >= today.getTime())
+      .sort((a, b) => a.end.getTime() - b.end.getTime())
+      .slice(0, 5)
+      .map(({ p, end }) => {
+        const days = Math.round((end.getTime() - today.getTime()) / 86400000);
+        const countdown = days === 0 ? "Aujourd'hui" : days === 1 ? 'Demain' : `Dans ${days} jours`;
+        const dotCls = days <= 3 ? 'urgent' : 'avenir';
+        return { name: p.name, project: countdown, date: end.toLocaleDateString('fr-FR'), dotCls };
+      });
+    this.cdr.detectChanges();
+  }
+
+  private loadTeamLoad(): void {
+    this.analyticsService.getManagerAnalytics().subscribe({
+      next: (r: any) => {
+        const d = r && r.data ? r.data : r;
+        const members: any[] = (d && d.workloadByMember) ? d.workloadByMember : [];
+        const rows = members.map(m => {
+          const completed = m.completedTasks || 0;
+          const open = m.openTasks || 0;
+          const assignees = open + completed;
+          const level = open >= 9 ? 'red' : open >= 5 ? 'orange' : 'green';
+          return { fullName: m.memberName || '—', name: (m.memberName || '—').split(' ')[0], assignees, completed, level };
         });
-      },
-      error: () => {
-        this.ngZone.run(() => {
-          this.projectsList = [];
-          this.cdr.markForCheck();
-          this.loadUpcomingDeadlines();
-        });
-      }
-    });
-  }
-
-  /** Load upcoming deadlines from overdue + near-due tasks */
-  loadUpcomingDeadlines(): void {
-    this.taskService.getOverdueTasks().subscribe({
-      next: (tasks: Task[]) => {
-        this.ngZone.run(() => {
-          try {
-            if (tasks && tasks.length > 0) {
-              this.upcomingDeadlines = tasks.slice(0, 6).map(task => {
-                const deadline = task.deadline ? new Date(task.deadline) : null;
-                const today = new Date();
-                const tomorrow = new Date(today);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                let dueDate = 'No Date';
-                let dueDateClass = 'future';
-                if (deadline) {
-                  if (deadline.toDateString() === today.toDateString()) { dueDate = 'Today'; dueDateClass = 'today'; }
-                  else if (deadline.toDateString() === tomorrow.toDateString()) { dueDate = 'Tomorrow'; dueDateClass = 'tomorrow'; }
-                  else if (deadline < today) { dueDate = 'Overdue'; dueDateClass = 'today'; }
-                  else { dueDate = deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); dueDateClass = 'future'; }
-                }
-                return { taskName: task.name, projectName: task.projectName || 'Workspace Project', dueDate, dueDateClass, assigneeName: task.assignedToName };
-              });
-            } else {
-              this.upcomingDeadlines = [];
-            }
-          } catch (e) {
-            this.upcomingDeadlines = [];
-          }
-          this.cdr.markForCheck();
-          this.loadTeamActivity();
-        });
-      },
-      error: () => {
-        this.ngZone.run(() => {
-          this.upcomingDeadlines = [];
-          this.cdr.markForCheck();
-          this.loadTeamActivity();
-        });
-      }
-    });
-  }
-
-  /** Load real team activity from activity log service */
-  loadTeamActivity(): void {
-    this.activityLogService.getAllActivityLogs().subscribe({
-      next: (logs: ActivityLog[]) => {
-        this.ngZone.run(() => {
-          try {
-            if (logs && logs.length > 0) {
-              this.activitiesList = logs.slice(0, 6).map(log => ({
-                id: log.id,
-                developerName: log.user?.firstName
-                  ? `${log.user.firstName} ${log.user.lastName || ''}`.trim()
-                  : (log.user?.username || `User #${log.userId}`),
-                action: this.formatAction(log.action, log.entityType),
-                taskName: log.details || log.entityType || 'workspace item',
-                timestamp: this.formatTimestamp(log.timestamp),
-                details: log.entityType,
-                activityType: log.action
-              }));
-            } else {
-              this.activitiesList = [];
-            }
-          } catch (e) {
-            this.activitiesList = [];
-          }
-          this.cdr.markForCheck();
-          this.loadSubmissions();
-        });
-      },
-      error: () => {
-        this.ngZone.run(() => {
-          this.activitiesList = [];
-          this.cdr.markForCheck();
-          this.loadSubmissions();
-        });
-      }
-    });
-  }
-
-  private formatAction(action: string, entityType?: string): string {
-    const actionMap: Record<string, string> = {
-      'TASK_COMPLETED': 'completed task',
-      'TASK_CREATED': 'created task',
-      'TASK_UPDATED': 'updated',
-      'DELIVERABLE_UPLOADED': 'uploaded deliverable',
-      'COMMENT_ADDED': 'commented on',
-      'TASK_STARTED': 'started working on',
-      'PROJECT_UPDATED': 'updated project',
-      'FILE_UPLOADED': 'uploaded file to'
-    };
-    return actionMap[action] || action.toLowerCase().replace(/_/g, ' ');
-  }
-
-  private formatTimestamp(timestamp: string): string {
-    if (!timestamp) return 'recently';
-    const then = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - then.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  }
-
-  loadSubmissions(): void {
-    this.ngZone.run(() => {
-      this.pendingSubmissions = [];
-      this.loading = false;
-      this.cdr.markForCheck();
-    });
-  }
-
-  // Action: Open Review Dialog
-  openReviewModal(submission: DeliverableSubmission, action: 'APPROVED' | 'REJECTED'): void {
-    this.selectedSubmission = submission;
-    this.reviewStatus = action;
-    this.pmFeedback = action === 'APPROVED' ? 'Excellent task delivery. Requirements satisfied.' : '';
-    this.showReviewModal = true;
-  }
-
-  closeReviewModal(): void {
-    this.showReviewModal = false;
-    this.selectedSubmission = null;
-    this.pmFeedback = '';
-  }
-
-  submitReviewDecision(): void {
-    if (!this.selectedSubmission) return;
-    if (this.reviewStatus === 'REJECTED' && !this.pmFeedback.trim()) {
-      this.triggerToast('Feedback description is required when sending back tasks.', 'error');
-      return;
-    }
-    this.submittingReview = true;
-    const taskId = this.selectedSubmission.taskId;
-    const nextProgress = this.reviewStatus === 'APPROVED' ? 100 : 30;
-    const nextStatus = this.reviewStatus === 'APPROVED' ? 'COMPLETED' : 'ON_HOLD';
-    this.taskService.updateTaskProgress(taskId, nextProgress, nextStatus).subscribe({
-      next: () => this.finalizeReviewUI(),
-      error: () => this.finalizeReviewUI()
-    });
-  }
-
-  private finalizeReviewUI(): void {
-    this.ngZone.run(() => {
-      this.submittingReview = false;
-      this.showReviewModal = false;
-      if (this.selectedSubmission) {
-        if (this.reviewStatus === 'APPROVED') {
-          this.triggerToast(`Successfully approved deliverable for "${this.selectedSubmission.taskName}"!`, 'success');
-          this.stats.completedTasks++;
-          this.stats.activeTasks = Math.max(0, this.stats.activeTasks - 1);
-          this.stats.taskCompletionRate = Math.round((this.stats.completedTasks / this.stats.totalTasks) * 100);
-        } else {
-          this.triggerToast(`Sent back task "${this.selectedSubmission.taskName}" for refinements.`, 'success');
-        }
-        this.pendingSubmissions = this.pendingSubmissions.filter(s => s.id !== this.selectedSubmission?.id);
-      }
-      this.cdr.markForCheck();
-    });
-  }
-
-  getActivityNodeClass(activity: WorkspaceActivity): object {
-    const type = activity.activityType || '';
-    if (type.includes('COMPLETED') || type.includes('APPROVED')) return { 'node-green': true };
-    if (type.includes('UPLOADED') || type.includes('FILE')) return { 'node-blue': true };
-    if (type.includes('COMMENT')) return { 'node-orange': true };
-    // Fall back to name-based coloring for mock data
-    const name = activity.developerName;
-    return {
-      'node-green': name.includes('Alex'),
-      'node-blue': name.includes('Maya') || name.includes('Leila'),
-      'node-orange': name.includes('Carlos')
-    };
-  }
-
-  getActivityIcon(activity: WorkspaceActivity): string {
-    const type = activity.activityType || activity.action || '';
-    if (type.includes('completed') || type.includes('COMPLETED')) return 'check';
-    if (type.includes('uploaded') || type.includes('UPLOAD')) return 'upload';
-    if (type.includes('commented') || type.includes('COMMENT')) return 'message';
-    return 'play';
-  }
-
-  exportReport(): void {
-    this.triggerToast('Generating Project Health report...', 'success');
-    this.reportService.getProjectHealthReportPdf().subscribe({
-      next: (blob) => {
-        ReportService.triggerDownload(blob, 'project_health_report.pdf');
-        this.triggerToast('Project Health report downloaded!', 'success');
+        const max = Math.max(1, ...rows.map(r => r.assignees));
+        this.teamLoad = rows.slice(0, 6).map(r => ({
+          name: r.name, fullName: r.fullName, assignees: r.assignees, completed: r.completed,
+          assignPct: (r.assignees / max) * 100, donePct: (r.completed / max) * 100, level: r.level
+        }));
         this.cdr.detectChanges();
       },
-      error: () => this.triggerToast('Failed to generate report. Please try again.', 'error')
+      error: () => {}
     });
   }
 
-  private triggerToast(message: string, type: 'success' | 'error' = 'success'): void {
-    this.toast.show(message, type);
+  private loadDeliverables(): void {
+    this.deliverableService.getPendingDeliverables().subscribe({
+      next: (list: any[]) => {
+        const arr = Array.isArray(list) ? list : [];
+        this.badges.setDeliverables(arr.length);
+        this.pendingDeliverables = arr.slice(0, 6).map(d => {
+          const submitter = d.submittedByName || 'Inconnu';
+          const date = d.createdAt ? new Date(d.createdAt).toLocaleDateString('fr-FR') : '';
+          return {
+            file: d.fileName || 'Livrable',
+            submitter,
+            meta: [submitter, d.taskName, date].filter(Boolean).join(' • '),
+            initials: this.initials(submitter),
+            color: this.avatarColor(submitter)
+          };
+        });
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
   }
 
+  levelLabel(level: string): string {
+    return level === 'red' ? 'Surchargé' : level === 'orange' ? 'Occupé' : 'Disponible';
+  }
+
+  private midnight(dateStr: string): Date {
+    const d = new Date(dateStr); d.setHours(0, 0, 0, 0); return d;
+  }
+
+  private health(p: Project, today: Date): { label: string; cls: string } {
+    const status = (p.status || '').toUpperCase();
+    const progress = p.progress || 0;
+    if (status === 'COMPLETED' || progress >= 100) return { label: 'Terminé', cls: 'ok' };
+    if (p.endDate && new Date(p.endDate) < today) return { label: 'En retard', cls: 'danger' };
+    if (progress < 40) return { label: 'À surveiller', cls: 'warn' };
+    return { label: 'En bonne voie', cls: 'ok' };
+  }
+
+  private statusLabel(s?: string): string {
+    const map: Record<string, string> = {
+      ACTIVE: 'Actif', IN_PROGRESS: 'En cours', PLANNED: 'Planifié',
+      ON_HOLD: 'En pause', COMPLETED: 'Terminé', CANCELLED: 'Annulé'
+    };
+    return map[(s || '').toUpperCase()] || 'Actif';
+  }
+
+  private initials(name: string): string {
+    return (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  }
+  private avatarColor(name: string): string {
+    const colors = ['#2563eb', '#7c3aed', '#0891b2', '#059669', '#d97706', '#dc2626'];
+    let h = 0; for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+    return colors[Math.abs(h) % colors.length];
+  }
 }

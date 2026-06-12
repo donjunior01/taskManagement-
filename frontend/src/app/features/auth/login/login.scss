@@ -9,7 +9,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: linear-gradient(145deg, #eff6ff 0%, #ffffff 50%, #fff7ed 100%);
+  background: linear-gradient(145deg, #eff6ff 0%, #ffffff 50%, #f8fafc 100%);
   position: relative;
   overflow: hidden;
   font-family: 'Inter', system-ui, sans-serif;
@@ -38,7 +38,7 @@
   .circle-2 {
     width: 520px; height: 520px;
     bottom: -160px; right: -120px;
-    background: radial-gradient(circle at center, rgba(234,88,12,.11) 0%, rgba(249,115,22,.06) 40%, transparent 70%);
+    background: radial-gradient(circle at center, rgba(37,99,235,.11) 0%, rgba(29,78,216,.06) 40%, transparent 70%);
     animation: circleFloat2 17s ease-in-out infinite;
   }
 }
@@ -77,7 +77,7 @@
 /* ── Brand Header — gradient top section ── */
 .brand-header {
   position: relative;
-  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #ea580c 100%);
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #1d4ed8 100%);
   padding: 36px 40px 30px;
   text-align: center;
   overflow: hidden;
@@ -165,7 +165,7 @@
     content: '';
     display: block;
     width: 36px; height: 3px;
-    background: linear-gradient(90deg, #2563eb, #ea580c);
+    background: linear-gradient(90deg, #2563eb, #1d4ed8);
     border-radius: 99px;
     margin-top: 7px;
   }
@@ -218,7 +218,7 @@
       .forgot-link {
         font-size: 12px;
         font-weight: 700;
-        color: #ea580c;
+        color: #1d4ed8;
         text-decoration: none;
         transition: color .15s;
         &:hover { color: #c2410c; text-decoration: underline; }
@@ -388,7 +388,7 @@
 
   .register-link {
     font-weight: 700;
-    color: #ea580c;
+    color: #1d4ed8;
     text-decoration: none;
     transition: color .15s;
     &:hover { color: #c2410c; text-decoration: underline; }

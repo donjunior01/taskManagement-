@@ -1,258 +1,301 @@
-<div class="developer-dashboard-container animate-fade-in-up">
+<div class="user-dashboard-container animate-fade-in-up">
   <!-- Greeting Header block -->
   <div class="dashboard-greeting-header">
     <div class="greeting-text">
-      <h2>Welcome back, {{ currentUser?.firstName || 'Developer' }}!</h2>
-      <p>Review assigned deliverables, coordinate workspace milestones, and track lead revisions.</p>
+      <span class="greeting-salutation">Bonjour {{ currentUser?.firstName || 'Collaborateur' }} 👋</span>
+      <h1 class="greeting-title">Voici votre journée</h1>
+    </div>
+    <div class="header-actions-btn">
+      <button class="new-ticket-btn" routerLink="/user/support">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Nouveau ticket</span>
+      </button>
     </div>
   </div>
 
   <!-- Loading State Spinner -->
   <div class="spinner-wrapper" *ngIf="loading">
     <div class="spinner"></div>
-    <span>Decrypting workspace telemetry...</span>
+    <span>Récupération des données de l'espace de travail...</span>
   </div>
 
   <ng-container *ngIf="!loading">
     <!-- Vitals Analytics Row -->
     <div class="vitals-row">
-      <!-- Card: Assigned Tasks -->
+      <!-- Card: Projets -->
       <div class="glass-panel vital-card">
-        <div class="card-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
+        <div class="card-icon bg-blue-light text-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
           </svg>
         </div>
         <div class="vital-info">
-          <span class="vital-val">{{ stats.totalTasks }}</span>
-          <span class="vital-lbl">Assigned Tasks</span>
+          <span class="vital-val">{{ projectCount }}</span>
+          <span class="vital-lbl">Projets</span>
         </div>
       </div>
-
-      <!-- Card: Active In Progress -->
+      
+      <!-- Card: Tâches Ouvertes -->
       <div class="glass-panel vital-card">
-        <div class="card-icon icon-blue">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
+        <div class="card-icon bg-blue-light text-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <polyline points="9 11 12 14 17 9"></polyline>
           </svg>
         </div>
         <div class="vital-info">
-          <span class="vital-val text-blue">{{ stats.activeTasks }}</span>
-          <span class="vital-lbl">Active In Progress</span>
+          <span class="vital-val">{{ openTasksCount }}</span>
+          <span class="vital-lbl">Tâches Ouvertes</span>
         </div>
       </div>
 
-      <!-- Card: Overdue Deliverables -->
-      <div class="glass-panel vital-card" [ngClass]="{ warning: stats.overdueTasks > 0 }">
-        <div class="card-icon icon-red">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Card: Tâches Dues Aujourd'hui -->
+      <div class="glass-panel vital-card">
+        <div class="card-icon bg-orange-light text-orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="8" x2="12" y2="12"></line>
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
         </div>
         <div class="vital-info">
-          <span class="vital-val" [ngClass]="{ 'text-danger': stats.overdueTasks > 0 }">{{ stats.overdueTasks }}</span>
-          <span class="vital-lbl">Overdue Tasks</span>
+          <span class="vital-val">{{ dueTodayCount }}</span>
+          <span class="vital-lbl">Tâches Dues Aujourd'hui</span>
         </div>
       </div>
 
-      <!-- Card: Completion Rate Gauge (Concentric Circular SVG) -->
-      <div class="glass-panel vital-card concentric-card">
-        <div class="circle-gauge">
-          <svg class="circular-chart" viewBox="0 0 36 36">
-            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="circle" [attr.stroke-dasharray]="stats.completionRate + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <text x="18" y="20.35" class="percentage">{{ stats.completionRate }}%</text>
+      <!-- Card: Heures Logées Cette Semaine -->
+      <div class="glass-panel vital-card">
+        <div class="card-icon bg-green-light text-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
         </div>
         <div class="vital-info">
-          <span class="vital-val">{{ stats.completedTasks }}/{{ stats.totalTasks }}</span>
-          <span class="vital-lbl">Tasks Done Rate</span>
+          <span class="vital-val">{{ loggedHoursCount }}h</span>
+          <span class="vital-lbl">Heures Logées Cette Semaine</span>
         </div>
       </div>
-    </div>
 
-    <!-- Quick Summary Charts -->
-    <div class="charts-row" *ngIf="stats.totalTasks > 0">
-      <!-- Task Status Distribution (donut) -->
-      <div class="glass-panel chart-card animate-scale-in">
-        <div class="section-header">
-          <h3>Task Status Breakdown</h3>
-        </div>
-        <div class="donut-wrap">
-          <svg viewBox="0 0 36 36" class="donut-chart">
-            <circle class="donut-track" cx="18" cy="18" r="15.915" fill="none" stroke-width="3.6"></circle>
-            <circle *ngFor="let d of donutSegments"
-                    [ngClass]="d.seg.cls"
-                    cx="18" cy="18" r="15.915" fill="none" stroke-width="3.6"
-                    pathLength="100"
-                    [attr.stroke-dasharray]="d.dash"
-                    [attr.transform]="'rotate(' + d.rotation + ' 18 18)'"></circle>
-            <text x="18" y="18.6" class="donut-center">{{ stats.totalTasks }}</text>
+      <!-- Card: Messages Non Lus -->
+      <div class="glass-panel vital-card">
+        <div class="card-icon bg-purple-light text-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
-          <div class="donut-legend">
-            <div class="legend-item" *ngFor="let s of statusChart">
-              <span class="legend-dot" [ngClass]="s.cls"></span>
-              <span class="legend-label">{{ s.label }}</span>
-              <span class="legend-count">{{ s.count }}</span>
-            </div>
-          </div>
         </div>
-      </div>
-
-      <!-- Priority Distribution (bars) -->
-      <div class="glass-panel chart-card animate-scale-in">
-        <div class="section-header">
-          <h3>Priority Distribution</h3>
-        </div>
-        <div class="bars-chart">
-          <div class="bar-row" *ngFor="let p of priorityChart">
-            <span class="bar-label">{{ p.label }}</span>
-            <div class="bar-track">
-              <div class="bar-fill" [ngClass]="p.cls" [style.width.%]="p.pct"></div>
-            </div>
-            <span class="bar-count">{{ p.count }}</span>
-          </div>
+        <div class="vital-info">
+          <span class="vital-val">{{ unreadMessagesCount }}</span>
+          <span class="vital-lbl">Messages Non Lus</span>
         </div>
       </div>
     </div>
 
-    <!-- Main Workspace Layout -->
+    <!-- Main Workspace Grid -->
     <div class="dashboard-columns">
-      <!-- LEFT COLUMN: Tasks and Workspaces -->
+      <!-- LEFT COLUMN -->
       <div class="dashboard-left-col">
-        
-        <!-- Urgent Action Items -->
-        <div class="glass-panel panel-section animate-scale-in">
+        <!-- Card 1: Aperçu Kanban -->
+        <div class="glass-panel panel-section kanban-section animate-scale-in">
           <div class="section-header">
-            <h3>Urgent Action Items</h3>
-            <span class="indicator-badge" *ngIf="urgentTasks.length > 0">{{ urgentTasks.length }} urgent</span>
+            <h3>Aperçu Kanban</h3>
           </div>
 
-          <div class="urgent-empty" *ngIf="urgentTasks.length === 0">
-            <div class="empty-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 14 14"></polyline>
-              </svg>
-            </div>
-            <p>Workspace Clean! Zero urgent deliverables require immediate action.</p>
-          </div>
-
-          <div class="urgent-list" *ngIf="urgentTasks.length > 0">
-            <div class="urgent-item-card" *ngFor="let task of urgentTasks">
-              <div class="card-meta">
-                <span class="priority-badge" [ngClass]="task.priority?.toLowerCase() || 'medium'">{{ task.priority }}</span>
-                <span class="due-lbl">Due: {{ task.deadline }}</span>
+          <div class="kanban-board">
+            <!-- Column 1: À FAIRE -->
+            <div class="kanban-col">
+              <div class="kanban-col-header">
+                <span class="col-dot bg-amber"></span>
+                <span class="col-title">À FAIRE</span>
+                <span class="col-badge">{{ todoTasks.length }}</span>
               </div>
-              
-              <h4 class="task-title">{{ task.name }}</h4>
-              <span class="project-tag">Scope: {{ task.projectName }}</span>
-
-              <div class="card-actions">
-                <div class="progress-details">
-                  <span>Task Progress</span>
-                  <strong>{{ task.progress || 0 }}%</strong>
+              <div class="kanban-col-cards">
+                <div class="kanban-card" *ngFor="let t of todoTasks">
+                  <h4 class="card-task-title">{{ t.name }}</h4>
+                  <div class="card-meta">
+                    <span class="priority-badge" [ngClass]="t.priority?.toLowerCase() || 'medium'">
+                      <span class="badge-dot"></span>
+                      {{ t.priority === 'LOW' ? 'Basse' : (t.priority === 'HIGH' || t.priority === 'CRITICAL' ? 'Haute'
+                      : 'Moyenne') }}
+                    </span>
+                    <span class="due-date" *ngIf="t.deadline">
+                      {{ formatDeadline(t.deadline) }}
+                    </span>
+                  </div>
                 </div>
-                <button class="btn-action-workspace" routerLink="/user/my-tasks">
-                  <span>Open Workspace</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </button>
+                <div class="kanban-empty" *ngIf="todoTasks.length === 0">
+                  <p>Aucune tâche à faire.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Column 2: EN COURS -->
+            <div class="kanban-col">
+              <div class="kanban-col-header">
+                <span class="col-dot bg-blue"></span>
+                <span class="col-title">EN COURS</span>
+                <span class="col-badge">{{ inProgressTasks.length }}</span>
+              </div>
+              <div class="kanban-col-cards">
+                <div class="kanban-card" *ngFor="let t of inProgressTasks">
+                  <h4 class="card-task-title">{{ t.name }}</h4>
+                  <div class="card-meta">
+                    <span class="priority-badge" [ngClass]="t.priority?.toLowerCase() || 'medium'">
+                      <span class="badge-dot"></span>
+                      {{ t.priority === 'LOW' ? 'Basse' : (t.priority === 'HIGH' || t.priority === 'CRITICAL' ? 'Haute'
+                      : 'Moyenne') }}
+                    </span>
+                    <span class="due-date" *ngIf="t.deadline">
+                      {{ formatDeadline(t.deadline) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="kanban-empty" *ngIf="inProgressTasks.length === 0">
+                  <p>Aucune tâche en cours.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Column 3: TERMINÉ -->
+            <div class="kanban-col">
+              <div class="kanban-col-header">
+                <span class="col-dot bg-green"></span>
+                <span class="col-title">TERMINÉ</span>
+                <span class="col-badge">{{ completedTasks.length }}</span>
+              </div>
+              <div class="kanban-col-cards">
+                <div class="kanban-card" *ngFor="let t of completedTasks">
+                  <h4 class="card-task-title">{{ t.name }}</h4>
+                  <div class="card-meta">
+                    <span class="priority-badge" [ngClass]="t.priority?.toLowerCase() || 'medium'">
+                      <span class="badge-dot"></span>
+                      {{ t.priority === 'LOW' ? 'Basse' : (t.priority === 'HIGH' || t.priority === 'CRITICAL' ? 'Haute'
+                      : 'Moyenne') }}
+                    </span>
+                    <span class="due-date" *ngIf="t.deadline">
+                      {{ formatDeadline(t.deadline) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="kanban-empty" *ngIf="completedTasks.length === 0">
+                  <p>Aucune tâche terminée.</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Active Workspaces Mappings -->
-        <div class="glass-panel panel-section animate-scale-in">
-          <div class="section-header">
-            <h3>Active Project Workspaces</h3>
-            <span class="indicator-badge gray">{{ projectsList.length }} mapped</span>
-          </div>
-
-          <div class="projects-empty" *ngIf="projectsList.length === 0">
-            <p>No active project workspaces registered for your assigned tasks.</p>
-          </div>
-
-          <div class="projects-grid" *ngIf="projectsList.length > 0">
-            <div class="project-mini-card" *ngFor="let proj of projectsList">
-              <div class="card-top">
-                <h4>{{ proj.name }}</h4>
-                <span class="status-lbl">{{ proj.status?.replace('_', ' ') }}</span>
-              </div>
-              <p class="proj-desc" *ngIf="proj.description">{{ proj.description }}</p>
-              
-              <div class="proj-progress-track">
-                <div class="bar-details">
-                  <span>Global Completion</span>
-                  <strong>{{ proj.progress || 0 }}%</strong>
-                </div>
-                <div class="progress-track-bg">
-                  <div class="progress-fill" [style.width.%]="proj.progress || 0"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- RIGHT COLUMN: Collaboration Feedbacks -->
-      <div class="dashboard-right-col">
+        <!-- Card 2: Activité récente -->
         <div class="glass-panel panel-section feed-section animate-scale-in">
           <div class="section-header">
-            <h3>Collaboration Feed & Alerts</h3>
+            <h3>Activité récente</h3>
           </div>
 
           <div class="feed-empty" *ngIf="activityFeed.length === 0">
-            <p>No active comments or milestone events logged in your workspace.</p>
+            <p>Aucun événement récent enregistré.</p>
           </div>
 
           <div class="feed-stream" *ngIf="activityFeed.length > 0">
             <div class="feed-item" *ngFor="let feed of activityFeed">
-              
-              <!-- Feed Icons & Badges -->
-              <div class="feed-badge-icon" [ngClass]="feed.type.toLowerCase()">
+              <div class="feed-badge-icon">
                 <!-- Comment Icon -->
-                <svg *ngIf="feed.type === 'COMMENT'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg *ngIf="feed.type === 'COMMENT'" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
                 <!-- Revision Icon -->
-                <svg *ngIf="feed.type === 'REVISION'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg *ngIf="feed.type === 'REVISION'" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="12" y1="8" x2="12" y2="12"></line>
                   <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
-                <!-- Approval Icon -->
-                <svg *ngIf="feed.type === 'APPROVAL'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
+                <!-- Approval Icon (Check circle/badge) -->
+                <svg *ngIf="feed.type === 'APPROVAL'" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="16 12 12 8 8 12"></polyline>
+                  <line x1="12" y1="16" x2="12" y2="8"></line>
+                </svg>
+                <!-- Default/Deadline Icon -->
+                <svg *ngIf="feed.type === 'DEADLINE'" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
               </div>
 
               <div class="feed-body">
-                <div class="feed-meta">
-                  <strong>{{ feed.type === 'COMMENT' ? 'Feedback Comment' : (feed.type === 'REVISION' ? 'Revision Request' : 'Milestone Approved') }}</strong>
-                  <span class="time-lbl">{{ feed.timestamp }}</span>
-                </div>
                 <p class="feed-msg">{{ feed.message }}</p>
-                <div class="feed-context">
-                  <span class="proj-ref">{{ feed.projectName }}</span>
-                  <span class="dot-divider">•</span>
-                  <span class="task-ref">{{ feed.taskName }}</span>
-                </div>
+                <span class="time-lbl">{{ feed.timestamp }}</span>
               </div>
-
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="dashboard-right-col">
+        <!-- Card 1: Échéances à venir -->
+        <div class="glass-panel panel-section deadlines-section animate-scale-in">
+          <div class="section-header">
+            <h3>Échéances à venir</h3>
+          </div>
+
+          <div class="deadlines-empty" *ngIf="upcomingDeadlines.length === 0">
+            <p>Aucune échéance à venir.</p>
+          </div>
+
+          <div class="deadlines-list" *ngIf="upcomingDeadlines.length > 0">
+            <div class="deadline-item" *ngFor="let item of upcomingDeadlines">
+              <span class="deadline-dot" [ngClass]="item.dotClass"></span>
+              <div class="deadline-info">
+                <h4>{{ item.name }}</h4>
+                <p>{{ item.projectName }}</p>
+              </div>
+              <span class="deadline-badge">{{ item.dateLabel }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Log rapide -->
+        <div class="glass-panel panel-section quick-log-section animate-scale-in">
+          <div class="section-header">
+            <h3>Log rapide</h3>
+          </div>
+
+          <form (ngSubmit)="submitQuickLog()" #logForm="ngForm">
+            <div class="form-group">
+              <label>Tâche</label>
+              <select name="taskId" [(ngModel)]="quickLog.taskId" required>
+                <option value="" disabled selected>Sélectionner une tâche</option>
+                <option *ngFor="let t of tasksList" [value]="t.id">{{ t.name }}</option>
+              </select>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Heures</label>
+                <input type="number" name="hours" [(ngModel)]="quickLog.hours" min="1" max="24" required
+                  placeholder="2">
+              </div>
+              <div class="form-group">
+                <label>Date</label>
+                <input type="date" name="date" [(ngModel)]="quickLog.date" required>
+              </div>
+            </div>
+            <button type="submit" class="submit-btn" [disabled]="!logForm.valid">
+              <span>Enregistrer</span>
+            </button>
+          </form>
         </div>
       </div>
     </div>

@@ -40,4 +40,14 @@ export class AnalyticsService {
   getManagerAnalytics(): Observable<ManagerAnalytics> {
     return this.apiService.get<ManagerAnalytics>('/analytics/manager');
   }
+
+  /** Portfolio-wide report analytics (real data). Response is wrapped in ApiResponse.data. */
+  getAdminReports(): Observable<any> {
+    return this.apiService.get<any>('/analytics/admin/reports');
+  }
+
+  /** Live API performance metrics (real request metrics). Wrapped in ApiResponse.data. */
+  getPerformance(): Observable<any> {
+    return this.apiService.get<any>('/analytics/admin/performance');
+  }
 }

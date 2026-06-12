@@ -18,7 +18,13 @@ import java.util.function.Function;
 public class JwtUtil {
 
     private static final String SECRET_KEY = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
-    private static final long JWT_EXPIRATION = 86400000; // 24 hours
+    private static final long JWT_EXPIRATION = 86400000; // 24 hours (fallback)
+
+    private final com.example.gpiApp.service.SystemSettingsService systemSettingsService;
+
+    public JwtUtil(com.example.gpiApp.service.SystemSettingsService systemSettingsService) {
+        this.systemSettingsService = systemSettingsService;
+    }
 
     public String generateToken(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -31,11 +37,17 @@ public class JwtUtil {
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
+        long validity;
+        try {
+            validity = systemSettingsService.getJwtValidityMillis();
+        } catch (Exception e) {
+            validity = JWT_EXPIRATION;
+        }
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
+                .setExpiration(new Date(System.currentTimeMillis() + validity))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

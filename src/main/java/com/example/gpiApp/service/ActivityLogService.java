@@ -118,8 +118,10 @@ public class ActivityLogService {
                 .activityType(activityLog.getActivityType())
                 .description(activityLog.getDescription())
                 .userId(activityLog.getUser() != null ? activityLog.getUser().getId() : null)
-                .userName(activityLog.getUser() != null ? 
+                .userName(activityLog.getUser() != null ?
                         activityLog.getUser().getFirstName() + " " + activityLog.getUser().getLastName() : null)
+                .userRole(activityLog.getUser() != null && activityLog.getUser().getRole() != null ?
+                        activityLog.getUser().getRole().name() : null)
                 .entityType(activityLog.getEntityType())
                 .entityId(activityLog.getEntityId())
                 .ipAddress(activityLog.getIpAddress())

@@ -41,7 +41,14 @@ public class CalendarEventRequestDTO {
     private String location;
     
     private Integer reminderMinutes;
-    
+
     private Boolean syncToGoogle;
+
+    /** Distribution target: "PROJECT" (default when projectId set) sends to all project members,
+     *  "ALL" sends to every active user, "SELF" keeps it private to the creator. */
+    private String audience;
+
+    /** When distributing to a project's members. */
+    private Long projectId;
 }
 

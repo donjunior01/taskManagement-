@@ -14,6 +14,10 @@ export interface Message {
   content: string;
   isRead?: boolean;
   createdAt?: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentType?: string;
+  attachmentSize?: string;
 }
 
 @Injectable({

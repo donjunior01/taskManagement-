@@ -58,7 +58,21 @@ public class ProjectController {
         Long userId = getCurrentUserId(authentication);
         return ResponseEntity.ok(projectService.updateProject(id, request, userId));
     }
-    
+
+    @Operation(summary = "Archive project", description = "Archive a project (hidden from the default lists)")
+    @PatchMapping("/{id}/archive")
+    public ResponseEntity<ApiResponse<ProjectDTO>> archiveProject(
+            @Parameter(description = "Project ID") @PathVariable Long id) {
+        return ResponseEntity.ok(projectService.setArchived(id, true));
+    }
+
+    @Operation(summary = "Unarchive project", description = "Restore an archived project")
+    @PatchMapping("/{id}/unarchive")
+    public ResponseEntity<ApiResponse<ProjectDTO>> unarchiveProject(
+            @Parameter(description = "Project ID") @PathVariable Long id) {
+        return ResponseEntity.ok(projectService.setArchived(id, false));
+    }
+
     @Operation(summary = "Delete project", description = "Delete a project")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteProject(

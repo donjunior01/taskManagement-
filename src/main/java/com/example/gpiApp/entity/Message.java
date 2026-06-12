@@ -34,6 +34,18 @@ public class Message {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    // Optional file attachment (uploaded via /api/files/upload, stored under /uploads/**).
+    @Column(name = "attachment_url", length = 500)
+    private String attachmentUrl;
+
+    @Column(name = "attachment_name")
+    private String attachmentName;
+
+    @Column(name = "attachment_type", length = 30)
+    private String attachmentType;  // IMAGE | VIDEO | DOCUMENT | VOICE
+
+    @Column(name = "attachment_size", length = 40)
+    private String attachmentSize;
 
     @Column(name = "is_read")
     @Builder.Default

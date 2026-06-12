@@ -24,6 +24,7 @@ import { PmTeamsComponent } from './features/project-manager/teams/teams';
 import { PmDeliverablesComponent } from './features/project-manager/deliverables/deliverables';
 import { PmCalendarComponent } from './features/project-manager/calendar/calendar';
 import { PmReportsComponent } from './features/project-manager/reports/reports';
+import { PmNotificationsComponent } from './features/project-manager/notifications/notifications';
 import { SupportComponent } from './features/support/support';
 import { UserDashboardComponent } from './features/user/dashboard/dashboard';
 import { UserMyTasksComponent } from './features/user/my-tasks/my-tasks';
@@ -32,6 +33,11 @@ import { UserMessagesComponent } from './features/user/messages/messages';
 import { UserCalendarComponent } from './features/user/calendar/calendar';
 import { AdminSupportComponent } from './features/admin/support/support';
 import { AdminReportsComponent } from './features/admin/reports/reports';
+import { AdminTeamsComponent } from './features/admin/teams/teams';
+import { AdminLoginAttemptsComponent } from './features/admin/login-attempts/login-attempts';
+import { AdminSecurityLogComponent } from './features/admin/security-log/security-log';
+import { AdminPerformanceComponent } from './features/admin/performance/performance';
+import { AdminApiDocsComponent } from './features/admin/api-docs/api-docs';
 import { UserDeliverablesComponent } from './features/user/deliverables/deliverables';
 
 export const routes: Routes = [
@@ -53,11 +59,17 @@ export const routes: Routes = [
       { path: 'users', component: AdminUsersComponent },
       { path: 'projects', component: AdminProjectsComponent },
       { path: 'projects/:id', component: AdminProjectDetailComponent },
+      { path: 'teams', component: AdminTeamsComponent },
       { path: 'tasks', component: AdminTasksComponent },
+      { path: 'security-log', component: AdminSecurityLogComponent },
+      { path: 'login-attempts', component: AdminLoginAttemptsComponent },
       { path: 'activity-logs', component: AdminActivityLogsComponent },
+      { path: 'reports', component: AdminReportsComponent },
+      { path: 'performance', component: AdminPerformanceComponent },
+      { path: 'notifications', component: PmNotificationsComponent },
       { path: 'settings', component: AdminSettingsComponent },
       { path: 'support', component: AdminSupportComponent },
-      { path: 'reports', component: AdminReportsComponent }
+      { path: 'api-docs', component: AdminApiDocsComponent }
     ]
   },
   
@@ -77,6 +89,7 @@ export const routes: Routes = [
       { path: 'deliverables', component: PmDeliverablesComponent },
       { path: 'calendar', component: PmCalendarComponent },
       { path: 'reports', component: PmReportsComponent },
+      { path: 'notifications', component: PmNotificationsComponent },
       { path: 'support', component: SupportComponent },
       { path: 'messages', component: UserMessagesComponent }
     ]
@@ -95,6 +108,7 @@ export const routes: Routes = [
       { path: 'time-logs', component: UserTimeLogsComponent },
       { path: 'messages', component: UserMessagesComponent },
       { path: 'calendar', component: UserCalendarComponent },
+      { path: 'notifications', component: PmNotificationsComponent },
       { path: 'support', component: SupportComponent }
     ]
   },

@@ -1,16 +1,4 @@
 <div class="logs-container animate-fade-in-up">
-  <!-- Governance Greeting Area -->
-  <div class="logs-header">
-    <div class="header-text">
-      <h2>Operations Log</h2>
-      <p>Security compliance audits, real-time user session traces, and database mutation timelines.</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-secondary" (click)="clearFilters()" *ngIf="searchTerm || categoryFilter || impactFilter || startDateFilter || endDateFilter">
-        Clear All Filters
-      </button>
-    </div>
-  </div>
 
   <!-- Advanced Auditing Toolbar -->
   <div class="glass-panel filter-toolbar">
@@ -23,7 +11,7 @@
       </div>
       <input 
         type="text" 
-        placeholder="Filter logs by operator, details, IP address..." 
+        placeholder="Filtrer les journaux par opérateur, détails, adresse IP..."
         [(ngModel)]="searchTerm" 
         (ngModelChange)="onFilterChange()"
       />
@@ -33,30 +21,34 @@
       <!-- Category Filter -->
       <div class="select-wrapper">
         <select [(ngModel)]="categoryFilter" (change)="onFilterChange()">
-          <option value="">All Categories</option>
-          <option value="SECURITY">Security & Access</option>
-          <option value="DATA_MUTATION">Data Mutations</option>
-          <option value="SYSTEM">System Operations</option>
+          <option value="">Toutes les catégories</option>
+          <option value="SECURITY">Sécurité et accès</option>
+          <option value="DATA_MUTATION">Mutations de données</option>
+          <option value="SYSTEM">Opérations système</option>
         </select>
       </div>
 
       <!-- Impact Filter -->
       <div class="select-wrapper">
         <select [(ngModel)]="impactFilter" (change)="onFilterChange()">
-          <option value="">All Impact Levels</option>
-          <option value="CRITICAL">Critical</option>
-          <option value="HIGH">High</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="LOW">Low</option>
+          <option value="">Tous les niveaux d'impact</option>
+          <option value="CRITICAL">Critique</option>
+          <option value="HIGH">Élevé</option>
+          <option value="MEDIUM">Moyen</option>
+          <option value="LOW">Faible</option>
         </select>
       </div>
 
       <!-- Dates Picker -->
       <div class="date-pickers">
-        <input type="date" [(ngModel)]="startDateFilter" (change)="onFilterChange()" title="Start Audit Date" />
-        <span class="range-separator">to</span>
-        <input type="date" [(ngModel)]="endDateFilter" (change)="onFilterChange()" title="End Audit Date" />
+        <input type="date" [(ngModel)]="startDateFilter" (change)="onFilterChange()" title="Date de début d'audit" />
+        <span class="range-separator">à</span>
+        <input type="date" [(ngModel)]="endDateFilter" (change)="onFilterChange()" title="Date de fin d'audit" />
       </div>
+
+      <button class="btn btn-secondary btn-clear" (click)="clearFilters()" *ngIf="searchTerm || categoryFilter || impactFilter || startDateFilter || endDateFilter">
+        Effacer
+      </button>
     </div>
   </div>
 
@@ -72,86 +64,34 @@
           <line x1="12" y1="8" x2="12.01" y2="8"></line>
         </svg>
       </div>
-      <h3>No Audit Logs Found</h3>
-      <p>No system activity matches your filtering criteria or selected timelines.</p>
+      <h3>Aucun journal d'audit trouvé</h3>
+      <p>Aucune activité système ne correspond à vos critères de filtrage ou aux périodes sélectionnées.</p>
     </div>
 
-    <!-- Interactive Vertical Timeline Feed -->
-    <div class="timeline-feed" *ngIf="filteredLogs.length > 0">
-      <div class="timeline-line"></div>
-
-      <div class="timeline-item animate-scale-in" *ngFor="let log of filteredLogs" (click)="openInspector(log)">
-        
-        <!-- Timeline Left Category Badge Icon -->
-        <div class="timeline-node" [ngClass]="log.category.toLowerCase()">
-          <!-- Security Category Icon -->
-          <svg *ngIf="log.category === 'SECURITY'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-          <!-- Mutation Category Icon -->
-          <svg *ngIf="log.category === 'DATA_MUTATION'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
-            <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
-          </svg>
-          <!-- System Category Icon -->
-          <svg *ngIf="log.category === 'SYSTEM'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-        </div>
-
-        <!-- Timeline Right Information Box -->
-        <div class="timeline-body">
-          <div class="timeline-body-header">
-            <div class="header-tags">
-              <span class="action-badge">{{ log.action }}</span>
-              <span class="impact-badge" [ngClass]="log.impact.toLowerCase()">
-                {{ log.impact }} Impact
-              </span>
-            </div>
-            <span class="log-time">{{ log.timestamp }}</span>
-          </div>
-
-          <p class="log-details">{{ log.details }}</p>
-
-          <div class="timeline-body-footer">
-            <div class="footer-meta">
-              <span class="operator-tag">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                Performed by: <strong>{{ log.performedBy }}</strong> 
-                <span class="role-subtext">({{ log.userRole }})</span>
-              </span>
-              <span class="ip-tag">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
-                  <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
-                  <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-                  <line x1="12" y1="20" x2="12.01" y2="20"></line>
-                </svg>
-                IP: {{ log.ipAddress }}
-              </span>
-            </div>
-
-            <button class="inspect-btn">
-              <span>Inspect Trace</span>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-      </div>
+    <!-- Activity table (prototype k3 columns) -->
+    <div class="table-wrapper logs-table-wrap" *ngIf="filteredLogs.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr><th>Heure</th><th>Utilisateur</th><th>Rôle</th><th>Module</th><th>Action</th><th>Détails</th><th>IP</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of filteredLogs" class="log-row" (click)="openInspector(log)">
+            <td class="nowrap">{{ log.timestamp }}</td>
+            <td class="td-name">{{ log.performedBy }}</td>
+            <td class="muted">{{ log.userRole }}</td>
+            <td><span class="module-chip" [ngClass]="log.category.toLowerCase()">{{ log.category }}</span></td>
+            <td><span class="action-badge" [ngClass]="log.action.toLowerCase()">{{ log.action }}</span></td>
+            <td class="muted details-cell">{{ log.details }}</td>
+            <td class="muted" style="font-family:ui-monospace,monospace;">{{ log.ipAddress }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Pagination Footer -->
     <div class="table-footer" *ngIf="filteredLogs.length > 0">
       <div class="entries-info">
-        Showing entries {{ (currentPage * pageSize) + 1 }} to {{ ((currentPage * pageSize) + filteredLogs.length) }} of {{ totalElements }} total events
+        Affichage des entrées {{ (currentPage * pageSize) + 1 }} à {{ ((currentPage * pageSize) + filteredLogs.length) }} sur {{ totalElements }} événements au total
       </div>
       <div class="pagination-controls">
         <button class="pag-btn" (click)="prevPage()" [disabled]="currentPage === 0">
@@ -184,8 +124,8 @@
   <div class="glass-panel modal-card inspector-modal animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="header-titles">
-        <span class="inspector-label">Telemetry Trace Inspector</span>
-        <h3>Event ID #{{ selectedLog?.id }} — {{ selectedLog?.action }}</h3>
+        <span class="inspector-label">Inspecteur de trace de télémétrie</span>
+        <h3>ID d'événement #{{ selectedLog?.id }} — {{ selectedLog?.action }}</h3>
       </div>
       <button class="modal-close-btn" (click)="closeInspector()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -199,44 +139,44 @@
       <!-- Upper key attributes grid -->
       <div class="attributes-grid">
         <div class="attribute-item">
-          <span class="attr-label">Event Category</span>
+          <span class="attr-label">Catégorie d'événement</span>
           <span class="attr-value badge-cat" [ngClass]="selectedLog?.category?.toLowerCase() || 'system'">
-            {{ selectedLog?.category === 'DATA_MUTATION' ? 'Data Mutation' : (selectedLog?.category === 'SECURITY' ? 'Security & Access' : 'System Engine') }}
+            {{ selectedLog?.category === 'DATA_MUTATION' ? 'Mutation de données' : (selectedLog?.category === 'SECURITY' ? 'Sécurité et accès' : 'Moteur système') }}
           </span>
         </div>
         <div class="attribute-item">
-          <span class="attr-label">Audit Severity</span>
+          <span class="attr-label">Gravité de l'audit</span>
           <span class="attr-value badge-imp" [ngClass]="selectedLog?.impact?.toLowerCase() || 'low'">
-            {{ selectedLog?.impact }} IMPACT
+            IMPACT {{ selectedLog?.impact }}
           </span>
         </div>
         <div class="attribute-item">
-          <span class="attr-label">Log Time (UTC)</span>
+          <span class="attr-label">Heure du journal (UTC)</span>
           <span class="attr-value text-bold">{{ selectedLog?.timestamp }}</span>
         </div>
         <div class="attribute-item">
-          <span class="attr-label">Executor ID / Username</span>
+          <span class="attr-label">ID exécuteur / Nom d'utilisateur</span>
           <span class="attr-value text-bold">{{ selectedLog?.performedBy }} ({{ selectedLog?.userRole }})</span>
         </div>
         <div class="attribute-item" style="grid-column: span 2;">
-          <span class="attr-label">Admin IP Address</span>
+          <span class="attr-label">Adresse IP de l'administrateur</span>
           <span class="attr-value text-bold code-font">{{ selectedLog?.ipAddress }}</span>
         </div>
         <div class="attribute-item" style="grid-column: span 2;" *ngIf="selectedLog?.userAgent">
-          <span class="attr-label">Agent Client Payload String</span>
+          <span class="attr-label">Chaîne de charge utile du client (agent)</span>
           <span class="attr-value code-font font-sm">{{ selectedLog?.userAgent }}</span>
         </div>
       </div>
 
       <!-- Human Description -->
       <div class="inspector-section">
-        <span class="section-label">Audit Narrative Summary</span>
+        <span class="section-label">Résumé narratif de l'audit</span>
         <p class="narrative-text">{{ selectedLog?.details }}</p>
       </div>
 
       <!-- Preformatted JSON Metadata -->
       <div class="inspector-section" *ngIf="selectedLog?.metaData">
-        <span class="section-label">Structured JSON Telemetry Trace</span>
+        <span class="section-label">Trace de télémétrie JSON structurée</span>
         <div class="code-block-wrapper">
           <pre><code>{{ selectedLog?.metaData }}</code></pre>
         </div>
@@ -244,7 +184,7 @@
     </div>
 
     <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="closeInspector()">Close Trace Inspector</button>
+      <button class="btn btn-secondary" (click)="closeInspector()">Fermer l'inspecteur de trace</button>
     </div>
   </div>
 </div>

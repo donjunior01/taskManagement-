@@ -6,7 +6,7 @@
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"></polyline>
       </svg>
-      Back to Projects
+      Retour aux projets
     </button>
     <div class="pd-topbar-actions" *ngIf="!loading && project">
       <button class="btn btn-secondary" (click)="openEditModal()">
@@ -14,14 +14,14 @@
           <polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon>
           <line x1="3" y1="21" x2="21" y2="21"></line>
         </svg>
-        Edit Project
+        Modifier le projet
       </button>
       <button class="btn btn-danger" (click)="openDeleteModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3 6 5 6 21 6"></polyline>
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
         </svg>
-        Delete Project
+        Supprimer le projet
       </button>
     </div>
   </div>
@@ -29,7 +29,7 @@
   <!-- ── Loading State ──────────────────────────────────────────────────── -->
   <div class="pd-loading" *ngIf="loading">
     <div class="spinner"></div>
-    <span>Loading project details...</span>
+    <span>Chargement des détails du projet...</span>
   </div>
 
   <!-- ── Not Found ──────────────────────────────────────────────────────── -->
@@ -39,9 +39,9 @@
         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
       </svg>
     </div>
-    <h3>Project Not Found</h3>
-    <p>The requested project could not be loaded. Please go back and try again.</p>
-    <button class="btn btn-primary" (click)="goBack()">Back to Projects</button>
+    <h3>Projet introuvable</h3>
+    <p>Le projet demandé n'a pas pu être chargé. Veuillez revenir en arrière et réessayer.</p>
+    <button class="btn btn-primary" (click)="goBack()">Retour aux projets</button>
   </div>
 
   <!-- ── Main Content ───────────────────────────────────────────────────── -->
@@ -54,7 +54,7 @@
           {{ getStatusLabel(project.status) }}
         </span>
         <h1 class="hero-title">{{ project.name }}</h1>
-        <p class="hero-desc">{{ project.description || 'No description provided for this project workspace.' }}</p>
+        <p class="hero-desc">{{ project.description || 'Aucune description fournie pour cet espace de projet.' }}</p>
 
         <div class="hero-meta">
           <div class="meta-chip">
@@ -62,7 +62,7 @@
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            <span>{{ project.managerName || 'Unassigned Manager' }}</span>
+            <span>{{ project.managerName || 'Chef de projet non attribué' }}</span>
           </div>
           <div class="meta-chip">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -78,7 +78,7 @@
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            <span>{{ getDaysRemaining() }} days remaining</span>
+            <span>{{ getDaysRemaining() }} jours restants</span>
           </div>
         </div>
       </div>
@@ -94,7 +94,7 @@
         </svg>
         <div class="ring-center">
           <span class="ring-pct">{{ project.progress || 0 }}%</span>
-          <span class="ring-label">Progress</span>
+          <span class="ring-label">Progression</span>
         </div>
       </div>
     </div>
@@ -112,7 +112,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ project.taskCount || taskStats.total || 0 }}</span>
-          <span class="stat-label">Total Tasks</span>
+          <span class="stat-label">Total des tâches</span>
         </div>
       </div>
 
@@ -127,7 +127,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ members.length || project.teamCount || 0 }}</span>
-          <span class="stat-label">Team Members</span>
+          <span class="stat-label">Membres de l'équipe</span>
         </div>
       </div>
 
@@ -139,7 +139,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ taskStats.completed }}</span>
-          <span class="stat-label">Completed Tasks</span>
+          <span class="stat-label">Tâches terminées</span>
         </div>
       </div>
 
@@ -152,7 +152,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ getDaysTotal() }}</span>
-          <span class="stat-label">Total Duration (days)</span>
+          <span class="stat-label">Durée totale (jours)</span>
         </div>
       </div>
     </div>
@@ -163,8 +163,8 @@
       <!-- Task Status Chart -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Task Status Distribution</h4>
-          <span class="chart-subtitle">{{ taskStats.total }} tasks total</span>
+          <h4>Répartition par statut des tâches</h4>
+          <span class="chart-subtitle">{{ taskStats.total }} tâches au total</span>
         </div>
 
         <div class="task-donut-wrap" *ngIf="taskStats.total > 0">
@@ -199,22 +199,22 @@
           <div class="donut-legend">
             <div class="legend-item">
               <span class="legend-dot" style="background:#94a3b8;"></span>
-              <span class="legend-label">Planned</span>
+              <span class="legend-label">Planifié</span>
               <span class="legend-count">{{ taskStats.planned }}</span>
             </div>
             <div class="legend-item">
               <span class="legend-dot" style="background:var(--primary);"></span>
-              <span class="legend-label">In Progress</span>
+              <span class="legend-label">En cours</span>
               <span class="legend-count">{{ taskStats.inProgress }}</span>
             </div>
             <div class="legend-item">
               <span class="legend-dot" style="background:var(--success);"></span>
-              <span class="legend-label">Completed</span>
+              <span class="legend-label">Terminé</span>
               <span class="legend-count">{{ taskStats.completed }}</span>
             </div>
             <div class="legend-item">
               <span class="legend-dot" style="background:var(--warning, #f59e0b);"></span>
-              <span class="legend-label">On Hold</span>
+              <span class="legend-label">En attente</span>
               <span class="legend-count">{{ taskStats.onHold }}</span>
             </div>
           </div>
@@ -225,7 +225,7 @@
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
           </svg>
-          <span>No tasks assigned yet</span>
+          <span>Aucune tâche attribuée pour le moment</span>
         </div>
         <div class="chart-loading" *ngIf="loadingTasks">
           <div class="spinner"></div>
@@ -235,17 +235,17 @@
       <!-- Timeline Progress Chart -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Project Timeline</h4>
-          <span class="chart-subtitle">Duration analysis</span>
+          <h4>Chronologie du projet</h4>
+          <span class="chart-subtitle">Analyse de la durée</span>
         </div>
 
         <div class="timeline-chart">
           <!-- Duration gauge -->
           <div class="timeline-gauge">
             <div class="gauge-labels">
-              <span class="gauge-start">{{ project.startDate || 'Start' }}</span>
-              <span class="gauge-pct">{{ getDaysElapsedPct() | number:'1.0-0' }}% elapsed</span>
-              <span class="gauge-end">{{ project.endDate || 'End' }}</span>
+              <span class="gauge-start">{{ project.startDate || 'Début' }}</span>
+              <span class="gauge-pct">{{ getDaysElapsedPct() | number:'1.0-0' }}% écoulés</span>
+              <span class="gauge-end">{{ project.endDate || 'Fin' }}</span>
             </div>
             <div class="gauge-track">
               <div class="gauge-fill" [style.width.%]="getDaysElapsedPct()"></div>
@@ -257,23 +257,23 @@
           <div class="timeline-stats">
             <div class="tl-stat">
               <span class="tl-num">{{ getDaysTotal() }}</span>
-              <span class="tl-lbl">Total Days</span>
+              <span class="tl-lbl">Jours au total</span>
             </div>
             <div class="tl-divider"></div>
             <div class="tl-stat">
               <span class="tl-num">{{ getDaysTotal() - getDaysRemaining() }}</span>
-              <span class="tl-lbl">Days Elapsed</span>
+              <span class="tl-lbl">Jours écoulés</span>
             </div>
             <div class="tl-divider"></div>
             <div class="tl-stat">
               <span class="tl-num" [class.overdue]="getDaysRemaining() === 0">{{ getDaysRemaining() }}</span>
-              <span class="tl-lbl">Days Left</span>
+              <span class="tl-lbl">Jours restants</span>
             </div>
           </div>
 
           <!-- Task completion vs progress stacked bar -->
           <div class="completion-bar-section" *ngIf="taskStats.total > 0">
-            <span class="completion-label">Task Completion Rate</span>
+            <span class="completion-label">Taux d'achèvement des tâches</span>
             <div class="completion-track">
               <div class="completion-fill"
                 [style.width.%]="taskStats.total > 0 ? (taskStats.completed / taskStats.total * 100) : 0">
@@ -289,8 +289,8 @@
       <!-- Members Distribution Chart -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Team Composition</h4>
-          <span class="chart-subtitle">{{ members.length }} member(s) assigned</span>
+          <h4>Composition de l'équipe</h4>
+          <span class="chart-subtitle">{{ members.length }} membre(s) attribué(s)</span>
         </div>
 
         <div class="members-chart" *ngIf="members.length > 0 && !loadingMembers">
@@ -316,35 +316,35 @@
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
           </svg>
-          <span>No team members assigned</span>
+          <span>Aucun membre d'équipe attribué</span>
         </div>
       </div>
 
       <!-- Task Priority Distribution -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Task Priority Breakdown</h4>
-          <span class="chart-subtitle">Priority distribution</span>
+          <h4>Répartition par priorité des tâches</h4>
+          <span class="chart-subtitle">Distribution des priorités</span>
         </div>
 
         <!-- Priority bars -->
         <div class="priority-bars-direct" *ngIf="tasks.length > 0 && !loadingTasks">
           <div class="pb-row">
-            <span class="pb-label high-lbl">High</span>
+            <span class="pb-label high-lbl">Élevée</span>
             <div class="pb-track">
               <div class="pb-fill high-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('HIGH') / tasks.length * 100) : 0"></div>
             </div>
             <span class="pb-val">{{ getCountByPriority('HIGH') }}</span>
           </div>
           <div class="pb-row">
-            <span class="pb-label med-lbl">Medium</span>
+            <span class="pb-label med-lbl">Moyenne</span>
             <div class="pb-track">
               <div class="pb-fill med-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('MEDIUM') / tasks.length * 100) : 0"></div>
             </div>
             <span class="pb-val">{{ getCountByPriority('MEDIUM') }}</span>
           </div>
           <div class="pb-row">
-            <span class="pb-label low-lbl">Low</span>
+            <span class="pb-label low-lbl">Faible</span>
             <div class="pb-track">
               <div class="pb-fill low-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('LOW') / tasks.length * 100) : 0"></div>
             </div>
@@ -357,7 +357,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
           </svg>
-          <span>No task priority data</span>
+          <span>Aucune donnée de priorité de tâche</span>
         </div>
       </div>
     </div>
@@ -366,8 +366,8 @@
     <div class="glass-panel pd-section">
       <div class="section-header">
         <div class="section-title-group">
-          <h4>Team Members</h4>
-          <span class="section-count">{{ members.length }} member(s)</span>
+          <h4>Membres de l'équipe</h4>
+          <span class="section-count">{{ members.length }} membre(s)</span>
         </div>
       </div>
 
@@ -385,7 +385,7 @@
       </div>
 
       <div class="section-loading" *ngIf="loadingMembers">
-        <div class="spinner"></div><span>Loading team roster...</span>
+        <div class="spinner"></div><span>Chargement de l'équipe...</span>
       </div>
 
       <div class="section-empty" *ngIf="!loadingMembers && members.length === 0">
@@ -393,7 +393,7 @@
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
         </svg>
-        <p>No team members have been assigned to this project.</p>
+        <p>Aucun membre d'équipe n'a été attribué à ce projet.</p>
       </div>
     </div>
 
@@ -401,8 +401,8 @@
     <div class="glass-panel pd-section">
       <div class="section-header">
         <div class="section-title-group">
-          <h4>Project Tasks</h4>
-          <span class="section-count">{{ tasks.length }} task(s)</span>
+          <h4>Tâches du projet</h4>
+          <span class="section-count">{{ tasks.length }} tâche(s)</span>
         </div>
       </div>
 
@@ -410,12 +410,12 @@
         <table class="tasks-table">
           <thead>
             <tr>
-              <th>Task Name</th>
-              <th>Assignee</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Progress</th>
-              <th>Deadline</th>
+              <th>Nom de la tâche</th>
+              <th>Assigné à</th>
+              <th>Priorité</th>
+              <th>Statut</th>
+              <th>Progression</th>
+              <th>Échéance</th>
             </tr>
           </thead>
           <tbody>
@@ -454,7 +454,7 @@
       </div>
 
       <div class="section-loading" *ngIf="loadingTasks">
-        <div class="spinner"></div><span>Loading tasks...</span>
+        <div class="spinner"></div><span>Chargement des tâches...</span>
       </div>
 
       <div class="section-empty" *ngIf="!loadingTasks && tasks.length === 0">
@@ -462,7 +462,7 @@
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
         </svg>
-        <p>No tasks have been created for this project yet.</p>
+        <p>Aucune tâche n'a encore été créée pour ce projet.</p>
       </div>
     </div>
 
@@ -473,7 +473,7 @@
 <div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()">
   <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Edit Project</h3>
+      <h3>Modifier le projet</h3>
       <button class="modal-close-btn" (click)="closeEditModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
@@ -482,52 +482,52 @@
     </div>
     <form class="modal-form" (submit)="submitEditProject(); $event.preventDefault()">
       <div class="form-group">
-        <label>Project Name</label>
+        <label>Nom du projet</label>
         <input type="text" [(ngModel)]="editForm.name" name="name" required />
       </div>
       <div class="form-group">
-        <label>Business Description</label>
+        <label>Description métier</label>
         <app-ai-describe [type]="'PROJECT'" [title]="editForm.name" (generated)="editForm.description = $event"></app-ai-describe>
         <textarea rows="3" [(ngModel)]="editForm.description" name="description"></textarea>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Start Date</label>
+          <label>Date de début</label>
           <input type="date" [(ngModel)]="editForm.startDate" name="startDate" required />
         </div>
         <div class="form-group">
-          <label>Delivery Target Date</label>
+          <label>Date de livraison cible</label>
           <input type="date" [(ngModel)]="editForm.endDate" name="endDate" required />
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Assigned Manager</label>
+          <label>Chef de projet attribué</label>
           <select [(ngModel)]="editForm.managerId" name="managerId">
-            <option [value]="undefined">-- Unassigned --</option>
+            <option [value]="undefined">-- Non attribué --</option>
             <option *ngFor="let m of projectManagers" [value]="m.id">
               {{ m.firstName }} {{ m.lastName }} (@{{ m.username }})
             </option>
           </select>
         </div>
         <div class="form-group">
-          <label>Status</label>
+          <label>Statut</label>
           <select [(ngModel)]="editForm.status" name="status">
-            <option value="PLANNED">Planned</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="ON_HOLD">On Hold</option>
-            <option value="COMPLETED">Completed</option>
+            <option value="PLANNED">Planifié</option>
+            <option value="IN_PROGRESS">En cours</option>
+            <option value="ON_HOLD">En attente</option>
+            <option value="COMPLETED">Terminé</option>
           </select>
         </div>
       </div>
       <div class="form-group">
-        <label>Progress (%)</label>
+        <label>Progression (%)</label>
         <input type="number" min="0" max="100" [(ngModel)]="editForm.progress" name="progress" />
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Annuler</button>
         <button type="submit" class="btn btn-primary" [disabled]="submitting">
-          <span *ngIf="!submitting">Save Changes</span>
+          <span *ngIf="!submitting">Enregistrer les modifications</span>
           <div class="spinner" *ngIf="submitting"></div>
         </button>
       </div>
@@ -545,11 +545,11 @@
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
         </svg>
       </div>
-      <h3>Destroy Project</h3>
+      <h3>Détruire le projet</h3>
     </div>
     <div class="delete-modal-body">
       <p class="delete-message">
-        You are about to permanently destroy the project workspace
+        Vous êtes sur le point de détruire définitivement l'espace de projet
         <strong>"{{ project?.name }}"</strong>.
       </p>
       <div class="delete-warning-box">
@@ -558,13 +558,13 @@
           <line x1="12" y1="9" x2="12" y2="13"></line>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
-        <span>This action cannot be undone. All tasks, assignments, milestones, and files linked to this project will be permanently deleted.</span>
+        <span>Cette action est irréversible. Toutes les tâches, affectations, jalons et fichiers liés à ce projet seront définitivement supprimés.</span>
       </div>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">Cancel</button>
+      <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">Annuler</button>
       <button type="button" class="btn btn-danger-solid" (click)="submitDeleteProject()" [disabled]="submitting">
-        <span *ngIf="!submitting">Yes, Destroy Project</span>
+        <span *ngIf="!submitting">Oui, détruire le projet</span>
         <div class="spinner" *ngIf="submitting"></div>
       </button>
     </div>

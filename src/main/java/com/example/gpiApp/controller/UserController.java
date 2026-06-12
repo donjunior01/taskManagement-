@@ -72,6 +72,21 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Reset a user's password (admin)", description = "Resets the user's password to a policy-compliant temporary value and emails it")
+    @PostMapping("/{id}/reset-password")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<com.example.gpiApp.dto.ApiResponse<Map<String, String>>> resetPassword(
+            @Parameter(description = "User ID") @PathVariable Long id) {
+        try {
+            Map<String, String> result = userService.resetUserPassword(id);
+            return ResponseEntity.ok(com.example.gpiApp.dto.ApiResponse.success(
+                    "Mot de passe réinitialisé et envoyé à " + result.get("email"), result));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(com.example.gpiApp.dto.ApiResponse.error(
+                    e.getMessage() != null ? e.getMessage() : "Échec de la réinitialisation du mot de passe."));
+        }
+    }
+
     @Operation(summary = "Get all users", description = "Retrieve paginated list of all users")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved users"),

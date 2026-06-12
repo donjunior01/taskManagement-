@@ -3,7 +3,7 @@
   <!-- Loading State Spinner -->
   <div class="spinner-wrapper" *ngIf="loading">
     <div class="spinner"></div>
-    <span>Decrypting workspace governance telemetry ledgers...</span>
+    <span>Déchiffrement des registres de télémétrie de gouvernance de l'espace de travail...</span>
   </div>
 
   <!-- Main Reports dashboard -->
@@ -12,15 +12,15 @@
     <!-- Greeting Header Area -->
     <div class="reports-header">
       <div class="header-text">
-        <h2>System Audit Control Center</h2>
-        <p>Generate, compile, and configure high-level workspace performance analytics.</p>
+        <h2>Centre de contrôle des audits système</h2>
+        <p>Générez, compilez et configurez des analyses de performance de l'espace de travail de haut niveau.</p>
       </div>
       <button class="btn-settings" (click)="openSettings()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
-        <span>Audit Settings</span>
+        <span>Paramètres d'audit</span>
       </button>
     </div>
 
@@ -33,28 +33,28 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="card-title-icon text-blue">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
           </svg>
-          <h3>Generate System Audit</h3>
+          <h3>Générer un audit système</h3>
         </div>
 
         <form (ngSubmit)="generateReport()" class="report-form">
           <!-- Audit Type -->
           <div class="form-group">
-            <label class="form-label">Audit Scope Type</label>
+            <label class="form-label">Type de portée d'audit</label>
             <div class="select-wrapper">
               <select name="auditType" [(ngModel)]="auditType" required>
-                <optgroup label="— Live Backend Reports —">
-                  <option value="Project Health Report">Project Health Report (PDF)</option>
-                  <option value="Team Allocation Report">Team Allocation Report (PDF)</option>
-                  <option value="Milestone Delivery Report">Milestone Delivery Report (PDF)</option>
-                  <option value="Users Directory (PDF)">Users Directory (PDF)</option>
-                  <option value="Tasks Report (PDF)">Tasks Report (PDF / CSV)</option>
-                  <option value="Projects Report (PDF)">Projects Report (PDF / CSV)</option>
+                <optgroup label="— Rapports backend en direct —">
+                  <option value="Project Health Report">Rapport de santé des projets (PDF)</option>
+                  <option value="Team Allocation Report">Rapport d'affectation des équipes (PDF)</option>
+                  <option value="Milestone Delivery Report">Rapport de livraison des jalons (PDF)</option>
+                  <option value="Users Directory (PDF)">Annuaire des utilisateurs (PDF)</option>
+                  <option value="Tasks Report (PDF)">Rapport des tâches (PDF / CSV)</option>
+                  <option value="Projects Report (PDF)">Rapport des projets (PDF / CSV)</option>
                 </optgroup>
-                <optgroup label="— System Analytics —">
-                  <option value="System Load &amp; Performance">System Load &amp; Performance</option>
-                  <option value="API Gateway Access Logs">API Gateway Access Logs</option>
-                  <option value="User Activity Ledger">User Activity Ledger</option>
-                  <option value="Database Node Health">Database Node Health</option>
+                <optgroup label="— Analyses système —">
+                  <option value="System Load &amp; Performance">Charge et performance du système</option>
+                  <option value="API Gateway Access Logs">Journaux d'accès à la passerelle API</option>
+                  <option value="User Activity Ledger">Registre d'activité des utilisateurs</option>
+                  <option value="Database Node Health">Santé des nœuds de base de données</option>
                 </optgroup>
               </select>
             </div>
@@ -62,7 +62,7 @@
 
           <!-- Date Range Inputs -->
           <div class="form-group">
-            <label class="form-label">Audit Window</label>
+            <label class="form-label">Fenêtre d'audit</label>
             <div class="date-range-row">
               <div class="date-input-wrapper">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="input-inline-icon">
@@ -71,7 +71,7 @@
                   <line x1="8" y1="2" x2="8" y2="6"></line>
                   <line x1="3" y1="10" x2="21" y2="10"></line>
                 </svg>
-                <input type="text" name="startDate" [(ngModel)]="startDate" placeholder="Sep 01, 2024">
+                <input type="text" name="startDate" [(ngModel)]="startDate" placeholder="01 sept. 2024">
               </div>
               <span class="range-divider">-</span>
               <div class="date-input-wrapper">
@@ -81,41 +81,41 @@
                   <line x1="8" y1="2" x2="8" y2="6"></line>
                   <line x1="3" y1="10" x2="21" y2="10"></line>
                 </svg>
-                <input type="text" name="endDate" [(ngModel)]="endDate" placeholder="Sep 30, 2024">
+                <input type="text" name="endDate" [(ngModel)]="endDate" placeholder="30 sept. 2024">
               </div>
             </div>
           </div>
 
           <!-- Include Scopes Checkboxes -->
           <div class="form-group">
-            <label class="form-label">Audit Scopes</label>
+            <label class="form-label">Portées d'audit</label>
             <div class="checkbox-list">
               <label class="checkbox-item">
                 <input type="checkbox" name="scope1" [(ngModel)]="scopesSelection.serverLogs">
                 <span class="checkbox-custom"></span>
-                <span class="checkbox-label">Server Microservices Logs</span>
+                <span class="checkbox-label">Journaux des microservices serveur</span>
               </label>
               <label class="checkbox-item">
                 <input type="checkbox" name="scope2" [(ngModel)]="scopesSelection.usersActivity">
                 <span class="checkbox-custom"></span>
-                <span class="checkbox-label">Users Activity Tracking</span>
+                <span class="checkbox-label">Suivi de l'activité des utilisateurs</span>
               </label>
               <label class="checkbox-item">
                 <input type="checkbox" name="scope3" [(ngModel)]="scopesSelection.taskBacklogs">
                 <span class="checkbox-custom"></span>
-                <span class="checkbox-label">Task Completion Backlogs</span>
+                <span class="checkbox-label">Arriérés d'achèvement des tâches</span>
               </label>
               <label class="checkbox-item">
                 <input type="checkbox" name="scope4" [(ngModel)]="scopesSelection.financialAudits">
                 <span class="checkbox-custom"></span>
-                <span class="checkbox-label">Financial & SLA Auditing</span>
+                <span class="checkbox-label">Audit financier et SLA</span>
               </label>
             </div>
           </div>
 
           <!-- Export Format -->
           <div class="form-group">
-            <label class="form-label">Export Format</label>
+            <label class="form-label">Format d'exportation</label>
             <div class="format-segmented-toggle">
               <button type="button" class="btn-toggle" [ngClass]="{ active: exportFormat === 'PDF' }" (click)="setFormat('PDF')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toggle-icon">
@@ -124,7 +124,7 @@
                 </svg>
                 <span>PDF</span>
               </button>
-              <button type="button" class="btn-toggle" [ngClass]="{ active: exportFormat === 'CSV', disabled: !isCsvSupported() }" [disabled]="!isCsvSupported()" (click)="setFormat('CSV')" [title]="isCsvSupported() ? 'Export as CSV' : 'CSV not available for this report type'">
+              <button type="button" class="btn-toggle" [ngClass]="{ active: exportFormat === 'CSV', disabled: !isCsvSupported() }" [disabled]="!isCsvSupported()" (click)="setFormat('CSV')" [title]="isCsvSupported() ? 'Exporter au format CSV' : 'CSV non disponible pour ce type de rapport'">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toggle-icon">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                   <line x1="3" y1="9" x2="21" y2="9"></line>
@@ -140,7 +140,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="submit-bolt-icon" style="width: 14px; height: 14px; margin-right: 6px;">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
             </svg>
-            <span>Run Executive Audit</span>
+            <span>Lancer l'audit exécutif</span>
           </button>
         </form>
       </div>
@@ -148,7 +148,7 @@
       <!-- COLUMN 2: SLA Response Compliance Chart -->
       <div class="glass-panel chart-card velocity-trend-card">
         <div class="card-header">
-          <h3>API SLA Resolution Trend (24h)</h3>
+          <h3>Tendance de résolution SLA API (24 h)</h3>
           <button class="btn-card-menu">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="menu-icon">
               <circle cx="12" cy="5" r="1"></circle>
@@ -181,14 +181,14 @@
               </linearGradient>
             </defs>
           </svg>
-          <span class="chart-label">Response Time: Avg 98ms SLA compliance</span>
+          <span class="chart-label">Temps de réponse : conformité SLA moyenne de 98 ms</span>
         </div>
       </div>
 
       <!-- COLUMN 3: Server Load Allocation Card -->
       <div class="glass-panel chart-card allocation-card">
         <div class="card-header">
-          <h3>Server Load Allocation</h3>
+          <h3>Répartition de la charge serveur</h3>
           <button class="btn-card-menu">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="menu-icon">
               <circle cx="12" cy="5" r="1"></circle>
@@ -221,7 +221,7 @@
                       transform="rotate(198 50 50)"></circle>
             </svg>
             <div class="donut-center-labels">
-              <span class="donut-total-lbl">Memory</span>
+              <span class="donut-total-lbl">Mémoire</span>
               <span class="donut-total-val">42.8 GB</span>
             </div>
           </div>
@@ -238,7 +238,7 @@
             </div>
             <div class="legend-dot-item">
               <span class="dot bg-orange"></span>
-              <span class="dot-label">API Gateway</span>
+              <span class="dot-label">Passerelle API</span>
             </div>
           </div>
         </div>
@@ -256,14 +256,14 @@
             <line x1="9" y1="13" x2="15" y2="13"></line>
             <line x1="9" y1="17" x2="15" y2="17"></line>
           </svg>
-          <h3>Governance Audit Archives</h3>
+          <h3>Archives d'audit de gouvernance</h3>
         </div>
 
         <!-- Segmented Tab switcher buttons -->
         <div class="tab-switcher-nav">
-          <button class="tab-btn" [ngClass]="{ active: activeTab === 'saved' }" (click)="setActiveTab('saved')">Saved Executive Audits</button>
-          <button class="tab-btn" [ngClass]="{ active: activeTab === 'performance' }" (click)="setActiveTab('performance')">System Performance Vitals</button>
-          <button class="tab-btn" [ngClass]="{ active: activeTab === 'logs' }" (click)="setActiveTab('logs')">Operator Audit Logs</button>
+          <button class="tab-btn" [ngClass]="{ active: activeTab === 'saved' }" (click)="setActiveTab('saved')">Audits exécutifs enregistrés</button>
+          <button class="tab-btn" [ngClass]="{ active: activeTab === 'performance' }" (click)="setActiveTab('performance')">Indicateurs de performance système</button>
+          <button class="tab-btn" [ngClass]="{ active: activeTab === 'logs' }" (click)="setActiveTab('logs')">Journaux d'audit opérateur</button>
         </div>
       </div>
 
@@ -289,12 +289,12 @@
             </div>
 
             <div class="report-item-right">
-              <button class="btn-action btn-download" (click)="downloadReport(rep, $event)" title="Download Audit">
+              <button class="btn-action btn-download" (click)="downloadReport(rep, $event)" title="Télécharger l'audit">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="action-icon">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                 </svg>
               </button>
-              <button class="btn-action btn-delete" (click)="deleteReport(rep, $event)" title="Delete Audit Log">
+              <button class="btn-action btn-delete" (click)="deleteReport(rep, $event)" title="Supprimer le journal d'audit">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="action-icon">
                   <polyline points="3 6 5 6 21 6"></polyline>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -311,12 +311,12 @@
           <table class="report-table">
             <thead>
               <tr>
-                <th>Service API Node Name</th>
-                <th>CPU Load</th>
-                <th>Memory Allocation</th>
-                <th>Response SLA</th>
-                <th>Status</th>
-                <th>Active Conns</th>
+                <th>Nom du nœud de service API</th>
+                <th>Charge CPU</th>
+                <th>Allocation mémoire</th>
+                <th>SLA de réponse</th>
+                <th>Statut</th>
+                <th>Connexions actives</th>
               </tr>
             </thead>
             <tbody>
@@ -349,10 +349,10 @@
                 <td><strong>{{ rep.responseTime }} ms</strong></td>
                 <td>
                   <span class="health-badge" [ngClass]="rep.status.toLowerCase()">
-                    {{ rep.status === 'OPTIMAL' ? 'Optimal' : (rep.status === 'DEGRADED' ? 'Degraded' : 'Critical') }}
+                    {{ rep.status === 'OPTIMAL' ? 'Optimal' : (rep.status === 'DEGRADED' ? 'Dégradé' : 'Critique') }}
                   </span>
                 </td>
-                <td><strong>{{ rep.activeConnections | number }}</strong> connections</td>
+                <td><strong>{{ rep.activeConnections | number }}</strong> connexions</td>
               </tr>
             </tbody>
           </table>
@@ -365,11 +365,11 @@
           <table class="report-table">
             <thead>
               <tr>
-                <th>Audit ID</th>
-                <th>Operator Username</th>
-                <th>Action Administered</th>
-                <th>Target Element</th>
-                <th>Timestamp</th>
+                <th>ID d'audit</th>
+                <th>Nom d'utilisateur de l'opérateur</th>
+                <th>Action effectuée</th>
+                <th>Élément cible</th>
+                <th>Horodatage</th>
               </tr>
             </thead>
             <tbody>
@@ -404,8 +404,8 @@
   <div class="glass-panel modal-card settings-modal animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="header-titles">
-        <span class="modal-label">Audit Preferences</span>
-        <h3>Audit Configuration Parameters</h3>
+        <span class="modal-label">Préférences d'audit</span>
+        <h3>Paramètres de configuration d'audit</h3>
       </div>
       <button class="modal-close-btn" (click)="closeSettings()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -420,31 +420,31 @@
         
         <!-- Default Page Size -->
         <div class="form-group">
-          <label for="pageSize">Default Audit Page Layout</label>
+          <label for="pageSize">Mise en page par défaut de l'audit</label>
           <div class="select-wrapper">
             <select id="pageSize" name="pageSize" [(ngModel)]="settingsModel.pageSize">
-              <option value="A4">A4 Standard Format</option>
-              <option value="Letter">US Letter Format</option>
-              <option value="Legal">US Legal Format</option>
+              <option value="A4">Format A4 standard</option>
+              <option value="Letter">Format US Letter</option>
+              <option value="Legal">Format US Legal</option>
             </select>
           </div>
         </div>
 
         <!-- Layout Theme -->
         <div class="form-group">
-          <label for="chartTheme">Auditing Visual Theme</label>
+          <label for="chartTheme">Thème visuel d'audit</label>
           <div class="select-wrapper">
             <select id="chartTheme" name="chartTheme" [(ngModel)]="settingsModel.chartTheme">
-              <option value="Neon Teal">Neon Teal High Tech Theme</option>
-              <option value="Glassmorphic Blue">Glassmorphic Blue Theme</option>
-              <option value="Classic Slate">Classic Charcoal Theme</option>
+              <option value="Neon Teal">Thème high-tech bleu-vert néon</option>
+              <option value="Glassmorphic Blue">Thème bleu glassmorphique</option>
+              <option value="Classic Slate">Thème anthracite classique</option>
             </select>
           </div>
         </div>
 
         <!-- Alert Level Threshold -->
         <div class="form-group">
-          <label for="threshold">SLA Compliance Alert Threshold (%)</label>
+          <label for="threshold">Seuil d'alerte de conformité SLA (%)</label>
           <input 
             type="number" 
             id="threshold" 
@@ -460,15 +460,15 @@
           <label class="checkbox-item">
             <input type="checkbox" name="includeNotes" [(ngModel)]="settingsModel.includeNotes">
             <span class="checkbox-custom"></span>
-            <span class="checkbox-label">Include full cryptographic tracing hashes in logs</span>
+            <span class="checkbox-label">Inclure les empreintes cryptographiques complètes dans les journaux</span>
           </label>
         </div>
 
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeSettings()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save Settings</button>
+        <button type="button" class="btn btn-secondary" (click)="closeSettings()">Annuler</button>
+        <button type="submit" class="btn btn-primary">Enregistrer les paramètres</button>
       </div>
     </form>
   </div>
@@ -490,7 +490,7 @@
       </div>
 
       <div class="compile-text-block">
-        <h3>Running System Audit Scan</h3>
+        <h3>Analyse d'audit système en cours</h3>
         <p class="compile-step-tag">{{ compilingStep }}</p>
       </div>
 
@@ -508,8 +508,8 @@
   <div class="glass-panel modal-card report-preview-modal animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="header-titles">
-        <span class="modal-label">Audit Control Complete</span>
-        <h3>Compiled Executive Preview</h3>
+        <span class="modal-label">Contrôle d'audit terminé</span>
+        <h3>Aperçu exécutif compilé</h3>
       </div>
       <button class="modal-close-btn" (click)="closePreviewModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -525,7 +525,7 @@
       <div class="preview-layout-visual">
         <div class="mock-sheet">
           <div class="mock-sheet-header">
-            <span class="bullet-tag">Operations Audit Summary</span>
+            <span class="bullet-tag">Résumé d'audit des opérations</span>
             <div class="mock-sheet-title">{{ generatedPreview?.name }}</div>
           </div>
           <div class="mock-sheet-body">
@@ -550,38 +550,38 @@
       <!-- Compilation Parameters Details -->
       <div class="preview-metadata-list">
         <div class="preview-meta-row">
-          <span class="meta-label">Audit Category</span>
+          <span class="meta-label">Catégorie d'audit</span>
           <span class="meta-value"><strong>{{ generatedPreview?.type }}</strong></span>
         </div>
         <div class="preview-meta-row">
-          <span class="meta-label">Output Format / Page Count</span>
-          <span class="meta-value text-blue"><strong>{{ generatedPreview?.format }} / {{ settingsModel.pageSize }} Layout</strong></span>
+          <span class="meta-label">Format de sortie / Nombre de pages</span>
+          <span class="meta-value text-blue"><strong>{{ generatedPreview?.format }} / Mise en page {{ settingsModel.pageSize }}</strong></span>
         </div>
         <div class="preview-meta-row">
-          <span class="meta-label">Document Size</span>
+          <span class="meta-label">Taille du document</span>
           <span class="meta-value"><strong>{{ generatedPreview?.fileSize }}</strong></span>
         </div>
         <div class="preview-meta-row">
-          <span class="meta-label">Operations Scopes Audited</span>
-          <span class="meta-value"><strong>{{ generatedPreview?.scopesCount }} subsystems</strong></span>
+          <span class="meta-label">Portées d'opérations auditées</span>
+          <span class="meta-value"><strong>{{ generatedPreview?.scopesCount }} sous-systèmes</strong></span>
         </div>
         <div class="preview-meta-row">
-          <span class="meta-label">API Telemetries calculated</span>
-          <span class="meta-value"><strong>{{ generatedPreview?.metricsAnalyzed }} trace points scanned</strong></span>
+          <span class="meta-label">Télémétries API calculées</span>
+          <span class="meta-value"><strong>{{ generatedPreview?.metricsAnalyzed }} points de trace analysés</strong></span>
         </div>
       </div>
 
     </div>
 
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" (click)="closePreviewModal()">Discard</button>
+      <button type="button" class="btn btn-secondary" (click)="closePreviewModal()">Abandonner</button>
       <button type="button" class="btn btn-primary" (click)="saveGeneratedReport()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="footer-btn-icon" style="width: 14px; height: 14px; margin-right: 6px;">
           <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
           <polyline points="17 21 17 13 7 13 7 21"/>
           <polyline points="7 3 7 8 15 8"/>
         </svg>
-        <span>Archive &amp; Download</span>
+        <span>Archiver et télécharger</span>
       </button>
     </div>
   </div>

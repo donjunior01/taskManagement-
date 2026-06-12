@@ -23,15 +23,34 @@ export class AdminSecurityService {
   constructor(private apiService: ApiService) {}
 
   getLoginAttempts(): Observable<LoginAttempt[]> {
-    return this.apiService.get<LoginAttempt[]>('/admin/security/login-attempts');
+    // Large page so the security journal + 90-day heatmap have enough history.
+    return this.apiService.get<LoginAttempt[]>('/admin/security/login-attempts?page=0&size=1000');
   }
 
   getSecurityMetrics(): Observable<SecurityMetrics> {
     return this.apiService.get<SecurityMetrics>('/admin/security/metrics');
   }
 
+  /** Suspicious IPs aggregated server-side from failed login attempts. */
+  getSuspiciousIps(): Observable<any[]> {
+    return this.apiService.get<any[]>('/admin/security/suspicious-ips');
+  }
+
   deleteAllLoginAttempts(): Observable<void> {
     return this.apiService.delete<void>('/admin/security/login-attempts/all');
+  }
+
+  /** Admin IP blocking — blocked IPs are refused at login. */
+  getBlockedIps(): Observable<any[]> {
+    return this.apiService.get<any[]>('/admin/security/blocked-ips');
+  }
+
+  blockIp(ipAddress: string, reason?: string): Observable<any> {
+    return this.apiService.post<any>('/admin/security/blocked-ips/block', { ipAddress, reason });
+  }
+
+  unblockIp(ipAddress: string): Observable<any> {
+    return this.apiService.post<any>('/admin/security/blocked-ips/unblock', { ipAddress });
   }
 
   getPendingPasswordResets(): Observable<any[]> {

@@ -33,6 +33,7 @@ public class CalendarService {
     private final UserRepository userRepository;
     private final GoogleCalendarConfig googleCalendarConfig;
     private final Calendar googleCalendar;
+    private final NotificationService notificationService;
 
     public CalendarService(CalendarEventRepository calendarEventRepository,
                            ProjectRepository projectRepository,
@@ -40,6 +41,7 @@ public class CalendarService {
                            DeliverableRepository deliverableRepository,
                            UserRepository userRepository,
                            GoogleCalendarConfig googleCalendarConfig,
+                           NotificationService notificationService,
                            @org.springframework.beans.factory.annotation.Autowired(required = false) Calendar googleCalendar) {
         this.calendarEventRepository = calendarEventRepository;
         this.projectRepository = projectRepository;
@@ -47,6 +49,7 @@ public class CalendarService {
         this.deliverableRepository = deliverableRepository;
         this.userRepository = userRepository;
         this.googleCalendarConfig = googleCalendarConfig;
+        this.notificationService = notificationService;
         this.googleCalendar = googleCalendar;
     }
 
@@ -108,6 +111,69 @@ public class CalendarService {
 
     @Transactional
     public ApiResponse<CalendarEventDTO> createEvent(CalendarEventRequestDTO request, Long userId) {
+        allUsers creator = userRepository.findById(userId).orElse(null);
+
+        // ── Resolve the recipients of this event ────────────────────────────
+        // PROJECT (default when a projectId is given) → manager + every team member of the project.
+        // ALL → every active user. SELF → just the creator (a private event).
+        LinkedHashSet<allUsers> recipients = new LinkedHashSet<>();
+        if (creator != null) recipients.add(creator);
+        String audience = request.getAudience() != null ? request.getAudience().trim().toUpperCase()
+                : (request.getProjectId() != null ? "PROJECT" : "SELF");
+        if ("ALL".equals(audience)) {
+            userRepository.findAll().stream().filter(allUsers::isActive).forEach(recipients::add);
+        } else if ("PROJECT".equals(audience) && request.getProjectId() != null) {
+            projectRepository.findById(request.getProjectId()).ifPresent(p -> {
+                if (p.getManager() != null) recipients.add(p.getManager());
+                if (p.getTeams() != null) p.getTeams().forEach(t -> {
+                    if (t.getMembers() != null) recipients.addAll(t.getMembers());
+                });
+            });
+        }
+
+        // A series id links the copies only when there is more than one recipient.
+        String seriesId = recipients.size() > 1 ? UUID.randomUUID().toString() : null;
+        String creatorName = creator != null ? (creator.getFirstName() + " " + creator.getLastName()).trim() : "Un responsable";
+        String whenLabel = request.getStartTime() != null
+                ? request.getStartTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'à' HH:mm")) : "";
+
+        CalendarEvent master = null;
+        for (allUsers u : recipients) {
+            CalendarEvent event = newEventFromRequest(request);
+            event.setSeriesId(seriesId);
+            event.setUser(u);
+            CalendarEvent saved = calendarEventRepository.save(event);
+
+            if (creator != null && u.getId().equals(creator.getId())) {
+                master = saved;
+                // Sync the creator's own copy to Google if requested.
+                if (Boolean.TRUE.equals(request.getSyncToGoogle()) && googleCalendarConfig.isCalendarEnabled()) {
+                    try { syncEventToGoogle(saved); } catch (IOException e) { log.error("Failed to sync event to Google Calendar", e); }
+                }
+            } else {
+                // Notify each recipient that an event has been added to their calendar.
+                try {
+                    notificationService.createNotification(u.getId(),
+                            "Nouvel événement à l'agenda",
+                            creatorName + " a planifié « " + request.getTitle() + " »" + (whenLabel.isEmpty() ? "." : " le " + whenLabel + "."),
+                            Notification.NotificationType.REMINDER, saved.getId(), "CALENDAR");
+                } catch (Exception ignore) { }
+            }
+        }
+        if (master == null && !recipients.isEmpty()) {
+            master = calendarEventRepository.findBySeriesId(seriesId).stream().findFirst().orElse(null);
+        }
+        if (master == null) {
+            // No creator resolved → still persist a single event so nothing is lost.
+            CalendarEvent fallback = newEventFromRequest(request);
+            master = calendarEventRepository.save(fallback);
+        }
+
+        return ApiResponse.success("Event created successfully", convertToDTO(master));
+    }
+
+    /** Build a CalendarEvent (without user/series) from a request. */
+    private CalendarEvent newEventFromRequest(CalendarEventRequestDTO request) {
         CalendarEvent event = new CalendarEvent();
         event.setTitle(request.getTitle());
         event.setDescription(request.getDescription());
@@ -120,49 +186,54 @@ public class CalendarService {
         event.setColor(request.getColor() != null ? request.getColor() : EVENT_COLORS.get(event.getEventType()));
         event.setLocation(request.getLocation());
         event.setReminderMinutes(request.getReminderMinutes() != null ? request.getReminderMinutes() : 30);
-
-        userRepository.findById(userId).ifPresent(event::setUser);
-
-        CalendarEvent savedEvent = calendarEventRepository.save(event);
-
-        // Sync to Google Calendar if enabled and requested
-        if (Boolean.TRUE.equals(request.getSyncToGoogle()) && googleCalendarConfig.isCalendarEnabled()) {
-            try {
-                syncEventToGoogle(savedEvent);
-            } catch (IOException e) {
-                log.error("Failed to sync event to Google Calendar", e);
-            }
-        }
-
-        return ApiResponse.success("Event created successfully", convertToDTO(savedEvent));
+        return event;
     }
 
     @Transactional
     public ApiResponse<CalendarEventDTO> updateEvent(Long id, CalendarEventRequestDTO request) {
         return calendarEventRepository.findById(id)
                 .map(event -> {
-                    event.setTitle(request.getTitle());
-                    event.setDescription(request.getDescription());
-                    event.setStartTime(request.getStartTime());
-                    event.setEndTime(request.getEndTime());
-                    if (request.getAllDay() != null) event.setAllDay(request.getAllDay());
-                    if (request.getEventType() != null) event.setEventType(request.getEventType());
-                    if (request.getColor() != null) event.setColor(request.getColor());
-                    if (request.getLocation() != null) event.setLocation(request.getLocation());
-                    if (request.getReminderMinutes() != null) event.setReminderMinutes(request.getReminderMinutes());
+                    // A distributed event has copies for each recipient — update the whole series so the
+                    // change reflects on everyone's calendar.
+                    List<CalendarEvent> series = (event.getSeriesId() != null && !event.getSeriesId().isBlank())
+                            ? calendarEventRepository.findBySeriesId(event.getSeriesId())
+                            : java.util.List.of(event);
 
-                    CalendarEvent updatedEvent = calendarEventRepository.save(event);
+                    CalendarEvent editedCopy = event;
+                    for (CalendarEvent e : series) {
+                        e.setTitle(request.getTitle());
+                        e.setDescription(request.getDescription());
+                        e.setStartTime(request.getStartTime());
+                        e.setEndTime(request.getEndTime());
+                        if (request.getAllDay() != null) e.setAllDay(request.getAllDay());
+                        if (request.getEventType() != null) e.setEventType(request.getEventType());
+                        if (request.getColor() != null) e.setColor(request.getColor());
+                        if (request.getLocation() != null) e.setLocation(request.getLocation());
+                        if (request.getReminderMinutes() != null) e.setReminderMinutes(request.getReminderMinutes());
+                        CalendarEvent saved = calendarEventRepository.save(e);
+                        if (saved.getId().equals(id)) editedCopy = saved;
 
-                    // Update in Google Calendar if synced
-                    if (event.getIsSynced() && googleCalendarConfig.isCalendarEnabled()) {
-                        try {
-                            updateEventInGoogle(updatedEvent);
-                        } catch (IOException e) {
-                            log.error("Failed to update event in Google Calendar", e);
+                        if (saved.getIsSynced() && googleCalendarConfig.isCalendarEnabled()) {
+                            try { updateEventInGoogle(saved); } catch (IOException ex) { log.error("Failed to update event in Google Calendar", ex); }
                         }
                     }
 
-                    return ApiResponse.success("Event updated successfully", convertToDTO(updatedEvent));
+                    // Notify the other recipients that the event was updated.
+                    if (series.size() > 1) {
+                        String whenLabel = request.getStartTime() != null
+                                ? request.getStartTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'à' HH:mm")) : "";
+                        for (CalendarEvent e : series) {
+                            if (e.getId().equals(id) || e.getUser() == null) continue;
+                            try {
+                                notificationService.createNotification(e.getUser().getId(),
+                                        "Événement mis à jour",
+                                        "L'événement « " + request.getTitle() + " » a été modifié" + (whenLabel.isEmpty() ? "." : " — " + whenLabel + "."),
+                                        Notification.NotificationType.REMINDER, e.getId(), "CALENDAR");
+                            } catch (Exception ignore) { }
+                        }
+                    }
+
+                    return ApiResponse.success("Event updated successfully", convertToDTO(editedCopy));
                 })
                 .orElse(ApiResponse.error("Event not found"));
     }
@@ -171,16 +242,15 @@ public class CalendarService {
     public ApiResponse<Void> deleteEvent(Long id) {
         return calendarEventRepository.findById(id)
                 .map(event -> {
-                    // Delete from Google Calendar if synced
-                    if (event.getIsSynced() && googleCalendarConfig.isCalendarEnabled()) {
-                        try {
-                            deleteEventFromGoogle(event);
-                        } catch (IOException e) {
-                            log.error("Failed to delete event from Google Calendar", e);
+                    List<CalendarEvent> series = (event.getSeriesId() != null && !event.getSeriesId().isBlank())
+                            ? calendarEventRepository.findBySeriesId(event.getSeriesId())
+                            : java.util.List.of(event);
+                    for (CalendarEvent e : series) {
+                        if (e.getIsSynced() && googleCalendarConfig.isCalendarEnabled()) {
+                            try { deleteEventFromGoogle(e); } catch (IOException ex) { log.error("Failed to delete event from Google Calendar", ex); }
                         }
+                        calendarEventRepository.delete(e);
                     }
-
-                    calendarEventRepository.delete(event);
                     return ApiResponse.<Void>success("Event deleted successfully", null);
                 })
                 .orElse(ApiResponse.error("Event not found"));

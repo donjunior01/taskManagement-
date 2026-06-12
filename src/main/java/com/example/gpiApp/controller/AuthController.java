@@ -36,9 +36,25 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
     private final com.example.gpiApp.service.TotpService totpService;
+    private final com.example.gpiApp.service.LoginAttemptService loginAttemptService;
+    private final com.example.gpiApp.service.SystemSettingsService systemSettingsService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest httpRequest) {
+        final String ip = clientIp(httpRequest);
+        final String userAgent = httpRequest.getHeader("User-Agent");
+        final String identifier = (loginRequest.getUsername() != null && !loginRequest.getUsername().trim().isEmpty())
+                ? loginRequest.getUsername() : loginRequest.getEmail();
+
+        // Refuse logins from admin-blocked IP addresses.
+        if (loginAttemptService.isIpBlocked(ip)) {
+            loginAttemptService.logLoginAttempt(identifier, identifier,
+                    com.example.gpiApp.entity.LoginAttempt.LoginStatus.FAILURE, ip, userAgent,
+                    "Adresse IP bloquée", null);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Votre adresse IP a été bloquée. Contactez un administrateur."));
+        }
+
         try {
             String usernameOrEmail = loginRequest.getUsername();
             if (usernameOrEmail == null || usernameOrEmail.trim().isEmpty()) {
@@ -55,13 +71,25 @@ public class AuthController {
                     .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("User not found"));
 
             if (!user.isActive()) {
+                loginAttemptService.logLoginAttempt(user.getUsername(), user.getEmail(),
+                        com.example.gpiApp.entity.LoginAttempt.LoginStatus.FAILURE, ip, userAgent,
+                        "Compte inactif / en attente d'activation", user.getId());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(ApiResponse.error("Your account has been suspended. Please contact an administrator."));
+                        .body(ApiResponse.error("Votre compte n'est pas encore actif. Il est en attente d'activation par un administrateur."));
             }
 
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getEmail(), loginRequest.getPassword())
             );
+
+            // Maintenance mode — only admins may sign in while the platform is locked down.
+            if (systemSettingsService.isMaintenanceMode() && user.getRole() != allUsers.Role.ADMIN) {
+                loginAttemptService.logLoginAttempt(user.getUsername(), user.getEmail(),
+                        com.example.gpiApp.entity.LoginAttempt.LoginStatus.FAILURE, ip, userAgent,
+                        "Mode maintenance actif", user.getId());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("La plateforme est en maintenance. Seuls les administrateurs peuvent se connecter."));
+            }
 
             // Two-factor challenge: password is correct, now require a valid TOTP code.
             if (user.isTwoFactorEnabled()) {
@@ -71,6 +99,9 @@ public class AuthController {
                     return ResponseEntity.ok(java.util.Map.of("twoFactorRequired", true));
                 }
                 if (!totpService.verifyCode(user.getTwoFactorSecret(), code)) {
+                    loginAttemptService.logLoginAttempt(user.getUsername(), user.getEmail(),
+                            com.example.gpiApp.entity.LoginAttempt.LoginStatus.FAILURE, ip, userAgent,
+                            "Code 2FA invalide", user.getId());
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                             .body(ApiResponse.error("Invalid authentication code"));
                 }
@@ -79,11 +110,29 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String jwt = jwtUtil.generateToken(authentication);
 
+            // Record the successful sign-in so the security journal can display it.
+            loginAttemptService.logLoginAttempt(user.getUsername(), user.getEmail(),
+                    com.example.gpiApp.entity.LoginAttempt.LoginStatus.SUCCESS, ip, userAgent,
+                    "Connexion réussie", user.getId());
+
             return ResponseEntity.ok(new LoginResponse(jwt, user));
         } catch (org.springframework.security.core.AuthenticationException e) {
+            // Record the failed attempt (bad credentials, user not found, etc.).
+            loginAttemptService.logLoginAttempt(identifier, identifier,
+                    com.example.gpiApp.entity.LoginAttempt.LoginStatus.FAILURE, ip, userAgent,
+                    e.getMessage() != null ? e.getMessage() : "Identifiants invalides", null);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error("Invalid credentials: " + e.getMessage()));
         }
+    }
+
+    /** Best-effort client IP (honours a reverse proxy's X-Forwarded-For). */
+    private String clientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     @PostMapping("/register")
@@ -98,6 +147,12 @@ public class AuthController {
             return ResponseEntity.badRequest().body(ApiResponse.error("Email already exists"));
         }
 
+        // Enforce the configured password policy (admin Configuration → Security).
+        String policyError = systemSettingsService.validatePassword(registerRequest.getPassword());
+        if (policyError != null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(policyError));
+        }
+
         try {
             allUsers user = new allUsers();
             user.setUsername(registerRequest.getUsername());
@@ -106,17 +161,40 @@ public class AuthController {
             user.setFirstName(registerRequest.getFirstName());
             user.setLastName(registerRequest.getLastName());
             user.setRole(allUsers.Role.USER); // Default role
+            // New self-registrations start INACTIVE and must be approved by an admin.
+            user.setActive(false);
 
             allUsers savedUser = userRepository.save(user);
+
+            // Welcome note for the new user explaining the pending state.
             notificationService.createNotification(
                 savedUser.getId(),
-                "Welcome to the system!",
-                "Your account has been created. You can now receive task assignments and project updates.",
+                "Compte en attente d'activation",
+                "Votre compte a été créé et est en attente d'activation par un administrateur. Vous serez notifié dès qu'il sera activé.",
                 Notification.NotificationType.SYSTEM,
                 null,
                 null
             );
-            return ResponseEntity.ok(ApiResponse.success("Registration successful! Please sign in.", savedUser));
+
+            // Alert every admin so they can review and activate the new account.
+            try {
+                for (allUsers admin : userRepository.findByRole(allUsers.Role.ADMIN)) {
+                    notificationService.createNotification(
+                        admin.getId(),
+                        "Nouvelle inscription à valider",
+                        "L'utilisateur " + savedUser.getFirstName() + " " + savedUser.getLastName()
+                            + " (" + savedUser.getEmail() + ") attend l'activation de son compte.",
+                        Notification.NotificationType.SYSTEM,
+                        null,
+                        null
+                    );
+                }
+            } catch (Exception ignore) {
+                // Notifying admins is best-effort; never fail registration on it.
+            }
+
+            return ResponseEntity.ok(ApiResponse.success(
+                "Inscription réussie ! Votre compte est en attente d'activation par un administrateur.", savedUser));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Registration failed. Please try again."));

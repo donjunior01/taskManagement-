@@ -25,6 +25,7 @@ public class ProjectDTO {
     private Integer progress;
     private Integer taskCount;
     private Integer teamCount;
+    private Boolean archived;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

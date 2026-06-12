@@ -14,6 +14,7 @@ export interface Project {
   progress?: number;
   taskCount?: number;
   teamCount?: number;
+  archived?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -66,6 +67,11 @@ export class ProjectService {
 
   deleteProject(id: number): Observable<void> {
     return this.apiService.delete<void>(`/projects/${id}`);
+  }
+
+  /** Archive a project — it drops out of the default project lists. */
+  archiveProject(id: number): Observable<any> {
+    return this.apiService.patch<any>(`/projects/${id}/archive`, {});
   }
 
   getProjectsByManager(managerId: number, page: number = 0, size: number = 10): Observable<PagedResponse<Project>> {

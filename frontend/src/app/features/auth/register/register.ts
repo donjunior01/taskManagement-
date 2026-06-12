@@ -31,11 +31,14 @@ export class RegisterComponent {
     this.authService.register(this.registerRequest).subscribe({
       next: (response) => {
         this.loading = false;
-        this.router.navigate(['/login']);
+        // New accounts are inactive until an admin approves them — tell the user on the login page.
+        this.router.navigate(['/login'], { queryParams: { registered: 'pending' } });
       },
       error: (error) => {
         this.loading = false;
-        this.errorMessage = 'Registration failed. Please try again.';
+        // Surface the backend's real reason (e.g. password policy, duplicate email).
+        const msg = error?.error?.message || error?.error?.error;
+        this.errorMessage = msg || 'L\'inscription a échoué. Veuillez réessayer.';
         console.error('Registration error:', error);
       }
     });

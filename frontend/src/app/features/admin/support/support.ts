@@ -27,7 +27,7 @@ export interface AdminTicket {
   styleUrls: ['./support.scss']
 })
 export class AdminSupportComponent implements OnInit {
-  adminName: string = 'Administrator';
+  adminName: string = 'Administrateur';
   loading: boolean = false;
 
   // Statistics
@@ -63,7 +63,7 @@ export class AdminSupportComponent implements OnInit {
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
     if (user) {
-      this.adminName = user.firstName ? `${user.firstName} ${user.lastName}` : 'Administrator';
+      this.adminName = user.firstName ? `${user.firstName} ${user.lastName}` : 'Administrateur';
     }
     this.loadTickets();
   }
@@ -85,9 +85,9 @@ export class AdminSupportComponent implements OnInit {
 
         this.ticketsList = tickets.map((t: any) => ({
           id: t.id!,
-          subject: t.subject || t.title || 'No Subject',
+          subject: t.subject || t.title || 'Sans sujet',
           category: t.category || 'General' as any,
-          submittedBy: t.userName || `User #${t.userId}`,
+          submittedBy: t.userName || `Utilisateur n°${t.userId}`,
           submittedByEmail: t.userEmail || '',
           role: 'Employee' as any,
           priority: (t.priority || 'MEDIUM') as any,
@@ -179,28 +179,21 @@ export class AdminSupportComponent implements OnInit {
         const ticket = this.ticketsList.find(t => t.id === ticketId);
         if (ticket) {
           ticket.replies.push({
-            sender: 'Administrator',
+            sender: 'Administrateur',
             message: this.adminReplyMessage,
-            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
           });
           ticket.status = this.nextStatus;
         }
         this.submittingReply = false;
         this.showReplyModal = false;
-        this.triggerToast(`Reply sent and ticket #${ticketId} updated!`);
+        this.triggerToast(`Réponse envoyée et ticket n°${ticketId} mis à jour !`);
         this.applyFilters();
         this.cdr.detectChanges();
       },
-      error: () => {
-        // Fallback: update locally anyway
-        const ticket = this.ticketsList.find(t => t.id === ticketId);
-        if (ticket) {
-          ticket.status = this.nextStatus;
-        }
+      error: (err: any) => {
         this.submittingReply = false;
-        this.showReplyModal = false;
-        this.triggerToast(`Ticket #${ticketId} status updated locally.`);
-        this.applyFilters();
+        this.triggerToast(err?.error?.message || `Échec de la mise à jour du ticket n°${ticketId}.`, 'error');
         this.cdr.detectChanges();
       }
     });
@@ -211,15 +204,50 @@ export class AdminSupportComponent implements OnInit {
     this.ticketService.deleteTicket(ticket.id).subscribe({
       next: () => {
         this.ticketsList = this.ticketsList.filter(t => t.id !== ticket.id);
-        this.triggerToast(`Ticket #${ticket.id} deleted successfully.`);
+        this.triggerToast(`Ticket n°${ticket.id} supprimé avec succès.`);
         this.applyFilters();
       },
-      error: () => {
-        // Fallback: delete locally
-        this.ticketsList = this.ticketsList.filter(t => t.id !== ticket.id);
-        this.triggerToast(`Ticket #${ticket.id} deleted.`);
-        this.applyFilters();
+      error: (err: any) => {
+        this.triggerToast(err?.error?.message || `Échec de la suppression du ticket n°${ticket.id}.`, 'error');
       }
+    });
+  }
+
+  // Status tabs (prototype)
+  statusTabs: { label: string; value: string }[] = [
+    { label: 'Tous', value: '' },
+    { label: 'Ouverts', value: 'OPEN' },
+    { label: 'En cours', value: 'IN_PROGRESS' },
+    { label: 'Résolus', value: 'RESOLVED' }
+  ];
+
+  get criticalCount(): number {
+    return this.ticketsList.filter(t => t.priority === 'HIGH' || t.priority === 'URGENT').length;
+  }
+
+  priorityEmoji(p: string): string {
+    switch (p) {
+      case 'URGENT': return '🔴';
+      case 'HIGH':   return '🟠';
+      case 'MEDIUM': return '🟡';
+      default:       return '⚪';
+    }
+  }
+
+  priorityLabel(p: string): string {
+    switch (p) {
+      case 'URGENT': return 'Critique';
+      case 'HIGH':   return 'Haute';
+      case 'MEDIUM': return 'Normale';
+      default:       return 'Basse';
+    }
+  }
+
+  markResolved(ticket: AdminTicket, event: MouseEvent): void {
+    event.stopPropagation();
+    this.ticketService.updateTicketStatus(ticket.id, 'RESOLVED').subscribe({
+      next: () => { ticket.status = 'RESOLVED'; this.triggerToast(`Ticket n°${ticket.id} résolu.`); this.applyFilters(); this.cdr.detectChanges(); },
+      error: (err: any) => { this.triggerToast(err?.error?.message || `Échec de la résolution du ticket n°${ticket.id}.`, 'error'); }
     });
   }
 
@@ -230,8 +258,8 @@ export class AdminSupportComponent implements OnInit {
     this.resolvedTickets = this.ticketsList.filter(t => t.status === 'RESOLVED').length;
   }
 
-  private triggerToast(msg: string): void {
-    this.toast.show(msg, 'success');
+  private triggerToast(msg: string, type: 'success' | 'error' = 'success'): void {
+    this.toast.show(msg, type);
   }
 
 }

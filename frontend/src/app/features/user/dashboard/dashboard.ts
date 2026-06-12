@@ -1,19 +1,16 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { TaskService, Task } from '../../../core/services/task.service';
 import { ProjectService, Project } from '../../../core/services/project.service';
 import { NotificationService } from '../../../core/services/notification.service';
-
-export interface DeveloperStats {
-  totalTasks: number;
-  activeTasks: number;
-  completedTasks: number;
-  overdueTasks: number;
-  completionRate: number;
-  totalProjects: number;
-}
+import { TimeLogService } from '../../../core/services/time-log.service';
+import { BadgeCountsService } from '../../../core/services/badge-counts.service';
+import { UserService } from '../../../core/services/user.service';
+import { ActivityLogService } from '../../../core/services/activity-log.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface ActivityFeed {
   id: number;
@@ -24,17 +21,10 @@ export interface ActivityFeed {
   timestamp: string;
 }
 
-export interface ChartSegment {
-  label: string;
-  count: number;
-  pct: number;
-  cls: string;
-}
-
 @Component({
   selector: 'app-user-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
@@ -42,30 +32,44 @@ export class UserDashboardComponent implements OnInit {
   currentUser: any;
   tasksList: Task[] = [];
   projectsList: Project[] = [];
-  urgentTasks: Task[] = [];
   activityFeed: ActivityFeed[] = [];
   loading: boolean = true;
 
-  // Quick-summary charts (custom SVG/CSS, no external chart library).
-  statusChart: ChartSegment[] = [];
-  priorityChart: ChartSegment[] = [];
-  donutSegments: { seg: ChartSegment; dash: string; rotation: number }[] = [];
-  
-  stats: DeveloperStats = {
-    totalTasks: 0,
-    activeTasks: 0,
-    completedTasks: 0,
-    overdueTasks: 0,
-    completionRate: 0,
-    totalProjects: 0
+  // Kanban bins
+  todoTasks: Task[] = [];
+  inProgressTasks: Task[] = [];
+  completedTasks: Task[] = [];
+
+  // Deadlines
+  upcomingDeadlines: any[] = [];
+
+  // Quick log form state
+  quickLog: any = {
+    taskId: '',
+    hours: '',
+    date: ''
   };
+
+  // KPIs
+  openTasksCount: number = 0;
+  dueTodayCount: number = 0;
+  loggedHoursCount: number = 0;
+  unreadMessagesCount: number = 0;
+
+  /** Number of projects the current user works on (from the user DTO). */
+  get projectCount(): number { return this.currentUser?.projectCount ?? 0; }
 
   constructor(
     private authService: AuthService,
+    private userService: UserService,
     private router: Router,
     private taskService: TaskService,
     private projectService: ProjectService,
     private notificationService: NotificationService,
+    private timeLogService: TimeLogService,
+    private activityLogService: ActivityLogService,
+    private badges: BadgeCountsService,
+    private toast: ToastService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -75,11 +79,31 @@ export class UserDashboardComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    this.quickLog.date = new Date().toISOString().split('T')[0];
+    
+    // Subscribe to live unread message counts from global BadgeCountsService
+    this.badges.messages$.subscribe(n => {
+      this.unreadMessagesCount = n;
+      this.cdr.detectChanges();
+    });
+
+    // Load full user details to ensure firstName is properly loaded.
+    // GET /users/{id} returns a wrapped DTO ({ success, message, data }), so unwrap .data.
+    this.userService.getUserById(this.currentUser.id).subscribe({
+      next: (res: any) => {
+        const u = res?.data ?? res;
+        if (u) {
+          this.currentUser = { ...this.currentUser, ...u };
+          this.authService.updateCurrentUser({ firstName: u.firstName, lastName: u.lastName, email: u.email });
+          this.cdr.detectChanges();
+        }
+      }
+    });
+
     this.loadDashboardData();
   }
 
   loadDashboardData(): void {
-    console.log('UserDashboardComponent: loadDashboardData started. Current user:', this.currentUser);
     this.loading = true;
     
     if (!this.currentUser || !this.currentUser.id) {
@@ -87,15 +111,23 @@ export class UserDashboardComponent implements OnInit {
       return;
     }
 
+    // Load total hours logged
+    this.timeLogService.getTotalHoursByUser(this.currentUser.id).subscribe({
+      next: (response: any) => {
+        this.loggedHoursCount = (response && response.data !== undefined) ? response.data : (response || 0);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loggedHoursCount = 0;
+      }
+    });
+
+    // Load tasks list
     this.taskService.getTasksByUser(this.currentUser.id, 0, 100).subscribe({
       next: (response: any) => {
         try {
           this.tasksList = response && response.data ? response.data : [];
           this.calculateStats();
-          this.buildCharts();
-          if (this.tasksList.length > 0) {
-            this.loadProjectsFromTasks();
-          }
         } catch (e) {
           this.tasksList = [];
         } finally {
@@ -110,21 +142,53 @@ export class UserDashboardComponent implements OnInit {
       }
     });
 
-    // Collaboration Feed & Alerts — real data from the user's notifications.
+    // Load activities (from notifications)
     this.loadActivityFeed();
   }
 
-  /** Builds the Collaboration Feed from the user's real notifications. */
+  submitQuickLog(): void {
+    if (!this.quickLog.taskId) { this.toast.show('Veuillez sélectionner une tâche.', 'error'); return; }
+    const hours = Number(this.quickLog.hours);
+    if (!hours || hours <= 0) { this.toast.show('Veuillez saisir un nombre d\'heures valide.', 'error'); return; }
+    if (!this.quickLog.date) { this.toast.show('Veuillez choisir une date.', 'error'); return; }
+    const dayStr = this.quickLog.date;
+    // Same payload shape as the "Suivi du Temps" page (sends both hours/date and hoursSpent/logDate).
+    const log = {
+      taskId: Number(this.quickLog.taskId),
+      hours,
+      date: dayStr,
+      description: 'Log rapide depuis le tableau de bord',
+      hoursSpent: hours,
+      logDate: dayStr
+    };
+    this.timeLogService.createTimeLog(log as any).subscribe({
+      next: () => {
+        this.quickLog.taskId = '';
+        this.quickLog.hours = '';
+        this.quickLog.date = new Date().toISOString().split('T')[0];
+        this.loadDashboardData();
+        this.toast.show('Temps enregistré.', 'success');
+      },
+      error: () => {
+        this.toast.show('Échec de l\'enregistrement du temps.', 'error');
+      }
+    });
+  }
+
+  /**
+   * Loads the Recent Activity Feed from the user's own notifications.
+   * (The global /api/activity-logs endpoint is admin/manager-only — calling it as a
+   * collaborator returns 403, so we use notifications, which every user can read.)
+   */
   private loadActivityFeed(): void {
     this.notificationService.getNotifications().subscribe({
       next: (response: any) => {
-        const items: any[] = response?.data || response?.content
-          || (Array.isArray(response) ? response : []);
-        this.activityFeed = items.slice(0, 8).map((n: any) => ({
+        const items: any[] = Array.isArray(response) ? response : (response && response.data ? response.data : []);
+        this.activityFeed = items.slice(0, 5).map((n: any) => ({
           id: n.id,
-          projectName: n.referenceType || 'Workspace',
-          taskName: n.title || '',
-          type: this.mapNotificationType(n.type),
+          projectName: n.referenceType || 'Notification',
+          taskName: n.title || 'Système',
+          type: this.mapActivityLogType(n.type),
           message: n.message || n.title || '',
           timestamp: this.relativeTime(n.createdAt)
         }));
@@ -137,15 +201,19 @@ export class UserDashboardComponent implements OnInit {
     });
   }
 
-  private mapNotificationType(type: string): 'COMMENT' | 'REVISION' | 'APPROVAL' | 'DEADLINE' {
+  private mapActivityLogType(type: string): 'COMMENT' | 'REVISION' | 'APPROVAL' | 'DEADLINE' {
     switch (type) {
-      case 'COMMENT': return 'COMMENT';
-      case 'TASK_COMPLETED': return 'APPROVAL';
+      case 'COMMENT_ADDED':
+        return 'COMMENT';
+      case 'TASK_COMPLETED':
+      case 'DELIVERABLE_REVIEWED':
+        return 'APPROVAL';
       case 'TASK_UPDATED':
-      case 'DELIVERABLE_DUE': return 'REVISION';
-      case 'TASK_ASSIGNED':
-      case 'REMINDER': return 'DEADLINE';
-      default: return 'COMMENT';
+      case 'PROJECT_UPDATED':
+      case 'DELIVERABLE_SUBMITTED':
+        return 'REVISION';
+      default:
+        return 'DEADLINE';
     }
   }
 
@@ -154,111 +222,59 @@ export class UserDashboardComponent implements OnInit {
     const then = new Date(iso).getTime();
     if (isNaN(then)) return '';
     const diffMin = Math.round((Date.now() - then) / 60000);
-    if (diffMin < 1) return 'Just now';
-    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffMin < 1) return "À l'instant";
+    if (diffMin < 60) return `Il y a ${diffMin} min`;
     const diffH = Math.round(diffMin / 60);
-    if (diffH < 24) return `${diffH}h ago`;
+    if (diffH < 24) return `Il y a ${diffH} h`;
     const diffD = Math.round(diffH / 24);
-    return `${diffD}d ago`;
-  }
-
-  /** Computes task status & priority distributions for the summary charts. */
-  private buildCharts(): void {
-    const total = this.tasksList.length || 1;
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    const completed = this.tasksList.filter(t => t.status === 'COMPLETED').length;
-    const inProgress = this.tasksList.filter(t => t.status === 'IN_PROGRESS').length;
-    const overdue = this.tasksList.filter(t =>
-      t.status !== 'COMPLETED' && t.deadline && t.deadline < todayStr).length;
-    const planned = this.tasksList.length - completed - inProgress - overdue;
-
-    this.statusChart = [
-      { label: 'Completed', count: completed, pct: Math.round((completed / total) * 100), cls: 'seg-green' },
-      { label: 'In Progress', count: inProgress, pct: Math.round((inProgress / total) * 100), cls: 'seg-blue' },
-      { label: 'Planned', count: Math.max(0, planned), pct: Math.round((Math.max(0, planned) / total) * 100), cls: 'seg-slate' },
-      { label: 'Overdue', count: overdue, pct: Math.round((overdue / total) * 100), cls: 'seg-red' }
-    ].filter(s => s.count > 0);
-
-    // Donut segments (each ring normalised to pathLength=100, rotated to start
-    // where the previous segment ended; -90 puts the first segment at 12 o'clock).
-    let acc = 0;
-    this.donutSegments = this.statusChart.map(seg => {
-      const len = (seg.count / total) * 100;
-      const o = { seg, dash: `${len} ${100 - len}`, rotation: (acc / 100) * 360 - 90 };
-      acc += len;
-      return o;
-    });
-
-    const prio = (p: string) => this.tasksList.filter(t => (t.priority || 'MEDIUM') === p).length;
-    const maxPrio = Math.max(1, prio('CRITICAL'), prio('HIGH'), prio('MEDIUM'), prio('LOW'));
-    this.priorityChart = [
-      { label: 'Critical', count: prio('CRITICAL'), pct: Math.round((prio('CRITICAL') / maxPrio) * 100), cls: 'seg-red' },
-      { label: 'High', count: prio('HIGH'), pct: Math.round((prio('HIGH') / maxPrio) * 100), cls: 'seg-orange' },
-      { label: 'Medium', count: prio('MEDIUM'), pct: Math.round((prio('MEDIUM') / maxPrio) * 100), cls: 'seg-blue' },
-      { label: 'Low', count: prio('LOW'), pct: Math.round((prio('LOW') / maxPrio) * 100), cls: 'seg-slate' }
-    ];
-  }
-
-  private loadProjectsFromTasks(): void {
-    console.log('UserDashboardComponent: loadProjectsFromTasks started.');
-    try {
-      if (!this.tasksList || this.tasksList.length === 0) {
-        console.warn('UserDashboardComponent: tasksList is empty, returning.');
-        return;
-      }
-      const uniqueProjectIds = Array.from(new Set(this.tasksList.map(t => t.projectId).filter(id => id !== undefined && id !== null)));
-      console.log('UserDashboardComponent: Unique project IDs derived from tasks:', uniqueProjectIds);
-      
-      this.projectService.getAllProjects(0, 100).subscribe({
-        next: (response: any) => {
-          console.log('UserDashboardComponent: getAllProjects response:', response);
-          try {
-            const projects = response && response.data ? response.data : [];
-            this.projectsList = projects.filter((p: any) => p.id && uniqueProjectIds.includes(p.id));
-            this.stats.totalProjects = this.projectsList.length;
-            console.log('UserDashboardComponent: Filtered projectsList. Length:', this.projectsList.length);
-          } catch (e) {
-            console.error('UserDashboardComponent: Error parsing projects list:', e);
-            this.stats.totalProjects = 0;
-          }
-        },
-        error: () => {
-          this.projectsList = [];
-          this.stats.totalProjects = 0;
-        }
-      });
-    } catch (e) {
-      console.error('UserDashboardComponent: Error preparing projects load:', e);
-    }
+    return `Il y a ${diffD} j`;
   }
 
   private calculateStats(): void {
-    const total = this.tasksList.length;
-    const active = this.tasksList.filter(t => t.status === 'IN_PROGRESS' || t.status === 'PLANNED').length;
-    const completed = this.tasksList.filter(t => t.status === 'COMPLETED').length;
-
-    // Check overdue: past target deadline date and not completed
     const todayStr = new Date().toISOString().split('T')[0];
-    const overdue = this.tasksList.filter(t => 
-      t.status !== 'COMPLETED' && t.deadline && t.deadline < todayStr
-    ).length;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-    const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    // KPIs count
+    this.openTasksCount = this.tasksList.filter(t => t.status !== 'COMPLETED').length;
+    this.dueTodayCount = this.tasksList.filter(t => t.status !== 'COMPLETED' && t.deadline === todayStr).length;
 
-    this.stats = {
-      totalTasks: total,
-      activeTasks: active,
-      completedTasks: completed,
-      overdueTasks: overdue,
-      completionRate: rate,
-      totalProjects: 0 // Will be set after loading projects
-    };
+    // Kanban Bins
+    this.todoTasks = this.tasksList.filter(t => t.status === 'PLANNED' || t.status === 'TODO');
+    this.inProgressTasks = this.tasksList.filter(t => t.status === 'IN_PROGRESS');
+    this.completedTasks = this.tasksList.filter(t => t.status === 'COMPLETED');
 
-    // Filter urgent tasks: CRITICAL or HIGH priority and not completed
-    this.urgentTasks = this.tasksList.filter(t =>
-      t.status !== 'COMPLETED' && (t.priority === 'CRITICAL' || t.priority === 'HIGH')
-    ).slice(0, 4);
+    // Deadlines
+    this.upcomingDeadlines = this.tasksList
+      .filter(t => t.status !== 'COMPLETED' && t.deadline)
+      .sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''))
+      .slice(0, 5)
+      .map(t => {
+        let dateLabel = t.deadline || '';
+        let dotClass = 'bg-purple-500';
+        if (t.deadline === todayStr) {
+          dateLabel = "Aujourd'hui";
+          dotClass = 'bg-red-500';
+        } else if (t.deadline === tomorrowStr) {
+          dateLabel = 'Demain';
+          dotClass = 'bg-amber-500';
+        }
+        return {
+          name: t.name,
+          projectName: t.projectName || 'Projet',
+          dateLabel,
+          dotClass
+        };
+      });
   }
 
+  formatDeadline(deadline: string | undefined): string {
+    if (!deadline) return '';
+    const parts = deadline.split('-');
+    if (parts.length === 3) {
+      return `${parts[1]}-${parts[2]}`;
+    }
+    return deadline;
+  }
 }

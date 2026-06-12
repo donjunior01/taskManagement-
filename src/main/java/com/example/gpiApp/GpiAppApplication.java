@@ -3,11 +3,15 @@ package com.example.gpiApp;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.annotation.EnableAsync;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
+// @EnableAsync makes the @Async e-mail methods run off the request thread, so sending (or a
+// misconfigured/unreachable SMTP host) never blocks the HTTP response.
+@EnableAsync
 @SpringBootApplication
 public class GpiAppApplication {
 

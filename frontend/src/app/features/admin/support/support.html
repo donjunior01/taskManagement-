@@ -3,8 +3,8 @@
   <!-- Header Governance Card -->
   <div class="support-header">
     <div class="header-text">
-      <h2>Support Tickets Governance</h2>
-      <p>Manage system-wide developer tickets, bug alerts, and authorization credentials.</p>
+      <h2>Gestion des tickets de support</h2>
+      <p>Gérez les tickets des développeurs à l'échelle du système, les alertes de bogues et les identifiants d'autorisation.</p>
     </div>
   </div>
 
@@ -13,7 +13,7 @@
     <!-- Stat 1: Total Tickets -->
     <div class="glass-panel stat-card">
       <div class="stat-main">
-        <span class="stat-label">Total Tickets</span>
+        <span class="stat-label">Total des tickets</span>
         <div class="stat-value-container">
           <span class="stat-value">{{ totalTickets }}</span>
         </div>
@@ -28,10 +28,10 @@
     <!-- Stat 2: Open Tickets -->
     <div class="glass-panel stat-card alert-card">
       <div class="stat-main">
-        <span class="stat-label">Open Tickets</span>
+        <span class="stat-label">Tickets ouverts</span>
         <div class="stat-value-container">
           <span class="stat-value text-danger">{{ openTickets }}</span>
-          <span class="stat-pill negative" *ngIf="openTickets > 0">Action required</span>
+          <span class="stat-pill negative" *ngIf="openTickets > 0">Action requise</span>
         </div>
       </div>
       <div class="card-icon icon-red">
@@ -46,7 +46,7 @@
     <!-- Stat 3: In Progress Tickets -->
     <div class="glass-panel stat-card">
       <div class="stat-main">
-        <span class="stat-label">In Progress</span>
+        <span class="stat-label">En cours</span>
         <div class="stat-value-container">
           <span class="stat-value text-orange">{{ inProgressTickets }}</span>
         </div>
@@ -63,7 +63,7 @@
     <!-- Stat 4: Resolved Tickets -->
     <div class="glass-panel stat-card">
       <div class="stat-main">
-        <span class="stat-label">Resolved Tickets</span>
+        <span class="stat-label">Tickets résolus</span>
         <div class="stat-value-container">
           <span class="stat-value text-green">{{ resolvedTickets }}</span>
         </div>
@@ -89,54 +89,65 @@
           type="text" 
           [(ngModel)]="searchTerm" 
           (input)="onFilterChange()" 
-          placeholder="Search by Ticket ID, submitter name, or subject..."
+          placeholder="Rechercher par ID de ticket, nom de l'auteur ou sujet..."
         />
       </div>
 
       <!-- Select Status -->
       <div class="filter-dropdown">
         <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
-          <option value="">All Statuses</option>
-          <option value="OPEN">Open</option>
-          <option value="IN_PROGRESS">In Progress</option>
-          <option value="RESOLVED">Resolved</option>
+          <option value="">Tous les statuts</option>
+          <option value="OPEN">Ouvert</option>
+          <option value="IN_PROGRESS">En cours</option>
+          <option value="RESOLVED">Résolu</option>
         </select>
       </div>
 
       <!-- Select Priority -->
       <div class="filter-dropdown">
         <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
-          <option value="">All Priorities</option>
-          <option value="URGENT">Urgent</option>
-          <option value="HIGH">High</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="LOW">Low</option>
+          <option value="">Toutes les priorités</option>
+          <option value="URGENT">Urgente</option>
+          <option value="HIGH">Élevée</option>
+          <option value="MEDIUM">Moyenne</option>
+          <option value="LOW">Faible</option>
         </select>
       </div>
 
       <!-- Reset -->
       <button class="btn-reset" (click)="resetFilters()" *ngIf="searchTerm || statusFilter || priorityFilter">
-        <span>Reset Filters</span>
+        <span>Réinitialiser les filtres</span>
       </button>
+
+      <div class="tickets-count">
+        <span class="strong">{{ totalTickets }} tickets</span> · {{ openTickets }} ouverts ·
+        <span class="text-danger">{{ criticalCount }} critiques</span>
+      </div>
+    </div>
+
+    <!-- Status tabs -->
+    <div class="status-tabs">
+      <button *ngFor="let tab of statusTabs" class="status-tab" [class.active]="statusFilter === tab.value"
+        (click)="statusFilter = tab.value; onFilterChange()">{{ tab.label }}</button>
     </div>
   </div>
 
   <!-- Primary Governance ledger List Table -->
   <div class="glass-panel ledger-card animate-fade-in-up">
     <div class="ledger-header">
-      <h3>Active Support Ledgers</h3>
+      <h3>Registres de support actifs</h3>
     </div>
 
     <div class="table-responsive">
       <table class="tickets-table">
         <thead>
           <tr>
-            <th>Ticket ID</th>
-            <th>Submitter Info</th>
-            <th>Issue Subject</th>
-            <th>Priority Badge</th>
-            <th>Status Badge</th>
-            <th>Date Logged</th>
+            <th>ID du ticket</th>
+            <th>Auteur</th>
+            <th>Sujet du problème</th>
+            <th>Priorité</th>
+            <th>Statut</th>
+            <th>Date d'enregistrement</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -162,23 +173,28 @@
             </td>
             <td>
               <span class="priority-badge" [ngClass]="tick.priority.toLowerCase()">
-                {{ tick.priority }}
+                {{ priorityEmoji(tick.priority) }} {{ priorityLabel(tick.priority) }}
               </span>
             </td>
             <td>
               <span class="status-badge" [ngClass]="tick.status.toLowerCase()">
-                {{ tick.status === 'OPEN' ? 'Open' : (tick.status === 'IN_PROGRESS' ? 'In Progress' : 'Resolved') }}
+                {{ tick.status === 'OPEN' ? 'Ouvert' : (tick.status === 'IN_PROGRESS' ? 'En cours' : 'Résolu') }}
               </span>
             </td>
             <td class="date-cell">{{ tick.date }}</td>
             <td>
               <div class="action-buttons-row">
-                <button class="btn-action btn-reply" (click)="openReplyModal(tick)" title="Review & Reply">
+                <button class="btn-action btn-reply" (click)="openReplyModal(tick)" title="Consulter et répondre">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="action-icon">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                   </svg>
                 </button>
-                <button class="btn-action btn-delete" (click)="deleteTicket(tick, $event)" title="Delete Log">
+                <button class="btn-action btn-resolve" (click)="markResolved(tick, $event)" title="Résoudre" *ngIf="tick.status !== 'RESOLVED'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="action-icon">
+                    <path d="M20 6 9 17l-5-5"></path>
+                  </svg>
+                </button>
+                <button class="btn-action btn-delete" (click)="deleteTicket(tick, $event)" title="Supprimer l'enregistrement">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="action-icon">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -197,7 +213,7 @@
                   <line x1="12" y1="8" x2="12" y2="12"></line>
                   <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
-                <p>Zero support tickets found matching target configurations.</p>
+                <p>Aucun ticket de support ne correspond aux critères sélectionnés.</p>
               </div>
             </td>
           </tr>
@@ -213,8 +229,8 @@
   <div class="glass-panel modal-card reply-modal animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="header-titles">
-        <span class="modal-label">Review Workspace Ticket</span>
-        <h3>Ticket #{{ selectedTicket?.id }} Details</h3>
+        <span class="modal-label">Consulter le ticket de l'espace de travail</span>
+        <h3>Détails du ticket n°{{ selectedTicket?.id }}</h3>
       </div>
       <button class="modal-close-btn" (click)="closeReplyModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -230,22 +246,22 @@
         <!-- Ticket Information Header -->
         <div class="ticket-info-summary">
           <div class="meta-row">
-            <span class="lbl">Subject:</span>
+            <span class="lbl">Sujet :</span>
             <span class="val"><strong>{{ selectedTicket?.subject }}</strong></span>
           </div>
           <div class="meta-row">
-            <span class="lbl">From:</span>
+            <span class="lbl">De :</span>
             <span class="val">{{ selectedTicket?.submittedBy }} ({{ selectedTicket?.submittedByEmail }}) - <strong>{{ selectedTicket?.role }}</strong></span>
           </div>
           <div class="meta-row">
-            <span class="lbl">Date Logged:</span>
+            <span class="lbl">Date d'enregistrement :</span>
             <span class="val">{{ selectedTicket?.date }}</span>
           </div>
         </div>
 
         <!-- Issue Description -->
         <div class="form-group">
-          <label>Issue Description</label>
+          <label>Description du problème</label>
           <div class="description-backplate">
             <p>{{ selectedTicket?.description }}</p>
           </div>
@@ -253,7 +269,7 @@
 
         <!-- Existing replies -->
         <div class="form-group" *ngIf="selectedTicket && selectedTicket.replies.length > 0">
-          <label>Conversation Log</label>
+          <label>Historique de la conversation</label>
           <div class="replies-log-backplate">
             <div class="reply-bubble animate-scale-in" *ngFor="let rep of selectedTicket.replies">
               <span class="reply-sender"><strong>{{ rep.sender }}</strong> • {{ rep.timestamp }}</span>
@@ -264,25 +280,25 @@
 
         <!-- Set status -->
         <div class="form-group">
-          <label for="nextStatus">Update Ticket Status</label>
+          <label for="nextStatus">Mettre à jour le statut du ticket</label>
           <div class="select-wrapper">
             <select id="nextStatus" name="nextStatus" [(ngModel)]="nextStatus">
-              <option value="OPEN">Open</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="RESOLVED">Resolved</option>
+              <option value="OPEN">Ouvert</option>
+              <option value="IN_PROGRESS">En cours</option>
+              <option value="RESOLVED">Résolu</option>
             </select>
           </div>
         </div>
 
         <!-- Reply Message text -->
         <div class="form-group">
-          <label for="adminReplyMessage">Send Reply Message</label>
+          <label for="adminReplyMessage">Envoyer un message de réponse</label>
           <textarea 
             id="adminReplyMessage" 
             name="adminReplyMessage" 
             rows="3" 
             [(ngModel)]="adminReplyMessage" 
-            placeholder="Type your response to the developer/manager here..."
+            placeholder="Saisissez ici votre réponse au développeur/responsable..."
             required
           ></textarea>
         </div>
@@ -290,10 +306,10 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeReplyModal()">Cancel</button>
+        <button type="button" class="btn btn-secondary" (click)="closeReplyModal()">Annuler</button>
         <button type="submit" class="btn btn-primary" [disabled]="submittingReply || !adminReplyMessage.trim()">
           <span *ngIf="submittingReply" class="spinner"></span>
-          <span>{{ submittingReply ? 'Sending reply...' : 'Send Reply' }}</span>
+          <span>{{ submittingReply ? 'Envoi de la réponse...' : 'Envoyer la réponse' }}</span>
         </button>
       </div>
     </form>
