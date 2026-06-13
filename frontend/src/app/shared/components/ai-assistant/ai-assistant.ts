@@ -20,7 +20,15 @@ interface ChatMsg {
 export class AiAssistantWidgetComponent implements AfterViewChecked {
   @ViewChild('scrollArea') private scrollArea?: ElementRef<HTMLElement>;
 
-  private readonly STORAGE_KEY = 'ai_assistant_history';
+  // Legacy global key (pre-fix). It was shared across all users on a browser, leaking one
+  // user's conversation to the next. We migrate away from it and delete it on load.
+  private static readonly LEGACY_KEY = 'ai_assistant_history';
+
+  /** Per-user storage key so a conversation is only ever visible to the user who created it. */
+  private storageKey(): string {
+    const id = this.auth.getCurrentUser()?.id;
+    return id != null ? `ai_assistant_history_${id}` : 'ai_assistant_history_guest';
+  }
 
   isOpen = false;
   userInput = '';
@@ -122,13 +130,15 @@ export class AiAssistantWidgetComponent implements AfterViewChecked {
 
   clear(): void {
     this.messages = [];
-    localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem(this.storageKey());
   }
 
   private loadHistory(): void {
+    // Remove the legacy shared key so no other user's conversation can ever be read.
+    try { localStorage.removeItem(AiAssistantWidgetComponent.LEGACY_KEY); } catch { /* ignore */ }
     try {
-      const raw = localStorage.getItem(this.STORAGE_KEY);
-      if (raw) this.messages = JSON.parse(raw);
+      const raw = localStorage.getItem(this.storageKey());
+      this.messages = raw ? JSON.parse(raw) : [];
     } catch {
       this.messages = [];
     }
@@ -138,7 +148,7 @@ export class AiAssistantWidgetComponent implements AfterViewChecked {
     try {
       // Keep the last 40 messages to bound storage.
       const trimmed = this.messages.slice(-40);
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(trimmed));
+      localStorage.setItem(this.storageKey(), JSON.stringify(trimmed));
     } catch { /* ignore quota errors */ }
   }
 }
