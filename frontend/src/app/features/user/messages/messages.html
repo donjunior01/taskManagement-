@@ -118,7 +118,7 @@
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
-              <span>Les messages sont chiffrés de bout en bout. Personne en dehors de cette discussion, pas même TaskMaster, ne peut les lire.</span>
+              <span>Les messages sont chiffrés de bout en bout. Personne en dehors de cette discussion, pas même {{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}, ne peut les lire.</span>
             </div>
 
             <!-- Messages Stream list -->
@@ -381,8 +381,8 @@
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
           </div>
-          <h3>Messagerie Web TaskMaster</h3>
-          <p>Envoyez et recevez des messages sans garder votre téléphone en ligne. Utilisez TaskMaster sur jusqu'à 4 appareils connectés simultanément.</p>
+          <h3>Messagerie Web {{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</h3>
+          <p>Envoyez et recevez des messages sans garder votre téléphone en ligne. Utilisez {{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }} sur jusqu'à 4 appareils connectés simultanément.</p>
           <div class="landing-footer">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>

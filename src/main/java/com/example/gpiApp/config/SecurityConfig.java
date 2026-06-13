@@ -51,6 +51,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/auth/**",
+                    // Public branding (app name/logo/PDF colours) for the login & registration pages
+                    "/api/settings/branding",
+                    // Public password policy so the registration page can guide & validate input
+                    "/api/settings/password-policy",
                     "/actuator/health",
                     "/actuator/info",
                     "/error",

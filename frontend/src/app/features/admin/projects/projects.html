@@ -132,6 +132,7 @@
           <tr>
             <th>Nom du projet</th>
             <th>Chef de Projet</th>
+            <th>Créé par</th>
             <th>Équipe</th>
             <th class="progress-col">Progression</th>
             <th>Statut</th>
@@ -152,6 +153,7 @@
                 <span class="muted-cell">{{ project.managerName || 'Non assigné' }}</span>
               </div>
             </td>
+            <td class="muted-cell">{{ project.createdByName || '—' }}</td>
             <td class="muted-cell team-cell">{{ teamNames(project) }}</td>
             <td>
               <div class="progress-cell">

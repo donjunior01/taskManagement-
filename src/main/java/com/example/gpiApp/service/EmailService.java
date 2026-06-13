@@ -9,7 +9,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Slf4j
@@ -18,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final BrevoEmailClient brevoClient;
 
     @Value("${spring.mail.from:noreply@taskmanagement.com}")
     private String fromEmail;
@@ -25,24 +25,39 @@ public class EmailService {
     @Value("${app.email.enabled:false}")
     private boolean emailEnabled;
 
+    /** Email can be sent when Brevo (REST) is configured OR SMTP is explicitly enabled. */
+    private boolean canSend() {
+        return brevoClient.isEnabled() || emailEnabled;
+    }
+
+    /**
+     * Send an email through Brevo's REST API when configured; otherwise fall back to SMTP
+     * (JavaMailSender). Centralises delivery so every notification benefits from both paths.
+     */
+    private void dispatch(String to, String subject, String body) {
+        if (brevoClient.isEnabled()) {
+            brevoClient.send(to, subject, body);
+            return;
+        }
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
+        mailSender.send(message);
+    }
+
     @Async
     public void sendDeadlineReminder(Task task, String recipientEmail) {
-        if (!emailEnabled) {
+        if (!canSend()) {
             log.info("Email service is disabled. Skipping deadline reminder for task: {}", task.getName());
             return;
         }
-
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(recipientEmail);
-            message.setSubject("Task Deadline Reminder: " + task.getName());
-            
-            String deadline = task.getDeadline() != null 
+            String deadline = task.getDeadline() != null
                     ? task.getDeadline().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy"))
                     : "Not set";
-            
-            String emailBody = String.format(
+            String body = String.format(
                     "Dear User,\n\n" +
                     "This is a reminder that your task '%s' is due on %s.\n\n" +
                     "Task Details:\n" +
@@ -52,16 +67,9 @@ public class EmailService {
                     "Please ensure you complete this task before the deadline.\n\n" +
                     "Best regards,\n" +
                     "Task Management System",
-                    task.getName(),
-                    deadline,
-                    task.getPriority(),
-                    task.getStatus(),
-                    task.getProgress()
-            );
-            
-            message.setText(emailBody);
-            
-            mailSender.send(message);
+                    task.getName(), deadline, task.getPriority(), task.getStatus(), task.getProgress());
+
+            dispatch(recipientEmail, "Task Deadline Reminder: " + task.getName(), body);
             log.info("Deadline reminder email sent to {} for task: {}", recipientEmail, task.getName());
         } catch (Exception e) {
             log.error("Failed to send deadline reminder email to {}: {}", recipientEmail, e.getMessage());
@@ -70,22 +78,15 @@ public class EmailService {
 
     @Async
     public void sendTaskAssignmentNotification(Task task, String recipientEmail) {
-        if (!emailEnabled) {
+        if (!canSend()) {
             log.info("Email service is disabled. Skipping assignment notification for task: {}", task.getName());
             return;
         }
-
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(recipientEmail);
-            message.setSubject("New Task Assigned: " + task.getName());
-            
-            String deadline = task.getDeadline() != null 
+            String deadline = task.getDeadline() != null
                     ? task.getDeadline().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy"))
                     : "Not set";
-            
-            String emailBody = String.format(
+            String body = String.format(
                     "Dear User,\n\n" +
                     "You have been assigned a new task '%s'.\n\n" +
                     "Task Details:\n" +
@@ -97,13 +98,9 @@ public class EmailService {
                     "Task Management System",
                     task.getName(),
                     task.getDescription() != null ? task.getDescription() : "No description",
-                    task.getPriority(),
-                    deadline
-            );
-            
-            message.setText(emailBody);
-            
-            mailSender.send(message);
+                    task.getPriority(), deadline);
+
+            dispatch(recipientEmail, "New Task Assigned: " + task.getName(), body);
             log.info("Task assignment email sent to {} for task: {}", recipientEmail, task.getName());
         } catch (Exception e) {
             log.error("Failed to send task assignment email to {}: {}", recipientEmail, e.getMessage());
@@ -111,29 +108,25 @@ public class EmailService {
     }
 
     /**
-     * Email a user their reset temporary password. When mail is disabled (default), this is a no-op
+     * Email a user their reset temporary password. When no provider is configured, this is a no-op
      * that just logs — the admin still sees the temporary password returned by the API.
      */
     @Async
     public void sendPasswordResetEmail(String recipientEmail, String temporaryPassword) {
-        if (!emailEnabled) {
+        if (!canSend()) {
             log.info("Email service is disabled. Skipping password-reset email to {}.", recipientEmail);
             return;
         }
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(recipientEmail);
-            message.setSubject("Réinitialisation de votre mot de passe — TaskMaster Pro");
-            message.setText(
+            String body =
                     "Bonjour,\n\n" +
                     "Votre mot de passe a été réinitialisé par un administrateur.\n\n" +
                     "Mot de passe temporaire : " + temporaryPassword + "\n\n" +
                     "Veuillez vous connecter avec ce mot de passe puis le modifier immédiatement " +
                     "depuis votre profil.\n\n" +
                     "Cordialement,\n" +
-                    "L'équipe TaskMaster Pro");
-            mailSender.send(message);
+                    "L'équipe TaskMaster Pro";
+            dispatch(recipientEmail, "Réinitialisation de votre mot de passe — TaskMaster Pro", body);
             log.info("Password-reset email sent to {}.", recipientEmail);
         } catch (Exception e) {
             log.error("Failed to send password-reset email to {}: {}", recipientEmail, e.getMessage());
@@ -142,31 +135,21 @@ public class EmailService {
 
     @Async
     public void sendProjectUpdateNotification(String projectName, String updateType, String recipientEmail) {
-        if (!emailEnabled) {
+        if (!canSend()) {
             log.info("Email service is disabled. Skipping project update notification for: {}", projectName);
             return;
         }
-
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(recipientEmail);
-            message.setSubject("Project Update: " + projectName);
-            
-            String emailBody = String.format(
+            String body = String.format(
                     "Dear User,\n\n" +
                     "There has been an update to the project '%s'.\n\n" +
                     "Update Type: %s\n\n" +
                     "Please log in to the system to view more details.\n\n" +
                     "Best regards,\n" +
                     "Task Management System",
-                    projectName,
-                    updateType
-            );
-            
-            message.setText(emailBody);
-            
-            mailSender.send(message);
+                    projectName, updateType);
+
+            dispatch(recipientEmail, "Project Update: " + projectName, body);
             log.info("Project update email sent to {} for project: {}", recipientEmail, projectName);
         } catch (Exception e) {
             log.error("Failed to send project update email to {}: {}", recipientEmail, e.getMessage());

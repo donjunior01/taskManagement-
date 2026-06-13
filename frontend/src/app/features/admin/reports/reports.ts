@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { PdfService } from '../../../core/services/pdf.service';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 
 interface Donut { name: string; value: number; color: string; pct: number; dash: string; offset: number; }
@@ -17,7 +18,7 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
     <!-- Toolbar -->
     <div class="rep-card pad-row anim" style="--d:0s">
       <div class="period-tabs">
-        <button *ngFor="let p of periods" class="ptab" [class.active]="period === p" (click)="period = p">{{ p }}</button>
+        <button *ngFor="let p of periods" class="ptab" [class.active]="period === p" (click)="selectPeriod(p)" [disabled]="loadingReports">{{ p }}</button>
       </div>
       <div class="rep-actions">
         <button class="btn btn-primary" (click)="toast.show('Génération du rapport lancée.', 'success')">
@@ -231,9 +232,9 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
       <div class="rep-card center-card anim" style="--d:.60s">
         <div class="rc-head"><h3>Temps moyen de résolution</h3></div>
         <div class="rc-body center-body">
-          <div class="big-stat">3h 42m</div>
-          <span class="badge badge-success">↘ −18% vs mois dernier</span>
-          <p class="center-note">Cible SLA : 4h · respectée pour 93 % des tickets</p>
+          <div class="big-stat">{{ avgResolutionLabel }}</div>
+          <span class="badge badge-success">{{ fmtNumPub(resolvedRate) }} % de tickets résolus</span>
+          <p class="center-note">Délai moyen entre l'ouverture et la résolution des tickets sur la période</p>
         </div>
       </div>
 
@@ -391,11 +392,22 @@ export class AdminReportsComponent implements OnInit {
   hover: { chart: string; i: number; leftPct: number } | null = null;
   donutHover = -1;
 
+  loadingReports = false;
+  avgResolutionHours = 0;
+  resolvedRate = 0;
+  get avgResolutionLabel(): string {
+    const h = Math.floor(this.avgResolutionHours);
+    const m = Math.round((this.avgResolutionHours - h) * 60);
+    return this.avgResolutionHours > 0 ? `${h}h ${String(m).padStart(2, '0')}m` : '—';
+  }
+  fmtNumPub(v: any): string { return this.fmtNum(v); }
+
+  // Values start as placeholders and are replaced by real backend data (no mock numbers).
   execKpis = [
-    { value: '87 %', label: 'Taux de complétion des projets', tone: 'success', delta: '+4 pts vs mois dernier', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>' },
-    { value: '79 %', label: 'Taux de respect des délais', tone: 'brand', delta: '−2 pts', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>' },
-    { value: '3 412 h', label: 'Heures totales loguées', tone: 'navy', delta: '+312 h ce mois', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"></circle><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path></svg>' },
-    { value: '4,6 / 5', label: 'Satisfaction support', tone: 'purple', delta: '93 % résolus', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17a2 2 0 0 1-2 2H6.8a2 2 0 0 0-1.4.6L3 22V5a2 2 0 0 1 2-2h15a2 2 0 0 1 2 2z"></path></svg>' }
+    { value: '—', label: 'Taux de complétion des projets', tone: 'success', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>' },
+    { value: '—', label: 'Taux de respect des délais', tone: 'brand', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>' },
+    { value: '—', label: 'Heures totales loguées', tone: 'navy', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"></circle><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path></svg>' },
+    { value: '—', label: 'Satisfaction support', tone: 'purple', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17a2 2 0 0 1-2 2H6.8a2 2 0 0 0-1.4.6L3 22V5a2 2 0 0 1 2-2h15a2 2 0 0 1 2 2z"></path></svg>' }
   ];
 
   pct100Ticks = [100, 75, 50, 25, 0];
@@ -417,16 +429,9 @@ export class AdminReportsComponent implements OnInit {
   resolutionRate: { mois: string; taux: number }[] = [];
   resLine = '';
 
-  topPerformers = [
-    { nom: 'Sophie Marchand', taches: 47 }, { nom: 'Karim Benali', taches: 41 },
-    { nom: 'Léa Fontaine', taches: 36 }, { nom: 'Adam Cherif', taches: 32 },
-    { nom: 'Camille Olivier', taches: 28 }, { nom: 'Mathilde Garnier', taches: 24 }
-  ];
-  topMax = 47;
-  teamLoad = [
-    { equipe: 'Web', charge: 82 }, { equipe: 'Backend', charge: 71 }, { equipe: 'Mobile', charge: 90 },
-    { equipe: 'Data', charge: 55 }, { equipe: 'Design', charge: 64 }, { equipe: 'Sécurité', charge: 48 }
-  ];
+  topPerformers: { nom: string; taches: number }[] = [];
+  topMax = 1;
+  teamLoad: { equipe: string; charge: number }[] = [];
   recap: RecapRow[] = [];
   // Pagination for the "Récapitulatif par projet" table (10 rows per page).
   recapPage = 0;
@@ -440,18 +445,40 @@ export class AdminReportsComponent implements OnInit {
   radarAxes: { x: number; y: number; lx: number; ly: number; label: string }[] = [];
   radarShape = '';
 
-  constructor(private projectService: ProjectService, public toast: ToastService, private cdr: ChangeDetectorRef, private analytics: AnalyticsService) {}
+  constructor(private projectService: ProjectService, public toast: ToastService, private cdr: ChangeDetectorRef, private analytics: AnalyticsService, private pdf: PdfService) {}
 
   ngOnInit(): void {
     this.loadProjects();
-    this.analytics.getAdminReports().subscribe({
+    this.loadReports();
+  }
+
+  /** Map the visible period tab to the backend period parameter. */
+  private periodParam(): string | undefined {
+    switch (this.period) {
+      case 'Cette semaine': return 'week';
+      case 'Ce mois': return 'month';
+      case 'Ce trimestre': return 'quarter';
+      default: return undefined; // Personnalisé → all-time
+    }
+  }
+
+  selectPeriod(p: string): void {
+    if (this.loadingReports || this.period === p) return;
+    this.period = p;
+    this.loadReports();
+  }
+
+  private loadReports(): void {
+    this.loadingReports = true;
+    this.analytics.getAdminReports(this.periodParam()).subscribe({
       next: (r: any) => {
         const d = r && r.data ? r.data : r;
         if (d && Array.isArray(d.statusOverTime)) this.applyReports(d);
         this.computeGeometry();
+        this.loadingReports = false;
         this.reveal();
       },
-      error: () => { this.computeGeometry(); this.reveal(); }
+      error: () => { this.loadingReports = false; this.computeGeometry(); this.reveal(); }
     });
   }
 
@@ -469,6 +496,16 @@ export class AdminReportsComponent implements OnInit {
     this.topPerformers = (d.topPerformers || []).map((p: any) => ({ nom: p.nom, taches: p.taches || 0 }));
     this.teamLoad = (d.teamLoad || []).map((t: any) => ({ equipe: t.equipe, charge: t.charge || 0 }));
     this.ticketsByCat = (d.ticketsByCategory || []).map((c: any) => ({ name: c.name, value: c.value || 0, color: '', pct: 0, dash: '', offset: 0 }));
+
+    // Real per-project recap (replaces the previously fabricated rows).
+    this.recap = (d.recap || []).map((row: any) => ({
+      nom: row.nom, pm: row.pm || 'Non assigné', taches: row.taches || 0, terminees: row.terminees || 0,
+      retard: row.retard || 0, heures: row.heures || 0, progression: row.progression || 0, statut: row.statut || 'PLANNED'
+    }));
+    this.recapPage = 0;
+
+    this.avgResolutionHours = Number(d.avgResolutionHours || 0);
+    this.resolvedRate = Number(d.resolvedRate || 0);
 
     const hours = Number(d.totalHours || 0);
     const sat = Number(d.supportSatisfaction || 0);
@@ -581,15 +618,11 @@ export class AdminReportsComponent implements OnInit {
   }
 
   private loadProjects(): void {
+    // Only the "planifié vs réel" mini-chart comes from here; the recap table is built
+    // server-side from real per-project data (see applyReports).
     this.projectService.getAllProjects(0, 50).subscribe({
       next: (r: any) => {
         const list: any[] = r && r.data ? r.data : (Array.isArray(r) ? r : []);
-        this.recap = list.map(p => {
-          const tasks = p.taskCount || 0;
-          const term = Math.round((p.progress || 0) / 100 * tasks);
-          return { nom: p.name, pm: p.managerName || 'Non assigné', taches: tasks, terminees: term, retard: Math.max(0, tasks - term - 5), heures: Math.round(tasks * 4.2), progression: p.progress || 0, statut: p.status || 'PLANNED' };
-        });
-        this.recapPage = 0;
         this.plannedVsReal = list.slice(0, 6).map(p => ({ name: (p.name || '').split(' ').slice(0, 2).join(' '), planifie: 100, reel: p.progress || 0 }));
         this.cdr.detectChanges();
       },
@@ -612,16 +645,11 @@ export class AdminReportsComponent implements OnInit {
   }
 
   exportPdf(): void {
-    const esc = (s: any) => (s ?? '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const esc = (s: any) => this.pdf.esc(s);
     const rows = this.recap.map(r => `<tr><td>${esc(r.nom)}</td><td>${esc(r.pm)}</td><td>${r.terminees}/${r.taches}</td><td>${r.progression}%</td><td>${esc(this.statusLabel(r.statut))}</td></tr>`).join('');
-    const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Rapport global</title>
-      <style>body{font-family:Inter,Arial,sans-serif;color:#1e2540;padding:24px;}h1{font-size:18px;margin:0 0 12px;}table{width:100%;border-collapse:collapse;font-size:12px;}th{background:#f1f5f9;text-align:left;padding:8px;font-size:10px;text-transform:uppercase;color:#64748b;}td{padding:8px;border-top:1px solid #e2e8f0;}@media print{@page{margin:14mm;}}</style>
-      </head><body><h1>Rapport global — Récapitulatif par projet</h1>
-      <table><thead><tr><th>Projet</th><th>PM</th><th>Tâches</th><th>Complétion</th><th>Statut</th></tr></thead><tbody>${rows}</tbody></table>
-      <script>window.onload=function(){window.print();}<\/script></body></html>`;
-    const w = window.open('', '_blank');
-    if (!w) { this.toast.show("Autorisez les pop-ups pour l'export PDF.", 'error'); return; }
-    w.document.open(); w.document.write(html); w.document.close();
+    const body = `<table><thead><tr><th>Projet</th><th>PM</th><th>Tâches</th><th>Complétion</th><th>Statut</th></tr></thead><tbody>${rows}</tbody></table>`;
+    const ok = this.pdf.open({ title: 'Rapport global', subtitle: `Récapitulatif par projet · ${this.recap.length} projet(s)`, bodyHtml: body });
+    if (!ok) { this.toast.show("Autorisez les pop-ups pour l'export PDF.", 'error'); return; }
     this.toast.show('Aperçu PDF ouvert.', 'success');
   }
 }

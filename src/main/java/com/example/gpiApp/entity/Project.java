@@ -32,6 +32,11 @@ public class Project {
     @JoinColumn(name = "manager_id")
     private allUsers manager;
 
+    /** The user (typically an admin) who created this project — drives per-admin project counts & traceability. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private allUsers createdBy;
+
     @Column(name = "start_date")
     private LocalDate startDate;
 

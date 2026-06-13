@@ -79,8 +79,13 @@ public class AiAssistantService {
 
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
-    private final OpenAiClient openAiClient;
-    private final ClaudeAiClient claudeClient;
+    private final LangChainAiClient langChainClient;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
+    /** True when the LangChain.js + Gemini sidecar is configured; otherwise the rule-based engine is used. */
+    private boolean anyAiEnabled() {
+        return langChainClient.isEnabled();
+    }
 
     // ── Public API ───────────────────────────────────────────────────────────
 
@@ -206,11 +211,11 @@ public class AiAssistantService {
     private Optional<AiNarrative> tryAiSummary(Project project, List<Task> tasks, long total,
                                               long completed, long inProgress, long overdue, long todo,
                                               double completionRate, Integer daysRemaining, String health) {
-        if (!claudeClient.isEnabled()) {
+        if (!anyAiEnabled()) {
             return Optional.empty();
         }
         try {
-            var mapper = claudeClient.objectMapper();
+            var mapper = objectMapper;
             var payload = mapper.createObjectNode();
             payload.put("projectName", project.getName());
             payload.put("totalTasks", total);
@@ -231,10 +236,7 @@ public class AiAssistantService {
                 node.put("deadline", t.getDeadline() != null ? t.getDeadline().toString() : null);
             }
             String payloadJson = mapper.writeValueAsString(payload);
-            Optional<String> response = openAiClient.complete(
-                    SUMMARY_SYSTEM_PROMPT, payloadJson)
-                    .or(() -> claudeClient.complete(
-                            SUMMARY_SYSTEM_PROMPT, payloadJson));
+            Optional<String> response = langChainClient.complete(SUMMARY_SYSTEM_PROMPT, payloadJson);
             if (response.isEmpty()) return Optional.empty();
 
             JsonNode json = parseJsonObject(response.get(), mapper);
@@ -375,11 +377,11 @@ public class AiAssistantService {
     }
 
     private Optional<AiPriorityText> tryAiPriorities(Project project, List<TaskPrioritySuggestionDTO> suggestions) {
-        if (!claudeClient.isEnabled()) {
+        if (!anyAiEnabled()) {
             return Optional.empty();
         }
         try {
-            var mapper = claudeClient.objectMapper();
+            var mapper = objectMapper;
             var payload = mapper.createObjectNode();
             payload.put("projectName", project.getName());
             var taskArray = payload.putArray("tasks");
@@ -392,10 +394,7 @@ public class AiAssistantService {
                 node.put("urgencyScore", s.getUrgencyScore());
             }
             String payloadJson = mapper.writeValueAsString(payload);
-            Optional<String> response = openAiClient.complete(
-                    PRIORITIES_SYSTEM_PROMPT, payloadJson)
-                    .or(() -> claudeClient.complete(
-                            PRIORITIES_SYSTEM_PROMPT, payloadJson));
+            Optional<String> response = langChainClient.complete(PRIORITIES_SYSTEM_PROMPT, payloadJson);
             if (response.isEmpty()) return Optional.empty();
 
             JsonNode json = parseJsonObject(response.get(), mapper);
@@ -671,11 +670,11 @@ public class AiAssistantService {
     private Optional<String> tryAiRiskNarrative(Project project, String projectRiskLevel, int projectSlipDays,
                                                String predictedCompletion, int atRiskCount, int totalOpen,
                                                List<TaskRiskDTO> risks) {
-        if (!claudeClient.isEnabled() || totalOpen == 0) {
+        if (!anyAiEnabled() || totalOpen == 0) {
             return Optional.empty();
         }
         try {
-            var mapper = claudeClient.objectMapper();
+            var mapper = objectMapper;
             var payload = mapper.createObjectNode();
             payload.put("projectName", project.getName());
             payload.put("projectRiskLevel", projectRiskLevel);
@@ -694,10 +693,7 @@ public class AiAssistantService {
                 node.put("deadline", r.getDeadline());
             }
             String payloadJson = mapper.writeValueAsString(payload);
-            Optional<String> response = openAiClient.complete(
-                    RISK_SYSTEM_PROMPT, payloadJson)
-                    .or(() -> claudeClient.complete(
-                            RISK_SYSTEM_PROMPT, payloadJson));
+            Optional<String> response = langChainClient.complete(RISK_SYSTEM_PROMPT, payloadJson);
             if (response.isEmpty()) return Optional.empty();
             JsonNode json = parseJsonObject(response.get(), mapper);
             if (json == null || !json.hasNonNull("summary")) return Optional.empty();

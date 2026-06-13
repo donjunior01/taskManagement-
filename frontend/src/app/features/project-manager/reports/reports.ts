@@ -6,6 +6,7 @@ import { ProjectService, Project } from '../../../core/services/project.service'
 import { TaskService, Task } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { PdfService } from '../../../core/services/pdf.service';
 
 interface MemberRow { name: string; assignees: number; done: number; late: number; hours: number; rate: number; }
 interface Donut { name: string; value: number; color: string; dash: string; offset: number; }
@@ -280,7 +281,8 @@ export class PmReportsComponent implements OnInit {
     private taskService: TaskService,
     private authService: AuthService,
     private toast: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private pdf: PdfService
   ) {}
 
   ngOnInit(): void {
@@ -457,12 +459,13 @@ export class PmReportsComponent implements OnInit {
     this.toast.show('Export CSV généré.', 'success');
   }
   exportPdf(): void {
-    const esc = (s: any) => (s ?? '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const esc = (s: any) => this.pdf.esc(s);
     const rows = this.members.map(m => `<tr><td>${esc(m.name)}</td><td>${m.assignees}</td><td>${m.done}</td><td>${m.late}</td><td>${m.hours}h</td><td>${m.rate}%</td></tr>`).join('');
-    const kpi = this.kpis.map(k => `<div style="display:inline-block;margin-right:18px"><b>${k.label} :</b> ${esc(k.value)}</div>`).join('');
-    const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Rapport</title><style>body{font-family:Inter,Arial,sans-serif;color:#1e293b;padding:24px}h1{font-size:18px}table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}th{background:#f1f5f9;text-align:left;padding:8px;font-size:10px;text-transform:uppercase;color:#64748b}td{padding:8px;border-top:1px solid #e2e8f0}@media print{@page{margin:14mm}}</style></head><body><h1>Rapport — Performance de l'équipe</h1><p style="font-size:12px;color:#64748b">${kpi}</p><table><thead><tr><th>Membre</th><th>Assignées</th><th>Terminées</th><th>En retard</th><th>Heures</th><th>Taux</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>`;
-    const w = window.open('', '_blank'); if (!w) { this.toast.show('Autorisez les pop-ups pour le PDF.', 'error'); return; }
-    w.document.open(); w.document.write(html); w.document.close();
+    const kpi = this.kpis.map(k => `<span style="display:inline-block;margin-right:18px"><b>${esc(k.label)} :</b> ${esc(k.value)}</span>`).join('');
+    const body = `<p class="kpis">${kpi}</p>`
+      + `<table><thead><tr><th>Membre</th><th>Assignées</th><th>Terminées</th><th>En retard</th><th>Heures</th><th>Taux</th></tr></thead><tbody>${rows}</tbody></table>`;
+    const ok = this.pdf.open({ title: "Rapport — Performance de l'équipe", subtitle: `${this.members.length} membre(s)`, bodyHtml: body });
+    if (!ok) { this.toast.show('Autorisez les pop-ups pour le PDF.', 'error'); return; }
     this.toast.show('Aperçu PDF ouvert.', 'success');
   }
 }

@@ -27,6 +27,7 @@ public class LoginAttemptService {
     private final LoginAttemptRepository loginAttemptRepository;
     private final UserRepository userRepository;
     private final com.example.gpiApp.repository.BlockedIpRepository blockedIpRepository;
+    private final IpResolverService ipResolver;
     
     @Transactional
     public void logLoginAttempt(String username, String email, LoginAttempt.LoginStatus status, 
@@ -103,7 +104,7 @@ public class LoginAttemptService {
         java.util.List<com.example.gpiApp.dto.SuspiciousIpDTO> ips =
                 loginAttemptRepository.findSuspiciousIps(LoginAttempt.LoginStatus.FAILURE);
         ips.forEach(ip -> {
-            ip.setCountry("Inconnu");          // no GeoIP service configured
+            ip.setCountry(ipResolver.lookupCountry(ip.getIpAddress()));   // GeoIP (cached)
             // An IP is "Bloquée" only when an admin has actually blocked it; otherwise it is watched.
             ip.setStatus(blockedIpRepository.existsByIpAddress(ip.getIpAddress()) ? "Bloquée" : "Surveillée");
         });

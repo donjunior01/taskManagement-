@@ -30,8 +30,9 @@ public class DashboardApiController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Admin role required")
     })
     @GetMapping("/admin/stats")
-    public ResponseEntity<ApiResponse<DashboardStatsDTO>> getAdminDashboardStats() {
-        DashboardStatsDTO stats = dashboardService.getAdminDashboardStats();
+    public ResponseEntity<ApiResponse<DashboardStatsDTO>> getAdminDashboardStats(Authentication authentication) {
+        Long adminId = getCurrentUserId(authentication);
+        DashboardStatsDTO stats = dashboardService.getAdminDashboardStats(adminId);
         return ResponseEntity.ok(ApiResponse.success("Dashboard stats retrieved successfully", stats));
     }
     

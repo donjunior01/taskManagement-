@@ -9,3 +9,8 @@ apache-maven-3.9.5/
 .mvn/
 mvnw
 mvnw.cmd
+# Keep the build context lean and free of runtime data / secrets.
+uploads/
+*.log
+google-credentials.json
+.env

@@ -3,6 +3,17 @@ google-credentials.json
 **/google-credentials.json
 *-service-account*.json
 
+# Secrets — never commit environment files (they hold API keys, e.g. GEMINI_API_KEY)
+.env
+**/.env
+!**/.env.example
+
+# Node / npm (frontend + ai-service)
+node_modules/
+**/node_modules/
+npm-debug.log*
+.angular/
+
 # Maven
 target/
 pom.xml.tag

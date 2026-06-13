@@ -8,6 +8,7 @@ import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { BadgeCountsService } from '../../../core/services/badge-counts.service';
 import { FileService } from '../../../core/services/file.service';
+import { BrandingService } from '../../../core/services/branding.service';
 
 export interface ChatContact {
   id: number;
@@ -88,7 +89,8 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
     private badges: BadgeCountsService,
     private fileService: FileService,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService
+    private toast: ToastService,
+    public branding: BrandingService
   ) {}
 
   toggleEmojiPanel(): void { this.showEmojiPanel = !this.showEmojiPanel; this.showAttachMenu = false; }

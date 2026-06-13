@@ -20,14 +20,29 @@ public class DashboardService {
     private final TaskRepository taskRepository;
     private final TeamRepository teamRepository;
     
-    public DashboardStatsDTO getAdminDashboardStats() {
+    public DashboardStatsDTO getAdminDashboardStats(Long adminId) {
         long totalUsers = userRepository.count();
-        long totalProjects = projectRepository.count();
-        long activeProjects = projectRepository.countByStatus(Project.ProjectStatus.ACTIVE)
-                + projectRepository.countByStatus(Project.ProjectStatus.IN_PROGRESS)
-                + projectRepository.countByStatus(Project.ProjectStatus.PLANNED);
-        long completedProjects = projectRepository.countByStatus(Project.ProjectStatus.COMPLETED);
-        long onHoldProjects = projectRepository.countByStatus(Project.ProjectStatus.ON_HOLD);
+        // Project counts are scoped to the projects this admin created — every admin shares the
+        // same dashboard layout but sees only their own project portfolio (traceability).
+        long totalProjects;
+        long activeProjects;
+        long completedProjects;
+        long onHoldProjects;
+        if (adminId != null) {
+            totalProjects = projectRepository.countByCreatedById(adminId);
+            activeProjects = projectRepository.countByCreatedByIdAndStatus(adminId, Project.ProjectStatus.ACTIVE)
+                    + projectRepository.countByCreatedByIdAndStatus(adminId, Project.ProjectStatus.IN_PROGRESS)
+                    + projectRepository.countByCreatedByIdAndStatus(adminId, Project.ProjectStatus.PLANNED);
+            completedProjects = projectRepository.countByCreatedByIdAndStatus(adminId, Project.ProjectStatus.COMPLETED);
+            onHoldProjects = projectRepository.countByCreatedByIdAndStatus(adminId, Project.ProjectStatus.ON_HOLD);
+        } else {
+            totalProjects = projectRepository.count();
+            activeProjects = projectRepository.countByStatus(Project.ProjectStatus.ACTIVE)
+                    + projectRepository.countByStatus(Project.ProjectStatus.IN_PROGRESS)
+                    + projectRepository.countByStatus(Project.ProjectStatus.PLANNED);
+            completedProjects = projectRepository.countByStatus(Project.ProjectStatus.COMPLETED);
+            onHoldProjects = projectRepository.countByStatus(Project.ProjectStatus.ON_HOLD);
+        }
         
         long totalTasks = taskRepository.count();
         long activeTasks = taskRepository.countByStatus(Task.TaskStatus.IN_PROGRESS);

@@ -33,13 +33,48 @@
         <span class="hint">S'applique aux livrables et aux pièces jointes de la messagerie (max 100 Mo)</span>
       </div>
       <div class="cfg-field">
-        <label>Logo</label>
-        <div class="upload-drop">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>
-          Cliquer pour téléverser
+        <label>Logo de l'application</label>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:56px;height:56px;border-radius:11px;background:#1e2540;display:grid;place-items:center;overflow:hidden;flex-shrink:0;">
+            <img *ngIf="logoUrl" [src]="logoUrl" alt="logo" style="width:100%;height:100%;object-fit:contain;" />
+            <svg *ngIf="!logoUrl" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" style="width:26px;height:26px;"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label class="upload-drop" style="cursor:pointer;margin:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>
+              Cliquer pour téléverser
+              <input type="file" accept="image/*" (change)="onLogoSelected($event)" hidden />
+            </label>
+            <button *ngIf="logoUrl" type="button" class="btn btn-outline" style="font-size:11px;padding:4px 10px;" (click)="removeLogo()">Retirer le logo</button>
+          </div>
         </div>
+        <span class="hint">Affiché dans la barre latérale, sur les pages de connexion/inscription et dans l'en-tête des PDF (max 512 Ko).</span>
       </div>
     </div>
+
+    <!-- PDF branding -->
+    <div class="cfg-grid" style="margin-top:8px;border-top:1px solid var(--border, #e2e8f0);padding-top:16px;">
+      <div class="cfg-field">
+        <label>Couleur d'en-tête des PDF</label>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="color" [(ngModel)]="pdfHeaderColor" style="width:46px;height:38px;padding:2px;border-radius:8px;cursor:pointer;" />
+          <input type="text" [(ngModel)]="pdfHeaderColor" style="flex:1;" />
+        </div>
+      </div>
+      <div class="cfg-field">
+        <label>Couleur de pied de page des PDF</label>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="color" [(ngModel)]="pdfFooterColor" style="width:46px;height:38px;padding:2px;border-radius:8px;cursor:pointer;" />
+          <input type="text" [(ngModel)]="pdfFooterColor" style="flex:1;" />
+        </div>
+      </div>
+      <div class="cfg-field" style="grid-column:1 / -1;">
+        <label>Texte du pied de page des PDF</label>
+        <input type="text" [(ngModel)]="pdfFooterText" placeholder="Document confidentiel — généré automatiquement" />
+        <span class="hint">Apparaît dans le bandeau de pied de page de tous les documents PDF générés.</span>
+      </div>
+    </div>
+
     <div class="cfg-foot"><button class="btn btn-primary" (click)="saveGeneral()" [disabled]="submitting">Enregistrer les modifications</button></div>
   </div>
 

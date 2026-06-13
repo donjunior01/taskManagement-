@@ -33,10 +33,38 @@ public class SystemSettingsService {
         return toDTO(getSettings());
     }
 
+    /** Public password policy — safe for the unauthenticated registration page. */
+    public com.example.gpiApp.dto.PasswordPolicyDTO getPasswordPolicy() {
+        SystemSettings s = getSettings();
+        return com.example.gpiApp.dto.PasswordPolicyDTO.builder()
+                .minLength(s.getPasswordMinLength())
+                .requireUppercase(s.getPasswordRequireUppercase())
+                .requireDigit(s.getPasswordRequireDigit())
+                .requireSpecial(s.getPasswordRequireSpecial())
+                .build();
+    }
+
+    /** Public branding payload (app name, logo, PDF colours) — safe for unauthenticated pages. */
+    public com.example.gpiApp.dto.BrandingDTO getBranding() {
+        SystemSettings s = getSettings();
+        return com.example.gpiApp.dto.BrandingDTO.builder()
+                .appName(s.getAppName())
+                .logoUrl(s.getLogoUrl())
+                .pdfHeaderColor(s.getPdfHeaderColor())
+                .pdfFooterColor(s.getPdfFooterColor())
+                .pdfFooterText(s.getPdfFooterText())
+                .build();
+    }
+
     @Transactional
     public SystemSettingsDTO updateGeneral(SystemSettingsDTO dto) {
         SystemSettings s = getSettings();
         if (dto.getAppName() != null && !dto.getAppName().trim().isEmpty()) s.setAppName(dto.getAppName().trim());
+        // logoUrl: empty string clears the logo; null means "unchanged".
+        if (dto.getLogoUrl() != null) s.setLogoUrl(dto.getLogoUrl().trim().isEmpty() ? null : dto.getLogoUrl().trim());
+        if (dto.getPdfHeaderColor() != null && !dto.getPdfHeaderColor().trim().isEmpty()) s.setPdfHeaderColor(dto.getPdfHeaderColor().trim());
+        if (dto.getPdfFooterColor() != null && !dto.getPdfFooterColor().trim().isEmpty()) s.setPdfFooterColor(dto.getPdfFooterColor().trim());
+        if (dto.getPdfFooterText() != null) s.setPdfFooterText(dto.getPdfFooterText().trim());
         if (dto.getDefaultLanguage() != null) s.setDefaultLanguage(dto.getDefaultLanguage());
         if (dto.getTimezone() != null) s.setTimezone(dto.getTimezone());
         if (dto.getMaxFileUploadMb() != null) s.setMaxFileUploadMb(Math.min(100, Math.max(1, dto.getMaxFileUploadMb())));
@@ -154,6 +182,10 @@ public class SystemSettingsService {
     private SystemSettingsDTO toDTO(SystemSettings s) {
         return SystemSettingsDTO.builder()
                 .appName(s.getAppName())
+                .logoUrl(s.getLogoUrl())
+                .pdfHeaderColor(s.getPdfHeaderColor())
+                .pdfFooterColor(s.getPdfFooterColor())
+                .pdfFooterText(s.getPdfFooterText())
                 .defaultLanguage(s.getDefaultLanguage())
                 .timezone(s.getTimezone())
                 .jwtValidityMinutes(s.getJwtValidityMinutes())

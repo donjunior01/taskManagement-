@@ -1,18 +1,22 @@
-# Full local stack: MySQL + Spring Boot backend + Angular (nginx) frontend.
+# Full local stack: MySQL + LangChain.js/Gemini AI sidecar + Spring Boot backend + Angular (nginx).
 #   docker compose up --build
-# Frontend: http://localhost:4200   Backend/Swagger: http://localhost:8073/swagger-ui.html
+# Frontend: http://localhost:4200   Backend/Swagger: http://localhost:8074/swagger-ui.html
 #
-# Pass your Claude key through the environment to enable live AI:
-#   ANTHROPIC_API_KEY=sk-ant-... docker compose up --build
+# AI: the LangChain.js "ai-service" is the only AI provider. Put your Gemini key in a root .env file:
+#   GEMINI_API_KEY=...        (or:  GEMINI_API_KEY=... docker compose up --build)
+# Without it, the assistant falls back to a deterministic rule-based engine.
 
 services:
   mysql:
     image: mysql:8.0
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: project_management
+    # Host port 3308 (not 3307) to avoid clashing with a local dev MySQL already on 3307.
+    # The backend reaches MySQL over the internal network at mysql:3306 regardless of this mapping.
     ports:
-      - "3307:3306"
+      - "3308:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
@@ -21,27 +25,67 @@ services:
       timeout: 5s
       retries: 10
 
+  # LangChain.js + Gemini AI sidecar (see ai-service/). Holds the Gemini key server-side.
+  ai-service:
+    build: ./ai-service
+    restart: unless-stopped
+    environment:
+      # >>> PUT YOUR GEMINI API KEY HERE (via the host env or a root .env file) <<<
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODELS: ${GEMINI_MODELS:-gemini-2.5-flash,gemini-2.0-flash}
+      GEMINI_MAX_TOKENS: ${GEMINI_MAX_TOKENS:-1024}
+    # Internal only — the backend reaches it at http://ai-service:8090. Expose for local debugging if needed.
+
   backend:
     build: .
+    restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
+      ai-service:
+        condition: service_started
     environment:
+      # Use the LangChain.js sidecar as the primary AI provider.
+      AI_SERVICE_URL: http://ai-service:8090
       # Override the dev (localhost:3307) datasource to reach the mysql service.
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/project_management?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
-      # Let Hibernate create the schema in the fresh container DB; data.sql then seeds it.
+      # Let Hibernate create the schema in the fresh container DB; schema.sql adds extra columns
+      # (continue-on-error) and data.sql then seeds it.
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      # Optional — enables live AI assistant when provided by the host.
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Optional secrets — passed through from the host environment when present.
+      # (AI runs through the ai-service sidecar above; no LLM keys are needed by the backend.)
+      JWT_SECRET: ${JWT_SECRET:-}
+      # Brevo transactional email (REST API) — primary email provider when set.
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:-}
+      BREVO_SENDER_NAME: ${BREVO_SENDER_NAME:-TaskMaster Pro}
+      # Optional SMTP (set EMAIL_ENABLED=true plus the SMTP_* vars to send real email).
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    # Host port 8074 (not 8073) to avoid clashing with a local dev backend already on 8073.
+    # Inside the stack the app still listens on 8073, and nginx proxies the SPA's /api there.
     ports:
-      - "8073:8073"
+      - "8074:8073"
+    healthcheck:
+      # Readiness = the app is accepting connections on 8073. Uses bash's /dev/tcp
+      # (the temurin image ships bash) so no curl/wget dependency is needed.
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/8073' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   frontend:
     build: ./frontend
+    restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "4200:80"
 

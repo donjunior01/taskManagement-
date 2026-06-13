@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivityLogService } from '../../../core/services/activity-log.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { PdfService } from '../../../core/services/pdf.service';
 
 interface AuditRow {
   time: string;
@@ -177,7 +178,8 @@ export class AdminActivityLogsComponent implements OnInit {
   constructor(
     private activityLogService: ActivityLogService,
     private toast: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private pdf: PdfService
   ) {}
 
   ngOnInit(): void { this.loadLogs(); }
@@ -300,28 +302,13 @@ export class AdminActivityLogsComponent implements OnInit {
   }
 
   exportPdf(): void {
-    const esc = (s: any) => (s ?? '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const esc = (s: any) => this.pdf.esc(s);
     const rows = this.filtered.map(l =>
       `<tr><td>${esc(l.time)}</td><td>${esc(l.user)}</td><td>${esc(l.role)}</td><td>${esc(l.module)}</td><td>${esc(l.action)}</td><td>${esc(l.details)}</td><td>${esc(l.ip)}</td></tr>`
     ).join('');
-    const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Journal d'activité</title>
-      <style>
-        body{font-family:Inter,Arial,sans-serif;color:#1e2540;padding:24px;}
-        h1{font-size:18px;margin:0 0 4px;} .sub{color:#64748b;font-size:12px;margin:0 0 16px;}
-        table{width:100%;border-collapse:collapse;font-size:11px;}
-        th{background:#f1f5f9;text-align:left;padding:7px 8px;text-transform:uppercase;font-size:9px;color:#64748b;letter-spacing:.4px;}
-        td{padding:7px 8px;border-top:1px solid #e2e8f0;}
-        @media print{@page{margin:14mm;}}
-      </style></head><body>
-      <h1>Journal d'activité</h1>
-      <p class="sub">${this.filtered.length} entrée(s) · exporté le ${this.fmt(new Date().toISOString())}</p>
-      <table><thead><tr><th>Horodatage</th><th>Utilisateur</th><th>Rôle</th><th>Module</th><th>Action</th><th>Détails</th><th>IP</th></tr></thead>
-      <tbody>${rows}</tbody></table>
-      <script>window.onload=function(){window.print();}</script>
-      </body></html>`;
-    const w = window.open('', '_blank');
-    if (!w) { this.toast.show("Veuillez autoriser les pop-ups pour l'export PDF.", 'error'); return; }
-    w.document.open(); w.document.write(html); w.document.close();
+    const body = `<table><thead><tr><th>Horodatage</th><th>Utilisateur</th><th>Rôle</th><th>Module</th><th>Action</th><th>Détails</th><th>IP</th></tr></thead><tbody>${rows}</tbody></table>`;
+    const ok = this.pdf.open({ title: "Journal d'activité", subtitle: `${this.filtered.length} entrée(s)`, bodyHtml: body });
+    if (!ok) { this.toast.show("Veuillez autoriser les pop-ups pour l'export PDF.", 'error'); return; }
     this.toast.show('Aperçu PDF ouvert — utilisez « Enregistrer au format PDF ».', 'success');
   }
 

@@ -19,6 +19,8 @@ public class ProjectDTO {
     private String description;
     private Long managerId;
     private String managerName;
+    private Long createdById;
+    private String createdByName;
     private LocalDate startDate;
     private LocalDate endDate;
     private Project.ProjectStatus status;

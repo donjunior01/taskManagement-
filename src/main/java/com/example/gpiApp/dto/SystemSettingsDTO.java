@@ -15,6 +15,10 @@ import lombok.NoArgsConstructor;
 public class SystemSettingsDTO {
     // Général
     private String appName;
+    private String logoUrl;
+    private String pdfHeaderColor;
+    private String pdfFooterColor;
+    private String pdfFooterText;
     private String defaultLanguage;
     private String timezone;
 

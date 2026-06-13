@@ -30,12 +30,14 @@ import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Computes portfolio analytics for a project manager: delivery KPIs (on-time rate,
@@ -73,7 +75,7 @@ public class AnalyticsService {
     //  Admin "Rapports" — portfolio-wide analytics from real persisted data
     // ──────────────────────────────────────────────────────────────────────
     @Transactional(readOnly = true)
-    public AdminReportsDTO getAdminReports() {
+    public AdminReportsDTO getAdminReports(String period) {
         List<Project> projects = projectRepository.findAll();
         List<Task> tasks = taskRepository.findAll();
         List<SupportTicket> tickets = supportTicketRepository.findAll();
@@ -82,6 +84,18 @@ public class AnalyticsService {
         List<Team> teams = teamRepository.findAll();
 
         LocalDate today = LocalDate.now();
+        // Window start for the period filter (null = all-time / "Personnalisé").
+        final LocalDate since = windowStart(period, today);
+
+        // Time-bound subsets used by the period-sensitive metrics.
+        List<TimeLog> windowLogs = since == null ? timeLogs
+                : timeLogs.stream().filter(l -> l.getLogDate() != null && !l.getLogDate().isBefore(since)).collect(Collectors.toList());
+        List<SupportTicket> windowTickets = since == null ? tickets
+                : tickets.stream().filter(t -> t.getCreatedAt() != null && !t.getCreatedAt().toLocalDate().isBefore(since)).collect(Collectors.toList());
+        List<Task> windowCompleted = tasks.stream()
+                .filter(t -> t.getStatus() == Task.TaskStatus.COMPLETED)
+                .filter(t -> { LocalDate f = completionDate(t); return since == null || (f != null && !f.isBefore(since)); })
+                .collect(Collectors.toList());
 
         // ── Executive KPIs ──
         long totalTasks = tasks.size();
@@ -89,8 +103,7 @@ public class AnalyticsService {
         double completionRate = totalTasks > 0 ? round1((double) completedTasks / totalTasks * 100) : 0;
 
         long completedWithDeadline = 0, onTime = 0;
-        for (Task t : tasks) {
-            if (t.getStatus() != Task.TaskStatus.COMPLETED) continue;
+        for (Task t : windowCompleted) {
             LocalDate finished = completionDate(t);
             if (t.getDeadline() != null && finished != null) {
                 completedWithDeadline++;
@@ -99,17 +112,17 @@ public class AnalyticsService {
         }
         double onTimeRate = completedWithDeadline > 0 ? round1((double) onTime / completedWithDeadline * 100) : 0;
 
-        double totalHours = round1(timeLogs.stream()
+        double totalHours = round1(windowLogs.stream()
                 .filter(l -> l.getHoursSpent() != null).mapToDouble(TimeLog::getHoursSpent).sum());
 
-        long ticketsTotal = tickets.size();
-        long ticketsResolved = tickets.stream()
+        long ticketsTotal = windowTickets.size();
+        long ticketsResolved = windowTickets.stream()
                 .filter(t -> t.getStatus() == SupportTicket.Status.RESOLVED || t.getStatus() == SupportTicket.Status.CLOSED)
                 .count();
         double resolvedRate = ticketsTotal > 0 ? round1((double) ticketsResolved / ticketsTotal * 100) : 0;
         double supportSatisfaction = round1(resolvedRate / 100 * 5);
 
-        double avgResolutionHours = round1(tickets.stream()
+        double avgResolutionHours = round1(windowTickets.stream()
                 .filter(t -> t.getResolvedAt() != null && t.getCreatedAt() != null)
                 .mapToLong(t -> ChronoUnit.HOURS.between(t.getCreatedAt(), t.getResolvedAt()))
                 .filter(h -> h >= 0).average().orElse(0));
@@ -125,11 +138,63 @@ public class AnalyticsService {
                 .burndown(burndown(tasks, today))
                 .dau(dau(attempts, today))
                 .resolutionTrend(resolutionTrend(tickets, today))
-                .topPerformers(topPerformers(tasks))
+                .topPerformers(topPerformers(windowCompleted))
                 .teamLoad(teamLoad(teams, tasks))
-                .ticketsByCategory(ticketsByPriority(tickets))
+                .ticketsByCategory(ticketsByPriority(windowTickets))
+                .recap(buildRecap(projects, tasks, windowLogs, today))
+                .period(period != null ? period : "all")
                 .generatedAt(LocalDateTime.now())
                 .build();
+    }
+
+    /** Window start for the period filter; null means all-time. */
+    private LocalDate windowStart(String period, LocalDate today) {
+        if (period == null) return null;
+        switch (period.toLowerCase()) {
+            case "week": case "semaine": return today.minusDays(7);
+            case "month": case "mois": return today.minusDays(30);
+            case "quarter": case "trimestre": return today.minusDays(90);
+            default: return null; // "all" / "personnalisé"
+        }
+    }
+
+    /** Real per-project recap: task counts, overdue, hours (within the window), progress, status. */
+    private List<AdminReportsDTO.RecapRowDTO> buildRecap(List<Project> projects, List<Task> tasks,
+                                                         List<TimeLog> windowLogs, LocalDate today) {
+        // Hours per project from the (already window-filtered) time logs.
+        Map<Long, Double> hoursByProject = new HashMap<>();
+        for (TimeLog l : windowLogs) {
+            if (l.getHoursSpent() == null || l.getTask() == null || l.getTask().getProject() == null) continue;
+            Long pid = l.getTask().getProject().getId();
+            hoursByProject.merge(pid, l.getHoursSpent(), Double::sum);
+        }
+        // Tasks per project.
+        Map<Long, List<Task>> tasksByProject = new HashMap<>();
+        for (Task t : tasks) {
+            if (t.getProject() == null) continue;
+            tasksByProject.computeIfAbsent(t.getProject().getId(), k -> new ArrayList<>()).add(t);
+        }
+
+        List<AdminReportsDTO.RecapRowDTO> out = new ArrayList<>();
+        for (Project p : projects) {
+            List<Task> pt = tasksByProject.getOrDefault(p.getId(), List.of());
+            long done = pt.stream().filter(t -> t.getStatus() == Task.TaskStatus.COMPLETED).count();
+            long overdue = pt.stream()
+                    .filter(t -> t.getStatus() != Task.TaskStatus.COMPLETED)
+                    .filter(t -> t.getDeadline() != null && t.getDeadline().isBefore(today))
+                    .count();
+            out.add(AdminReportsDTO.RecapRowDTO.builder()
+                    .nom(p.getName())
+                    .pm(p.getManager() != null ? (p.getManager().getFirstName() + " " + p.getManager().getLastName()).trim() : "Non assigné")
+                    .taches(pt.size())
+                    .terminees(done)
+                    .retard(overdue)
+                    .heures(round1(hoursByProject.getOrDefault(p.getId(), 0.0)))
+                    .progression(p.getProgress() != null ? p.getProgress() : 0)
+                    .statut(p.getStatus() != null ? p.getStatus().name() : "PLANNED")
+                    .build());
+        }
+        return out;
     }
 
     /** Projects bucketed by creation month over the last 12 months, split by current status. */

@@ -33,8 +33,9 @@ public class AnalyticsController {
     @Operation(summary = "Get admin portfolio reports",
             description = "Portfolio-wide KPIs and time series (status over time, burndown, DAU, resolution trend, top performers, team load, tickets) derived from real data.")
     @GetMapping("/admin/reports")
-    public ResponseEntity<ApiResponse<AdminReportsDTO>> getAdminReports() {
-        return ResponseEntity.ok(ApiResponse.success("Reports generated", analyticsService.getAdminReports()));
+    public ResponseEntity<ApiResponse<AdminReportsDTO>> getAdminReports(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String period) {
+        return ResponseEntity.ok(ApiResponse.success("Reports generated", analyticsService.getAdminReports(period)));
     }
 
     @Operation(summary = "Get live API performance metrics",

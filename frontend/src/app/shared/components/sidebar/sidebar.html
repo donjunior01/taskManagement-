@@ -2,12 +2,13 @@
   <!-- Top logo header section -->
   <div class="sidebar-header-logo">
     <div class="logo-stack-svg">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <img *ngIf="(branding.branding$ | async)?.logoUrl as logo" [src]="logo" alt="logo" class="sidebar-logo-img" />
+      <svg *ngIf="!(branding.branding$ | async)?.logoUrl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
       </svg>
     </div>
     <div class="logo-text-block">
-      <span class="logo-brand-txt">TaskMaster Pro</span>
+      <span class="logo-brand-txt">{{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</span>
       <span class="logo-sub" *ngIf="isAdmin()">Administration</span>
       <span class="logo-sub" *ngIf="isUser()">Gestion de projets</span>
       <span class="logo-sub" *ngIf="!isAdmin() && !isUser()">Project Suite</span>
@@ -347,7 +348,7 @@
     </div>
 
     <!-- Version line (prototype footer) -->
-    <div class="sidebar-version" *ngIf="isAdmin()">v2.0.1 — Spring Boot · Angular 21</div>
+    <div class="sidebar-version" *ngIf="isAdmin()">V 1.0.0 — Build by Don Junior</div>
 
     <!-- Sign Out button wrapper -->
     <div class="sidebar-footer">

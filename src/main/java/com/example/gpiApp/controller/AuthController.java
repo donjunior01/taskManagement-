@@ -38,6 +38,7 @@ public class AuthController {
     private final com.example.gpiApp.service.TotpService totpService;
     private final com.example.gpiApp.service.LoginAttemptService loginAttemptService;
     private final com.example.gpiApp.service.SystemSettingsService systemSettingsService;
+    private final com.example.gpiApp.service.IpResolverService ipResolver;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest httpRequest) {
@@ -126,13 +127,9 @@ public class AuthController {
         }
     }
 
-    /** Best-effort client IP (honours a reverse proxy's X-Forwarded-For). */
+    /** Real client IP — honours X-Forwarded-For and substitutes the machine IP for loopback (local dev). */
     private String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
+        return ipResolver.resolveClientIp(request);
     }
 
     @PostMapping("/register")

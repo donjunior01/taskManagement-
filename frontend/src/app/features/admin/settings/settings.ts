@@ -6,6 +6,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { TwoFactorService, TwoFactorSetup } from '../../../core/services/twofa.service';
 import { SystemSettingsService } from '../../../core/services/system-settings.service';
 import { ApiService } from '../../../core/services/api.service';
+import { BrandingService } from '../../../core/services/branding.service';
 
 @Component({
   selector: 'app-admin-settings',
@@ -29,6 +30,12 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   appName: string = 'TaskMaster Pro';
   defaultLanguage: string = 'Français';
   timezone: string = 'Europe/Paris (UTC+1)';
+
+  // Branding — logo + PDF header/footer (applied app-wide & in every generated PDF)
+  logoUrl: string | null = null;
+  pdfHeaderColor: string = '#1e2540';
+  pdfFooterColor: string = '#2563eb';
+  pdfFooterText: string = 'Document confidentiel — généré automatiquement';
 
   // Sécurité tab (cosmetic policy fields)
   jwtValidity: number = 60;
@@ -99,7 +106,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     private toast: ToastService,
     private twoFactorService: TwoFactorService,
     private settingsService: SystemSettingsService,
-    private api: ApiService
+    private api: ApiService,
+    private branding: BrandingService
   ) {}
 
   ngOnInit(): void {
@@ -119,6 +127,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         this.defaultLanguage = s.defaultLanguage ?? this.defaultLanguage;
         this.timezone = s.timezone ?? this.timezone;
         this.maxFileUploadSize = s.maxFileUploadMb ?? this.maxFileUploadSize;
+        // Branding
+        this.logoUrl = s.logoUrl ?? null;
+        this.pdfHeaderColor = s.pdfHeaderColor ?? this.pdfHeaderColor;
+        this.pdfFooterColor = s.pdfFooterColor ?? this.pdfFooterColor;
+        this.pdfFooterText = s.pdfFooterText ?? this.pdfFooterText;
         // Sécurité
         this.jwtValidity = s.jwtValidityMinutes ?? this.jwtValidity;
         this.maxAttempts = s.maxLoginAttempts ?? this.maxAttempts;
@@ -218,10 +231,17 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
       appName: this.appName.trim(),
       defaultLanguage: this.defaultLanguage,
       timezone: this.timezone,
-      maxFileUploadMb: this.maxFileUploadSize
+      maxFileUploadMb: this.maxFileUploadSize,
+      // empty string clears the logo on the backend; null is treated as "unchanged"
+      logoUrl: this.logoUrl ?? '',
+      pdfHeaderColor: this.pdfHeaderColor,
+      pdfFooterColor: this.pdfFooterColor,
+      pdfFooterText: this.pdfFooterText
     }).subscribe({
-      next: () => {
+      next: (s) => {
         this.submitting = false;
+        // Reflect the new identity everywhere live (sidebar, login, register, PDFs).
+        this.branding.apply(s);
         this.triggerToast('Paramètres généraux enregistrés avec succès.', 'success');
       },
       error: () => {
@@ -230,6 +250,28 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  /** Read a chosen logo file as a data-URI so it can be stored and shown without auth. */
+  onLogoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files[0];
+    if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      this.triggerToast('Veuillez choisir un fichier image (PNG, JPG, SVG…).', 'error');
+      return;
+    }
+    if (file.size > 512 * 1024) {
+      this.triggerToast('Le logo doit faire moins de 512 Ko.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => { this.logoUrl = reader.result as string; };
+    reader.onerror = () => this.triggerToast('Impossible de lire le fichier image.', 'error');
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  removeLogo(): void { this.logoUrl = null; }
 
   /** Persist the Sécurité tab (password policy + session/lockout limits). */
   saveSecurity(): void {

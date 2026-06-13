@@ -27,6 +27,20 @@ public class SystemSettingsController {
         return ResponseEntity.ok(settingsService.getSettingsDTO());
     }
 
+    @Operation(summary = "Get public branding (app name, logo, PDF colours)",
+            description = "Unauthenticated — used by the login/registration pages and app-wide branding.")
+    @GetMapping("/branding")
+    public ResponseEntity<com.example.gpiApp.dto.BrandingDTO> getBranding() {
+        return ResponseEntity.ok(settingsService.getBranding());
+    }
+
+    @Operation(summary = "Get public password policy",
+            description = "Unauthenticated — lets the registration page show & validate the password requirements.")
+    @GetMapping("/password-policy")
+    public ResponseEntity<com.example.gpiApp.dto.PasswordPolicyDTO> getPasswordPolicy() {
+        return ResponseEntity.ok(settingsService.getPasswordPolicy());
+    }
+
     @Operation(summary = "Update general settings (admin only)")
     @PutMapping("/general")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")

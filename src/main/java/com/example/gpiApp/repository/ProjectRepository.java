@@ -30,6 +30,14 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT COUNT(p) FROM Project p WHERE p.status = :status")
     Long countByStatus(@Param("status") Project.ProjectStatus status);
 
+    /** Total projects created by a given admin (drives the per-admin dashboard count). */
+    @Query("SELECT COUNT(p) FROM Project p WHERE p.createdBy.id = :userId")
+    long countByCreatedById(@Param("userId") Long userId);
+
+    /** Projects created by a given admin in a given status. */
+    @Query("SELECT COUNT(p) FROM Project p WHERE p.createdBy.id = :userId AND p.status = :status")
+    long countByCreatedByIdAndStatus(@Param("userId") Long userId, @Param("status") Project.ProjectStatus status);
+
     /** Distinct projects a user works on — as manager OR as a member of one of the project's teams. */
     @Query("SELECT COUNT(DISTINCT p) FROM Project p LEFT JOIN p.teams t LEFT JOIN t.members m " +
            "WHERE (p.archived = false OR p.archived IS NULL) AND (p.manager.id = :userId OR m.id = :userId)")

@@ -30,6 +30,23 @@ public class SystemSettings {
     @Builder.Default
     private String appName = "TaskMaster Pro";
 
+    /** Application logo — a data-URI (base64) or external URL, shown app-wide (sidebar, login, register, PDFs). */
+    @Column(name = "logo_url", columnDefinition = "LONGTEXT")
+    private String logoUrl;
+
+    // ── Branding PDF (header/footer of every generated PDF) ──────────────────
+    @Column(name = "pdf_header_color")
+    @Builder.Default
+    private String pdfHeaderColor = "#1e2540";
+
+    @Column(name = "pdf_footer_color")
+    @Builder.Default
+    private String pdfFooterColor = "#2563eb";
+
+    @Column(name = "pdf_footer_text")
+    @Builder.Default
+    private String pdfFooterText = "Document confidentiel — généré automatiquement";
+
     @Column(name = "default_language", nullable = false)
     @Builder.Default
     private String defaultLanguage = "Français";

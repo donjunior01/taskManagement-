@@ -34,7 +34,7 @@ class AiAssistantServiceTest {
 
     @Mock private ProjectRepository projectRepository;
     @Mock private TaskRepository taskRepository;
-    @Mock private ClaudeAiClient claudeClient;
+    @Mock private LangChainAiClient langChainClient;
     @InjectMocks private AiAssistantService service;
 
     private Project project;
@@ -47,8 +47,8 @@ class AiAssistantServiceTest {
                 .endDate(LocalDate.now().plusDays(30))
                 .build();
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
-        // No API key in tests → assistant must use the rule-based engine (source = MOCK).
-        lenient().when(claudeClient.isEnabled()).thenReturn(false);
+        // No AI sidecar in tests → assistant must use the rule-based engine (source = MOCK).
+        lenient().when(langChainClient.isEnabled()).thenReturn(false);
     }
 
     private Task task(String name, Task.TaskStatus status, Task.TaskPriority priority,

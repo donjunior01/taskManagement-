@@ -35,7 +35,9 @@ public class AdminReportsDTO {
     private List<PerformerDTO> topPerformers;         // top 6
     private List<TeamLoadDTO> teamLoad;               // per team
     private List<CategoryCountDTO> ticketsByCategory; // by priority
+    private List<RecapRowDTO> recap;                  // per-project summary
 
+    private String period;                            // echo of the applied period filter
     private LocalDateTime generatedAt;
 
     @Data @NoArgsConstructor @AllArgsConstructor @Builder
@@ -81,5 +83,17 @@ public class AdminReportsDTO {
     public static class CategoryCountDTO {
         private String name;
         private long value;
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class RecapRowDTO {
+        private String nom;
+        private String pm;
+        private long taches;
+        private long terminees;
+        private long retard;
+        private double heures;
+        private int progression;
+        private String statut;
     }
 }

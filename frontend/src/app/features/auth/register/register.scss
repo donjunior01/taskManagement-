@@ -313,3 +313,33 @@
   .form-title, .register-form, .error-alert, .card-footer { padding-left: 22px; padding-right: 22px; }
   .form-title { font-size: 16px; margin: 18px 0 14px; }
 }
+
+/* ════════════════════════════════════════════════
+   PASSWORD REQUIREMENTS CHECKLIST
+   ════════════════════════════════════════════════ */
+.password-rules {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.password-rules li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-muted, #64748b);
+  transition: color .2s ease;
+}
+.password-rules li svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: #cbd5e1;
+}
+.password-rules li.met {
+  color: #16a34a;
+  font-weight: 600;
+}
+.password-rules li.met svg { color: #16a34a; }

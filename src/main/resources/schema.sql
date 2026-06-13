@@ -381,6 +381,9 @@ ALTER TABLE `system_settings` ADD COLUMN `notify_on_suspicious_login` BOOLEAN NO
 ALTER TABLE `system_settings` ADD COLUMN `notify_on_project_overdue` BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE `system_settings` ADD COLUMN `backup_retention_days` INT NOT NULL DEFAULT 30;
 
+-- Project creator (per-admin project ownership & traceability). Harmless duplicate-column error on re-run.
+ALTER TABLE `projects` ADD COLUMN `created_by` BIGINT;
+
 -- Archive flag for projects (admin "archive" action). Harmless duplicate-column error on re-run.
 ALTER TABLE `projects` ADD COLUMN `archived` BOOLEAN NOT NULL DEFAULT FALSE;
 
@@ -398,6 +401,12 @@ CREATE TABLE IF NOT EXISTS `blocked_ips` (
 ALTER TABLE `calendar_events` ADD COLUMN `series_id` VARCHAR(64);
 
 ALTER TABLE `system_settings` ADD COLUMN `max_file_upload_mb` INT NOT NULL DEFAULT 100;
+
+-- Branding: app logo (data-URI or URL) + PDF header/footer colours and footer text.
+ALTER TABLE `system_settings` ADD COLUMN `logo_url` LONGTEXT;
+ALTER TABLE `system_settings` ADD COLUMN `pdf_header_color` VARCHAR(20) DEFAULT '#1e2540';
+ALTER TABLE `system_settings` ADD COLUMN `pdf_footer_color` VARCHAR(20) DEFAULT '#2563eb';
+ALTER TABLE `system_settings` ADD COLUMN `pdf_footer_text` VARCHAR(255) DEFAULT 'Document confidentiel — généré automatiquement';
 
 -- Message attachments (group chat / messaging). Duplicate-column errors harmless on re-run.
 ALTER TABLE `messages` ADD COLUMN `attachment_url` VARCHAR(500);

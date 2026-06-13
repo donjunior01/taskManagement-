@@ -91,7 +91,12 @@ public class ProjectService {
             userRepository.findById(request.getManagerId())
                     .ifPresent(project::setManager);
         }
-        
+
+        // Record the creator (drives per-admin project counts & traceability).
+        if (createdById != null) {
+            userRepository.findById(createdById).ifPresent(project::setCreatedBy);
+        }
+
         Project savedProject = projectRepository.save(project);
         
         // Log activity
@@ -276,8 +281,11 @@ public class ProjectService {
                 .name(project.getName())
                 .description(project.getDescription())
                 .managerId(project.getManager() != null ? project.getManager().getId() : null)
-                .managerName(project.getManager() != null ? 
+                .managerName(project.getManager() != null ?
                         project.getManager().getFirstName() + " " + project.getManager().getLastName() : null)
+                .createdById(project.getCreatedBy() != null ? project.getCreatedBy().getId() : null)
+                .createdByName(project.getCreatedBy() != null ?
+                        project.getCreatedBy().getFirstName() + " " + project.getCreatedBy().getLastName() : null)
                 .startDate(project.getStartDate())
                 .endDate(project.getEndDate())
                 .status(project.getStatus())

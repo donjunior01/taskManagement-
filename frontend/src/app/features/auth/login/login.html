@@ -12,7 +12,7 @@
       </div>
       <div class="suspended-modal-body">
         <h3>Account Suspended</h3>
-        <p class="suspended-lead">Your access to <strong>ApexTask</strong> has been suspended by an administrator.</p>
+        <p class="suspended-lead">Your access to <strong>{{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</strong> has been suspended by an administrator.</p>
         <div class="suspended-info-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
@@ -40,11 +40,12 @@
   <div class="login-card glass-panel animate-scale-in" [class.shake-element]="errorMessage">
     <div class="brand-header">
       <div class="brand-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <img *ngIf="(branding.branding$ | async)?.logoUrl as logo" [src]="logo" alt="logo" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;" />
+        <svg *ngIf="!(branding.branding$ | async)?.logoUrl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
         </svg>
       </div>
-      <h1>ApexTask</h1>
+      <h1>{{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</h1>
       <p class="brand-subtitle">Streamlined Enterprise Task Workspace</p>
     </div>
 
@@ -173,7 +174,7 @@
     </form>
 
     <div class="card-footer">
-      <p>New to ApexTask? <a routerLink="/register" class="register-link">Create corporate account</a></p>
+      <p>New to {{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}? <a routerLink="/register" class="register-link">Create corporate account</a></p>
     </div>
   </div>
 </div>

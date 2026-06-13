@@ -33,9 +33,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AiChatService {
 
-    private final OpenAiClient openAiClient;
-    private final ClaudeAiClient claudeClient;
-    private final GeminiAiClient geminiClient;
+    private final LangChainAiClient langChainClient;
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
@@ -125,11 +123,9 @@ public class AiChatService {
         }
         turns.add(Map.of("role", "user", "content", "CONTEXT:\n" + context + "\n\nQUESTION:\n" + message));
 
-        // Provider chain: OpenAI (gpt-4o, primary) → Anthropic Claude → Google Gemini → deterministic fallback.
+        // AI via the LangChain.js + Gemini sidecar; deterministic, data-grounded fallback otherwise.
         final List<Map<String, String>> chatTurns = turns;
-        return openAiClient.chat(ASSISTANT_SYSTEM_PROMPT, chatTurns)
-                .or(() -> claudeClient.chat(ASSISTANT_SYSTEM_PROMPT, chatTurns))
-                .or(() -> geminiClient.chat(ASSISTANT_SYSTEM_PROMPT, chatTurns))
+        return langChainClient.chat(ASSISTANT_SYSTEM_PROMPT, chatTurns)
                 .map(reply -> AiChatResponseDTO.builder().reply(reply).source("AI").build())
                 .orElseGet(() -> AiChatResponseDTO.builder()
                         .reply(fallbackChat(request, message, context))
@@ -210,10 +206,10 @@ public class AiChatService {
     }
 
     private String fallbackChat(AiChatRequestDTO request, String message, String context) {
-        // Deterministic, data-grounded reply when all providers are unavailable.
-        return "AI service is not configured, so here is the relevant information from your workspace:\n\n"
+        // Deterministic, data-grounded reply when the AI sidecar is unavailable.
+        return "The AI assistant is offline right now, so here is the relevant information from your workspace:\n\n"
                 + context
-                + "\nTip: set OPENAI_API_KEY (or ANTHROPIC_API_KEY / GEMINI_API_KEY) to get conversational answers and tailored guidance.";
+                + "\nTip: start the LangChain.js AI service (cd ai-service && npm start) with a valid GEMINI_API_KEY to get conversational answers and tailored guidance.";
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -231,9 +227,7 @@ public class AiChatService {
         String userContent = "Type: " + type + "\nTitle: " + name
                 + (context.isEmpty() ? "" : "\nContext: " + context);
 
-        return openAiClient.complete(DESCRIPTION_SYSTEM_PROMPT, userContent)
-                .or(() -> claudeClient.complete(DESCRIPTION_SYSTEM_PROMPT, userContent))
-                .or(() -> geminiClient.complete(DESCRIPTION_SYSTEM_PROMPT, userContent))
+        return langChainClient.complete(DESCRIPTION_SYSTEM_PROMPT, userContent)
                 .map(String::trim)
                 .orElseGet(() -> fallbackDescription(type, name, context));
     }
@@ -266,9 +260,7 @@ public class AiChatService {
                 + (task.getDeadline() != null ? "\nDeadline: " + task.getDeadline() : "")
                 + "\nPriority: " + task.getPriority();
 
-        return openAiClient.complete(GUIDANCE_SYSTEM_PROMPT, userContent)
-                .or(() -> claudeClient.complete(GUIDANCE_SYSTEM_PROMPT, userContent))
-                .or(() -> geminiClient.complete(GUIDANCE_SYSTEM_PROMPT, userContent))
+        return langChainClient.complete(GUIDANCE_SYSTEM_PROMPT, userContent)
                 .map(reply -> AiChatResponseDTO.builder().reply(reply).source("AI").build())
                 .orElseGet(() -> AiChatResponseDTO.builder()
                         .reply(fallbackGuidance(task)).source("MOCK").build());

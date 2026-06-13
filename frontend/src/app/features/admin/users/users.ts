@@ -37,6 +37,7 @@ export class AdminUsersComponent implements OnInit {
   // Derived data (no dedicated user fields → computed from real sources)
   private lastLoginMap = new Map<string, string>();   // username/email → last successful login date
   private projectCountMap = new Map<number, number>(); // userId → projects managed/joined
+  private createdByCountMap = new Map<number, number>(); // userId → projects this user created (admins)
 
   // Modals Visibility
   showAddModal: boolean = false;
@@ -104,13 +105,17 @@ export class AdminUsersComponent implements OnInit {
       next: (r: any) => {
         const list: any[] = r && r.data ? r.data : (Array.isArray(r) ? r : []);
         const m = new Map<number, number>();
-        const bump = (id: any) => { if (id != null) m.set(Number(id), (m.get(Number(id)) || 0) + 1); };
+        const created = new Map<number, number>();
+        const bump = (map: Map<number, number>, id: any) => { if (id != null) map.set(Number(id), (map.get(Number(id)) || 0) + 1); };
         list.forEach(p => {
-          bump(p.managerId);
+          bump(m, p.managerId);
           const members = p.members || p.memberIds || p.team?.members || [];
-          (Array.isArray(members) ? members : []).forEach((mem: any) => bump(typeof mem === 'number' ? mem : mem?.id ?? mem?.userId));
+          (Array.isArray(members) ? members : []).forEach((mem: any) => bump(m, typeof mem === 'number' ? mem : mem?.id ?? mem?.userId));
+          // Per-admin "created projects" count (matches the backend createdBy scoping).
+          bump(created, p.createdById);
         });
         this.projectCountMap = m;
+        this.createdByCountMap = created;
         this.cdr.detectChanges();
       },
       error: () => {}
@@ -212,9 +217,13 @@ export class AdminUsersComponent implements OnInit {
   }
 
   projectCount(u: User): number {
-    // Prefer the backend-computed count (managed + team membership; total for admins),
-    // falling back to the client-side managed-project count.
-    const v = (u as any).projectCount ?? (u.id != null ? this.projectCountMap.get(u.id) : undefined);
+    // Admins → projects they personally created; everyone else → projects managed + joined.
+    // Prefer the backend-computed count, falling back to the matching client-side map.
+    const isAdmin = this.roleOf(u) === 'ADMIN';
+    const fallback = u.id != null
+      ? (isAdmin ? this.createdByCountMap.get(u.id) : this.projectCountMap.get(u.id))
+      : undefined;
+    const v = (u as any).projectCount ?? fallback;
     return v ?? 0;
   }
 

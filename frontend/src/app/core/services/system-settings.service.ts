@@ -6,6 +6,10 @@ import { ApiService } from './api.service';
 export interface SystemSettings {
   // Général
   appName: string;
+  logoUrl: string | null;
+  pdfHeaderColor: string;
+  pdfFooterColor: string;
+  pdfFooterText: string;
   defaultLanguage: string;
   timezone: string;
   // Sécurité
@@ -36,6 +40,13 @@ export interface SystemSettings {
   maxFileUploadMb: number;
 }
 
+export interface PasswordPolicy {
+  minLength: number;
+  requireUppercase: boolean;
+  requireDigit: boolean;
+  requireSpecial: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SystemSettingsService {
   /** Live application settings — components can subscribe to react to the configured app name. */
@@ -52,6 +63,11 @@ export class SystemSettingsService {
     return this.api.get<SystemSettings>('/settings').pipe(
       tap(s => this.settingsSubject.next(s))
     );
+  }
+
+  /** Public password policy (no auth) — for the registration page's live guidance/validation. */
+  getPasswordPolicy(): Observable<PasswordPolicy> {
+    return this.api.get<PasswordPolicy>('/settings/password-policy');
   }
 
   updateGeneral(patch: Partial<SystemSettings>): Observable<SystemSettings> {

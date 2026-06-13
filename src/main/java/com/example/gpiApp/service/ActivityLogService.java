@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 public class ActivityLogService {
     
     private final ActivityLogRepository activityLogRepository;
+    private final IpResolverService ipResolver;
     
     @Transactional(readOnly = true)
     public PagedResponse<ActivityLogDTO> getAllActivityLogs(int page, int size) {
@@ -87,7 +88,7 @@ public class ActivityLogService {
     }
     
     @Transactional
-    public void logActivity(ActivityLog.ActivityType activityType, String description, allUsers user, 
+    public void logActivity(ActivityLog.ActivityType activityType, String description, allUsers user,
                            String entityType, Long entityId, String ipAddress) {
         ActivityLog activityLog = ActivityLog.builder()
                 .activityType(activityType)
@@ -95,21 +96,27 @@ public class ActivityLogService {
                 .user(user)
                 .entityType(entityType)
                 .entityId(entityId)
-                .ipAddress(ipAddress)
+                .ipAddress(resolveIp(ipAddress))
                 .build();
-        
+
         activityLogRepository.save(activityLog);
     }
-    
+
     @Transactional
     public void logSecurityAlert(String description, String ipAddress) {
         ActivityLog activityLog = ActivityLog.builder()
                 .activityType(ActivityLog.ActivityType.SECURITY_ALERT)
                 .description(description)
-                .ipAddress(ipAddress)
+                .ipAddress(resolveIp(ipAddress))
                 .build();
-        
+
         activityLogRepository.save(activityLog);
+    }
+
+    /** Use the caller-supplied IP, else resolve the real IP from the current request (the common case). */
+    private String resolveIp(String ipAddress) {
+        if (ipAddress != null && !ipAddress.isBlank()) return ipAddress;
+        try { return ipResolver.resolveCurrentRequestIp(); } catch (Exception e) { return null; }
     }
     
     private ActivityLogDTO convertToDTO(ActivityLog activityLog) {

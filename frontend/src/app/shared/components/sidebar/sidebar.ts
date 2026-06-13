@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { BadgeCountsService } from '../../../core/services/badge-counts.service';
+import { BrandingService } from '../../../core/services/branding.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -29,6 +30,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private badges: BadgeCountsService,
+    public branding: BrandingService,
     private cdr: ChangeDetectorRef
   ) {
     this.currentUser = this.authService.getCurrentUser();

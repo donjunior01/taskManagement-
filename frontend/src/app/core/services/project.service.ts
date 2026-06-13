@@ -8,6 +8,8 @@ export interface Project {
   description?: string;
   managerId?: number;
   managerName?: string;
+  createdById?: number;
+  createdByName?: string;
   startDate?: string;
   endDate?: string;
   status?: string;

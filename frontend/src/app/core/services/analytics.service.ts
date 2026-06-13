@@ -42,8 +42,9 @@ export class AnalyticsService {
   }
 
   /** Portfolio-wide report analytics (real data). Response is wrapped in ApiResponse.data. */
-  getAdminReports(): Observable<any> {
-    return this.apiService.get<any>('/analytics/admin/reports');
+  getAdminReports(period?: string): Observable<any> {
+    const q = period ? `?period=${encodeURIComponent(period)}` : '';
+    return this.apiService.get<any>(`/analytics/admin/reports${q}`);
   }
 
   /** Live API performance metrics (real request metrics). Wrapped in ApiResponse.data. */

@@ -30,17 +30,45 @@ public class UserServiceImpl implements UserService {
     private final com.example.gpiApp.service.SystemSettingsService systemSettingsService;
     private final com.example.gpiApp.service.EmailService emailService;
     private final com.example.gpiApp.repository.ProjectRepository projectRepository;
+    private final com.example.gpiApp.service.ActivityLogService activityLogService;
 
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, NotificationService notificationService,
                            com.example.gpiApp.service.SystemSettingsService systemSettingsService,
                            com.example.gpiApp.service.EmailService emailService,
-                           com.example.gpiApp.repository.ProjectRepository projectRepository) {
+                           com.example.gpiApp.repository.ProjectRepository projectRepository,
+                           com.example.gpiApp.service.ActivityLogService activityLogService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.notificationService = notificationService;
         this.systemSettingsService = systemSettingsService;
         this.emailService = emailService;
         this.projectRepository = projectRepository;
+        this.activityLogService = activityLogService;
+    }
+
+    /** The admin/user performing the current request, resolved from the security context (for traceability). */
+    private allUsers currentActor() {
+        try {
+            org.springframework.security.core.Authentication auth =
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || auth.getName() == null) return null;
+            String name = auth.getName();
+            try {
+                return userRepository.findById(Long.parseLong(name)).orElse(null);
+            } catch (NumberFormatException e) {
+                return userRepository.findByEmail(name)
+                        .orElseGet(() -> userRepository.findByUsername(name).orElse(null));
+            }
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Best-effort traceability log for an admin action on a user account. */
+    private void logUserAction(com.example.gpiApp.entity.ActivityLog.ActivityType type, String description, Long targetUserId) {
+        try {
+            activityLogService.logActivity(type, description, currentActor(), "USER", targetUserId, null);
+        } catch (Exception ignore) { /* never let logging break the action */ }
     }
 
     @Override
@@ -133,6 +161,9 @@ public class UserServiceImpl implements UserService {
                 null,
                 null
             );
+            logUserAction(com.example.gpiApp.entity.ActivityLog.ActivityType.USER_CREATED,
+                    "User account '" + savedAllUsers.getUsername() + "' (" + savedAllUsers.getRole() + ") was created",
+                    savedAllUsers.getId());
             UserDTO userDTO = convertToDTO(savedAllUsers);
             return new UserResponseDTO(true, "allUsers created successfully", userDTO);
         } catch (Exception e) {
@@ -203,6 +234,9 @@ public class UserServiceImpl implements UserService {
             allUsers updatedAllUsers = userRepository.save(existingAllUsers);
             System.out.println("allUsers saved successfully: " + updatedAllUsers);
 
+            logUserAction(com.example.gpiApp.entity.ActivityLog.ActivityType.USER_UPDATED,
+                    "User account '" + updatedAllUsers.getUsername() + "' was updated",
+                    updatedAllUsers.getId());
             UserDTO userDTO = convertToDTO(updatedAllUsers);
             return new UserResponseDTO(true, "allUsers updated successfully", userDTO);
         } catch (Exception e) {
@@ -214,10 +248,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDTO deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
+        Optional<allUsers> target = userRepository.findById(id);
+        if (target.isEmpty()) {
             return new UserResponseDTO(false, "allUsers not found", null);
         }
+        String username = target.get().getUsername();
         userRepository.deleteById(id);
+        logUserAction(com.example.gpiApp.entity.ActivityLog.ActivityType.USER_DELETED,
+                "User account '" + username + "' was deleted", id);
         return new UserResponseDTO(true, "allUsers deleted successfully", null);
     }
 
@@ -273,6 +311,8 @@ public class UserServiceImpl implements UserService {
         allUsers updatedUser = userRepository.findById(id).orElse(user);
         
         String status = updatedUser.isActive() ? "activated" : "suspended";
+        logUserAction(com.example.gpiApp.entity.ActivityLog.ActivityType.USER_UPDATED,
+                "User account '" + updatedUser.getUsername() + "' was " + status, id);
         return new UserResponseDTO(true, "User account " + status + " successfully", convertToDTO(updatedUser));
     }
 
@@ -301,10 +341,10 @@ public class UserServiceImpl implements UserService {
         userDTO.setFullName(allUsers.getFirstName() + " " + allUsers.getLastName());
         userDTO.setActive(allUsers.isActive());
         userDTO.setCreatedAt(allUsers.getCreatedAt());
-        // Admins oversee everything → show the total project count; everyone else → their own projects.
+        // Admins → projects they personally created (per-admin traceability); everyone else → their own projects.
         try {
             userDTO.setProjectCount(allUsers.getRole() == Role.ADMIN
-                    ? projectRepository.count()
+                    ? projectRepository.countByCreatedById(allUsers.getId())
                     : projectRepository.countProjectsByUser(allUsers.getId()));
         } catch (Exception e) {
             userDTO.setProjectCount(0L);
