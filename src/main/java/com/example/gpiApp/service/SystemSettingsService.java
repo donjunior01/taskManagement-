@@ -44,6 +44,23 @@ public class SystemSettingsService {
                 .build();
     }
 
+    /**
+     * Human language name for AI prompts, derived from the admin-configured default language
+     * (Configuration → Général). Drives the language the AI assistant replies in.
+     */
+    public String getAiLanguageName() {
+        try {
+            String lang = getSettings().getDefaultLanguage();
+            if (lang == null || lang.isBlank()) return "French";
+            String l = lang.toLowerCase();
+            if (l.contains("fran")) return "French";
+            if (l.contains("eng")) return "English";
+            return lang;
+        } catch (Exception e) {
+            return "French";
+        }
+    }
+
     /** Public branding payload (app name, logo, PDF colours) — safe for unauthenticated pages. */
     public com.example.gpiApp.dto.BrandingDTO getBranding() {
         SystemSettings s = getSettings();

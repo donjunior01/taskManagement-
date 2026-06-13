@@ -55,7 +55,7 @@ public class AiAssistantService {
              "recommendations": ["<short actionable recommendation>", "..."]}
             Rules: base everything strictly on the data provided; do not invent tasks or numbers;
             keep the summary under 80 words; provide 1 to 4 recommendations ordered by impact;
-            use plain ASCII characters only (no emoji, no special dashes).""";
+            do not use emoji (accented characters for the response language are fine).""";
 
     private static final String PRIORITIES_SYSTEM_PROMPT = """
             You are a project-management assistant embedded in a task-management application.
@@ -65,7 +65,7 @@ public class AiAssistantService {
             {"overallAdvice": "<one sentence of overall guidance>",
              "reasons": [{"taskId": <number>, "reason": "<short justification for this task's urgency>"}]}
             Rules: base everything strictly on the data provided; do not invent tasks; provide one
-            reason per task given; keep each reason under 25 words; use plain ASCII characters only.""";
+            reason per task given; keep each reason under 25 words; do not use emoji.""";
 
     private static final String RISK_SYSTEM_PROMPT = """
             You are a project-management assistant embedded in a task-management application.
@@ -75,12 +75,21 @@ public class AiAssistantService {
             Respond with a SINGLE JSON object and nothing else, matching exactly:
             {"summary": "<2-4 sentence risk assessment naming the biggest threats>"}
             Rules: base everything strictly on the data provided; do not invent tasks or dates;
-            keep the summary under 80 words; use plain ASCII characters only (no emoji, no special dashes).""";
+            keep the summary under 80 words; do not use emoji (accented characters for the response language are fine).""";
 
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
     private final LangChainAiClient langChainClient;
+    private final SystemSettingsService systemSettings;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
+    /** Append a language directive so AI narratives are written in the admin-configured language. */
+    private String withLanguage(String systemPrompt) {
+        String lang = systemSettings.getAiLanguageName();
+        return systemPrompt + "\n\nLANGUAGE: Write every text field of your response (summary, headline, "
+                + "recommendations, advice, reasons) entirely in " + lang
+                + ", using that language's normal accented characters. Keep JSON keys and enum values unchanged.";
+    }
 
     /** True when the LangChain.js + Gemini sidecar is configured; otherwise the rule-based engine is used. */
     private boolean anyAiEnabled() {
@@ -236,7 +245,7 @@ public class AiAssistantService {
                 node.put("deadline", t.getDeadline() != null ? t.getDeadline().toString() : null);
             }
             String payloadJson = mapper.writeValueAsString(payload);
-            Optional<String> response = langChainClient.complete(SUMMARY_SYSTEM_PROMPT, payloadJson);
+            Optional<String> response = langChainClient.complete(withLanguage(SUMMARY_SYSTEM_PROMPT), payloadJson);
             if (response.isEmpty()) return Optional.empty();
 
             JsonNode json = parseJsonObject(response.get(), mapper);
@@ -394,7 +403,7 @@ public class AiAssistantService {
                 node.put("urgencyScore", s.getUrgencyScore());
             }
             String payloadJson = mapper.writeValueAsString(payload);
-            Optional<String> response = langChainClient.complete(PRIORITIES_SYSTEM_PROMPT, payloadJson);
+            Optional<String> response = langChainClient.complete(withLanguage(PRIORITIES_SYSTEM_PROMPT), payloadJson);
             if (response.isEmpty()) return Optional.empty();
 
             JsonNode json = parseJsonObject(response.get(), mapper);
@@ -693,7 +702,7 @@ public class AiAssistantService {
                 node.put("deadline", r.getDeadline());
             }
             String payloadJson = mapper.writeValueAsString(payload);
-            Optional<String> response = langChainClient.complete(RISK_SYSTEM_PROMPT, payloadJson);
+            Optional<String> response = langChainClient.complete(withLanguage(RISK_SYSTEM_PROMPT), payloadJson);
             if (response.isEmpty()) return Optional.empty();
             JsonNode json = parseJsonObject(response.get(), mapper);
             if (json == null || !json.hasNonNull("summary")) return Optional.empty();

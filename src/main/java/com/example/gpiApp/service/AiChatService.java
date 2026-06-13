@@ -34,6 +34,7 @@ import java.util.Map;
 public class AiChatService {
 
     private final LangChainAiClient langChainClient;
+    private final SystemSettingsService systemSettings;
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
@@ -76,20 +77,20 @@ public class AiChatService {
             Rules: base factual statements about specific projects/tasks/users strictly on the CONTEXT provided
             in the user message; if the context lacks the answer, say so instead of inventing. For "how to use
             the app" questions, you may rely on the APPLICATION GUIDE above. Be concise and practical. Use short
-            paragraphs or bullet points. Use plain ASCII characters (no emoji).
+            paragraphs or bullet points. Do not use emoji (accented characters for the response language are fine).
             """;
 
     private static final String DESCRIPTION_SYSTEM_PROMPT = """
             You are a writing assistant for a project & task management application. Given an item type
             (project, task, or deliverable), a title, and optional context, write a single clear, professional
             description of 2 to 4 sentences that states the objective, the expected outcome, and any obvious
-            scope. Respond with ONLY the description text, no preamble, no quotes, plain ASCII characters.
+            scope. Respond with ONLY the description text, no preamble, no quotes, no emoji.
             """;
 
     private static final String GUIDANCE_SYSTEM_PROMPT = """
             You are a delivery coach in a task management application. Given a task's title and description,
             explain briefly what is being asked, then propose a short ordered checklist (3 to 6 steps) of how
-            to approach and complete it. Respond in plain ASCII. Format as: a one-line summary, then steps as
+            to approach and complete it. Do not use emoji. Format as: a one-line summary, then steps as
             lines beginning with a number and a period (e.g. "1. ...").
             """;
 
@@ -125,7 +126,7 @@ public class AiChatService {
 
         // AI via the LangChain.js + Gemini sidecar; deterministic, data-grounded fallback otherwise.
         final List<Map<String, String>> chatTurns = turns;
-        return langChainClient.chat(ASSISTANT_SYSTEM_PROMPT, chatTurns)
+        return langChainClient.chat(withLanguage(ASSISTANT_SYSTEM_PROMPT), chatTurns)
                 .map(reply -> AiChatResponseDTO.builder().reply(reply).source("AI").build())
                 .orElseGet(() -> AiChatResponseDTO.builder()
                         .reply(fallbackChat(request, message, context))
@@ -189,24 +190,30 @@ public class AiChatService {
         if (userId == null) return "No signed-in user context is available.";
         allUsers user = userRepository.findById(userId).orElse(null);
         if (user == null) return "No signed-in user context is available.";
+        boolean fr = isFrench();
         List<Task> tasks = taskRepository.findByAssignedTo(user);
         StringBuilder sb = new StringBuilder();
-        sb.append("USER: ").append(fullName(user)).append('\n');
-        sb.append("Assigned tasks (").append(tasks.size()).append("):\n");
+        sb.append(fr ? "UTILISATEUR : " : "USER: ").append(fullName(user)).append('\n');
+        sb.append(fr ? "Tâches assignées (" : "Assigned tasks (").append(tasks.size()).append("):\n");
         for (Task t : tasks) {
             sb.append("  - ").append(safe(t.getName()))
               .append(" [").append(t.getStatus()).append(", ").append(t.getPriority())
-              .append(t.getDeadline() != null ? ", due " + t.getDeadline() : "")
+              .append(t.getDeadline() != null ? (fr ? ", échéance " : ", due ") + t.getDeadline() : "")
               .append(", ").append(t.getProgress() == null ? 0 : t.getProgress()).append("%]")
-              .append(t.getProject() != null ? " in " + safe(t.getProject().getName()) : "")
+              .append(t.getProject() != null ? (fr ? " dans " : " in ") + safe(t.getProject().getName()) : "")
               .append('\n');
         }
-        if (tasks.isEmpty()) sb.append("  (no tasks currently assigned)\n");
+        if (tasks.isEmpty()) sb.append(fr ? "  (aucune tâche assignée actuellement)\n" : "  (no tasks currently assigned)\n");
         return sb.toString();
     }
 
     private String fallbackChat(AiChatRequestDTO request, String message, String context) {
         // Deterministic, data-grounded reply when the AI sidecar is unavailable.
+        if (isFrench()) {
+            return "L'assistant IA est hors ligne pour le moment. Voici les informations pertinentes de votre espace de travail :\n\n"
+                    + context
+                    + "\nConseil : démarrez le service IA (cd ai-service && npm start) avec une clé GEMINI_API_KEY valide pour obtenir des réponses conversationnelles et des conseils personnalisés.";
+        }
         return "The AI assistant is offline right now, so here is the relevant information from your workspace:\n\n"
                 + context
                 + "\nTip: start the LangChain.js AI service (cd ai-service && npm start) with a valid GEMINI_API_KEY to get conversational answers and tailored guidance.";
@@ -227,15 +234,22 @@ public class AiChatService {
         String userContent = "Type: " + type + "\nTitle: " + name
                 + (context.isEmpty() ? "" : "\nContext: " + context);
 
-        return langChainClient.complete(DESCRIPTION_SYSTEM_PROMPT, userContent)
+        return langChainClient.complete(withLanguage(DESCRIPTION_SYSTEM_PROMPT), userContent)
                 .map(String::trim)
                 .orElseGet(() -> fallbackDescription(type, name, context));
     }
 
     private String fallbackDescription(String type, String name, String context) {
-        // Use the supplied type word so events, teams, etc. read naturally.
-        String subject = (type == null || type.isBlank()) ? "item" : type;
+        String subject = (type == null || type.isBlank()) ? (isFrench() ? "élément" : "item") : type;
         StringBuilder sb = new StringBuilder();
+        if (isFrench()) {
+            sb.append("Cet élément (").append(subject).append(") concerne « ").append(name).append(" ». ");
+            sb.append("Il définit le travail nécessaire pour livrer « ").append(name).append(" »");
+            if (!context.isEmpty()) sb.append(" dans le cadre de ").append(context);
+            sb.append(", y compris l'objectif principal, le résultat attendu et les critères d'acceptation. ");
+            sb.append("Mettez à jour cette description avec la portée, les dépendances et les échéances dès qu'elles sont confirmées.");
+            return sb.toString();
+        }
         sb.append("This ").append(subject).append(" covers \"").append(name).append("\". ");
         sb.append("It defines the work required to deliver \"").append(name).append("\"");
         if (!context.isEmpty()) sb.append(" within ").append(context);
@@ -260,7 +274,7 @@ public class AiChatService {
                 + (task.getDeadline() != null ? "\nDeadline: " + task.getDeadline() : "")
                 + "\nPriority: " + task.getPriority();
 
-        return langChainClient.complete(GUIDANCE_SYSTEM_PROMPT, userContent)
+        return langChainClient.complete(withLanguage(GUIDANCE_SYSTEM_PROMPT), userContent)
                 .map(reply -> AiChatResponseDTO.builder().reply(reply).source("AI").build())
                 .orElseGet(() -> AiChatResponseDTO.builder()
                         .reply(fallbackGuidance(task)).source("MOCK").build());
@@ -268,6 +282,15 @@ public class AiChatService {
 
     private String fallbackGuidance(Task task) {
         String name = safe(task.getName());
+        if (isFrench()) {
+            return "Objectif : terminer « " + name + " ».\n"
+                    + "1. Relisez la description de la tâche et listez précisément ce qui est demandé.\n"
+                    + "2. Décomposez le travail en petites sous-étapes vérifiables.\n"
+                    + "3. Confirmez les entrées, dépendances ou accès nécessaires avant de commencer.\n"
+                    + "4. Réalisez le travail dans l'ordre, en enregistrant vos heures au fur et à mesure.\n"
+                    + "5. Testez ou vérifiez le résultat par rapport au résultat attendu de la tâche.\n"
+                    + "6. Soumettez le livrable et prévenez votre chef de projet pour relecture.";
+        }
         return "Goal: complete \"" + name + "\".\n"
                 + "1. Re-read the task description and list exactly what is being asked.\n"
                 + "2. Break the work into small, verifiable sub-steps.\n"
@@ -283,5 +306,18 @@ public class AiChatService {
 
     private String safe(String s) {
         return s == null ? "" : s;
+    }
+
+    /** Append a language directive so the model replies in the admin-configured language. */
+    private String withLanguage(String systemPrompt) {
+        String lang = systemSettings.getAiLanguageName();
+        return systemPrompt + "\n\nLANGUAGE: Respond entirely in " + lang
+                + ". Every sentence, heading and list item must be written in " + lang
+                + ", using that language's normal accented characters.";
+    }
+
+    /** True when the configured AI language is French (drives the localized rule-based fallbacks). */
+    private boolean isFrench() {
+        return "French".equalsIgnoreCase(systemSettings.getAiLanguageName());
     }
 }

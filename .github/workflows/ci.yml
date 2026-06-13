@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, donjunior01 ]
+    branches: [ main, deployment ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, deployment ]
 
 # Cancel superseded runs on the same ref.
 concurrency:

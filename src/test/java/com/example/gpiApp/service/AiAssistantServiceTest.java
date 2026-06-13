@@ -35,6 +35,7 @@ class AiAssistantServiceTest {
     @Mock private ProjectRepository projectRepository;
     @Mock private TaskRepository taskRepository;
     @Mock private LangChainAiClient langChainClient;
+    @Mock private SystemSettingsService systemSettings;
     @InjectMocks private AiAssistantService service;
 
     private Project project;

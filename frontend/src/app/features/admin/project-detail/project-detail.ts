@@ -7,6 +7,7 @@ import { ProjectService, Project, ProjectRequest } from '../../../core/services/
 import { TaskService, Task } from '../../../core/services/task.service';
 import { UserService, User } from '../../../core/services/user.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { AiAssistantService, ProjectInsight, PrioritizationResult, RiskAssessment } from '../../../core/services/ai-assistant.service';
 
 interface TaskStats {
   planned: number;
@@ -37,6 +38,14 @@ export class AdminProjectDetailComponent implements OnInit {
 
   taskStats: TaskStats = { planned: 0, inProgress: 0, completed: 0, onHold: 0, total: 0 };
 
+  // AI Assistant (real data from /api/ai/projects/{id}/*)
+  aiInsight: ProjectInsight | null = null;
+  aiPriorities: PrioritizationResult | null = null;
+  aiRisks: RiskAssessment | null = null;
+  loadingAiSummary = false;
+  loadingAiPriorities = false;
+  loadingAiRisks = false;
+
   showEditModal = false;
   showDeleteModal = false;
   submitting = false;
@@ -57,6 +66,7 @@ export class AdminProjectDetailComponent implements OnInit {
     private projectService: ProjectService,
     private taskService: TaskService,
     private userService: UserService,
+    private aiService: AiAssistantService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService
   ) {}
@@ -288,5 +298,58 @@ export class AdminProjectDetailComponent implements OnInit {
 
   getCountByPriority(priority: string): number {
     return this.tasks.filter(t => (t.priority || '').toUpperCase() === priority).length;
+  }
+
+  // ── AI Assistant (real data, same endpoints as the PM detail page) ───────────
+  generateAiSummary(): void {
+    if (!this.projectId || this.loadingAiSummary) return;
+    this.loadingAiSummary = true;
+    this.aiService.getProjectSummary(this.projectId).subscribe({
+      next: (response: any) => { this.aiInsight = response?.data || response; this.loadingAiSummary = false; this.cdr.detectChanges(); },
+      error: () => { this.loadingAiSummary = false; this.toast.show('Impossible de générer le résumé du projet.', 'error'); this.cdr.detectChanges(); }
+    });
+  }
+
+  generateAiPriorities(): void {
+    if (!this.projectId || this.loadingAiPriorities) return;
+    this.loadingAiPriorities = true;
+    this.aiService.getTaskPriorities(this.projectId).subscribe({
+      next: (response: any) => { this.aiPriorities = response?.data || response; this.loadingAiPriorities = false; this.cdr.detectChanges(); },
+      error: () => { this.loadingAiPriorities = false; this.toast.show('Impossible de générer les suggestions de priorité.', 'error'); this.cdr.detectChanges(); }
+    });
+  }
+
+  generateAiRisks(): void {
+    if (!this.projectId || this.loadingAiRisks) return;
+    this.loadingAiRisks = true;
+    this.aiService.getRiskAssessment(this.projectId).subscribe({
+      next: (response: any) => { this.aiRisks = response?.data || response; this.loadingAiRisks = false; this.cdr.detectChanges(); },
+      error: () => { this.loadingAiRisks = false; this.toast.show('Impossible de générer l\'évaluation des risques.', 'error'); this.cdr.detectChanges(); }
+    });
+  }
+
+  getHealthClass(status: string | undefined): string {
+    switch ((status || '').toUpperCase()) {
+      case 'ON_TRACK': return 'health-ontrack';
+      case 'AT_RISK': return 'health-atrisk';
+      case 'OFF_TRACK': return 'health-offtrack';
+      default: return 'health-atrisk';
+    }
+  }
+
+  getUrgencyClass(score: number): string {
+    if (score >= 75) return 'urgency-critical';
+    if (score >= 55) return 'urgency-high';
+    if (score >= 30) return 'urgency-medium';
+    return 'urgency-low';
+  }
+
+  getRiskClass(level: string | undefined): string {
+    switch ((level || '').toUpperCase()) {
+      case 'CRITICAL': return 'risk-critical';
+      case 'HIGH': return 'risk-high';
+      case 'MEDIUM': return 'risk-medium';
+      default: return 'risk-low';
+    }
   }
 }

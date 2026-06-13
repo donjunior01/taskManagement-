@@ -362,6 +362,115 @@
       </div>
     </div>
 
+    <!-- ── AI Assistant Section (real data) ───────────────────────────────── -->
+    <div class="glass-panel pd-section ai-section">
+      <div class="section-header">
+        <div class="section-title-group">
+          <h4>
+            <svg class="ai-spark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l1.9 5.8L20 9.7l-5.1 3.5L17 19l-5-3.6L7 19l2.1-5.8L4 9.7l6.1-1.9z"></path>
+            </svg>
+            Assistant IA
+          </h4>
+          <span class="section-count">Analyse &amp; priorisation</span>
+        </div>
+        <div class="ai-actions">
+          <button class="btn btn-primary btn-sm" (click)="generateAiSummary()" [disabled]="loadingAiSummary">
+            <span *ngIf="!loadingAiSummary">Résumer le projet</span>
+            <div class="spinner" *ngIf="loadingAiSummary"></div>
+          </button>
+          <button class="btn btn-secondary btn-sm" (click)="generateAiPriorities()" [disabled]="loadingAiPriorities">
+            <span *ngIf="!loadingAiPriorities">Suggérer des priorités</span>
+            <div class="spinner" *ngIf="loadingAiPriorities"></div>
+          </button>
+          <button class="btn btn-secondary btn-sm" (click)="generateAiRisks()" [disabled]="loadingAiRisks">
+            <span *ngIf="!loadingAiRisks">Prédire les risques</span>
+            <div class="spinner" *ngIf="loadingAiRisks"></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty hint -->
+      <div class="ai-hint" *ngIf="!aiInsight && !aiPriorities && !aiRisks && !loadingAiSummary && !loadingAiPriorities && !loadingAiRisks">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l1.9 5.8L20 9.7l-5.1 3.5L17 19l-5-3.6L7 19l2.1-5.8L4 9.7l6.1-1.9z"></path>
+        </svg>
+        <p>Générez un résumé IA ou laissez l'assistant classer les tâches ouvertes par urgence.</p>
+      </div>
+
+      <!-- Summary result -->
+      <div class="ai-insight" *ngIf="aiInsight">
+        <div class="ai-insight-top">
+          <span class="ai-health-badge" [ngClass]="getHealthClass(aiInsight.healthStatus)">{{ aiInsight.healthHeadline }}</span>
+          <span class="ai-source-chip" title="Source de l'analyse">{{ aiInsight.source }}</span>
+        </div>
+        <p class="ai-summary-text">{{ aiInsight.summary }}</p>
+        <div class="ai-metrics">
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.completionRate }}%</span><span class="aim-lbl">Complétion</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.inProgressTasks }}</span><span class="aim-lbl">En cours</span></div>
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiInsight.overdueTasks > 0">{{ aiInsight.overdueTasks }}</span><span class="aim-lbl">En retard</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.todoTasks }}</span><span class="aim-lbl">Backlog</span></div>
+        </div>
+        <div class="ai-recos" *ngIf="aiInsight.recommendations.length">
+          <h5>Recommandations</h5>
+          <ul>
+            <li *ngFor="let r of aiInsight.recommendations">{{ r }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Priorities result -->
+      <div class="ai-priorities" *ngIf="aiPriorities">
+        <p class="ai-advice">{{ aiPriorities.overallAdvice }}</p>
+        <div class="ai-prio-list" *ngIf="aiPriorities.suggestions.length">
+          <div class="ai-prio-row" *ngFor="let s of aiPriorities.suggestions">
+            <div class="aip-score" [ngClass]="getUrgencyClass(s.urgencyScore)">{{ s.urgencyScore }}</div>
+            <div class="aip-main">
+              <div class="aip-head">
+                <span class="aip-name">{{ s.taskName }}</span>
+                <span class="aip-change" *ngIf="s.changeRecommended">
+                  <span class="aip-from" [ngClass]="getPriorityClass(s.currentPriority)">{{ s.currentPriority }}</span>
+                  →
+                  <span class="aip-to" [ngClass]="getPriorityClass(s.suggestedPriority)">{{ s.suggestedPriority }}</span>
+                </span>
+                <span class="aip-keep" *ngIf="!s.changeRecommended">Garder {{ s.currentPriority }}</span>
+              </div>
+              <span class="aip-reason">{{ s.reason }}</span>
+              <span class="aip-assignee" *ngIf="s.assignedToName">Assigné à {{ s.assignedToName }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Risk prediction result -->
+      <div class="ai-risks" *ngIf="aiRisks">
+        <div class="ai-insight-top">
+          <span class="ai-health-badge" [ngClass]="getRiskClass(aiRisks.projectRiskLevel)">{{ aiRisks.headline }}</span>
+          <span class="ai-source-chip" title="Source de l'analyse">{{ aiRisks.source }}</span>
+        </div>
+        <p class="ai-summary-text">{{ aiRisks.summary }}</p>
+        <div class="ai-metrics">
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.atRiskCount > 0">{{ aiRisks.atRiskCount }}</span><span class="aim-lbl">À risque</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiRisks.totalOpenTasks }}</span><span class="aim-lbl">Tâches ouvertes</span></div>
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.projectSlipDays > 0">{{ aiRisks.projectSlipDays }}</span><span class="aim-lbl">Dérive (jours)</span></div>
+          <div class="ai-metric"><span class="aim-val aim-date">{{ aiRisks.predictedProjectCompletion || '—' }}</span><span class="aim-lbl">Fin prévue</span></div>
+        </div>
+        <div class="ai-risk-list" *ngIf="aiRisks.risks.length">
+          <div class="ai-risk-row" *ngFor="let r of aiRisks.risks">
+            <span class="air-badge" [ngClass]="getRiskClass(r.riskLevel)">{{ r.riskLevel }}</span>
+            <div class="air-main">
+              <div class="air-head">
+                <span class="air-name">{{ r.taskName }}</span>
+                <span class="air-slip" *ngIf="r.predictedSlipDays > 0">+{{ r.predictedSlipDays }}j de retard</span>
+              </div>
+              <span class="air-reason">{{ r.reason }}</span>
+              <span class="air-meta">{{ r.progress }}% fait<span *ngIf="r.deadline"> · échéance {{ r.deadline }}</span><span *ngIf="r.predictedCompletionDate"> · ETA {{ r.predictedCompletionDate }}</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Team Members Section ───────────────────────────────────────────── -->
     <div class="glass-panel pd-section">
       <div class="section-header">
