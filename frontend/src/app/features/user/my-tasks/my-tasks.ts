@@ -52,10 +52,10 @@ interface TimeEntry { date: string; hours: number; desc: string; }
 
     <!-- ═══ Kanban board ═══ -->
     <div class="board" *ngIf="view === 'board'">
-      <div class="col" *ngFor="let c of visibleColumns">
+      <div class="col" *ngFor="let c of visibleColumns; trackBy: trackByColKey">
         <div class="col-head"><span class="col-title">{{ c.label }}</span><span class="col-count">{{ c.tasks.length }}</span></div>
         <div class="col-list">
-          <div class="card anim" *ngFor="let t of c.tasks; let i = index" [style.--d]="(i*0.03)+'s'" (click)="open(t)" [attr.data-task-id]="t.id">
+          <div class="card anim" *ngFor="let t of c.tasks; let i = index; trackBy: trackByTaskId" [style.--d]="(i*0.03)+'s'" (click)="open(t)" [attr.data-task-id]="t.id">
             <div class="c-title">{{ t.name }}</div>
             <span class="proj-badge" *ngIf="t.projectName">{{ t.projectName }}</span>
             <div class="c-prio"><span class="pri" [ngClass]="prio(t.priority).cls"><i class="dot"></i>{{ prio(t.priority).label }}</span><span class="c-date" *ngIf="t.deadline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>{{ t.deadline | date:'dd-MM' }}</span></div>
@@ -75,7 +75,7 @@ interface TimeEntry { date: string; hours: number; desc: string; }
       <table class="mt-table">
         <thead><tr><th>Tâche</th><th>Projet</th><th>Priorité</th><th>Statut</th><th>Échéance</th><th>Progression</th></tr></thead>
         <tbody>
-          <tr *ngFor="let t of filteredTasks" (click)="open(t)">
+          <tr *ngFor="let t of filteredTasks; trackBy: trackByTaskId" (click)="open(t)">
             <td class="td-name">{{ t.name }}</td>
             <td class="muted">{{ t.projectName || '—' }}</td>
             <td><span class="pri" [ngClass]="prio(t.priority).cls"><i class="dot"></i>{{ prio(t.priority).label }}</span></td>
@@ -340,6 +340,12 @@ export class UserMyTasksComponent implements OnInit {
   }
 
   private norm(s?: string): string { const u = (s || '').toUpperCase(); return u === 'PLANNED' ? 'TODO' : u === 'OVERDUE' ? 'IN_PROGRESS' : u; }
+
+  // trackBy keeps the DOM stable across change detection (the columns/tasks come from getters that
+  // return new array/object references each cycle). Without these, every click/keystroke tears down
+  // and rebuilds the cards, replaying the fade-in animation — the "continuous blinking" effect.
+  trackByTaskId(_index: number, t: Task): number | string { return t?.id ?? _index; }
+  trackByColKey(_index: number, c: { key: string }): string { return c.key; }
 
   get filteredTasks(): Task[] {
     return this.myTasks.filter(t => {
