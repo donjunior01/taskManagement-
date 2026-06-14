@@ -73,7 +73,7 @@ export class LoginComponent implements OnInit {
           }
         } catch (e) {
           console.error('Routing evaluation failed:', e);
-          this.errorMessage = 'An error occurred during redirection. Please try again.';
+          this.errorMessage = 'Une erreur s\'est produite lors de la redirection. Veuillez réessayer.';
         } finally {
           this.loading = false;
           this.cdr.detectChanges();
@@ -91,9 +91,9 @@ export class LoginComponent implements OnInit {
           // Pending activation, maintenance mode, etc. — show the backend's exact reason.
           this.errorMessage = raw;
         } else if (this.twoFactorRequired) {
-          this.errorMessage = 'Invalid authentication code. Please try again.';
+          this.errorMessage = 'Code d\'authentification invalide. Veuillez réessayer.';
         } else {
-          this.errorMessage = 'Invalid credentials. Please verify your corporate email and try again.';
+          this.errorMessage = 'Identifiants invalides. Vérifiez votre e-mail professionnel et réessayez.';
         }
         this.cdr.detectChanges();
       }

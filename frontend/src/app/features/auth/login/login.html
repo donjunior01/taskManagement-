@@ -11,20 +11,20 @@
         </div>
       </div>
       <div class="suspended-modal-body">
-        <h3>Account Suspended</h3>
-        <p class="suspended-lead">Your access to <strong>{{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</strong> has been suspended by an administrator.</p>
+        <h3>Compte suspendu</h3>
+        <p class="suspended-lead">Votre accès à <strong>{{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</strong> a été suspendu par un administrateur.</p>
         <div class="suspended-info-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          <span>If you believe this is an error, please reach out to your system administrator to have your account reviewed and reactivated.</span>
+          <span>Si vous pensez qu'il s'agit d'une erreur, contactez votre administrateur système pour faire réviser et réactiver votre compte.</span>
         </div>
       </div>
       <div class="suspended-modal-footer">
         <button class="suspended-close-btn" (click)="showSuspendedModal = false">
-          Close
+          Fermer
         </button>
       </div>
     </div>
@@ -46,10 +46,10 @@
         </svg>
       </div>
       <h1>{{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</h1>
-      <p class="brand-subtitle">Streamlined Enterprise Task Workspace</p>
+      <p class="brand-subtitle">Espace de travail d'entreprise simplifié</p>
     </div>
 
-    <h2 class="form-title">Welcome Back</h2>
+    <h2 class="form-title">Bon retour</h2>
 
     @if (infoMessage) {
       <div class="info-alert animate-fade-in-up" style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;margin-bottom:14px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;">
@@ -75,7 +75,7 @@
 
     <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
       <div class="form-group" [class.has-error]="emailInput.invalid && (emailInput.dirty || emailInput.touched)">
-        <label for="email">Corporate Email</label>
+        <label for="email">E-mail professionnel</label>
         <div class="input-wrapper">
           <span class="input-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -96,14 +96,14 @@
           />
         </div>
         @if (emailInput.invalid && (emailInput.dirty || emailInput.touched)) {
-          <span class="validation-msg">Please enter a valid email address</span>
+          <span class="validation-msg">Veuillez saisir une adresse e-mail valide</span>
         }
       </div>
 
       <div class="form-group" [class.has-error]="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)">
         <div class="label-row">
-          <label for="password">Security Password</label>
-          <a routerLink="/forgot-password" class="forgot-link">Forgot?</a>
+          <label for="password">Mot de passe</label>
+          <a routerLink="/forgot-password" class="forgot-link">Oublié ?</a>
         </div>
         <div class="input-wrapper">
           <span class="input-icon">
@@ -138,13 +138,13 @@
           </button>
         </div>
         @if (passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)) {
-          <span class="validation-msg">Password must be at least 4 characters long</span>
+          <span class="validation-msg">Le mot de passe doit contenir au moins 4 caractères</span>
         }
       </div>
 
       @if (twoFactorRequired) {
         <div class="form-group">
-          <label for="twofa-code">Authentication Code</label>
+          <label for="twofa-code">Code d'authentification</label>
           <input
             type="text"
             id="twofa-code"
@@ -153,18 +153,18 @@
             inputmode="numeric"
             autocomplete="one-time-code"
             maxlength="6"
-            placeholder="6-digit code from your authenticator app"
+            placeholder="Code à 6 chiffres de votre application d'authentification"
             autofocus />
-          <span class="validation-msg" style="color: var(--text-muted);">Enter the code from your authenticator app to finish signing in.</span>
+          <span class="validation-msg" style="color: var(--text-muted);">Saisissez le code de votre application d'authentification pour terminer la connexion.</span>
         </div>
       }
 
       <button type="submit" [disabled]="loading || loginForm.invalid" class="login-button">
         @if (loading) {
           <span class="spinner"></span>
-          <span>Signing in...</span>
+          <span>Connexion...</span>
         } @else {
-          <span>Access Workspace</span>
+          <span>Accéder à l'espace</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-arrow">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
@@ -174,7 +174,7 @@
     </form>
 
     <div class="card-footer">
-      <p>New to {{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}? <a routerLink="/register" class="register-link">Create corporate account</a></p>
+      <p>Nouveau sur {{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }} ? <a routerLink="/register" class="register-link">Créer un compte professionnel</a></p>
     </div>
   </div>
 </div>

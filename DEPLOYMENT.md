@@ -32,16 +32,27 @@ injected at deploy time, so the same images run on docker-compose or any PaaS.
 - Variables:
   ```
   PORT=8073
-  SPRING_DATASOURCE_URL=jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?createDatabaseIfNotExist=true
+  SPRING_DATASOURCE_URL=jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
   SPRING_DATASOURCE_USERNAME=${{MySQL.MYSQLUSER}}
   SPRING_DATASOURCE_PASSWORD=${{MySQL.MYSQLPASSWORD}}
   SPRING_JPA_HIBERNATE_DDL_AUTO=update
+  SPRING_SQL_INIT_MODE=always
   JWT_SECRET=<a long random string>
   AI_SERVICE_URL=http://ai-service.railway.internal:8090
   BREVO_API_KEY=<your Brevo key>
   BREVO_SENDER_EMAIL=<your verified Brevo sender>
   ```
   (`${{MySQL.*}}` are Railway reference variables — adjust `MySQL` to your DB service name.)
+
+  **MySQL notes:**
+  - The Railway MySQL plugin **already creates the database**, so do **not** add
+    `createDatabaseIfNotExist=true` (the user lacks CREATE-DATABASE rights). The
+    `allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC` params are required for
+    MySQL 8's `caching_sha2_password` auth over the internal network.
+  - `DDL_AUTO=update` lets Hibernate create the tables on first boot; `SQL_INIT_MODE=always`
+    then runs `schema.sql` (additive columns) and `data.sql` (seed admin/users). Both are
+    idempotent, so subsequent boots are safe.
+  - If you prefer SSL, set `useSSL=true&requireSSL=true` and drop `allowPublicKeyRetrieval`.
 
 ### 3. AI sidecar service
 - New service → from repo → **Root Directory: `/ai-service`**.
