@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { TaskService, Task } from '../../../core/services/task.service';
 import { DeliverableService, Deliverable } from '../../../core/services/deliverable.service';
@@ -249,6 +249,7 @@ export class UserDeliverablesComponent implements OnInit {
     private projectService: ProjectService,
     private fileService: FileService,
     private toast: ToastService,
+    private translate: TranslateService,
     private sanitizer: DomSanitizer,
     private cdr: ChangeDetectorRef
   ) {}
@@ -327,8 +328,8 @@ export class UserDeliverablesComponent implements OnInit {
   onFileInput(e: any): void { const f = e.target.files?.[0]; if (f) this.selectedFile = f; }
 
   submit(): void {
-    if (!this.form.taskId) { this.toast.show('Veuillez sélectionner une tâche.', 'error'); return; }
-    if (!this.selectedFile) { this.toast.show('Veuillez joindre un fichier.', 'error'); return; }
+    if (!this.form.taskId) { this.toast.show(this.translate.instant('toast.selectTask'), 'error'); return; }
+    if (!this.selectedFile) { this.toast.show(this.translate.instant('toast.attachFile'), 'error'); return; }
     this.submitting = true;
     const file = this.selectedFile;
     // Upload first, then record the deliverable with the real stored URL. No optimistic/local fallback:
@@ -336,15 +337,15 @@ export class UserDeliverablesComponent implements OnInit {
     this.fileService.uploadFile(file).subscribe({
       next: (res: any) => {
         const url = res?.data?.fileUrl ?? res?.fileUrl;
-        if (!url) { this.submitting = false; this.toast.show('Téléversement échoué : aucune URL retournée.', 'error'); return; }
+        if (!url) { this.submitting = false; this.toast.show(this.translate.instant('toast.uploadNoUrl'), 'error'); return; }
         this.deliverableService.submitDeliverable({ taskId: this.form.taskId!, fileName: file.name, fileUrl: url }).subscribe({
-          next: () => { this.submitting = false; this.showModal = false; this.toast.show('Livrable soumis pour validation.', 'success'); this.load(); },
-          error: () => { this.submitting = false; this.toast.show('Échec de l\'enregistrement du livrable.', 'error'); }
+          next: () => { this.submitting = false; this.showModal = false; this.toast.show(this.translate.instant('toast.deliverableSubmitted'), 'success'); this.load(); },
+          error: () => { this.submitting = false; this.toast.show(this.translate.instant('toast.deliverableSaveFailed'), 'error'); }
         });
       },
       error: (err: any) => {
         this.submitting = false;
-        this.toast.show(err?.error?.message || 'Type de fichier non autorisé ou fichier trop volumineux (max 10 Mo).', 'error');
+        this.toast.show(err?.error?.message || this.translate.instant('toast.fileTypeNotAllowed'), 'error');
       }
     });
   }
@@ -352,7 +353,7 @@ export class UserDeliverablesComponent implements OnInit {
   // ── Row actions ──
   /** In-app preview: fetch the file (auth-protected) and render images/PDFs inline; others offer a download. */
   preview(d: DelRow): void {
-    if (!d.fileUrl) { this.toast.show('Aucun aperçu disponible.', 'error'); return; }
+    if (!d.fileUrl) { this.toast.show(this.translate.instant('toast.noPreview'), 'error'); return; }
     const ext = (d.fileName || d.fileUrl).split('.').pop()?.toLowerCase() || '';
     const kind: PreviewState['kind'] = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext) ? 'image'
       : ext === 'pdf' ? 'pdf' : 'other';
@@ -366,7 +367,7 @@ export class UserDeliverablesComponent implements OnInit {
         }
         this.cdr.detectChanges();
       },
-      error: () => { this.previewState = null; this.toast.show('Impossible de charger l\'aperçu.', 'error'); this.cdr.detectChanges(); }
+      error: () => { this.previewState = null; this.toast.show(this.translate.instant('toast.previewLoadFailed'), 'error'); this.cdr.detectChanges(); }
     });
   }
   closePreview(): void { this.previewState = null; }
@@ -374,10 +375,10 @@ export class UserDeliverablesComponent implements OnInit {
     if (this.previewState) this.download({ fileUrl: this.previewState.rawUrl, fileName: this.previewState.name } as DelRow);
   }
   download(d: DelRow): void {
-    if (!d.fileUrl) { this.toast.show('Aucun fichier à télécharger.', 'error'); return; }
+    if (!d.fileUrl) { this.toast.show(this.translate.instant('toast.noFileToDownload'), 'error'); return; }
     this.fileService.downloadFile(d.fileUrl, d.fileName).subscribe({
-      next: () => this.toast.show('Téléchargement démarré.', 'success'),
-      error: () => this.toast.show('Échec du téléchargement.', 'error')
+      next: () => this.toast.show(this.translate.instant('toast.downloadStarted'), 'success'),
+      error: () => this.toast.show(this.translate.instant('toast.downloadFailed'), 'error')
     });
   }
 }

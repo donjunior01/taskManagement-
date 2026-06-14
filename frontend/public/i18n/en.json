@@ -294,5 +294,44 @@
     "phType": "Type a message",
     "cancelRecording": "Cancel recording",
     "sendVoiceNote": "Send voice note"
+  },
+  "toast": {
+    "selectTask": "Please select a task.",
+    "validHours": "Please enter a valid number of hours.",
+    "chooseDate": "Please choose a date.",
+    "timeSaved": "Time saved.",
+    "timeSaveFailed": "Failed to save the time entry.",
+    "attachFile": "Please attach a file.",
+    "uploadNoUrl": "Upload failed: no URL returned.",
+    "uploadFailed": "Upload failed.",
+    "deliverableSubmitted": "Deliverable submitted for validation.",
+    "deliverableSaveFailed": "Failed to save the deliverable.",
+    "deliverableSendFailed": "Failed to send the deliverable.",
+    "fileTypeNotAllowed": "File type not allowed or file too large (max 10 MB).",
+    "fileTypeNotAllowedShort": "File type not allowed or too large.",
+    "noPreview": "No preview available.",
+    "previewLoadFailed": "Unable to load the preview.",
+    "noFileToDownload": "No file to download.",
+    "downloadStarted": "Download started.",
+    "downloadFailed": "Download failed.",
+    "statusUpdated": "Status updated.",
+    "priorityUpdated": "Priority updated.",
+    "taskUpdated": "Task updated.",
+    "taskCompleted": "Task completed! 🎉",
+    "commentFailed": "Failed to send the comment.",
+    "fileSent": "File \"{{name}}\" sent.",
+    "aiTipsFailed": "Could not get AI tips.",
+    "csvGenerated": "CSV export generated.",
+    "exportFailed": "Export failed.",
+    "msgSendFailed": "Failed to send the message."
+  },
+  "relTime": {
+    "justNow": "Just now",
+    "minAgo": "{{n}} min ago",
+    "hAgo": "{{n}}h ago",
+    "dAgo": "{{n}}d ago"
+  },
+  "feed": {
+    "system": "System"
   }
 }

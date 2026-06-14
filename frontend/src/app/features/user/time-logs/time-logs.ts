@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TaskService, Task } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TimeLogService } from '../../../core/services/time-log.service';
@@ -228,6 +228,7 @@ export class UserTimeLogsComponent implements OnInit {
     private authService: AuthService,
     private timeLogService: TimeLogService,
     private toast: ToastService,
+    private translate: TranslateService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -324,7 +325,7 @@ export class UserTimeLogsComponent implements OnInit {
     const v = Math.max(0, +r.cells[d] || 0);
     const dayStr = this.iso(this.dayDate(d));
     const logs = r.logs[d] || [];
-    const finish = () => { this.fetchLogs(); this.toast.show('Temps enregistré.', 'success'); };
+    const finish = () => { this.fetchLogs(); this.toast.show(this.translate.instant('toast.timeSaved'), 'success'); };
     if (logs.length === 0) {
       if (v > 0) this.timeLogService.createTimeLog({ taskId: r.taskId, hours: v, date: dayStr, description: '', hoursSpent: v, logDate: dayStr } as any).subscribe({ next: finish, error: () => this.build() });
       else this.build();
@@ -344,10 +345,10 @@ export class UserTimeLogsComponent implements OnInit {
   }
   closeLog(): void { this.showLogModal = false; }
   submitLog(): void {
-    if (!this.logForm.taskId) { this.toast.show('Veuillez sélectionner une tâche.', 'error'); return; }
+    if (!this.logForm.taskId) { this.toast.show(this.translate.instant('toast.selectTask'), 'error'); return; }
     const hours = Number(this.logForm.hours);
-    if (!hours || hours <= 0) { this.toast.show('Veuillez saisir un nombre d\'heures valide.', 'error'); return; }
-    if (!this.logForm.date) { this.toast.show('Veuillez choisir une date.', 'error'); return; }
+    if (!hours || hours <= 0) { this.toast.show(this.translate.instant('toast.validHours'), 'error'); return; }
+    if (!this.logForm.date) { this.toast.show(this.translate.instant('toast.chooseDate'), 'error'); return; }
     this.savingLog = true;
     const dayStr = this.logForm.date;
     this.timeLogService.createTimeLog({
@@ -360,9 +361,9 @@ export class UserTimeLogsComponent implements OnInit {
         // Jump to the week of the logged day so the entry is visible, then refresh.
         this.weekStart = this.mondayOf(new Date(dayStr + 'T00:00:00'));
         this.fetchLogs();
-        this.toast.show('Temps enregistré.', 'success');
+        this.toast.show(this.translate.instant('toast.timeSaved'), 'success');
       },
-      error: () => { this.savingLog = false; this.toast.show('Échec de l\'enregistrement du temps.', 'error'); }
+      error: () => { this.savingLog = false; this.toast.show(this.translate.instant('toast.timeSaveFailed'), 'error'); }
     });
   }
 
@@ -372,9 +373,9 @@ export class UserTimeLogsComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'suivi-temps.csv'; a.click();
         window.URL.revokeObjectURL(url);
-        this.toast.show('Export CSV généré.', 'success');
+        this.toast.show(this.translate.instant('toast.csvGenerated'), 'success');
       },
-      error: () => this.toast.show("Échec de l'export.", 'error')
+      error: () => this.toast.show(this.translate.instant('toast.exportFailed'), 'error')
     });
   }
 }

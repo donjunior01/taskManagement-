@@ -294,5 +294,44 @@
     "phType": "Tapez un message",
     "cancelRecording": "Annuler l'enregistrement",
     "sendVoiceNote": "Envoyer la note vocale"
+  },
+  "toast": {
+    "selectTask": "Veuillez sélectionner une tâche.",
+    "validHours": "Veuillez saisir un nombre d'heures valide.",
+    "chooseDate": "Veuillez choisir une date.",
+    "timeSaved": "Temps enregistré.",
+    "timeSaveFailed": "Échec de l'enregistrement du temps.",
+    "attachFile": "Veuillez joindre un fichier.",
+    "uploadNoUrl": "Téléversement échoué : aucune URL retournée.",
+    "uploadFailed": "Téléversement échoué.",
+    "deliverableSubmitted": "Livrable soumis pour validation.",
+    "deliverableSaveFailed": "Échec de l'enregistrement du livrable.",
+    "deliverableSendFailed": "Échec de l'envoi du livrable.",
+    "fileTypeNotAllowed": "Type de fichier non autorisé ou fichier trop volumineux (max 10 Mo).",
+    "fileTypeNotAllowedShort": "Type de fichier non autorisé ou trop volumineux.",
+    "noPreview": "Aucun aperçu disponible.",
+    "previewLoadFailed": "Impossible de charger l'aperçu.",
+    "noFileToDownload": "Aucun fichier à télécharger.",
+    "downloadStarted": "Téléchargement démarré.",
+    "downloadFailed": "Échec du téléchargement.",
+    "statusUpdated": "Statut mis à jour.",
+    "priorityUpdated": "Priorité mise à jour.",
+    "taskUpdated": "Tâche mise à jour.",
+    "taskCompleted": "Tâche terminée ! 🎉",
+    "commentFailed": "Échec de l'envoi du commentaire.",
+    "fileSent": "Fichier « {{name}} » envoyé.",
+    "aiTipsFailed": "Impossible d'obtenir les conseils IA.",
+    "csvGenerated": "Export CSV généré.",
+    "exportFailed": "Échec de l'export.",
+    "msgSendFailed": "Échec de l'envoi du message."
+  },
+  "relTime": {
+    "justNow": "À l'instant",
+    "minAgo": "Il y a {{n}} min",
+    "hAgo": "Il y a {{n}} h",
+    "dAgo": "Il y a {{n}} j"
+  },
+  "feed": {
+    "system": "Système"
   }
 }

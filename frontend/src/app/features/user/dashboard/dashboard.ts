@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { TaskService, Task } from '../../../core/services/task.service';
 import { ProjectService, Project } from '../../../core/services/project.service';
@@ -71,6 +71,7 @@ export class UserDashboardComponent implements OnInit {
     private activityLogService: ActivityLogService,
     private badges: BadgeCountsService,
     private toast: ToastService,
+    private translate: TranslateService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -148,10 +149,10 @@ export class UserDashboardComponent implements OnInit {
   }
 
   submitQuickLog(): void {
-    if (!this.quickLog.taskId) { this.toast.show('Veuillez sélectionner une tâche.', 'error'); return; }
+    if (!this.quickLog.taskId) { this.toast.show(this.translate.instant('toast.selectTask'), 'error'); return; }
     const hours = Number(this.quickLog.hours);
-    if (!hours || hours <= 0) { this.toast.show('Veuillez saisir un nombre d\'heures valide.', 'error'); return; }
-    if (!this.quickLog.date) { this.toast.show('Veuillez choisir une date.', 'error'); return; }
+    if (!hours || hours <= 0) { this.toast.show(this.translate.instant('toast.validHours'), 'error'); return; }
+    if (!this.quickLog.date) { this.toast.show(this.translate.instant('toast.chooseDate'), 'error'); return; }
     const dayStr = this.quickLog.date;
     // Same payload shape as the "Suivi du Temps" page (sends both hours/date and hoursSpent/logDate).
     const log = {
@@ -168,10 +169,10 @@ export class UserDashboardComponent implements OnInit {
         this.quickLog.hours = '';
         this.quickLog.date = new Date().toISOString().split('T')[0];
         this.loadDashboardData();
-        this.toast.show('Temps enregistré.', 'success');
+        this.toast.show(this.translate.instant('toast.timeSaved'), 'success');
       },
       error: () => {
-        this.toast.show('Échec de l\'enregistrement du temps.', 'error');
+        this.toast.show(this.translate.instant('toast.timeSaveFailed'), 'error');
       }
     });
   }
@@ -188,7 +189,7 @@ export class UserDashboardComponent implements OnInit {
         this.activityFeed = items.slice(0, 5).map((n: any) => ({
           id: n.id,
           projectName: n.referenceType || 'Notification',
-          taskName: n.title || 'Système',
+          taskName: n.title || this.translate.instant('feed.system'),
           type: this.mapActivityLogType(n.type),
           message: n.message || n.title || '',
           timestamp: this.relativeTime(n.createdAt)
@@ -223,12 +224,12 @@ export class UserDashboardComponent implements OnInit {
     const then = new Date(iso).getTime();
     if (isNaN(then)) return '';
     const diffMin = Math.round((Date.now() - then) / 60000);
-    if (diffMin < 1) return "À l'instant";
-    if (diffMin < 60) return `Il y a ${diffMin} min`;
+    if (diffMin < 1) return this.translate.instant('relTime.justNow');
+    if (diffMin < 60) return this.translate.instant('relTime.minAgo', { n: diffMin });
     const diffH = Math.round(diffMin / 60);
-    if (diffH < 24) return `Il y a ${diffH} h`;
+    if (diffH < 24) return this.translate.instant('relTime.hAgo', { n: diffH });
     const diffD = Math.round(diffH / 24);
-    return `Il y a ${diffD} j`;
+    return this.translate.instant('relTime.dAgo', { n: diffD });
   }
 
   private calculateStats(): void {

@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DeliverableService } from '../../../core/services/deliverable.service';
@@ -316,7 +316,8 @@ export class UserMyTasksComponent implements OnInit {
     private aiService: AiAssistantService,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService
+    private toast: ToastService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -441,11 +442,11 @@ export class UserMyTasksComponent implements OnInit {
     if (!t.id) return;
     const prog = (t.status || '').toUpperCase() === 'COMPLETED' ? 100 : (t.progress || 0);
     t.progress = prog;
-    this.taskService.updateTaskProgress(t.id, prog, t.status!).subscribe({ next: () => this.toast.show('Statut mis à jour.', 'success'), error: () => {} });
+    this.taskService.updateTaskProgress(t.id, prog, t.status!).subscribe({ next: () => this.toast.show(this.translate.instant('toast.statusUpdated'), 'success'), error: () => {} });
   }
   updatePriority(t: Task): void {
     if (!t.id) return;
-    this.taskService.updateTask(t.id, this.req(t)).subscribe({ next: () => this.toast.show('Priorité mise à jour.', 'success'), error: () => {} });
+    this.taskService.updateTask(t.id, this.req(t)).subscribe({ next: () => this.toast.show(this.translate.instant('toast.priorityUpdated'), 'success'), error: () => {} });
   }
   updateProgress(t: Task): void {
     if (!t.id) return;
@@ -460,19 +461,19 @@ export class UserMyTasksComponent implements OnInit {
   saveTitle(t: Task): void {
     this.editTitle = false;
     if (!t.id || !t.name.trim()) return;
-    this.taskService.updateTask(t.id, this.req(t)).subscribe({ next: () => this.toast.show('Tâche mise à jour.', 'success'), error: () => {} });
+    this.taskService.updateTask(t.id, this.req(t)).subscribe({ next: () => this.toast.show(this.translate.instant('toast.taskUpdated'), 'success'), error: () => {} });
   }
   markDone(t: Task): void {
     if (!t.id) return;
     t.status = 'COMPLETED'; t.progress = 100;
-    this.taskService.updateTaskProgress(t.id, 100, 'COMPLETED').subscribe({ next: () => this.toast.show('Tâche terminée ! 🎉', 'success'), error: () => {} });
+    this.taskService.updateTaskProgress(t.id, 100, 'COMPLETED').subscribe({ next: () => this.toast.show(this.translate.instant('toast.taskCompleted'), 'success'), error: () => {} });
   }
 
   // ── Comments ──
   sendComment(t: Task): void {
     const text = this.newComment.trim();
     if (!text || !t.id) return;
-    const optimistic: DrawerComment = { sender: this.developerName, message: text, time: "à l'instant", mine: true };
+    const optimistic: DrawerComment = { sender: this.developerName, message: text, time: this.translate.instant('relTime.justNow'), mine: true };
     this.comments.push(optimistic);
     t.commentCount = (t.commentCount || 0) + 1;
     this.newComment = '';
@@ -487,7 +488,7 @@ export class UserMyTasksComponent implements OnInit {
         // Roll back the optimistic comment — it was not persisted.
         this.comments = this.comments.filter(c => c !== optimistic);
         t.commentCount = Math.max(0, (t.commentCount || 1) - 1);
-        this.toast.show('Échec de l\'envoi du commentaire.', 'error');
+        this.toast.show(this.translate.instant('toast.commentFailed'), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -499,25 +500,25 @@ export class UserMyTasksComponent implements OnInit {
     if (!file || !t.id) return;
     const submit = (url: string) => {
       this.deliverableService.submitDeliverable({ taskId: t.id!, fileName: file.name, fileUrl: url }).subscribe({
-        next: () => { this.toast.show(`Fichier « ${file.name} » envoyé.`, 'success'); this.loadFiles(t); },
-        error: () => { this.toast.show('Échec de l\'envoi du livrable.', 'error'); }
+        next: () => { this.toast.show(this.translate.instant('toast.fileSent', { name: file.name }), 'success'); this.loadFiles(t); },
+        error: () => { this.toast.show(this.translate.instant('toast.deliverableSendFailed'), 'error'); }
       });
     };
     // Upload returns { success, message, data: { fileName, fileUrl } } — unwrap .data.
     this.fileService.uploadFile(file).subscribe({
       next: (res: any) => {
         const url = res?.data?.fileUrl ?? res?.fileUrl;
-        if (!url) { this.toast.show('Téléversement échoué : aucune URL retournée.', 'error'); return; }
+        if (!url) { this.toast.show(this.translate.instant('toast.uploadNoUrl'), 'error'); return; }
         submit(url);
       },
-      error: (err: any) => this.toast.show(err?.error?.message || 'Type de fichier non autorisé ou fichier trop volumineux (max 10 Mo).', 'error')
+      error: (err: any) => this.toast.show(err?.error?.message || this.translate.instant('toast.fileTypeNotAllowed'), 'error')
     });
   }
   downloadFile(f: DrawerFile): void {
-    if (!f.url) { this.toast.show('Aucun fichier à télécharger.', 'error'); return; }
+    if (!f.url) { this.toast.show(this.translate.instant('toast.noFileToDownload'), 'error'); return; }
     this.fileService.downloadFile(f.url, f.name).subscribe({
-      next: () => this.toast.show('Téléchargement démarré.', 'success'),
-      error: () => this.toast.show('Échec du téléchargement.', 'error')
+      next: () => this.toast.show(this.translate.instant('toast.downloadStarted'), 'success'),
+      error: () => this.toast.show(this.translate.instant('toast.downloadFailed'), 'error')
     });
   }
 
@@ -527,7 +528,7 @@ export class UserMyTasksComponent implements OnInit {
     this.aiLoading = true; this.aiGuidance = '';
     this.aiService.getTaskGuidance(t.id).subscribe({
       next: (res: any) => { this.aiGuidance = res?.reply || 'Aucun conseil disponible.'; this.aiLoading = false; this.cdr.detectChanges(); },
-      error: () => { this.aiLoading = false; this.toast.show("Impossible d'obtenir les conseils IA.", 'error'); this.cdr.detectChanges(); }
+      error: () => { this.aiLoading = false; this.toast.show(this.translate.instant('toast.aiTipsFailed'), 'error'); this.cdr.detectChanges(); }
     });
   }
 
@@ -556,10 +557,10 @@ export class UserMyTasksComponent implements OnInit {
     const diff = Date.now() - new Date(at).getTime();
     if (isNaN(diff)) return '';
     const m = Math.floor(diff / 60000);
-    if (m < 1) return "à l'instant";
-    if (m < 60) return `Il y a ${m} min`;
+    if (m < 1) return this.translate.instant('relTime.justNow');
+    if (m < 60) return this.translate.instant('relTime.minAgo', { n: m });
     const h = Math.floor(m / 60);
-    if (h < 24) return `Il y a ${h} h`;
-    return `Il y a ${Math.floor(h / 24)} j`;
+    if (h < 24) return this.translate.instant('relTime.hAgo', { n: h });
+    return this.translate.instant('relTime.dAgo', { n: Math.floor(h / 24) });
   }
 }
