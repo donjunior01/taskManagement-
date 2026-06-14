@@ -9,9 +9,9 @@
     </div>
     <div class="logo-text-block">
       <span class="logo-brand-txt">{{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</span>
-      <span class="logo-sub" *ngIf="isAdmin()">Administration</span>
-      <span class="logo-sub" *ngIf="isUser()">Gestion de projets</span>
-      <span class="logo-sub" *ngIf="!isAdmin() && !isUser()">Project Suite</span>
+      <span class="logo-sub" *ngIf="isAdmin()">{{ 'sidebar.subAdmin' | translate }}</span>
+      <span class="logo-sub" *ngIf="isUser()">{{ 'sidebar.subUser' | translate }}</span>
+      <span class="logo-sub" *ngIf="!isAdmin() && !isUser()">{{ 'sidebar.subDefault' | translate }}</span>
     </div>
   </div>
 
@@ -20,7 +20,7 @@
     <div *ngIf="isAdmin()">
 
       <!-- Administration -->
-      <div class="nav-section-title">Administration</div>
+      <div class="nav-section-title">{{ 'nav.section.administration' | translate }}</div>
       <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <rect x="3" y="3" width="7" height="9"></rect>
@@ -28,24 +28,24 @@
           <rect x="14" y="12" width="7" height="9"></rect>
           <rect x="3" y="16" width="7" height="5"></rect>
         </svg>
-        <span>Tableau de bord</span>
+        <span>{{ 'nav.dashboard' | translate }}</span>
       </a>
 
       <!-- Gestion -->
-      <div class="nav-section-title">Gestion</div>
+      <div class="nav-section-title">{{ 'nav.section.management' | translate }}</div>
       <a routerLink="/admin/users" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
         </svg>
-        <span>Utilisateurs</span>
+        <span>{{ 'nav.users' | translate }}</span>
       </a>
       <a routerLink="/admin/projects" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
           <polyline points="2 17 12 22 22 17"></polyline>
         </svg>
-        <span>Projets</span>
+        <span>{{ 'nav.projects' | translate }}</span>
       </a>
       <a routerLink="/admin/teams" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
@@ -54,33 +54,33 @@
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
-        <span>Équipes</span>
+        <span>{{ 'nav.teams' | translate }}</span>
       </a>
 
       <!-- Sécurité -->
-      <div class="nav-section-title">Sécurité</div>
+      <div class="nav-section-title">{{ 'nav.section.security' | translate }}</div>
       <a routerLink="/admin/security-log" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
         </svg>
-        <span>Journal de Sécurité</span>
+        <span>{{ 'nav.securityLog' | translate }}</span>
       </a>
       <a routerLink="/admin/login-attempts" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
-        <span>Tentatives de Connexion</span>
+        <span>{{ 'nav.loginAttempts' | translate }}</span>
       </a>
       <a routerLink="/admin/activity-logs" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
         </svg>
-        <span>Journal d'Activité</span>
+        <span>{{ 'nav.activityLogs' | translate }}</span>
       </a>
 
       <!-- Analytique -->
-      <div class="nav-section-title">Analytique</div>
+      <div class="nav-section-title">{{ 'nav.section.analytics' | translate }}</div>
       <a routerLink="/admin/reports" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -88,7 +88,7 @@
           <line x1="16" y1="13" x2="8" y2="13"></line>
           <line x1="16" y1="17" x2="8" y2="17"></line>
         </svg>
-        <span>Rapports Globaux</span>
+        <span>{{ 'nav.reports' | translate }}</span>
       </a>
       <a routerLink="/admin/performance" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
@@ -96,17 +96,17 @@
           <line x1="12" y1="20" x2="12" y2="4"></line>
           <line x1="6" y1="20" x2="6" y2="14"></line>
         </svg>
-        <span>Performance</span>
+        <span>{{ 'nav.performance' | translate }}</span>
       </a>
 
       <!-- Système -->
-      <div class="nav-section-title">Système</div>
+      <div class="nav-section-title">{{ 'nav.section.system' | translate }}</div>
       <a routerLink="/admin/notifications" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
         </svg>
-        <span>Notifications</span>
+        <span>{{ 'nav.notifications' | translate }}</span>
         <span class="nav-badge" *ngIf="notificationsCount > 0">{{ notificationsCount }}</span>
       </a>
       <a routerLink="/admin/settings" routerLinkActive="active" class="nav-link">
@@ -114,20 +114,20 @@
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
-        <span>Configuration</span>
+        <span>{{ 'nav.settings' | translate }}</span>
       </a>
       <a routerLink="/admin/support" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
-        <span>Support</span>
+        <span>{{ 'nav.support' | translate }}</span>
       </a>
       <a routerLink="/admin/api-docs" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <polyline points="16 18 22 12 16 6"></polyline>
           <polyline points="8 6 2 12 8 18"></polyline>
         </svg>
-        <span>Documentation API</span>
+        <span>{{ 'nav.apiDocs' | translate }}</span>
       </a>
     </div>
 
@@ -141,14 +141,14 @@
           <rect x="14" y="12" width="7" height="9"></rect>
           <rect x="3" y="16" width="7" height="5"></rect>
         </svg>
-        <span>Tableau de bord</span>
+        <span>{{ 'nav.dashboard' | translate }}</span>
       </a>
 
       <a routerLink="/pm/projects" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
         </svg>
-        <span>Mes Projets</span>
+        <span>{{ 'nav.myProjects' | translate }}</span>
       </a>
 
       <a routerLink="/pm/tasks" routerLinkActive="active" class="nav-link">
@@ -160,7 +160,7 @@
           <line x1="3" y1="12" x2="3.01" y2="12"></line>
           <line x1="3" y1="18" x2="3.01" y2="18"></line>
         </svg>
-        <span>Tâches</span>
+        <span>{{ 'nav.tasks' | translate }}</span>
       </a>
 
       <a routerLink="/pm/teams" routerLinkActive="active" class="nav-link">
@@ -170,7 +170,7 @@
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
-        <span>Équipes</span>
+        <span>{{ 'nav.teams' | translate }}</span>
       </a>
 
       <a routerLink="/pm/deliverables" routerLinkActive="active" class="nav-link">
@@ -179,7 +179,7 @@
           <polyline points="14 2 14 8 20 8"></polyline>
           <polyline points="9 15 11 17 15 13"></polyline>
         </svg>
-        <span>Livrables</span>
+        <span>{{ 'nav.deliverables' | translate }}</span>
         <span class="nav-badge" *ngIf="deliverablesCount > 0">{{ deliverablesCount }}</span>
       </a>
 
@@ -190,7 +190,7 @@
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
-        <span>Calendrier</span>
+        <span>{{ 'nav.calendar' | translate }}</span>
       </a>
 
       <a routerLink="/pm/reports" routerLinkActive="active" class="nav-link">
@@ -199,7 +199,7 @@
           <line x1="12" y1="20" x2="12" y2="4"></line>
           <line x1="6" y1="20" x2="6" y2="14"></line>
         </svg>
-        <span>Rapports</span>
+        <span>{{ 'nav.pmReports' | translate }}</span>
       </a>
 
       <a routerLink="/pm/analytics" routerLinkActive="active" class="nav-link">
@@ -209,14 +209,14 @@
           <line x1="6" y1="20" x2="6" y2="14"></line>
           <line x1="3" y1="20" x2="21" y2="20"></line>
         </svg>
-        <span>Analytique</span>
+        <span>{{ 'nav.analytics2' | translate }}</span>
       </a>
 
       <a routerLink="/pm/messages" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
-        <span>Messagerie</span>
+        <span>{{ 'nav.messages' | translate }}</span>
         <span class="nav-badge" *ngIf="messagesCount > 0">{{ messagesCount }}</span>
       </a>
 
@@ -225,7 +225,7 @@
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
         </svg>
-        <span>Notifications</span>
+        <span>{{ 'nav.notifications' | translate }}</span>
         <span class="nav-badge" *ngIf="notificationsCount > 0">{{ notificationsCount }}</span>
       </a>
 
@@ -236,7 +236,7 @@
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
-        <span>Support</span>
+        <span>{{ 'nav.support' | translate }}</span>
       </a>
     </div>
 
@@ -250,7 +250,7 @@
           <rect x="14" y="12" width="7" height="9"></rect>
           <rect x="3" y="16" width="7" height="5"></rect>
         </svg>
-        <span>Tableau de bord</span>
+        <span>{{ 'nav.dashboard' | translate }}</span>
       </a>
       
       <a routerLink="/user/my-tasks" routerLinkActive="active" class="nav-link">
@@ -258,7 +258,7 @@
           <polyline points="9 11 12 14 22 4"></polyline>
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
         </svg>
-        <span>Mes Tâches</span>
+        <span>{{ 'nav.myTasks' | translate }}</span>
       </a>
       
       <a routerLink="/user/time-logs" routerLinkActive="active" class="nav-link">
@@ -266,7 +266,7 @@
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 6 12 12 16 14"></polyline>
         </svg>
-        <span>Suivi du Temps</span>
+        <span>{{ 'nav.timeLogs' | translate }}</span>
       </a>
       
       <!-- Placeholder link mapping for My Deliverables -->
@@ -274,14 +274,14 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
         </svg>
-        <span>Livrables</span>
+        <span>{{ 'nav.deliverables' | translate }}</span>
       </a>
       
       <a routerLink="/user/messages" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
-        <span>Messagerie</span>
+        <span>{{ 'nav.messages' | translate }}</span>
         <span class="nav-badge" *ngIf="messagesCount > 0">{{ messagesCount }}</span>
       </a>
       
@@ -292,7 +292,7 @@
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
-        <span>Calendrier</span>
+        <span>{{ 'nav.calendar' | translate }}</span>
       </a>
 
       <a routerLink="/user/notifications" routerLinkActive="active" class="nav-link">
@@ -300,7 +300,7 @@
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
         </svg>
-        <span>Notifications</span>
+        <span>{{ 'nav.notifications' | translate }}</span>
         <span class="nav-badge" *ngIf="notificationsCount > 0">{{ notificationsCount }}</span>
       </a>
 
@@ -311,7 +311,7 @@
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
-        <span>Support</span>
+        <span>{{ 'nav.support' | translate }}</span>
       </a>
     </div>
   </nav>
@@ -358,7 +358,7 @@
           <polyline points="16 17 21 12 16 7"></polyline>
           <line x1="21" y1="12" x2="9" y2="12"></line>
         </svg>
-        <span>Déconnexion</span>
+        <span>{{ 'header.logout' | translate }}</span>
       </button>
     </div>
 

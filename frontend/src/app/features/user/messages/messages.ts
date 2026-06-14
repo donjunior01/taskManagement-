@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService, User } from '../../../core/services/user.service';
 import { MessageService, Message } from '../../../core/services/message.service';
@@ -41,7 +42,7 @@ export interface ChatMessage {
 @Component({
   selector: 'app-user-messages',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './messages.html',
   styleUrls: ['./messages.scss']
 })

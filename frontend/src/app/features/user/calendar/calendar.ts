@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { TaskService, Task } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -15,7 +16,7 @@ interface DayCell { date: Date; dateStr: string; day: number; inMonth: boolean; 
 @Component({
   selector: 'app-user-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
   <div class="ucal">
 
@@ -23,7 +24,7 @@ interface DayCell { date: Date; dateStr: string; day: number; inMonth: boolean; 
     <div class="ucal-top">
       <div class="nav">
         <button class="nav-btn" (click)="shift(-1)" aria-label="Précédent">‹</button>
-        <button class="today-btn" (click)="goToday()">Aujourd'hui</button>
+        <button class="today-btn" (click)="goToday()">{{ 'common.today' | translate }}</button>
         <button class="nav-btn" (click)="shift(1)" aria-label="Suivant">›</button>
         <h2 class="period">{{ periodLabel }}</h2>
       </div>
@@ -35,21 +36,21 @@ interface DayCell { date: Date; dateStr: string; day: number; inMonth: boolean; 
     <!-- ═══ Filters ═══ -->
     <div class="ucal-filters">
       <div class="fl">
-        <label>Projet</label>
+        <label>{{ 'common.project' | translate }}</label>
         <select [(ngModel)]="filterProject">
-          <option value="">Tous les projets</option>
+          <option value="">{{ 'calendar.allProjects' | translate }}</option>
           <option *ngFor="let p of projectsList" [value]="p">{{ p }}</option>
         </select>
       </div>
       <span class="divider">|</span>
-      <label class="type-check"><input type="checkbox" [(ngModel)]="typeFlags.task"> Tâche due</label>
-      <label class="type-check"><input type="checkbox" [(ngModel)]="typeFlags.meeting"> Réunion / Événement</label>
-      <label class="type-check"><input type="checkbox" [(ngModel)]="typeFlags.overdue"> Délai dépassé</label>
-      <button class="reset" (click)="resetFilters()">Réinitialiser</button>
+      <label class="type-check"><input type="checkbox" [(ngModel)]="typeFlags.task">{{ 'calendar.taskDue' | translate }}</label>
+      <label class="type-check"><input type="checkbox" [(ngModel)]="typeFlags.meeting">{{ 'calendar.meetingEvent' | translate }}</label>
+      <label class="type-check"><input type="checkbox" [(ngModel)]="typeFlags.overdue">{{ 'calendar.overdue' | translate }}</label>
+      <button class="reset" (click)="resetFilters()">{{ 'calendar.reset' | translate }}</button>
     </div>
 
     <!-- ═══ Loading ═══ -->
-    <div class="ucal-loading" *ngIf="loading"><div class="spin"></div><span>Chargement de l'agenda…</span></div>
+    <div class="ucal-loading" *ngIf="loading"><div class="spin"></div><span>{{ 'calendar.loadingAgenda' | translate }}</span></div>
 
     <!-- ═══ Month grid ═══ -->
     <div class="ucal-card" *ngIf="!loading && view === 'month'">
@@ -95,15 +96,15 @@ interface DayCell { date: Date; dateStr: string; day: number; inMonth: boolean; 
             <span class="ai-badge" [ngClass]="'t-' + it.type">{{ typeLabel(it.type) }}</span>
           </div>
         </div>
-        <div class="empty" *ngIf="agendaGroups.length === 0">Aucun événement sur cette période.</div>
+        <div class="empty" *ngIf="agendaGroups.length === 0">{{ 'calendar.noEvents' | translate }}</div>
       </div>
     </div>
 
     <!-- ═══ Legend ═══ -->
     <div class="ucal-legend" *ngIf="!loading">
-      <span class="lg"><i class="dot t-task"></i> Tâche due</span>
-      <span class="lg"><i class="dot t-meeting"></i> Réunion / Événement</span>
-      <span class="lg"><i class="dot t-overdue"></i> Délai dépassé</span>
+      <span class="lg"><i class="dot t-task"></i>{{ 'calendar.taskDue' | translate }}</span>
+      <span class="lg"><i class="dot t-meeting"></i>{{ 'calendar.meetingEvent' | translate }}</span>
+      <span class="lg"><i class="dot t-overdue"></i>{{ 'calendar.overdue' | translate }}</span>
     </div>
   </div>
 
@@ -112,13 +113,13 @@ interface DayCell { date: Date; dateStr: string; day: number; inMonth: boolean; 
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="m-head"><h3>{{ detail!.name }}</h3><button class="x" (click)="detail = null"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
       <div class="m-body">
-        <div class="det-row"><span class="det-k">Type</span><span class="ai-badge" [ngClass]="'t-' + detail!.type">{{ typeLabel(detail!.type) }}</span></div>
-        <div class="det-row"><span class="det-k">Projet</span><span>{{ detail!.project }}</span></div>
-        <div class="det-row"><span class="det-k">Date</span><span>{{ longDateStr(detail!.date) }}</span></div>
-        <div class="det-row" *ngIf="detail!.time"><span class="det-k">Heure</span><span>{{ detail!.time }}</span></div>
+        <div class="det-row"><span class="det-k">{{ 'common.type' | translate }}</span><span class="ai-badge" [ngClass]="'t-' + detail!.type">{{ typeLabel(detail!.type) }}</span></div>
+        <div class="det-row"><span class="det-k">{{ 'common.project' | translate }}</span><span>{{ detail!.project }}</span></div>
+        <div class="det-row"><span class="det-k">{{ 'common.date' | translate }}</span><span>{{ longDateStr(detail!.date) }}</span></div>
+        <div class="det-row" *ngIf="detail!.time"><span class="det-k">{{ 'common.time' | translate }}</span><span>{{ detail!.time }}</span></div>
         <div class="det-desc" *ngIf="detail!.desc">{{ detail!.desc }}</div>
       </div>
-      <div class="m-foot"><button class="btn-ghost" (click)="detail = null">Fermer</button></div>
+      <div class="m-foot"><button class="btn-ghost" (click)="detail = null">{{ 'common.close' | translate }}</button></div>
     </div>
   </div>
   `,

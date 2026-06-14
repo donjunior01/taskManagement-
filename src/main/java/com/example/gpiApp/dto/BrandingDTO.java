@@ -20,4 +20,5 @@ public class BrandingDTO {
     private String pdfHeaderColor;
     private String pdfFooterColor;
     private String pdfFooterText;
+    private String defaultLanguage;
 }

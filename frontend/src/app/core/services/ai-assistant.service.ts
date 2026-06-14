@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiService } from './api.service';
+import { LanguageService } from './language.service';
 
 export interface AiChatTurn {
   role: 'user' | 'assistant';
@@ -88,7 +89,7 @@ export interface RiskAssessment {
   providedIn: 'root'
 })
 export class AiAssistantService {
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private lang: LanguageService) {}
 
   getProjectSummary(projectId: number): Observable<ProjectInsight> {
     return this.apiService.get<ProjectInsight>(`/ai/projects/${projectId}/summary`);
@@ -109,7 +110,8 @@ export class AiAssistantService {
       message,
       projectId: opts.projectId,
       taskId: opts.taskId,
-      history: opts.history || []
+      history: opts.history || [],
+      language: this.lang.current
     }).pipe(map(r => (r?.data || r) as AiChatReply));
   }
 

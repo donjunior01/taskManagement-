@@ -35,8 +35,11 @@ export class AdminDashboardComponent implements OnInit {
 
     totalProjects: 0,
     activeProjects: 0,
+    inProgressProjects: 0,
+    plannedProjects: 0,
     completedProjects: 0,
     onHoldProjects: 0,
+    cancelledProjects: 0,
 
     totalTasks: 0,
     activeTasks: 0,
@@ -90,8 +93,7 @@ export class AdminDashboardComponent implements OnInit {
     ]);
   }
   get projectStatusTotal(): number {
-    const d = this.projectDistribution;
-    return d.active + d.completed + d.planned + d.onHold;
+    return this.stats.totalProjects || 0;
   }
 
   /** Donut: Role distribution */
@@ -197,16 +199,28 @@ export class AdminDashboardComponent implements OnInit {
     ];
   }
 
-  // ── Projects by status donut (prototype labels) ──
+  // ── Projects by status donut — real, non-overlapping status breakdown ──
   get statusDonut(): DonutSegment[] {
-    const total = this.stats.totalProjects;
-    const overdue = Math.max(0, total - this.stats.activeProjects - this.stats.completedProjects - this.stats.onHoldProjects);
-    return this.buildDonut([
-      { label: 'En cours',  value: this.stats.activeProjects,    color: 'var(--primary)' },
-      { label: 'Terminé',   value: this.stats.completedProjects, color: 'var(--success)' },
-      { label: 'En pause',  value: this.stats.onHoldProjects,    color: 'var(--warning)' },
-      { label: 'En retard', value: overdue,                      color: 'var(--danger)' }
-    ]);
+    const s: any = this.stats;
+    // Preferred: detailed per-status breakdown (backend with inProgress/planned/cancelled).
+    const breakdown = [
+      { label: 'En cours',  value: s.inProgressProjects || 0, color: 'var(--primary)' },
+      { label: 'Planifié',  value: s.plannedProjects || 0,    color: 'var(--warning)' },
+      { label: 'Terminé',   value: s.completedProjects || 0,  color: 'var(--success)' },
+      { label: 'En pause',  value: s.onHoldProjects || 0,     color: 'var(--accent)' },
+      { label: 'Annulé',    value: s.cancelledProjects || 0,  color: 'var(--danger)' }
+    ].filter(p => p.value > 0);
+    if (breakdown.length) return this.buildDonut(breakdown);
+
+    // Fallback (older backend that returns only the bundled fields) so the chart still renders.
+    const planned = Math.max(0, (s.totalProjects || 0) - (s.activeProjects || 0) - (s.completedProjects || 0) - (s.onHoldProjects || 0));
+    const legacy = [
+      { label: 'En cours',  value: s.activeProjects || 0,    color: 'var(--primary)' },
+      { label: 'Terminé',   value: s.completedProjects || 0, color: 'var(--success)' },
+      { label: 'En pause',  value: s.onHoldProjects || 0,    color: 'var(--accent)' },
+      { label: 'Planifié',  value: planned,                  color: 'var(--warning)' }
+    ].filter(p => p.value > 0);
+    return this.buildDonut(legacy);
   }
 
   // ── Role distribution bars ──

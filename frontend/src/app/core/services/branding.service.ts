@@ -9,6 +9,7 @@ export interface Branding {
   pdfHeaderColor: string;
   pdfFooterColor: string;
   pdfFooterText: string;
+  defaultLanguage: string;
 }
 
 const DEFAULTS: Branding = {
@@ -16,7 +17,8 @@ const DEFAULTS: Branding = {
   logoUrl: null,
   pdfHeaderColor: '#1e2540',
   pdfFooterColor: '#2563eb',
-  pdfFooterText: 'Document confidentiel — généré automatiquement'
+  pdfFooterText: 'Document confidentiel — généré automatiquement',
+  defaultLanguage: 'Français'
 };
 
 /**
@@ -50,7 +52,8 @@ export class BrandingService {
       logoUrl: b.logoUrl ? b.logoUrl : null,
       pdfHeaderColor: b.pdfHeaderColor || DEFAULTS.pdfHeaderColor,
       pdfFooterColor: b.pdfFooterColor || DEFAULTS.pdfFooterColor,
-      pdfFooterText: b.pdfFooterText != null ? b.pdfFooterText : DEFAULTS.pdfFooterText
+      pdfFooterText: b.pdfFooterText != null ? b.pdfFooterText : DEFAULTS.pdfFooterText,
+      defaultLanguage: (b.defaultLanguage && b.defaultLanguage.trim()) || DEFAULTS.defaultLanguage
     };
     this.subject.next(next);
     try { document.title = next.appName; } catch { /* SSR/no-DOM guard */ }

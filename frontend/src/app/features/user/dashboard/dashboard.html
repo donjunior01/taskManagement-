@@ -2,8 +2,8 @@
   <!-- Greeting Header block -->
   <div class="dashboard-greeting-header">
     <div class="greeting-text">
-      <span class="greeting-salutation">Bonjour {{ currentUser?.firstName || 'Collaborateur' }} 👋</span>
-      <h1 class="greeting-title">Voici votre journée</h1>
+      <span class="greeting-salutation">{{ 'user.greeting' | translate:{ name: (currentUser?.firstName || 'Collaborateur') } }}</span>
+      <h1 class="greeting-title">{{ 'user.greetingTitle' | translate }}</h1>
     </div>
     <div class="header-actions-btn">
       <button class="new-ticket-btn" routerLink="/user/support">
@@ -11,7 +11,7 @@
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <span>Nouveau ticket</span>
+        <span>{{ 'user.newTicket' | translate }}</span>
       </button>
     </div>
   </div>
@@ -19,7 +19,7 @@
   <!-- Loading State Spinner -->
   <div class="spinner-wrapper" *ngIf="loading">
     <div class="spinner"></div>
-    <span>Récupération des données de l'espace de travail...</span>
+    <span>{{ 'user.loadingWorkspace' | translate }}</span>
   </div>
 
   <ng-container *ngIf="!loading">
@@ -35,7 +35,7 @@
         </div>
         <div class="vital-info">
           <span class="vital-val">{{ projectCount }}</span>
-          <span class="vital-lbl">Projets</span>
+          <span class="vital-lbl">{{ 'user.vProjects' | translate }}</span>
         </div>
       </div>
       
@@ -50,7 +50,7 @@
         </div>
         <div class="vital-info">
           <span class="vital-val">{{ openTasksCount }}</span>
-          <span class="vital-lbl">Tâches Ouvertes</span>
+          <span class="vital-lbl">{{ 'user.vOpenTasks' | translate }}</span>
         </div>
       </div>
 
@@ -66,7 +66,7 @@
         </div>
         <div class="vital-info">
           <span class="vital-val">{{ dueTodayCount }}</span>
-          <span class="vital-lbl">Tâches Dues Aujourd'hui</span>
+          <span class="vital-lbl">{{ 'user.vDueToday' | translate }}</span>
         </div>
       </div>
 
@@ -81,7 +81,7 @@
         </div>
         <div class="vital-info">
           <span class="vital-val">{{ loggedHoursCount }}h</span>
-          <span class="vital-lbl">Heures Logées Cette Semaine</span>
+          <span class="vital-lbl">{{ 'user.vLoggedHours' | translate }}</span>
         </div>
       </div>
 
@@ -95,7 +95,7 @@
         </div>
         <div class="vital-info">
           <span class="vital-val">{{ unreadMessagesCount }}</span>
-          <span class="vital-lbl">Messages Non Lus</span>
+          <span class="vital-lbl">{{ 'user.vUnreadMessages' | translate }}</span>
         </div>
       </div>
     </div>
@@ -107,7 +107,7 @@
         <!-- Card 1: Aperçu Kanban -->
         <div class="glass-panel panel-section kanban-section animate-scale-in">
           <div class="section-header">
-            <h3>Aperçu Kanban</h3>
+            <h3>{{ 'user.kanbanOverview' | translate }}</h3>
           </div>
 
           <div class="kanban-board">
@@ -115,7 +115,7 @@
             <div class="kanban-col">
               <div class="kanban-col-header">
                 <span class="col-dot bg-amber"></span>
-                <span class="col-title">À FAIRE</span>
+                <span class="col-title">{{ 'user.colTodo' | translate }}</span>
                 <span class="col-badge">{{ todoTasks.length }}</span>
               </div>
               <div class="kanban-col-cards">
@@ -124,8 +124,7 @@
                   <div class="card-meta">
                     <span class="priority-badge" [ngClass]="t.priority?.toLowerCase() || 'medium'">
                       <span class="badge-dot"></span>
-                      {{ t.priority === 'LOW' ? 'Basse' : (t.priority === 'HIGH' || t.priority === 'CRITICAL' ? 'Haute'
-                      : 'Moyenne') }}
+                      {{ (t.priority === 'LOW' ? 'common.priorityLow' : (t.priority === 'HIGH' || t.priority === 'CRITICAL' ? 'common.priorityHigh' : 'common.priorityMedium')) | translate }}
                     </span>
                     <span class="due-date" *ngIf="t.deadline">
                       {{ formatDeadline(t.deadline) }}
@@ -133,7 +132,7 @@
                   </div>
                 </div>
                 <div class="kanban-empty" *ngIf="todoTasks.length === 0">
-                  <p>Aucune tâche à faire.</p>
+                  <p>{{ 'user.emptyTodo' | translate }}</p>
                 </div>
               </div>
             </div>
@@ -142,7 +141,7 @@
             <div class="kanban-col">
               <div class="kanban-col-header">
                 <span class="col-dot bg-blue"></span>
-                <span class="col-title">EN COURS</span>
+                <span class="col-title">{{ 'user.colInProgress' | translate }}</span>
                 <span class="col-badge">{{ inProgressTasks.length }}</span>
               </div>
               <div class="kanban-col-cards">
@@ -151,8 +150,7 @@
                   <div class="card-meta">
                     <span class="priority-badge" [ngClass]="t.priority?.toLowerCase() || 'medium'">
                       <span class="badge-dot"></span>
-                      {{ t.priority === 'LOW' ? 'Basse' : (t.priority === 'HIGH' || t.priority === 'CRITICAL' ? 'Haute'
-                      : 'Moyenne') }}
+                      {{ (t.priority === 'LOW' ? 'common.priorityLow' : (t.priority === 'HIGH' || t.priority === 'CRITICAL' ? 'common.priorityHigh' : 'common.priorityMedium')) | translate }}
                     </span>
                     <span class="due-date" *ngIf="t.deadline">
                       {{ formatDeadline(t.deadline) }}
@@ -160,7 +158,7 @@
                   </div>
                 </div>
                 <div class="kanban-empty" *ngIf="inProgressTasks.length === 0">
-                  <p>Aucune tâche en cours.</p>
+                  <p>{{ 'user.emptyInProgress' | translate }}</p>
                 </div>
               </div>
             </div>
@@ -169,7 +167,7 @@
             <div class="kanban-col">
               <div class="kanban-col-header">
                 <span class="col-dot bg-green"></span>
-                <span class="col-title">TERMINÉ</span>
+                <span class="col-title">{{ 'user.colDone' | translate }}</span>
                 <span class="col-badge">{{ completedTasks.length }}</span>
               </div>
               <div class="kanban-col-cards">
@@ -178,8 +176,7 @@
                   <div class="card-meta">
                     <span class="priority-badge" [ngClass]="t.priority?.toLowerCase() || 'medium'">
                       <span class="badge-dot"></span>
-                      {{ t.priority === 'LOW' ? 'Basse' : (t.priority === 'HIGH' || t.priority === 'CRITICAL' ? 'Haute'
-                      : 'Moyenne') }}
+                      {{ (t.priority === 'LOW' ? 'common.priorityLow' : (t.priority === 'HIGH' || t.priority === 'CRITICAL' ? 'common.priorityHigh' : 'common.priorityMedium')) | translate }}
                     </span>
                     <span class="due-date" *ngIf="t.deadline">
                       {{ formatDeadline(t.deadline) }}
@@ -187,7 +184,7 @@
                   </div>
                 </div>
                 <div class="kanban-empty" *ngIf="completedTasks.length === 0">
-                  <p>Aucune tâche terminée.</p>
+                  <p>{{ 'user.emptyDone' | translate }}</p>
                 </div>
               </div>
             </div>
@@ -197,11 +194,11 @@
         <!-- Card 2: Activité récente -->
         <div class="glass-panel panel-section feed-section animate-scale-in">
           <div class="section-header">
-            <h3>Activité récente</h3>
+            <h3>{{ 'user.recentActivity' | translate }}</h3>
           </div>
 
           <div class="feed-empty" *ngIf="activityFeed.length === 0">
-            <p>Aucun événement récent enregistré.</p>
+            <p>{{ 'user.noRecentEvents' | translate }}</p>
           </div>
 
           <div class="feed-stream" *ngIf="activityFeed.length > 0">
@@ -248,11 +245,11 @@
         <!-- Card 1: Échéances à venir -->
         <div class="glass-panel panel-section deadlines-section animate-scale-in">
           <div class="section-header">
-            <h3>Échéances à venir</h3>
+            <h3>{{ 'user.upcomingDeadlines' | translate }}</h3>
           </div>
 
           <div class="deadlines-empty" *ngIf="upcomingDeadlines.length === 0">
-            <p>Aucune échéance à venir.</p>
+            <p>{{ 'user.noUpcomingDeadlines' | translate }}</p>
           </div>
 
           <div class="deadlines-list" *ngIf="upcomingDeadlines.length > 0">
@@ -270,30 +267,30 @@
         <!-- Card 2: Log rapide -->
         <div class="glass-panel panel-section quick-log-section animate-scale-in">
           <div class="section-header">
-            <h3>Log rapide</h3>
+            <h3>{{ 'user.quickLog' | translate }}</h3>
           </div>
 
           <form (ngSubmit)="submitQuickLog()" #logForm="ngForm">
             <div class="form-group">
-              <label>Tâche</label>
+              <label>{{ 'common.task' | translate }}</label>
               <select name="taskId" [(ngModel)]="quickLog.taskId" required>
-                <option value="" disabled selected>Sélectionner une tâche</option>
+                <option value="" disabled selected>{{ 'user.selectTask' | translate }}</option>
                 <option *ngFor="let t of tasksList" [value]="t.id">{{ t.name }}</option>
               </select>
             </div>
             <div class="form-row-2">
               <div class="form-group">
-                <label>Heures</label>
+                <label>{{ 'common.hours' | translate }}</label>
                 <input type="number" name="hours" [(ngModel)]="quickLog.hours" min="1" max="24" required
                   placeholder="2">
               </div>
               <div class="form-group">
-                <label>Date</label>
+                <label>{{ 'common.date' | translate }}</label>
                 <input type="date" name="date" [(ngModel)]="quickLog.date" required>
               </div>
             </div>
             <button type="submit" class="submit-btn" [disabled]="!logForm.valid">
-              <span>Enregistrer</span>
+              <span>{{ 'common.save' | translate }}</span>
             </button>
           </form>
         </div>

@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService, LoginRequest } from '../../../core/services/auth.service';
 import { BrandingService } from '../../../core/services/branding.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LangToggleComponent } from '../../../shared/components/lang-toggle/lang-toggle';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, LangToggleComponent],
   templateUrl: './login.html',
   styleUrls: ['./login.scss']
 })
@@ -29,15 +31,16 @@ export class LoginComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     public branding: BrandingService,
+    private translate: TranslateService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParams;
     if (params['registered'] === 'pending') {
-      this.infoMessage = 'Votre compte a été créé et est en attente d\'activation par un administrateur. Vous pourrez vous connecter une fois activé.';
+      this.infoMessage = this.translate.instant('auth.infoPending');
     } else if (params['expired'] === '1') {
-      this.infoMessage = 'Votre session a expiré. Veuillez vous reconnecter.';
+      this.infoMessage = this.translate.instant('auth.infoExpired');
     }
   }
 
@@ -73,7 +76,7 @@ export class LoginComponent implements OnInit {
           }
         } catch (e) {
           console.error('Routing evaluation failed:', e);
-          this.errorMessage = 'An error occurred during redirection. Please try again.';
+          this.errorMessage = this.translate.instant('auth.errRedirect');
         } finally {
           this.loading = false;
           this.cdr.detectChanges();
@@ -91,9 +94,9 @@ export class LoginComponent implements OnInit {
           // Pending activation, maintenance mode, etc. — show the backend's exact reason.
           this.errorMessage = raw;
         } else if (this.twoFactorRequired) {
-          this.errorMessage = 'Invalid authentication code. Please try again.';
+          this.errorMessage = this.translate.instant('auth.errInvalid2fa');
         } else {
-          this.errorMessage = 'Invalid credentials. Please verify your corporate email and try again.';
+          this.errorMessage = this.translate.instant('auth.errInvalidCreds');
         }
         this.cdr.detectChanges();
       }

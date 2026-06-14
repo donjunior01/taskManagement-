@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DeliverableService } from '../../../core/services/deliverable.service';
@@ -19,33 +20,33 @@ interface TimeEntry { date: string; hours: number; desc: string; }
 @Component({
   selector: 'app-user-my-tasks',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
   <div class="mt-wrap">
 
     <!-- ═══ Page header ═══ -->
     <div class="page-head">
-      <h1>Mes Tâches</h1>
-      <p>Gérez et suivez l'avancement de vos tâches assignées.</p>
+      <h1>{{ 'mytasks.title' | translate }}</h1>
+      <p>{{ 'mytasks.subtitle' | translate }}</p>
     </div>
 
     <!-- ═══ Toolbar ═══ -->
     <div class="toolbar">
       <div class="tabs">
-        <button class="tab" *ngFor="let tb of statusTabs" [class.on]="tab === tb.key" (click)="tab = tb.key">{{ tb.label }}</button>
+        <button class="tab" *ngFor="let tb of statusTabs" [class.on]="tab === tb.key" (click)="tab = tb.key">{{ tb.label | translate }}</button>
       </div>
       <div class="tb-right">
         <select class="sel" [(ngModel)]="projectFilter">
-          <option value="">Tous projets</option>
+          <option value="">{{ 'common.allProjects' | translate }}</option>
           <option *ngFor="let p of projectOptions" [value]="p">{{ p }}</option>
         </select>
         <select class="sel" [(ngModel)]="priorityFilter">
-          <option value="">Priorité</option>
-          <option value="LOW">Basse</option><option value="MEDIUM">Moyenne</option><option value="HIGH">Haute</option><option value="CRITICAL">Critique</option>
+          <option value="">{{ 'common.priority' | translate }}</option>
+          <option value="LOW">{{ 'common.priorityLow' | translate }}</option><option value="MEDIUM">{{ 'common.priorityMedium' | translate }}</option><option value="HIGH">{{ 'common.priorityHigh' | translate }}</option><option value="CRITICAL">{{ 'common.priorityCritical' | translate }}</option>
         </select>
         <div class="view-toggle">
-          <button [class.on]="view === 'list'" (click)="view = 'list'" title="Liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
-          <button [class.on]="view === 'board'" (click)="view = 'board'" title="Tableau"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></button>
+          <button [class.on]="view === 'list'" (click)="view = 'list'" [title]="'common.list' | translate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
+          <button [class.on]="view === 'board'" (click)="view = 'board'" [title]="'common.board' | translate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></button>
         </div>
       </div>
     </div>
@@ -58,7 +59,7 @@ interface TimeEntry { date: string; hours: number; desc: string; }
           <div class="card anim" *ngFor="let t of c.tasks; let i = index; trackBy: trackByTaskId" [style.--d]="(i*0.03)+'s'" (click)="open(t)" [attr.data-task-id]="t.id">
             <div class="c-title">{{ t.name }}</div>
             <span class="proj-badge" *ngIf="t.projectName">{{ t.projectName }}</span>
-            <div class="c-prio"><span class="pri" [ngClass]="prio(t.priority).cls"><i class="dot"></i>{{ prio(t.priority).label }}</span><span class="c-date" *ngIf="t.deadline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>{{ t.deadline | date:'dd-MM' }}</span></div>
+            <div class="c-prio"><span class="pri" [ngClass]="prio(t.priority).cls"><i class="dot"></i>{{ prio(t.priority).label | translate }}</span><span class="c-date" *ngIf="t.deadline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>{{ t.deadline | date:'dd-MM' }}</span></div>
             <div class="c-bar"><div class="c-fill" [style.width.%]="t.progress || 0"></div></div>
             <div class="c-foot">
               <span class="avatar">{{ initials(t.assignedToName || developerName) }}</span>
@@ -73,17 +74,17 @@ interface TimeEntry { date: string; hours: number; desc: string; }
     <!-- ═══ List view ═══ -->
     <div class="list-card" *ngIf="view === 'list'">
       <table class="mt-table">
-        <thead><tr><th>Tâche</th><th>Projet</th><th>Priorité</th><th>Statut</th><th>Échéance</th><th>Progression</th></tr></thead>
+        <thead><tr><th>{{ 'common.task' | translate }}</th><th>{{ 'common.project' | translate }}</th><th>{{ 'common.priority' | translate }}</th><th>{{ 'common.status' | translate }}</th><th>{{ 'common.deadline' | translate }}</th><th>{{ 'common.progress' | translate }}</th></tr></thead>
         <tbody>
           <tr *ngFor="let t of filteredTasks; trackBy: trackByTaskId" (click)="open(t)">
             <td class="td-name">{{ t.name }}</td>
             <td class="muted">{{ t.projectName || '—' }}</td>
-            <td><span class="pri" [ngClass]="prio(t.priority).cls"><i class="dot"></i>{{ prio(t.priority).label }}</span></td>
-            <td><span class="st" [ngClass]="stInfo(t.status).cls">{{ stInfo(t.status).label }}</span></td>
+            <td><span class="pri" [ngClass]="prio(t.priority).cls"><i class="dot"></i>{{ prio(t.priority).label | translate }}</span></td>
+            <td><span class="st" [ngClass]="stInfo(t.status).cls">{{ stInfo(t.status).label | translate }}</span></td>
             <td class="muted">{{ t.deadline ? (t.deadline | date:'dd/MM/yyyy') : '—' }}</td>
             <td><div class="lbar"><div class="lfill" [style.width.%]="t.progress || 0"></div></div></td>
           </tr>
-          <tr *ngIf="filteredTasks.length === 0"><td colspan="6"><div class="col-empty">Aucune tâche.</div></td></tr>
+          <tr *ngIf="filteredTasks.length === 0"><td colspan="6"><div class="col-empty">{{ 'mytasks.noTasks' | translate }}</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -97,42 +98,42 @@ interface TimeEntry { date: string; hours: number; desc: string; }
         <input class="dr-title-input" *ngIf="editTitle" [(ngModel)]="t.name" (keyup.enter)="saveTitle(t)" (blur)="saveTitle(t)">
         <h2 class="dr-title" *ngIf="!editTitle">{{ t.name }}</h2>
         <div class="dr-head-actions">
-          <button class="ic" (click)="editTitle = !editTitle" title="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg></button>
-          <button class="ic" (click)="close()" title="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+          <button class="ic" (click)="editTitle = !editTitle" [title]="'common.edit' | translate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg></button>
+          <button class="ic" (click)="close()" [title]="'common.close' | translate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>
       </div>
 
       <div class="dr-body">
         <div class="grid2">
           <div class="fg"><label>Statut</label>
-            <select [(ngModel)]="t.status" (change)="updateStatus(t)"><option value="TODO">À faire</option><option value="IN_PROGRESS">En cours</option><option value="ON_HOLD">En révision</option><option value="COMPLETED">Terminé</option></select>
+            <select [(ngModel)]="t.status" (change)="updateStatus(t)"><option value="TODO">{{ 'common.statusTodo' | translate }}</option><option value="IN_PROGRESS">{{ 'common.statusInProgress' | translate }}</option><option value="ON_HOLD">{{ 'common.statusOnHold' | translate }}</option><option value="COMPLETED">{{ 'common.statusDone' | translate }}</option></select>
           </div>
           <div class="fg"><label>Priorité</label>
-            <select [(ngModel)]="t.priority" (change)="updatePriority(t)"><option value="LOW">Basse</option><option value="MEDIUM">Moyenne</option><option value="HIGH">Haute</option><option value="CRITICAL">Critique</option></select>
+            <select [(ngModel)]="t.priority" (change)="updatePriority(t)"><option value="LOW">{{ 'common.priorityLow' | translate }}</option><option value="MEDIUM">{{ 'common.priorityMedium' | translate }}</option><option value="HIGH">{{ 'common.priorityHigh' | translate }}</option><option value="CRITICAL">{{ 'common.priorityCritical' | translate }}</option></select>
           </div>
         </div>
 
         <div class="info-row">
-          <span><strong>Projet :</strong> {{ t.projectName || '—' }}</span>
-          <span><strong>Assigné à :</strong> {{ t.assignedToName || developerName }}</span>
+          <span><strong>{{ 'mytasks.projectLabel' | translate }}</strong> {{ t.projectName || '—' }}</span>
+          <span><strong>{{ 'mytasks.assignedTo' | translate }}</strong> {{ t.assignedToName || developerName }}</span>
         </div>
 
         <div class="fg">
-          <div class="lbl-row"><label>Description</label><button class="ai-btn" (click)="askAi(t)" [disabled]="aiLoading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3m0 12v3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M3 12h3m12 0h3M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"></path></svg>{{ aiLoading ? 'Analyse…' : 'Conseils IA' }}</button></div>
-          <textarea rows="3" [(ngModel)]="t.description" (blur)="saveDescription(t)" placeholder="Décrivez la tâche…"></textarea>
+          <div class="lbl-row"><label>{{ 'common.description' | translate }}</label><button class="ai-btn" (click)="askAi(t)" [disabled]="aiLoading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3m0 12v3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M3 12h3m12 0h3M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"></path></svg>{{ (aiLoading ? 'mytasks.aiAnalyzing' : 'mytasks.aiAdvice') | translate }}</button></div>
+          <textarea rows="3" [(ngModel)]="t.description" (blur)="saveDescription(t)" [placeholder]="'mytasks.describePlaceholder' | translate"></textarea>
           <div class="ai-box" *ngIf="aiGuidance">{{ aiGuidance }}</div>
         </div>
 
         <div class="fg">
-          <div class="lbl-row"><label>Progression</label><span class="prog-pct">{{ t.progress || 0 }}%</span></div>
+          <div class="lbl-row"><label>{{ 'common.progress' | translate }}</label><span class="prog-pct">{{ t.progress || 0 }}%</span></div>
           <input type="range" min="0" max="100" step="5" [(ngModel)]="t.progress" (change)="updateProgress(t)">
         </div>
 
         <!-- Tabs -->
         <div class="dr-tabs">
-          <button [class.on]="drawerTab === 'comments'" (click)="drawerTab = 'comments'">Commentaires</button>
-          <button [class.on]="drawerTab === 'files'" (click)="drawerTab = 'files'">Fichiers</button>
-          <button [class.on]="drawerTab === 'time'" (click)="drawerTab = 'time'">Temps</button>
+          <button [class.on]="drawerTab === 'comments'" (click)="drawerTab = 'comments'">{{ 'mytasks.tabComments' | translate }}</button>
+          <button [class.on]="drawerTab === 'files'" (click)="drawerTab = 'files'">{{ 'mytasks.tabFiles' | translate }}</button>
+          <button [class.on]="drawerTab === 'time'" (click)="drawerTab = 'time'">{{ 'mytasks.tabTime' | translate }}</button>
         </div>
 
         <!-- Commentaires -->
@@ -141,10 +142,10 @@ interface TimeEntry { date: string; hours: number; desc: string; }
             <span class="c-avatar">{{ initials(cm.sender) }}</span>
             <div class="c-bubble"><div class="c-meta"><span class="c-name">{{ cm.sender }}</span><span class="c-time">{{ cm.time }}</span></div><p>{{ cm.message }}</p></div>
           </div>
-          <div class="empty-sm" *ngIf="comments.length === 0">Aucun commentaire.</div>
+          <div class="empty-sm" *ngIf="comments.length === 0">{{ 'mytasks.noComments' | translate }}</div>
           <div class="comment-add">
-            <input type="text" placeholder="Ajouter un commentaire…" [(ngModel)]="newComment" (keyup.enter)="sendComment(t)">
-            <button class="send" (click)="sendComment(t)" [disabled]="!newComment.trim()">Envoyer</button>
+            <input type="text" [placeholder]="'mytasks.commentPlaceholder' | translate" [(ngModel)]="newComment" (keyup.enter)="sendComment(t)">
+            <button class="send" (click)="sendComment(t)" [disabled]="!newComment.trim()">{{ 'common.send' | translate }}</button>
           </div>
         </div>
 
@@ -152,26 +153,26 @@ interface TimeEntry { date: string; hours: number; desc: string; }
         <div class="tab-pane" *ngIf="drawerTab === 'files'">
           <div class="file-row" *ngFor="let f of files">
             <span class="f-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>{{ f.name }}</span>
-            <a class="f-dl" (click)="downloadFile(f)">Télécharger</a>
+            <a class="f-dl" (click)="downloadFile(f)">{{ 'common.download' | translate }}</a>
           </div>
-          <div class="empty-sm" *ngIf="files.length === 0">Aucun fichier.</div>
-          <button class="add-file" (click)="fileInput.click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Ajouter un fichier</button>
+          <div class="empty-sm" *ngIf="files.length === 0">{{ 'mytasks.noFiles' | translate }}</div>
+          <button class="add-file" (click)="fileInput.click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> {{ 'mytasks.addFile' | translate }}</button>
           <input type="file" #fileInput hidden (change)="onFile($event, t)" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.jpg,.jpeg,.png,.gif">
         </div>
 
         <!-- Temps -->
         <div class="tab-pane" *ngIf="drawerTab === 'time'">
-          <div class="time-total" *ngIf="timeEntries.length"><span>Total enregistré</span><strong>{{ totalHours }}h</strong></div>
+          <div class="time-total" *ngIf="timeEntries.length"><span>{{ 'mytasks.totalLogged' | translate }}</span><strong>{{ totalHours }}h</strong></div>
           <div class="time-row" *ngFor="let e of timeEntries">
             <div class="t-left"><span class="t-date">{{ e.date | date:'dd/MM/yyyy' }}</span><span class="t-desc" *ngIf="e.desc">{{ e.desc }}</span></div>
             <strong>{{ e.hours }}h</strong>
           </div>
-          <div class="empty-sm" *ngIf="timeEntries.length === 0">Aucun temps enregistré.</div>
+          <div class="empty-sm" *ngIf="timeEntries.length === 0">{{ 'mytasks.noTime' | translate }}</div>
         </div>
       </div>
 
       <div class="dr-foot">
-        <button class="done-btn" (click)="markDone(t)" [disabled]="t.status === 'COMPLETED'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="9 12 11.5 14.5 16 9.5"></polyline></svg> Marquer comme Terminé</button>
+        <button class="done-btn" (click)="markDone(t)" [disabled]="t.status === 'COMPLETED'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="9 12 11.5 14.5 16 9.5"></polyline></svg> {{ 'mytasks.markDone' | translate }}</button>
       </div>
     </ng-container>
   </aside>
@@ -283,9 +284,9 @@ export class UserMyTasksComponent implements OnInit {
   view: 'board' | 'list' = 'board';
   tab: 'all' | 'TODO' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED' = 'all';
   statusTabs = [
-    { key: 'all' as const, label: 'Toutes' }, { key: 'TODO' as const, label: 'À faire' },
-    { key: 'IN_PROGRESS' as const, label: 'En cours' }, { key: 'ON_HOLD' as const, label: 'En révision' },
-    { key: 'COMPLETED' as const, label: 'Terminé' }
+    { key: 'all' as const, label: 'common.all' }, { key: 'TODO' as const, label: 'common.statusTodo' },
+    { key: 'IN_PROGRESS' as const, label: 'common.statusInProgress' }, { key: 'ON_HOLD' as const, label: 'common.statusOnHold' },
+    { key: 'COMPLETED' as const, label: 'common.statusDone' }
   ];
   projectFilter = '';
   priorityFilter = '';
@@ -533,17 +534,17 @@ export class UserMyTasksComponent implements OnInit {
   // ── Helpers ──
   prio(p?: string): { label: string; cls: string } {
     const map: Record<string, { label: string; cls: string }> = {
-      LOW: { label: 'Basse', cls: 'p-low' }, MEDIUM: { label: 'Moyenne', cls: 'p-med' },
-      HIGH: { label: 'Haute', cls: 'p-high' }, CRITICAL: { label: 'Critique', cls: 'p-crit' }
+      LOW: { label: 'common.priorityLow', cls: 'p-low' }, MEDIUM: { label: 'common.priorityMedium', cls: 'p-med' },
+      HIGH: { label: 'common.priorityHigh', cls: 'p-high' }, CRITICAL: { label: 'common.priorityCritical', cls: 'p-crit' }
     };
-    return map[(p || '').toUpperCase()] || { label: 'Moyenne', cls: 'p-med' };
+    return map[(p || '').toUpperCase()] || { label: 'common.priorityMedium', cls: 'p-med' };
   }
   stInfo(s?: string): { label: string; cls: string } {
     const map: Record<string, { label: string; cls: string }> = {
-      TODO: { label: 'À faire', cls: 's-todo' }, IN_PROGRESS: { label: 'En cours', cls: 's-prog' },
-      ON_HOLD: { label: 'En révision', cls: 's-rev' }, COMPLETED: { label: 'Terminé', cls: 's-done' }
+      TODO: { label: 'common.statusTodo', cls: 's-todo' }, IN_PROGRESS: { label: 'common.statusInProgress', cls: 's-prog' },
+      ON_HOLD: { label: 'common.statusOnHold', cls: 's-rev' }, COMPLETED: { label: 'common.statusDone', cls: 's-done' }
     };
-    return map[this.norm(s)] || { label: 'À faire', cls: 's-todo' };
+    return map[this.norm(s)] || { label: 'common.statusTodo', cls: 's-todo' };
   }
   initials(name?: string): string {
     if (!name) return 'U';
