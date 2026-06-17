@@ -38,6 +38,11 @@ INSERT IGNORE INTO projects (id, name, description, manager_id, start_date, end_
 (108, 'IoT Platform Development', 'Develop IoT platform for smart city projects', 102, '2024-04-01', '2024-10-31', 'ACTIVE', 15, NOW(), NOW()),
 (109, 'Legacy System Migration', 'Migrate billing and CRM to cloud', 101, '2023-06-01', '2024-03-31', 'COMPLETED', 100, NOW(), NOW());
 
+-- Seed/legacy projects have no creator on record, which makes the "Created by" column blank.
+-- Attribute them to the seed administrator. Only touches rows still NULL, so projects
+-- genuinely created by a user (created_by already set) are never overwritten. Idempotent.
+UPDATE projects SET created_by = 100 WHERE created_by IS NULL;
+
 -- ===================================
 -- TEAMS (10 teams)
 -- ===================================

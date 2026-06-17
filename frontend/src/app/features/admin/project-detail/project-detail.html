@@ -192,8 +192,11 @@
               [attr.stroke-dashoffset]="getTaskSegmentOffset(3)"
               stroke-linecap="butt"/>
             <!-- Center -->
-            <text x="60" y="56" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text-primary)">{{ taskStats.total }}</text>
-            <text x="60" y="70" text-anchor="middle" font-size="9" fill="var(--text-muted)" font-weight="600">{{ 'admin.projectDetail.donutCenter' | translate }}</text>
+            <!-- Counter-rotate the centre labels so they read horizontally despite the SVG's -90deg spin. -->
+            <g transform="rotate(90 60 60)">
+              <text x="60" y="56" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text-primary)">{{ taskStats.total }}</text>
+              <text x="60" y="70" text-anchor="middle" font-size="9" fill="var(--text-muted)" font-weight="600">{{ 'admin.projectDetail.donutCenter' | translate }}</text>
+            </g>
           </svg>
 
           <div class="donut-legend">
@@ -402,7 +405,7 @@
       <div class="ai-insight" *ngIf="aiInsight">
         <div class="ai-insight-top">
           <span class="ai-health-badge" [ngClass]="getHealthClass(aiInsight.healthStatus)">{{ aiInsight.healthHeadline }}</span>
-          <span class="ai-source-chip" [title]="'admin.projectDetail.aiSourceTitle' | translate">{{ aiInsight.source }}</span>
+          <span class="ai-source-chip" *ngIf="aiInsight.source && aiInsight.source !== 'MOCK'" [title]="'admin.projectDetail.aiSourceTitle' | translate">{{ aiInsight.source }}</span>
         </div>
         <p class="ai-summary-text">{{ aiInsight.summary }}</p>
         <div class="ai-metrics">
@@ -446,7 +449,7 @@
       <div class="ai-risks" *ngIf="aiRisks">
         <div class="ai-insight-top">
           <span class="ai-health-badge" [ngClass]="getRiskClass(aiRisks.projectRiskLevel)">{{ aiRisks.headline }}</span>
-          <span class="ai-source-chip" [title]="'admin.projectDetail.aiSourceTitle' | translate">{{ aiRisks.source }}</span>
+          <span class="ai-source-chip" *ngIf="aiRisks.source && aiRisks.source !== 'MOCK'" [title]="'admin.projectDetail.aiSourceTitle' | translate">{{ aiRisks.source }}</span>
         </div>
         <p class="ai-summary-text">{{ aiRisks.summary }}</p>
         <div class="ai-metrics">
