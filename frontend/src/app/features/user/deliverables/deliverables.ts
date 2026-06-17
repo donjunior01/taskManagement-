@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { TaskService, Task } from '../../../core/services/task.service';
 import { DeliverableService, Deliverable } from '../../../core/services/deliverable.service';
@@ -15,54 +16,52 @@ interface PreviewState { name: string; kind: 'image' | 'pdf' | 'other'; url: Saf
 @Component({
   selector: 'app-user-deliverables',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
   <div class="dv-wrap">
 
     <!-- ═══ Page header ═══ -->
     <div class="page-head">
-      <h1>Mes Livrables</h1>
-      <p>Soumettez vos livrables et suivez le statut de vos soumissions.</p>
+      <h1>{{ 'deliverables.title' | translate }}</h1>
+      <p>{{ 'deliverables.subtitle' | translate }}</p>
     </div>
 
     <!-- ═══ KPI cards ═══ -->
     <div class="kpi-grid">
       <div class="kpi">
         <div class="kpi-icon" style="background:rgba(99,102,241,.1);color:#6366f1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div>
-        <div class="kpi-info"><h3>{{ stats.total }}</h3><p>Tâches assignées</p></div>
+        <div class="kpi-info"><h3>{{ stats.total }}</h3><p>{{ 'deliverables.assignedTasks' | translate }}</p></div>
       </div>
       <div class="kpi">
         <div class="kpi-icon" style="background:rgba(16,185,129,.1);color:#10b981"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-        <div class="kpi-info"><h3>{{ stats.approved }}</h3><p>Soumissions approuvées</p></div>
+        <div class="kpi-info"><h3>{{ stats.approved }}</h3><p>{{ 'deliverables.approvedSubmissions' | translate }}</p></div>
       </div>
       <div class="kpi">
         <div class="kpi-icon" style="background:rgba(245,158,11,.12);color:#f59e0b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
-        <div class="kpi-info"><h3>{{ stats.pending }}</h3><p>En attente de validation</p></div>
+        <div class="kpi-info"><h3>{{ stats.pending }}</h3><p>{{ 'deliverables.pendingValidation' | translate }}</p></div>
       </div>
       <div class="kpi">
         <div class="kpi-icon" style="background:rgba(239,68,68,.1);color:#ef4444"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg></div>
-        <div class="kpi-info"><h3>{{ stats.rejected }}</h3><p>Révisions demandées</p></div>
+        <div class="kpi-info"><h3>{{ stats.rejected }}</h3><p>{{ 'deliverables.revisionsRequested' | translate }}</p></div>
       </div>
     </div>
 
     <!-- ═══ Tabs + submit ═══ -->
     <div class="bar">
       <div class="tabs">
-        <button class="tab" [class.on]="tab === 'all'" (click)="tab = 'all'">Tous</button>
-        <button class="tab" [class.on]="tab === 'PENDING'" (click)="tab = 'PENDING'">En Attente</button>
-        <button class="tab" [class.on]="tab === 'APPROVED'" (click)="tab = 'APPROVED'">Approuvés</button>
-        <button class="tab" [class.on]="tab === 'REJECTED'" (click)="tab = 'REJECTED'">Rejetés</button>
+        <button class="tab" [class.on]="tab === 'all'" (click)="tab = 'all'">{{ 'deliverables.tabAll' | translate }}</button>
+        <button class="tab" [class.on]="tab === 'PENDING'" (click)="tab = 'PENDING'">{{ 'deliverables.tabPending' | translate }}</button>
+        <button class="tab" [class.on]="tab === 'APPROVED'" (click)="tab = 'APPROVED'">{{ 'deliverables.tabApproved' | translate }}</button>
+        <button class="tab" [class.on]="tab === 'REJECTED'" (click)="tab = 'REJECTED'">{{ 'deliverables.tabRejected' | translate }}</button>
       </div>
       <button class="btn-submit" (click)="openModal()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Soumettre un Livrable
-      </button>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>{{ 'deliverables.submitBtn' | translate }}</button>
     </div>
 
     <!-- ═══ Table ═══ -->
     <div class="table-card">
       <table class="dv-table">
-        <thead><tr><th>Nom du fichier</th><th>Projet</th><th>Tâche associée</th><th>Date</th><th>Statut</th><th class="right">Actions</th></tr></thead>
+        <thead><tr><th>{{ 'deliverables.fileName' | translate }}</th><th>{{ 'common.project' | translate }}</th><th>{{ 'deliverables.associatedTask' | translate }}</th><th>{{ 'common.date' | translate }}</th><th>{{ 'common.status' | translate }}</th><th class="right">{{ 'common.actions' | translate }}</th></tr></thead>
         <tbody>
           <tr *ngFor="let d of filtered" [class.rejected]="d.status === 'REJECTED'">
             <td>
@@ -72,11 +71,9 @@ interface PreviewState { name: string; kind: 'image' | 'pdf' | 'other'; url: Saf
                   <div class="fname">{{ d.fileName }}</div>
                   <div class="rejected-actions" *ngIf="d.status === 'REJECTED'">
                     <a class="feedback-link" (click)="feedback = d">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> Voir le retour
-                    </a>
-                    <a class="resubmit-link" (click)="resubmit(d)" title="Soumettre une version corrigée">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Resoumettre
-                    </a>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>{{ 'deliverables.viewFeedback' | translate }}</a>
+                    <a class="resubmit-link" (click)="resubmit(d)" [title]="'deliverables.attrResubmit' | translate">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>{{ 'deliverables.resubmit' | translate }}</a>
                   </div>
                 </div>
               </div>
@@ -87,13 +84,13 @@ interface PreviewState { name: string; kind: 'image' | 'pdf' | 'other'; url: Saf
             <td><span class="badge" [ngClass]="stInfo(d.status).cls">{{ stInfo(d.status).label }}</span></td>
             <td class="right">
               <div class="actions">
-                <button class="ic" title="Aperçu" (click)="preview(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+                <button class="ic" [title]="'deliverables.attrPreview' | translate" (click)="preview(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
                 <button class="ic" title="Télécharger" (click)="download(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
               </div>
             </td>
           </tr>
-          <tr *ngIf="!loading && filtered.length === 0"><td colspan="6"><div class="empty">Aucun livrable pour ce filtre.</div></td></tr>
-          <tr *ngIf="loading"><td colspan="6"><div class="empty">Chargement…</div></td></tr>
+          <tr *ngIf="!loading && filtered.length === 0"><td colspan="6"><div class="empty">{{ 'deliverables.noDeliverables' | translate }}</div></td></tr>
+          <tr *ngIf="loading"><td colspan="6"><div class="empty">{{ 'common.loading' | translate }}</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -102,31 +99,31 @@ interface PreviewState { name: string; kind: 'image' | 'pdf' | 'other'; url: Saf
   <!-- ═══ Submit modal ═══ -->
   <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
     <div class="modal" (click)="$event.stopPropagation()">
-      <div class="m-head"><h3>Soumettre un livrable</h3><button class="x" (click)="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
+      <div class="m-head"><h3>{{ 'deliverables.submitTitle' | translate }}</h3><button class="x" (click)="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
       <div class="m-body">
-        <div class="fg"><label>Projet</label>
+        <div class="fg"><label>{{ 'common.project' | translate }}</label>
           <select [(ngModel)]="form.projectId" (change)="form.taskId = undefined">
-            <option [ngValue]="undefined">Sélectionner un projet</option>
+            <option [ngValue]="undefined">{{ 'common.selectProject' | translate }}</option>
             <option *ngFor="let p of projectsList" [ngValue]="p.id">{{ p.name }}</option>
           </select>
         </div>
-        <div class="fg"><label>Tâche</label>
+        <div class="fg"><label>{{ 'common.task' | translate }}</label>
           <select [(ngModel)]="form.taskId">
-            <option [ngValue]="undefined">Sélectionner une tâche</option>
+            <option [ngValue]="undefined">{{ 'common.selectTask' | translate }}</option>
             <option *ngFor="let t of modalTasks" [ngValue]="t.id">{{ t.name }}</option>
           </select>
         </div>
-        <div class="fg"><label>Fichier</label>
+        <div class="fg"><label>{{ 'common.file' | translate }}</label>
           <div class="dropzone" [class.drag]="dragging" (click)="fileInput.click()" (dragover)="onDragOver($event)" (dragleave)="dragging=false" (drop)="onDrop($event)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
             <div class="dz-main">{{ selectedFile ? selectedFile.name : 'Glissez votre fichier ici ou cliquez pour parcourir' }}</div>
-            <div class="dz-sub">PDF, DOC(X), XLS(X), PPT(X), TXT, ZIP, RAR, images — max 10 Mo</div>
+            <div class="dz-sub">{{ 'deliverables.fileHint' | translate }}</div>
           </div>
           <input type="file" #fileInput hidden (change)="onFileInput($event)" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.jpg,.jpeg,.png,.gif">
         </div>
-        <div class="fg"><label>Notes</label><textarea rows="3" [(ngModel)]="form.notes" placeholder="Décrivez les changements…"></textarea></div>
+        <div class="fg"><label>{{ 'common.notes' | translate }}</label><textarea rows="3" [(ngModel)]="form.notes" [placeholder]="'deliverables.attrDescribeChanges' | translate"></textarea></div>
       </div>
-      <div class="m-foot"><button class="btn-ghost" (click)="closeModal()">Annuler</button><button class="btn-primary" (click)="submit()" [disabled]="submitting">Soumettre</button></div>
+      <div class="m-foot"><button class="btn-ghost" (click)="closeModal()">{{ 'common.cancel' | translate }}</button><button class="btn-primary" (click)="submit()" [disabled]="submitting">{{ 'common.submit' | translate }}</button></div>
     </div>
   </div>
 
@@ -135,7 +132,7 @@ interface PreviewState { name: string; kind: 'image' | 'pdf' | 'other'; url: Saf
     <div class="modal sm" (click)="$event.stopPropagation()">
       <div class="m-head"><h3>Retour sur « {{ feedback!.fileName }} »</h3><button class="x" (click)="feedback = null"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
       <div class="m-body"><p class="fb-text">{{ feedback!.comments || 'Aucun commentaire fourni par le chef de projet.' }}</p></div>
-      <div class="m-foot"><button class="btn-primary" (click)="feedback = null">Fermer</button></div>
+      <div class="m-foot"><button class="btn-primary" (click)="feedback = null">{{ 'common.close' | translate }}</button></div>
     </div>
   </div>
 
@@ -147,17 +144,17 @@ interface PreviewState { name: string; kind: 'image' | 'pdf' | 'other'; url: Saf
         <button class="x" (click)="closePreview()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
       <div class="preview-body">
-        <div class="preview-loading" *ngIf="previewState!.loading"><div class="spin"></div><span>Chargement de l'aperçu…</span></div>
+        <div class="preview-loading" *ngIf="previewState!.loading"><div class="spin"></div><span>{{ 'deliverables.loadingPreview' | translate }}</span></div>
         <ng-container *ngIf="!previewState!.loading">
           <img *ngIf="previewState!.kind === 'image'" [src]="previewState!.url" alt="aperçu" class="preview-img">
           <iframe *ngIf="previewState!.kind === 'pdf'" [src]="previewState!.url" class="preview-frame" title="aperçu"></iframe>
           <div class="preview-other" *ngIf="previewState!.kind === 'other'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-            <p>Ce type de fichier ne peut pas être prévisualisé ici.</p>
+            <p>{{ 'deliverables.cannotPreview' | translate }}</p>
           </div>
         </ng-container>
       </div>
-      <div class="m-foot"><button class="btn-ghost" (click)="closePreview()">Fermer</button><button class="btn-primary" (click)="downloadFromPreview()">Télécharger</button></div>
+      <div class="m-foot"><button class="btn-ghost" (click)="closePreview()">{{ 'common.close' | translate }}</button><button class="btn-primary" (click)="downloadFromPreview()">{{ 'common.download' | translate }}</button></div>
     </div>
   </div>
   `,
@@ -252,6 +249,7 @@ export class UserDeliverablesComponent implements OnInit {
     private projectService: ProjectService,
     private fileService: FileService,
     private toast: ToastService,
+    private translate: TranslateService,
     private sanitizer: DomSanitizer,
     private cdr: ChangeDetectorRef
   ) {}
@@ -330,8 +328,8 @@ export class UserDeliverablesComponent implements OnInit {
   onFileInput(e: any): void { const f = e.target.files?.[0]; if (f) this.selectedFile = f; }
 
   submit(): void {
-    if (!this.form.taskId) { this.toast.show('Veuillez sélectionner une tâche.', 'error'); return; }
-    if (!this.selectedFile) { this.toast.show('Veuillez joindre un fichier.', 'error'); return; }
+    if (!this.form.taskId) { this.toast.show(this.translate.instant('toast.selectTask'), 'error'); return; }
+    if (!this.selectedFile) { this.toast.show(this.translate.instant('toast.attachFile'), 'error'); return; }
     this.submitting = true;
     const file = this.selectedFile;
     // Upload first, then record the deliverable with the real stored URL. No optimistic/local fallback:
@@ -339,15 +337,15 @@ export class UserDeliverablesComponent implements OnInit {
     this.fileService.uploadFile(file).subscribe({
       next: (res: any) => {
         const url = res?.data?.fileUrl ?? res?.fileUrl;
-        if (!url) { this.submitting = false; this.toast.show('Téléversement échoué : aucune URL retournée.', 'error'); return; }
+        if (!url) { this.submitting = false; this.toast.show(this.translate.instant('toast.uploadNoUrl'), 'error'); return; }
         this.deliverableService.submitDeliverable({ taskId: this.form.taskId!, fileName: file.name, fileUrl: url }).subscribe({
-          next: () => { this.submitting = false; this.showModal = false; this.toast.show('Livrable soumis pour validation.', 'success'); this.load(); },
-          error: () => { this.submitting = false; this.toast.show('Échec de l\'enregistrement du livrable.', 'error'); }
+          next: () => { this.submitting = false; this.showModal = false; this.toast.show(this.translate.instant('toast.deliverableSubmitted'), 'success'); this.load(); },
+          error: () => { this.submitting = false; this.toast.show(this.translate.instant('toast.deliverableSaveFailed'), 'error'); }
         });
       },
       error: (err: any) => {
         this.submitting = false;
-        this.toast.show(err?.error?.message || 'Type de fichier non autorisé ou fichier trop volumineux (max 10 Mo).', 'error');
+        this.toast.show(err?.error?.message || this.translate.instant('toast.fileTypeNotAllowed'), 'error');
       }
     });
   }
@@ -355,7 +353,7 @@ export class UserDeliverablesComponent implements OnInit {
   // ── Row actions ──
   /** In-app preview: fetch the file (auth-protected) and render images/PDFs inline; others offer a download. */
   preview(d: DelRow): void {
-    if (!d.fileUrl) { this.toast.show('Aucun aperçu disponible.', 'error'); return; }
+    if (!d.fileUrl) { this.toast.show(this.translate.instant('toast.noPreview'), 'error'); return; }
     const ext = (d.fileName || d.fileUrl).split('.').pop()?.toLowerCase() || '';
     const kind: PreviewState['kind'] = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext) ? 'image'
       : ext === 'pdf' ? 'pdf' : 'other';
@@ -369,7 +367,7 @@ export class UserDeliverablesComponent implements OnInit {
         }
         this.cdr.detectChanges();
       },
-      error: () => { this.previewState = null; this.toast.show('Impossible de charger l\'aperçu.', 'error'); this.cdr.detectChanges(); }
+      error: () => { this.previewState = null; this.toast.show(this.translate.instant('toast.previewLoadFailed'), 'error'); this.cdr.detectChanges(); }
     });
   }
   closePreview(): void { this.previewState = null; }
@@ -377,10 +375,10 @@ export class UserDeliverablesComponent implements OnInit {
     if (this.previewState) this.download({ fileUrl: this.previewState.rawUrl, fileName: this.previewState.name } as DelRow);
   }
   download(d: DelRow): void {
-    if (!d.fileUrl) { this.toast.show('Aucun fichier à télécharger.', 'error'); return; }
+    if (!d.fileUrl) { this.toast.show(this.translate.instant('toast.noFileToDownload'), 'error'); return; }
     this.fileService.downloadFile(d.fileUrl, d.fileName).subscribe({
-      next: () => this.toast.show('Téléchargement démarré.', 'success'),
-      error: () => this.toast.show('Échec du téléchargement.', 'error')
+      next: () => this.toast.show(this.translate.instant('toast.downloadStarted'), 'success'),
+      error: () => this.toast.show(this.translate.instant('toast.downloadFailed'), 'error')
     });
   }
 }

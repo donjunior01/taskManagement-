@@ -22,27 +22,19 @@ public class DashboardService {
     
     public DashboardStatsDTO getAdminDashboardStats(Long adminId) {
         long totalUsers = userRepository.count();
-        // Project counts are scoped to the projects this admin created — every admin shares the
-        // same dashboard layout but sees only their own project portfolio (traceability).
-        long totalProjects;
-        long activeProjects;
-        long completedProjects;
-        long onHoldProjects;
-        if (adminId != null) {
-            totalProjects = projectRepository.countByCreatedById(adminId);
-            activeProjects = projectRepository.countByCreatedByIdAndStatus(adminId, Project.ProjectStatus.ACTIVE)
-                    + projectRepository.countByCreatedByIdAndStatus(adminId, Project.ProjectStatus.IN_PROGRESS)
-                    + projectRepository.countByCreatedByIdAndStatus(adminId, Project.ProjectStatus.PLANNED);
-            completedProjects = projectRepository.countByCreatedByIdAndStatus(adminId, Project.ProjectStatus.COMPLETED);
-            onHoldProjects = projectRepository.countByCreatedByIdAndStatus(adminId, Project.ProjectStatus.ON_HOLD);
-        } else {
-            totalProjects = projectRepository.count();
-            activeProjects = projectRepository.countByStatus(Project.ProjectStatus.ACTIVE)
-                    + projectRepository.countByStatus(Project.ProjectStatus.IN_PROGRESS)
-                    + projectRepository.countByStatus(Project.ProjectStatus.PLANNED);
-            completedProjects = projectRepository.countByStatus(Project.ProjectStatus.COMPLETED);
-            onHoldProjects = projectRepository.countByStatus(Project.ProjectStatus.ON_HOLD);
-        }
+        // The admin dashboard is a portfolio-oversight view, so the project charts/KPIs reflect ALL
+        // projects (global). Per-admin "who created what" is surfaced on the Users page (project
+        // count column) and the project list "Créé par" column. Counts are non-overlapping so the
+        // "Projets par Statut" donut adds up to the total.
+        long inProgressProjects = projectRepository.countByStatus(Project.ProjectStatus.ACTIVE)
+                + projectRepository.countByStatus(Project.ProjectStatus.IN_PROGRESS);
+        long plannedProjects = projectRepository.countByStatus(Project.ProjectStatus.PLANNED);
+        long completedProjects = projectRepository.countByStatus(Project.ProjectStatus.COMPLETED);
+        long onHoldProjects = projectRepository.countByStatus(Project.ProjectStatus.ON_HOLD);
+        long cancelledProjects = projectRepository.countByStatus(Project.ProjectStatus.CANCELLED);
+        // "Active" (KPI) = in-progress + planned; total = sum of all status buckets.
+        long activeProjects = inProgressProjects + plannedProjects;
+        long totalProjects = inProgressProjects + plannedProjects + completedProjects + onHoldProjects + cancelledProjects;
         
         long totalTasks = taskRepository.count();
         long activeTasks = taskRepository.countByStatus(Task.TaskStatus.IN_PROGRESS);
@@ -65,8 +57,11 @@ public class DashboardService {
                 .newUsersThisMonth(newUsersThisMonth)
                 .totalProjects(totalProjects)
                 .activeProjects(activeProjects)
+                .inProgressProjects(inProgressProjects)
+                .plannedProjects(plannedProjects)
                 .completedProjects(completedProjects)
                 .onHoldProjects(onHoldProjects)
+                .cancelledProjects(cancelledProjects)
                 .totalTasks(totalTasks)
                 .activeTasks(activeTasks)
                 .completedTasks(completedTasks)

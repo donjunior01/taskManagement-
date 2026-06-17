@@ -70,6 +70,7 @@ public class SystemSettingsService {
                 .pdfHeaderColor(s.getPdfHeaderColor())
                 .pdfFooterColor(s.getPdfFooterColor())
                 .pdfFooterText(s.getPdfFooterText())
+                .defaultLanguage(s.getDefaultLanguage())
                 .build();
     }
 

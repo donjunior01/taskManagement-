@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService, User } from '../../../core/services/user.service';
 import { MessageService, Message } from '../../../core/services/message.service';
@@ -41,7 +42,7 @@ export interface ChatMessage {
 @Component({
   selector: 'app-user-messages',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './messages.html',
   styleUrls: ['./messages.scss']
 })
@@ -90,6 +91,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
     private fileService: FileService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
+    private translate: TranslateService,
     public branding: BrandingService
   ) {}
 
@@ -476,7 +478,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
     this.fileService.uploadFile(file).subscribe({
       next: (res: any) => {
         const url = res?.data?.fileUrl ?? res?.fileUrl;
-        if (!url) { this.messageThread = this.messageThread.filter(x => x !== newMsg); this.triggerToast('Téléversement échoué.', 'error'); this.cdr.detectChanges(); return; }
+        if (!url) { this.messageThread = this.messageThread.filter(x => x !== newMsg); this.triggerToast(this.translate.instant('toast.uploadFailed'), 'error'); this.cdr.detectChanges(); return; }
         (newMsg as any)._uploading = false;
         (newMsg as any)._serverUrl = url;          // the authenticated /uploads path for download
         const msgObj: Message = {
@@ -490,7 +492,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
             newMsg.status = 'DELIVERED';
             this.cdr.detectChanges();
           },
-          error: () => { newMsg.status = 'SENT'; this.triggerToast('Échec de l\'envoi du message.', 'error'); this.cdr.detectChanges(); }
+          error: () => { newMsg.status = 'SENT'; this.triggerToast(this.translate.instant('toast.msgSendFailed'), 'error'); this.cdr.detectChanges(); }
         });
         if (this.selectedContact) {
           this.selectedContact.lastMessageText = `📎 ${file.name}`;
@@ -499,7 +501,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.messageThread = this.messageThread.filter(x => x !== newMsg);
-        this.triggerToast(err?.error?.message || 'Type de fichier non autorisé ou trop volumineux.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('toast.fileTypeNotAllowedShort'), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -508,10 +510,10 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
   /** Download a message attachment (authenticated blob fetch). */
   downloadAttachment(message: ChatMessage): void {
     const url = (message as any)._serverUrl || message.attachmentUrl;
-    if (!url || url === '#') { this.triggerToast('Aucun fichier à télécharger.', 'error'); return; }
+    if (!url || url === '#') { this.triggerToast(this.translate.instant('toast.noFileToDownload'), 'error'); return; }
     this.fileService.downloadFile(url, message.attachmentName).subscribe({
-      next: () => this.triggerToast('Téléchargement démarré.', 'success'),
-      error: () => this.triggerToast('Échec du téléchargement.', 'error')
+      next: () => this.triggerToast(this.translate.instant('toast.downloadStarted'), 'success'),
+      error: () => this.triggerToast(this.translate.instant('toast.downloadFailed'), 'error')
     });
   }
   /** Open an image/PDF attachment in a new tab. */

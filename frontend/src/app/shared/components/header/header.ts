@@ -13,6 +13,9 @@ import { ProjectService } from '../../../core/services/project.service';
 import { TaskService } from '../../../core/services/task.service';
 import { TeamService } from '../../../core/services/team.service';
 import { DeliverableService } from '../../../core/services/deliverable.service';
+import { LanguageService } from '../../../core/services/language.service';
+import { TranslatePipe } from '@ngx-translate/core';
+import { LangToggleComponent } from '../lang-toggle/lang-toggle';
 
 interface SearchResult { type: 'project' | 'task' | 'deliverable' | 'user' | 'team'; id?: number; label: string; sub?: string; route: any[]; query?: any; }
 interface SearchGroup { title: string; items: SearchResult[]; }
@@ -37,15 +40,15 @@ export interface DisplayConversation {
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe, LangToggleComponent],
   templateUrl: './header.html',
   styleUrl: './header.scss'
 })
 export class HeaderComponent implements OnInit {
   currentUser: any;
 
-  // Dynamic page title (mirrors prototype top bar)
-  pageTitle: string = 'Tableau de bord';
+  // Dynamic page title (translation key; resolved via the translate pipe in the template)
+  pageTitle: string = 'title.dashboard';
 
   // Current date shown under the PM page title (prototype top bar)
   currentDate: string = '';
@@ -105,6 +108,7 @@ export class HeaderComponent implements OnInit {
     private taskService: TaskService,
     private teamService: TeamService,
     private deliverableService: DeliverableService,
+    public language: LanguageService,
     private cdr: ChangeDetectorRef
   ) {
     this.currentUser = this.authService.getCurrentUser();
@@ -122,39 +126,39 @@ export class HeaderComponent implements OnInit {
   private titleForUrl(url: string): string {
     const u = (url || '').split('?')[0];
     const map: { key: string; title: string }[] = [
-      { key: '/admin/dashboard', title: 'Tableau de bord' },
-      { key: '/admin/users', title: 'Gestion des utilisateurs' },
-      { key: '/admin/projects', title: 'Supervision des projets' },
-      { key: '/admin/teams', title: 'Équipes' },
-      { key: '/admin/security-log', title: 'Journal de sécurité' },
-      { key: '/admin/login-attempts', title: 'Tentatives de connexion' },
-      { key: '/admin/activity-logs', title: "Journal d'activité" },
-      { key: '/admin/reports', title: 'Rapports globaux' },
-      { key: '/admin/performance', title: 'Performance' },
-      { key: '/admin/settings', title: 'Configuration système' },
-      { key: '/admin/support', title: 'Gestion du support' },
-      { key: '/admin/api-docs', title: 'Documentation API' },
-      { key: '/pm/dashboard', title: 'Tableau de bord' },
-      { key: '/pm/analytics', title: 'Analytique' },
-      { key: '/pm/projects', title: 'Projets' },
-      { key: '/pm/tasks', title: 'Tâches' },
-      { key: '/pm/teams', title: 'Équipes' },
-      { key: '/pm/deliverables', title: 'Livrables' },
-      { key: '/pm/calendar', title: 'Calendrier' },
-      { key: '/pm/reports', title: 'Rapports' },
-      { key: '/pm/messages', title: 'Messages' },
-      { key: '/pm/support', title: 'Support' },
-      { key: '/user/dashboard', title: 'Tableau de bord' },
-      { key: '/user/my-tasks', title: 'Mes tâches' },
-      { key: '/user/deliverables', title: 'Mes livrables' },
-      { key: '/user/time-logs', title: 'Temps de travail' },
-      { key: '/user/messages', title: 'Messages' },
-      { key: '/user/calendar', title: 'Calendrier' },
-      { key: '/user/notifications', title: 'Notifications' },
-      { key: '/user/support', title: 'Support' }
+      { key: '/admin/dashboard', title: 'title.dashboard' },
+      { key: '/admin/users', title: 'title.adminUsers' },
+      { key: '/admin/projects', title: 'title.adminProjects' },
+      { key: '/admin/teams', title: 'title.teams' },
+      { key: '/admin/security-log', title: 'title.securityLog' },
+      { key: '/admin/login-attempts', title: 'title.loginAttempts' },
+      { key: '/admin/activity-logs', title: 'title.activityLogs' },
+      { key: '/admin/reports', title: 'title.reports' },
+      { key: '/admin/performance', title: 'title.performance' },
+      { key: '/admin/settings', title: 'title.settings' },
+      { key: '/admin/support', title: 'title.support' },
+      { key: '/admin/api-docs', title: 'title.apiDocs' },
+      { key: '/pm/dashboard', title: 'title.dashboard' },
+      { key: '/pm/analytics', title: 'title.analytics' },
+      { key: '/pm/projects', title: 'title.pmProjects' },
+      { key: '/pm/tasks', title: 'title.pmTasks' },
+      { key: '/pm/teams', title: 'title.teams' },
+      { key: '/pm/deliverables', title: 'title.pmDeliverables' },
+      { key: '/pm/calendar', title: 'title.calendar' },
+      { key: '/pm/reports', title: 'title.pmReports' },
+      { key: '/pm/messages', title: 'title.pmMessages' },
+      { key: '/pm/support', title: 'title.support2' },
+      { key: '/user/dashboard', title: 'title.dashboard' },
+      { key: '/user/my-tasks', title: 'title.userMyTasks' },
+      { key: '/user/deliverables', title: 'title.userDeliverables' },
+      { key: '/user/time-logs', title: 'title.timeLogs' },
+      { key: '/user/messages', title: 'title.userMessages' },
+      { key: '/user/calendar', title: 'title.calendar' },
+      { key: '/user/notifications', title: 'title.userNotifications' },
+      { key: '/user/support', title: 'title.support2' }
     ];
     const hit = map.find(m => u.startsWith(m.key));
-    return hit ? hit.title : 'Administration';
+    return hit ? hit.title : 'title.default';
   }
 
   goToSecurity(): void {
@@ -492,12 +496,12 @@ export class HeaderComponent implements OnInit {
   }
 
   getDisplayRole(): string {
-    if (!this.currentUser?.role) return 'Espace Utilisateur';
+    if (!this.currentUser?.role) return 'role.user';
     const role = this.currentUser.role.replace('ROLE_', '');
     switch (role) {
-      case 'ADMIN':           return 'Administrateur';
-      case 'PROJECT_MANAGER': return 'Chef de Projet';
-      case 'USER':            return 'Espace Collaborateur';
+      case 'ADMIN':           return 'role.admin';
+      case 'PROJECT_MANAGER': return 'role.pm';
+      case 'USER':            return 'role.user';
       default:                return role;
     }
   }

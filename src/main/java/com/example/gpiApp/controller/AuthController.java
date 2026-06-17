@@ -170,6 +170,8 @@ public class AuthController {
                 "Votre compte a été créé et est en attente d'activation par un administrateur. Vous serez notifié dès qu'il sera activé.",
                 Notification.NotificationType.SYSTEM,
                 null,
+                null,
+                "accountPending",
                 null
             );
 
@@ -183,7 +185,11 @@ public class AuthController {
                             + " (" + savedUser.getEmail() + ") attend l'activation de son compte.",
                         Notification.NotificationType.SYSTEM,
                         null,
-                        null
+                        null,
+                        "newRegistration",
+                        java.util.Map.of(
+                            "name", savedUser.getFirstName() + " " + savedUser.getLastName(),
+                            "email", savedUser.getEmail())
                     );
                 }
             } catch (Exception ignore) {

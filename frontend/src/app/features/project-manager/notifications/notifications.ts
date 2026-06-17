@@ -1,8 +1,10 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { NotificationService, Notification } from '../../../core/services/notification.service';
 import { BadgeCountsService } from '../../../core/services/badge-counts.service';
+import { resolveNotifTitle, resolveNotifMessage } from '../../../core/services/notification-i18n';
 
 type Cat = 'task' | 'deliverable' | 'approved' | 'overdue' | 'team' | 'message' | 'system';
 interface NotifRow extends Notification { cat: Cat; }
@@ -10,7 +12,7 @@ interface NotifRow extends Notification { cat: Cat; }
 @Component({
   selector: 'app-pm-notifications',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
   <div class="nt-wrap">
 
@@ -18,10 +20,10 @@ interface NotifRow extends Notification { cat: Cat; }
     <div class="nt-bar">
       <div class="tabs">
         <button class="tab" *ngFor="let t of tabs" [class.on]="tab === t.key" (click)="tab = t.key">
-          {{ t.label }}<span class="cnt" *ngIf="tabCount(t.key) > 0">{{ tabCount(t.key) }}</span>
+          {{ t.label | translate }}<span class="cnt" *ngIf="tabCount(t.key) > 0">{{ tabCount(t.key) }}</span>
         </button>
       </div>
-      <button class="mark-all" (click)="markAll()" [disabled]="unreadCount === 0">Tout marquer comme lu</button>
+      <button class="mark-all" (click)="markAll()" [disabled]="unreadCount === 0">{{ 'notifications.markAll' | translate }}</button>
     </div>
 
     <!-- ═══ List ═══ -->
@@ -37,13 +39,13 @@ interface NotifRow extends Notification { cat: Cat; }
           <svg *ngSwitchDefault viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
         </div>
         <div class="nt-body">
-          <p class="nt-msg">{{ n.title || label(n.cat) }}<span *ngIf="n.message"> — {{ n.message }}</span></p>
+          <p class="nt-msg">{{ dispTitle(n) }}<span *ngIf="dispMsg(n)"> — {{ dispMsg(n) }}</span></p>
           <p class="nt-time">{{ timeAgo(n.createdAt) }}</p>
         </div>
         <span class="nt-dot" *ngIf="!n.isRead"></span>
-        <button class="nt-see" (click)="open(n)">Voir</button>
+        <button class="nt-see" (click)="open(n)">{{ 'notifications.view' | translate }}</button>
       </div>
-      <div class="empty" *ngIf="filtered.length === 0">Aucune notification.</div>
+      <div class="empty" *ngIf="filtered.length === 0">{{ 'notifications.empty' | translate }}</div>
     </div>
   </div>
 
@@ -60,14 +62,14 @@ interface NotifRow extends Notification { cat: Cat; }
           <svg *ngSwitchCase="'message'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
           <svg *ngSwitchDefault viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
         </div>
-        <div class="ntm-titles"><span class="ntm-cat">{{ label(detail!.cat) }}</span><h3>{{ detail!.title || label(detail!.cat) }}</h3></div>
+        <div class="ntm-titles"><span class="ntm-cat">{{ labelKey(detail!.cat) | translate }}</span><h3>{{ dispTitle(detail!) }}</h3></div>
         <button class="ntm-x" (click)="closeDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
       <div class="ntm-body">
-        <p class="ntm-msg">{{ detail!.message || 'Aucun détail supplémentaire.' }}</p>
+        <p class="ntm-msg">{{ dispMsg(detail!) || ('notifications.noDetail' | translate) }}</p>
         <p class="ntm-time">{{ timeAgo(detail!.createdAt) }}</p>
       </div>
-      <div class="ntm-foot"><button class="ntm-close-btn" (click)="closeDetail()">Fermer</button></div>
+      <div class="ntm-foot"><button class="ntm-close-btn" (click)="closeDetail()">{{ 'notifications.close' | translate }}</button></div>
     </div>
   </div>
   `,
@@ -112,15 +114,15 @@ export class PmNotificationsComponent implements OnInit, OnDestroy {
   rows: NotifRow[] = [];
   tab: 'all' | 'unread' | 'task' | 'deliverable' | 'team' | 'system' = 'all';
   tabs = [
-    { key: 'all' as const, label: 'Toutes' }, { key: 'unread' as const, label: 'Non lues' },
-    { key: 'task' as const, label: 'Tâches' }, { key: 'deliverable' as const, label: 'Livrables' },
-    { key: 'team' as const, label: 'Équipe' }, { key: 'system' as const, label: 'Système' }
+    { key: 'all' as const, label: 'notifications.tabAll' }, { key: 'unread' as const, label: 'notifications.tabUnread' },
+    { key: 'task' as const, label: 'notifications.tabTask' }, { key: 'deliverable' as const, label: 'notifications.tabDeliverable' },
+    { key: 'team' as const, label: 'notifications.tabTeam' }, { key: 'system' as const, label: 'notifications.tabSystem' }
   ];
 
   detail: NotifRow | null = null;
   private subs: Subscription[] = [];
 
-  constructor(private notificationService: NotificationService, private badges: BadgeCountsService, private cdr: ChangeDetectorRef) {}
+  constructor(private notificationService: NotificationService, private badges: BadgeCountsService, private cdr: ChangeDetectorRef, private translate: TranslateService) {}
 
   ngOnInit(): void {
     this.load();
@@ -198,8 +200,15 @@ export class PmNotificationsComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  label(cat: Cat): string {
-    return ({ task: 'Tâche', deliverable: 'Livrable', approved: 'Validé', overdue: 'Échéance', team: 'Équipe', message: 'Message', system: 'Système' } as Record<Cat, string>)[cat];
+  /** Localised notification title — uses the i18nKey when present, else the category label. */
+  dispTitle(n: NotifRow): string {
+    return resolveNotifTitle(n, this.translate) || this.translate.instant(this.labelKey(n.cat));
+  }
+  /** Localised notification body text (empty when there is none). */
+  dispMsg(n: NotifRow): string { return resolveNotifMessage(n, this.translate); }
+
+  labelKey(cat: Cat): string {
+    return ({ task: 'notifications.catTask', deliverable: 'notifications.catDeliverable', approved: 'notifications.catApproved', overdue: 'notifications.catOverdue', team: 'notifications.catTeam', message: 'notifications.catMessage', system: 'notifications.catSystem' } as Record<Cat, string>)[cat];
   }
 
   icon(cat: Cat): string {
@@ -220,10 +229,10 @@ export class PmNotificationsComponent implements OnInit, OnDestroy {
     const diff = Date.now() - new Date(at).getTime();
     if (isNaN(diff)) return '';
     const min = Math.floor(diff / 60000);
-    if (min < 1) return "à l'instant";
-    if (min < 60) return `il y a ${min} min`;
+    if (min < 1) return this.translate.instant('relTime.justNow');
+    if (min < 60) return this.translate.instant('relTime.minAgo', { n: min });
     const h = Math.floor(min / 60);
-    if (h < 24) return `il y a ${h} h`;
-    return `il y a ${Math.floor(h / 24)} j`;
+    if (h < 24) return this.translate.instant('relTime.hAgo', { n: h });
+    return this.translate.instant('relTime.dAgo', { n: Math.floor(h / 24) });
   }
 }

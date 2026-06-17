@@ -1,13 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NotificationService, Notification } from '../../../core/services/notification.service';
+import { resolveNotifMessage } from '../../../core/services/notification-i18n';
 import { AuthService } from '../../../core/services/auth.service';
 import { Subscription, interval } from 'rxjs';
 
 @Component({
   selector: 'app-notification-bell',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './notification-bell.html',
   styleUrl: './notification-bell.scss'
 })
@@ -19,8 +21,12 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
   constructor(
     private notificationService: NotificationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private translate: TranslateService
   ) {}
+
+  /** Localised message text (uses the notification's i18nKey when present). */
+  dispMsg(n: Notification): string { return resolveNotifMessage(n, this.translate); }
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {

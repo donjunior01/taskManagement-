@@ -6,7 +6,7 @@
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"></polyline>
       </svg>
-      Back to Projects
+      {{ 'pm.detail.backToProjects' | translate }}
     </button>
     <div class="pd-topbar-actions" *ngIf="!loading && project">
       <button class="btn btn-add-users" (click)="openAddUsersModal()">
@@ -16,34 +16,34 @@
           <line x1="19" y1="8" x2="19" y2="14"></line>
           <line x1="16" y1="11" x2="22" y2="11"></line>
         </svg>
-        Add Users
+        {{ 'pm.detail.addUsers' | translate }}
       </button>
       <button class="btn btn-add-task" (click)="openAddTaskModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        Add Task
+        {{ 'pm.detail.addTask' | translate }}
       </button>
       <button class="btn btn-secondary" (click)="openChat()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
-        Team Chat
+        {{ 'pm.detail.teamChat' | translate }}
       </button>
       <button class="btn btn-secondary" (click)="openEditModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon>
           <line x1="3" y1="21" x2="21" y2="21"></line>
         </svg>
-        Edit
+        {{ 'pm.detail.edit' | translate }}
       </button>
       <button class="btn btn-danger" (click)="openDeleteModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3 6 5 6 21 6"></polyline>
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
         </svg>
-        Delete
+        {{ 'pm.detail.delete' | translate }}
       </button>
     </div>
   </div>
@@ -51,7 +51,7 @@
   <!-- ── Loading ────────────────────────────────────────────────────────── -->
   <div class="pd-loading" *ngIf="loading">
     <div class="spinner"></div>
-    <span>Loading project workspace...</span>
+    <span>{{ 'pm.detail.loadingWorkspace' | translate }}</span>
   </div>
 
   <!-- ── Not Found ──────────────────────────────────────────────────────── -->
@@ -61,9 +61,9 @@
         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
       </svg>
     </div>
-    <h3>Workspace Not Found</h3>
-    <p>The project could not be loaded. Please return to the projects list.</p>
-    <button class="btn btn-primary" (click)="goBack()">Back to Projects</button>
+    <h3>{{ 'pm.detail.notFoundTitle' | translate }}</h3>
+    <p>{{ 'pm.detail.notFoundText' | translate }}</p>
+    <button class="btn btn-primary" (click)="goBack()">{{ 'pm.detail.backToProjects' | translate }}</button>
   </div>
 
   <!-- ── Main Content ───────────────────────────────────────────────────── -->
@@ -76,14 +76,14 @@
           {{ getStatusLabel(project.status) }}
         </span>
         <h1 class="hero-title">{{ project.name }}</h1>
-        <p class="hero-desc">{{ project.description || 'No description registered for this workspace.' }}</p>
+        <p class="hero-desc">{{ project.description || ('pm.detail.noDescription' | translate) }}</p>
         <div class="hero-meta">
           <div class="meta-chip">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            <span>{{ project.managerName || 'Unassigned Manager' }}</span>
+            <span>{{ project.managerName || ('pm.detail.unassignedManager' | translate) }}</span>
           </div>
           <div class="meta-chip">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -99,7 +99,7 @@
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            <span>{{ getDaysRemaining() }} days remaining</span>
+            <span>{{ 'pm.detail.daysRemaining' | translate:{ count: getDaysRemaining() } }}</span>
           </div>
         </div>
       </div>
@@ -113,7 +113,7 @@
         </svg>
         <div class="ring-center">
           <span class="ring-pct">{{ project.progress || 0 }}%</span>
-          <span class="ring-label">Progress</span>
+          <span class="ring-label">{{ 'pm.detail.progress' | translate }}</span>
         </div>
       </div>
     </div>
@@ -131,7 +131,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ taskStats.total || project.taskCount || 0 }}</span>
-          <span class="stat-label">Total Tasks</span>
+          <span class="stat-label">{{ 'pm.detail.totalTasks' | translate }}</span>
         </div>
       </div>
 
@@ -146,7 +146,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ members.length || project.teamCount || 0 }}</span>
-          <span class="stat-label">Team Members</span>
+          <span class="stat-label">{{ 'pm.detail.teamMembers' | translate }}</span>
         </div>
       </div>
 
@@ -158,7 +158,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ taskStats.completed }}</span>
-          <span class="stat-label">Completed Tasks</span>
+          <span class="stat-label">{{ 'pm.detail.completedTasks' | translate }}</span>
         </div>
       </div>
 
@@ -171,7 +171,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ getDaysRemaining() }}</span>
-          <span class="stat-label">Days Remaining</span>
+          <span class="stat-label">{{ 'pm.detail.daysRemainingShort' | translate }}</span>
         </div>
       </div>
     </div>
@@ -182,8 +182,8 @@
       <!-- Task Status Donut -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Task Status Distribution</h4>
-          <span class="chart-subtitle">{{ taskStats.total }} tasks total</span>
+          <h4>{{ 'pm.detail.taskStatusDist' | translate }}</h4>
+          <span class="chart-subtitle">{{ 'pm.detail.tasksTotal' | translate:{ count: taskStats.total } }}</span>
         </div>
 
         <div class="task-donut-wrap" *ngIf="taskStats.total > 0">
@@ -201,19 +201,22 @@
             <circle cx="60" cy="60" r="45" fill="none" stroke="var(--warning, #f59e0b)" stroke-width="14"
               [attr.stroke-dasharray]="getTaskSegmentDash(taskStats.onHold)"
               [attr.stroke-dashoffset]="getTaskSegmentOffset(3)" stroke-linecap="butt"/>
-            <text x="60" y="56" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text-primary)">{{ taskStats.total }}</text>
-            <text x="60" y="70" text-anchor="middle" font-size="9" fill="var(--text-muted)" font-weight="600">TASKS</text>
+            <!-- Counter-rotate the centre labels so they read horizontally despite the SVG's -90deg spin. -->
+            <g transform="rotate(90 60 60)">
+              <text x="60" y="56" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text-primary)">{{ taskStats.total }}</text>
+              <text x="60" y="70" text-anchor="middle" font-size="9" fill="var(--text-muted)" font-weight="600">TASKS</text>
+            </g>
           </svg>
           <div class="donut-legend">
-            <div class="legend-item"><span class="legend-dot" style="background:#94a3b8;"></span><span class="legend-label">Planned</span><span class="legend-count">{{ taskStats.planned }}</span></div>
-            <div class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span><span class="legend-label">In Progress</span><span class="legend-count">{{ taskStats.inProgress }}</span></div>
-            <div class="legend-item"><span class="legend-dot" style="background:var(--success);"></span><span class="legend-label">Completed</span><span class="legend-count">{{ taskStats.completed }}</span></div>
-            <div class="legend-item"><span class="legend-dot" style="background:var(--warning, #f59e0b);"></span><span class="legend-label">On Hold</span><span class="legend-count">{{ taskStats.onHold }}</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:#94a3b8;"></span><span class="legend-label">{{ 'pm.detail.legendPlanned' | translate }}</span><span class="legend-count">{{ taskStats.planned }}</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span><span class="legend-label">{{ 'pm.detail.legendInProgress' | translate }}</span><span class="legend-count">{{ taskStats.inProgress }}</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--success);"></span><span class="legend-label">{{ 'pm.detail.legendCompleted' | translate }}</span><span class="legend-count">{{ taskStats.completed }}</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--warning, #f59e0b);"></span><span class="legend-label">{{ 'pm.detail.legendOnHold' | translate }}</span><span class="legend-count">{{ taskStats.onHold }}</span></div>
           </div>
         </div>
         <div class="chart-empty" *ngIf="taskStats.total === 0 && !loadingTasks">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-          <span>No tasks assigned yet</span>
+          <span>{{ 'pm.detail.noTasksYet' | translate }}</span>
         </div>
         <div class="chart-loading" *ngIf="loadingTasks"><div class="spinner"></div></div>
       </div>
@@ -221,15 +224,15 @@
       <!-- Timeline -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Project Timeline</h4>
-          <span class="chart-subtitle">Duration analysis</span>
+          <h4>{{ 'pm.detail.projectTimeline' | translate }}</h4>
+          <span class="chart-subtitle">{{ 'pm.detail.durationAnalysis' | translate }}</span>
         </div>
         <div class="timeline-chart">
           <div class="timeline-gauge">
             <div class="gauge-labels">
-              <span class="gauge-start">{{ project.startDate || 'Start' }}</span>
-              <span class="gauge-pct">{{ getDaysElapsedPct() | number:'1.0-0' }}% elapsed</span>
-              <span class="gauge-end">{{ project.endDate || 'End' }}</span>
+              <span class="gauge-start">{{ project.startDate || ('pm.detail.startLabel' | translate) }}</span>
+              <span class="gauge-pct">{{ getDaysElapsedPct() | number:'1.0-0' }}{{ 'pm.detail.elapsedSuffix' | translate }}</span>
+              <span class="gauge-end">{{ project.endDate || ('pm.detail.endLabel' | translate) }}</span>
             </div>
             <div class="gauge-track">
               <div class="gauge-fill" [style.width.%]="getDaysElapsedPct()"></div>
@@ -239,21 +242,21 @@
           <div class="timeline-stats">
             <div class="tl-stat">
               <span class="tl-num">{{ getDaysTotal() }}</span>
-              <span class="tl-lbl">Total Days</span>
+              <span class="tl-lbl">{{ 'pm.detail.totalDays' | translate }}</span>
             </div>
             <div class="tl-divider"></div>
             <div class="tl-stat">
               <span class="tl-num">{{ getDaysTotal() - getDaysRemaining() }}</span>
-              <span class="tl-lbl">Days Elapsed</span>
+              <span class="tl-lbl">{{ 'pm.detail.daysElapsed' | translate }}</span>
             </div>
             <div class="tl-divider"></div>
             <div class="tl-stat">
               <span class="tl-num" [class.overdue]="getDaysRemaining() === 0">{{ getDaysRemaining() }}</span>
-              <span class="tl-lbl">Days Left</span>
+              <span class="tl-lbl">{{ 'pm.detail.daysLeft' | translate }}</span>
             </div>
           </div>
           <div class="completion-bar-section" *ngIf="taskStats.total > 0">
-            <span class="completion-label">Completion Rate</span>
+            <span class="completion-label">{{ 'pm.detail.completionRate' | translate }}</span>
             <div class="completion-track">
               <div class="completion-fill" [style.width.%]="taskStats.total > 0 ? (taskStats.completed / taskStats.total * 100) : 0"></div>
             </div>
@@ -265,8 +268,8 @@
       <!-- Team Chart -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Team Composition</h4>
-          <span class="chart-subtitle">{{ members.length }} member(s)</span>
+          <h4>{{ 'pm.detail.teamComposition' | translate }}</h4>
+          <span class="chart-subtitle">{{ 'pm.detail.members' | translate:{ count: members.length } }}</span>
         </div>
         <div class="members-chart" *ngIf="members.length > 0 && !loadingMembers">
           <div class="members-avatars-row">
@@ -286,29 +289,29 @@
         <div class="chart-loading" *ngIf="loadingMembers"><div class="spinner"></div></div>
         <div class="chart-empty" *ngIf="!loadingMembers && members.length === 0">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-          <span>No team members assigned</span>
+          <span>{{ 'pm.detail.noTeamAssigned' | translate }}</span>
         </div>
       </div>
 
       <!-- Priority Chart -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Task Priority Breakdown</h4>
-          <span class="chart-subtitle">Priority distribution</span>
+          <h4>{{ 'pm.detail.priorityBreakdown' | translate }}</h4>
+          <span class="chart-subtitle">{{ 'pm.detail.priorityDist' | translate }}</span>
         </div>
         <div class="priority-bars-direct" *ngIf="tasks.length > 0 && !loadingTasks">
           <div class="pb-row">
-            <span class="pb-label high-lbl">High</span>
+            <span class="pb-label high-lbl">{{ 'pm.detail.high' | translate }}</span>
             <div class="pb-track"><div class="pb-fill high-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('HIGH') / tasks.length * 100) : 0"></div></div>
             <span class="pb-val">{{ getCountByPriority('HIGH') }}</span>
           </div>
           <div class="pb-row">
-            <span class="pb-label med-lbl">Medium</span>
+            <span class="pb-label med-lbl">{{ 'pm.detail.medium' | translate }}</span>
             <div class="pb-track"><div class="pb-fill med-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('MEDIUM') / tasks.length * 100) : 0"></div></div>
             <span class="pb-val">{{ getCountByPriority('MEDIUM') }}</span>
           </div>
           <div class="pb-row">
-            <span class="pb-label low-lbl">Low</span>
+            <span class="pb-label low-lbl">{{ 'pm.detail.low' | translate }}</span>
             <div class="pb-track"><div class="pb-fill low-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('LOW') / tasks.length * 100) : 0"></div></div>
             <span class="pb-val">{{ getCountByPriority('LOW') }}</span>
           </div>
@@ -316,7 +319,7 @@
         <div class="chart-loading" *ngIf="loadingTasks"><div class="spinner"></div></div>
         <div class="chart-empty" *ngIf="!loadingTasks && tasks.length === 0">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-          <span>No task priority data</span>
+          <span>{{ 'pm.detail.noPriorityData' | translate }}</span>
         </div>
       </div>
     </div>
@@ -325,8 +328,8 @@
     <div class="glass-panel pd-section gantt-section">
       <div class="section-header">
         <div class="section-title-group">
-          <h4>Project Timeline</h4>
-          <span class="section-count">{{ tasks.length }} task(s) on the Gantt</span>
+          <h4>{{ 'pm.detail.projectTimeline' | translate }}</h4>
+          <span class="section-count">{{ 'pm.detail.ganttCount' | translate:{ count: tasks.length } }}</span>
         </div>
       </div>
 
@@ -342,7 +345,7 @@
             <div class="gantt-axis">
               <div class="gantt-axis-label" *ngFor="let m of ganttMonths" [style.left.%]="m.left">{{ m.label }}</div>
             </div>
-            <div class="gantt-today" *ngIf="ganttTodayPct >= 0 && ganttTodayPct <= 100" [style.left.%]="ganttTodayPct" title="Today"></div>
+            <div class="gantt-today" *ngIf="ganttTodayPct >= 0 && ganttTodayPct <= 100" [style.left.%]="ganttTodayPct" [title]="'pm.detail.today' | translate"></div>
             <div class="gantt-canvas-rows">
               <div class="gantt-track" *ngFor="let t of tasks">
                 <div class="gantt-bar" [ngClass]="getTaskStatusClass(t.status)"
@@ -357,17 +360,17 @@
         </div>
         <!-- Legend -->
         <div class="gantt-legend">
-          <span class="gl-item"><span class="gl-dot status-planned"></span>Planned</span>
-          <span class="gl-item"><span class="gl-dot status-inprogress"></span>In Progress</span>
-          <span class="gl-item"><span class="gl-dot status-completed"></span>Completed</span>
-          <span class="gl-item"><span class="gl-dot status-onhold"></span>On Hold</span>
-          <span class="gl-item"><span class="gl-today-key"></span>Today</span>
+          <span class="gl-item"><span class="gl-dot status-planned"></span>{{ 'pm.detail.legendPlanned' | translate }}</span>
+          <span class="gl-item"><span class="gl-dot status-inprogress"></span>{{ 'pm.detail.legendInProgress' | translate }}</span>
+          <span class="gl-item"><span class="gl-dot status-completed"></span>{{ 'pm.detail.legendCompleted' | translate }}</span>
+          <span class="gl-item"><span class="gl-dot status-onhold"></span>{{ 'pm.detail.legendOnHold' | translate }}</span>
+          <span class="gl-item"><span class="gl-today-key"></span>{{ 'pm.detail.today' | translate }}</span>
         </div>
       </div>
-      <div class="section-loading" *ngIf="loadingTasks"><div class="spinner"></div><span>Building timeline...</span></div>
+      <div class="section-loading" *ngIf="loadingTasks"><div class="spinner"></div><span>{{ 'pm.detail.buildingTimeline' | translate }}</span></div>
       <div class="section-empty" *ngIf="!loadingTasks && tasks.length === 0">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="15" y2="6"></line><line x1="3" y1="18" x2="18" y2="18"></line></svg>
-        <p>No tasks to plot on the timeline yet.</p>
+        <p>{{ 'pm.detail.noTasksTimeline' | translate }}</p>
       </div>
     </div>
 
@@ -379,21 +382,21 @@
             <svg class="ai-spark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2l1.9 5.8L20 9.7l-5.1 3.5L17 19l-5-3.6L7 19l2.1-5.8L4 9.7l6.1-1.9z"></path>
             </svg>
-            AI Assistant
+            {{ 'pm.detail.aiAssistant' | translate }}
           </h4>
-          <span class="section-count">Insights &amp; prioritisation</span>
+          <span class="section-count">{{ 'pm.detail.insightsPrioritisation' | translate }}</span>
         </div>
         <div class="ai-actions">
           <button class="btn btn-primary btn-sm" (click)="generateAiSummary()" [disabled]="loadingAiSummary">
-            <span *ngIf="!loadingAiSummary">Summarise Project</span>
+            <span *ngIf="!loadingAiSummary">{{ 'pm.detail.summariseProject' | translate }}</span>
             <div class="spinner" *ngIf="loadingAiSummary"></div>
           </button>
           <button class="btn btn-secondary btn-sm" (click)="generateAiPriorities()" [disabled]="loadingAiPriorities">
-            <span *ngIf="!loadingAiPriorities">Suggest Priorities</span>
+            <span *ngIf="!loadingAiPriorities">{{ 'pm.detail.suggestPriorities' | translate }}</span>
             <div class="spinner" *ngIf="loadingAiPriorities"></div>
           </button>
           <button class="btn btn-secondary btn-sm" (click)="generateAiRisks()" [disabled]="loadingAiRisks">
-            <span *ngIf="!loadingAiRisks">Predict Risks</span>
+            <span *ngIf="!loadingAiRisks">{{ 'pm.detail.predictRisks' | translate }}</span>
             <div class="spinner" *ngIf="loadingAiRisks"></div>
           </button>
         </div>
@@ -404,24 +407,24 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2l1.9 5.8L20 9.7l-5.1 3.5L17 19l-5-3.6L7 19l2.1-5.8L4 9.7l6.1-1.9z"></path>
         </svg>
-        <p>Generate an AI summary or let the assistant rank your open tasks by urgency.</p>
+        <p>{{ 'pm.detail.aiHint' | translate }}</p>
       </div>
 
       <!-- Summary result -->
       <div class="ai-insight" *ngIf="aiInsight">
         <div class="ai-insight-top">
           <span class="ai-health-badge" [ngClass]="getHealthClass(aiInsight.healthStatus)">{{ aiInsight.healthHeadline }}</span>
-          <span class="ai-source-chip" title="Source of the analysis">{{ aiInsight.source }}</span>
+          <span class="ai-source-chip" *ngIf="aiInsight.source && aiInsight.source !== 'MOCK'" [title]="'pm.detail.sourceTitle' | translate">{{ aiInsight.source }}</span>
         </div>
         <p class="ai-summary-text">{{ aiInsight.summary }}</p>
         <div class="ai-metrics">
-          <div class="ai-metric"><span class="aim-val">{{ aiInsight.completionRate }}%</span><span class="aim-lbl">Completion</span></div>
-          <div class="ai-metric"><span class="aim-val">{{ aiInsight.inProgressTasks }}</span><span class="aim-lbl">In Progress</span></div>
-          <div class="ai-metric"><span class="aim-val" [class.danger]="aiInsight.overdueTasks > 0">{{ aiInsight.overdueTasks }}</span><span class="aim-lbl">Overdue</span></div>
-          <div class="ai-metric"><span class="aim-val">{{ aiInsight.todoTasks }}</span><span class="aim-lbl">Backlog</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.completionRate }}%</span><span class="aim-lbl">{{ 'pm.detail.completion' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.inProgressTasks }}</span><span class="aim-lbl">{{ 'pm.detail.inProgressShort' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiInsight.overdueTasks > 0">{{ aiInsight.overdueTasks }}</span><span class="aim-lbl">{{ 'pm.detail.overdue' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.todoTasks }}</span><span class="aim-lbl">{{ 'pm.detail.backlog' | translate }}</span></div>
         </div>
         <div class="ai-recos" *ngIf="aiInsight.recommendations.length">
-          <h5>Recommendations</h5>
+          <h5>{{ 'pm.detail.recommendations' | translate }}</h5>
           <ul>
             <li *ngFor="let r of aiInsight.recommendations">{{ r }}</li>
           </ul>
@@ -442,10 +445,10 @@
                   →
                   <span class="aip-to" [ngClass]="getPriorityClass(s.suggestedPriority)">{{ s.suggestedPriority }}</span>
                 </span>
-                <span class="aip-keep" *ngIf="!s.changeRecommended">Keep {{ s.currentPriority }}</span>
+                <span class="aip-keep" *ngIf="!s.changeRecommended">{{ 'pm.detail.keep' | translate:{ priority: s.currentPriority } }}</span>
               </div>
               <span class="aip-reason">{{ s.reason }}</span>
-              <span class="aip-assignee" *ngIf="s.assignedToName">Assigned to {{ s.assignedToName }}</span>
+              <span class="aip-assignee" *ngIf="s.assignedToName">{{ 'pm.detail.assignedTo' | translate:{ name: s.assignedToName } }}</span>
             </div>
           </div>
         </div>
@@ -455,14 +458,14 @@
       <div class="ai-risks" *ngIf="aiRisks">
         <div class="ai-insight-top">
           <span class="ai-health-badge" [ngClass]="getRiskClass(aiRisks.projectRiskLevel)">{{ aiRisks.headline }}</span>
-          <span class="ai-source-chip" title="Source of the analysis">{{ aiRisks.source }}</span>
+          <span class="ai-source-chip" *ngIf="aiRisks.source && aiRisks.source !== 'MOCK'" [title]="'pm.detail.sourceTitle' | translate">{{ aiRisks.source }}</span>
         </div>
         <p class="ai-summary-text">{{ aiRisks.summary }}</p>
         <div class="ai-metrics">
-          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.atRiskCount > 0">{{ aiRisks.atRiskCount }}</span><span class="aim-lbl">At Risk</span></div>
-          <div class="ai-metric"><span class="aim-val">{{ aiRisks.totalOpenTasks }}</span><span class="aim-lbl">Open Tasks</span></div>
-          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.projectSlipDays > 0">{{ aiRisks.projectSlipDays }}</span><span class="aim-lbl">Slip (days)</span></div>
-          <div class="ai-metric"><span class="aim-val aim-date">{{ aiRisks.predictedProjectCompletion || '—' }}</span><span class="aim-lbl">Proj. Finish</span></div>
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.atRiskCount > 0">{{ aiRisks.atRiskCount }}</span><span class="aim-lbl">{{ 'pm.detail.atRisk' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiRisks.totalOpenTasks }}</span><span class="aim-lbl">{{ 'pm.detail.openTasks' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.projectSlipDays > 0">{{ aiRisks.projectSlipDays }}</span><span class="aim-lbl">{{ 'pm.detail.slipDays' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val aim-date">{{ aiRisks.predictedProjectCompletion || '—' }}</span><span class="aim-lbl">{{ 'pm.detail.projFinish' | translate }}</span></div>
         </div>
         <div class="ai-risk-list" *ngIf="aiRisks.risks.length">
           <div class="ai-risk-row" *ngFor="let r of aiRisks.risks">
@@ -470,10 +473,10 @@
             <div class="air-main">
               <div class="air-head">
                 <span class="air-name">{{ r.taskName }}</span>
-                <span class="air-slip" *ngIf="r.predictedSlipDays > 0">+{{ r.predictedSlipDays }}d late</span>
+                <span class="air-slip" *ngIf="r.predictedSlipDays > 0">{{ 'pm.detail.lateSuffix' | translate:{ days: r.predictedSlipDays } }}</span>
               </div>
               <span class="air-reason">{{ r.reason }}</span>
-              <span class="air-meta">{{ r.progress }}% done<span *ngIf="r.deadline"> · due {{ r.deadline }}</span><span *ngIf="r.predictedCompletionDate"> · ETA {{ r.predictedCompletionDate }}</span></span>
+              <span class="air-meta">{{ r.progress }}{{ 'pm.detail.doneSuffix' | translate }}<span *ngIf="r.deadline"> · {{ 'pm.detail.due' | translate }} {{ r.deadline }}</span><span *ngIf="r.predictedCompletionDate"> · {{ 'pm.detail.eta' | translate }} {{ r.predictedCompletionDate }}</span></span>
             </div>
           </div>
         </div>
@@ -484,8 +487,8 @@
     <div class="glass-panel pd-section">
       <div class="section-header">
         <div class="section-title-group">
-          <h4>Team Members</h4>
-          <span class="section-count">{{ members.length }} member(s)</span>
+          <h4>{{ 'pm.detail.teamMembers' | translate }}</h4>
+          <span class="section-count">{{ 'pm.detail.members' | translate:{ count: members.length } }}</span>
         </div>
         <button class="btn btn-add-users btn-sm" (click)="openAddUsersModal()">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -494,7 +497,7 @@
             <line x1="19" y1="8" x2="19" y2="14"></line>
             <line x1="16" y1="11" x2="22" y2="11"></line>
           </svg>
-          Add Users
+          {{ 'pm.detail.addUsers' | translate }}
         </button>
       </div>
 
@@ -509,23 +512,23 @@
           </div>
           <div class="member-right">
             <span class="member-badge">{{ m.role || 'USER' }}</span>
-            <button class="unassign-btn" (click)="openUnassignModal(m)" title="Remove from project">
+            <button class="unassign-btn" (click)="openUnassignModal(m)" [title]="'pm.detail.removeFromProject' | translate">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
                 <line x1="18" y1="8" x2="23" y2="13"></line>
                 <line x1="23" y1="8" x2="18" y2="13"></line>
               </svg>
-              Remove
+              {{ 'pm.detail.remove' | translate }}
             </button>
           </div>
         </div>
       </div>
 
-      <div class="section-loading" *ngIf="loadingMembers"><div class="spinner"></div><span>Loading team roster...</span></div>
+      <div class="section-loading" *ngIf="loadingMembers"><div class="spinner"></div><span>{{ 'pm.detail.loadingRoster' | translate }}</span></div>
       <div class="section-empty" *ngIf="!loadingMembers && members.length === 0">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-        <p>No team members assigned. Click "Add Users" to assign team members.</p>
+        <p>{{ 'pm.detail.noMembersHint' | translate }}</p>
       </div>
     </div>
 
@@ -533,15 +536,15 @@
     <div class="glass-panel pd-section">
       <div class="section-header">
         <div class="section-title-group">
-          <h4>Project Tasks</h4>
-          <span class="section-count">{{ tasks.length }} task(s)</span>
+          <h4>{{ 'pm.detail.projectTasks' | translate }}</h4>
+          <span class="section-count">{{ 'pm.detail.tasksCount' | translate:{ count: tasks.length } }}</span>
         </div>
         <button class="btn btn-add-task btn-sm" (click)="openAddTaskModal()">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          Add Task
+          {{ 'pm.detail.addTask' | translate }}
         </button>
       </div>
 
@@ -549,13 +552,13 @@
         <table class="tasks-table">
           <thead>
             <tr>
-              <th>Task Name</th>
-              <th>Assignee</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Progress</th>
-              <th>Deadline</th>
-              <th style="text-align:right;">Actions</th>
+              <th>{{ 'pm.detail.colTaskName' | translate }}</th>
+              <th>{{ 'pm.detail.colAssignee' | translate }}</th>
+              <th>{{ 'pm.detail.colPriority' | translate }}</th>
+              <th>{{ 'pm.detail.colStatus' | translate }}</th>
+              <th>{{ 'pm.detail.colProgress' | translate }}</th>
+              <th>{{ 'pm.detail.colDeadline' | translate }}</th>
+              <th style="text-align:right;">{{ 'pm.detail.colActions' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -582,13 +585,13 @@
               <td class="deadline-cell">{{ t.deadline || '—' }}</td>
               <td>
                 <div style="display:flex; justify-content:flex-end; gap:6px;">
-                  <button class="checklist-task-btn" (click)="openChecklist(t)" title="Sub-tasks / checklist">
+                  <button class="checklist-task-btn" (click)="openChecklist(t)" [title]="'pm.detail.subtasksTitle' | translate">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="9 11 12 14 22 4"></polyline>
                       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                     </svg>
                   </button>
-                  <button class="del-task-btn" (click)="deleteTask(t.id)" title="Delete Task">
+                  <button class="del-task-btn" (click)="deleteTask(t.id)" [title]="'pm.detail.deleteTaskTitle' | translate">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="3 6 5 6 21 6"></polyline>
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -600,10 +603,10 @@
           </tbody>
         </table>
       </div>
-      <div class="section-loading" *ngIf="loadingTasks"><div class="spinner"></div><span>Loading tasks...</span></div>
+      <div class="section-loading" *ngIf="loadingTasks"><div class="spinner"></div><span>{{ 'pm.detail.loadingTasks' | translate }}</span></div>
       <div class="section-empty" *ngIf="!loadingTasks && tasks.length === 0">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-        <p>No tasks yet. Click "Add Task" to create the first deliverable.</p>
+        <p>{{ 'pm.detail.noTasksHint' | translate }}</p>
       </div>
     </div>
 
@@ -623,8 +626,8 @@
         </svg>
       </div>
       <div class="modal-title-group">
-        <h3>Add Users to Project</h3>
-        <span class="modal-subtitle">Select team members to assign to <strong>{{ project?.name }}</strong></span>
+        <h3>{{ 'pm.detail.addUsersTitle' | translate }}</h3>
+        <span class="modal-subtitle">{{ 'pm.detail.addUsersSubtitle' | translate }} <strong>{{ project?.name }}</strong></span>
       </div>
       <button class="modal-close-btn" (click)="closeAddUsersModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -635,7 +638,7 @@
 
     <div class="users-modal-body">
       <div class="users-modal-loading" *ngIf="loadingUsers">
-        <div class="spinner"></div><span>Loading available users...</span>
+        <div class="spinner"></div><span>{{ 'pm.detail.loadingUsers' | translate }}</span>
       </div>
 
       <div class="users-list" *ngIf="!loadingUsers && availableUsers.length > 0">
@@ -655,21 +658,21 @@
             <span class="user-full-name">{{ u.firstName }} {{ u.lastName }}</span>
             <span class="user-sub">@{{ u.username }} · {{ u.email }}</span>
           </div>
-          <span class="already-badge" *ngIf="isUserAlreadyMember(u.id)">Already Assigned</span>
+          <span class="already-badge" *ngIf="isUserAlreadyMember(u.id)">{{ 'pm.detail.alreadyAssigned' | translate }}</span>
         </div>
       </div>
 
       <div class="users-empty" *ngIf="!loadingUsers && availableUsers.length === 0">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-        <span>No users available to assign.</span>
+        <span>{{ 'pm.detail.noUsersAvailable' | translate }}</span>
       </div>
     </div>
 
     <div class="modal-footer">
-      <span class="selection-info" *ngIf="selectedCount > 0">{{ selectedCount }} user(s) selected</span>
-      <button type="button" class="btn btn-secondary" (click)="closeAddUsersModal()">Cancel</button>
+      <span class="selection-info" *ngIf="selectedCount > 0">{{ 'pm.detail.usersSelected' | translate:{ count: selectedCount } }}</span>
+      <button type="button" class="btn btn-secondary" (click)="closeAddUsersModal()">{{ 'pm.detail.cancel' | translate }}</button>
       <button type="button" class="btn btn-primary" (click)="submitAddUsers()" [disabled]="assigningUsers || selectedCount === 0">
-        <span *ngIf="!assigningUsers">Assign Selected Users</span>
+        <span *ngIf="!assigningUsers">{{ 'pm.detail.assignSelected' | translate }}</span>
         <div class="spinner" *ngIf="assigningUsers"></div>
       </button>
     </div>
@@ -680,7 +683,7 @@
 <div class="modal-backdrop" *ngIf="showAddTaskModal" (click)="closeAddTaskModal()">
   <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>New Task / Deliverable</h3>
+      <h3>{{ 'pm.detail.newTaskTitle' | translate }}</h3>
       <button class="modal-close-btn" (click)="closeAddTaskModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
@@ -689,55 +692,55 @@
     </div>
     <form class="modal-form" (submit)="submitAddTask(); $event.preventDefault()">
       <div class="form-group">
-        <label>Task Name</label>
-        <input type="text" [(ngModel)]="taskForm.name" name="name" placeholder="e.g. Implement authentication module" required />
+        <label>{{ 'pm.detail.fieldTaskName' | translate }}</label>
+        <input type="text" [(ngModel)]="taskForm.name" name="name" [placeholder]="'pm.detail.phTaskName' | translate" required />
       </div>
       <div class="form-group">
         <label class="label-with-action">
-          Description
+          {{ 'pm.detail.fieldDescription' | translate }}
           <button type="button" class="btn-ai-generate" (click)="generateTaskDescription()"
-                  [disabled]="generatingTaskDesc || !taskForm.name.trim()" title="Generate a description with AI">
-            <span *ngIf="!generatingTaskDesc">✨ Generate with AI</span>
-            <span *ngIf="generatingTaskDesc">Generating…</span>
+                  [disabled]="generatingTaskDesc || !taskForm.name.trim()" [title]="'pm.detail.generateAiTitle' | translate">
+            <span *ngIf="!generatingTaskDesc">{{ 'pm.detail.generateAi' | translate }}</span>
+            <span *ngIf="generatingTaskDesc">{{ 'pm.detail.generating' | translate }}</span>
           </button>
         </label>
-        <textarea rows="2" [(ngModel)]="taskForm.description" name="description" placeholder="Describe the task scope and deliverables..."></textarea>
+        <textarea rows="2" [(ngModel)]="taskForm.description" name="description" [placeholder]="'pm.detail.phTaskDesc' | translate"></textarea>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Assign To</label>
+          <label>{{ 'pm.detail.fieldAssignTo' | translate }}</label>
           <select [(ngModel)]="taskForm.assignedToId" name="assignedToId">
-            <option [value]="0">-- Unassigned --</option>
+            <option [value]="0">{{ 'pm.detail.unassignedOption' | translate }}</option>
             <option *ngFor="let m of members" [value]="m.id">{{ m.firstName }} {{ m.lastName }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Deadline</label>
+          <label>{{ 'pm.detail.fieldDeadline' | translate }}</label>
           <input type="date" [(ngModel)]="taskForm.deadline" name="deadline" required />
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Priority</label>
+          <label>{{ 'pm.detail.fieldPriority' | translate }}</label>
           <select [(ngModel)]="taskForm.priority" name="priority">
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
+            <option value="LOW">{{ 'pm.detail.prioLow' | translate }}</option>
+            <option value="MEDIUM">{{ 'pm.detail.prioMedium' | translate }}</option>
+            <option value="HIGH">{{ 'pm.detail.prioHigh' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Difficulty</label>
+          <label>{{ 'pm.detail.fieldDifficulty' | translate }}</label>
           <select [(ngModel)]="taskForm.difficulty" name="difficulty">
-            <option value="EASY">Easy</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HARD">Hard</option>
+            <option value="EASY">{{ 'pm.detail.diffEasy' | translate }}</option>
+            <option value="MEDIUM">{{ 'pm.detail.diffMedium' | translate }}</option>
+            <option value="HARD">{{ 'pm.detail.diffHard' | translate }}</option>
           </select>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeAddTaskModal()">Cancel</button>
+        <button type="button" class="btn btn-secondary" (click)="closeAddTaskModal()">{{ 'pm.detail.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="submittingTask">
-          <span *ngIf="!submittingTask">Create Task</span>
+          <span *ngIf="!submittingTask">{{ 'pm.detail.createTask' | translate }}</span>
           <div class="spinner" *ngIf="submittingTask"></div>
         </button>
       </div>
@@ -749,7 +752,7 @@
 <div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()">
   <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Edit Project Workspace</h3>
+      <h3>{{ 'pm.detail.editTitle' | translate }}</h3>
       <button class="modal-close-btn" (click)="closeEditModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
@@ -758,49 +761,49 @@
     </div>
     <form class="modal-form" (submit)="submitEditProject(); $event.preventDefault()">
       <div class="form-group">
-        <label>Project Name</label>
+        <label>{{ 'pm.detail.fieldProjectName' | translate }}</label>
         <input type="text" [(ngModel)]="editForm.name" name="name" required />
       </div>
       <div class="form-group">
         <label class="label-with-action">
-          Business Description
+          {{ 'pm.detail.fieldBusinessDesc' | translate }}
           <button type="button" class="btn-ai-generate" (click)="generateProjectDescription()"
-                  [disabled]="generatingProjectDesc || !editForm.name.trim()" title="Generate a description with AI">
-            <span *ngIf="!generatingProjectDesc">✨ Generate with AI</span>
-            <span *ngIf="generatingProjectDesc">Generating…</span>
+                  [disabled]="generatingProjectDesc || !editForm.name.trim()" [title]="'pm.detail.generateAiTitle' | translate">
+            <span *ngIf="!generatingProjectDesc">{{ 'pm.detail.generateAi' | translate }}</span>
+            <span *ngIf="generatingProjectDesc">{{ 'pm.detail.generating' | translate }}</span>
           </button>
         </label>
         <textarea rows="3" [(ngModel)]="editForm.description" name="description"></textarea>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Start Date</label>
+          <label>{{ 'pm.detail.fieldStartDate' | translate }}</label>
           <input type="date" [(ngModel)]="editForm.startDate" name="startDate" required />
         </div>
         <div class="form-group">
-          <label>Delivery Target Date</label>
+          <label>{{ 'pm.detail.fieldDeliveryDate' | translate }}</label>
           <input type="date" [(ngModel)]="editForm.endDate" name="endDate" required />
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Workspace Status</label>
+          <label>{{ 'pm.detail.fieldStatus' | translate }}</label>
           <select [(ngModel)]="editForm.status" name="status">
-            <option value="PLANNED">Planned</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="ON_HOLD">On Hold</option>
-            <option value="COMPLETED">Completed</option>
+            <option value="PLANNED">{{ 'pm.detail.statusPlanned' | translate }}</option>
+            <option value="IN_PROGRESS">{{ 'pm.detail.statusInProgress' | translate }}</option>
+            <option value="ON_HOLD">{{ 'pm.detail.statusOnHold' | translate }}</option>
+            <option value="COMPLETED">{{ 'pm.detail.statusCompleted' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Progress (%)</label>
+          <label>{{ 'pm.detail.fieldProgress' | translate }}</label>
           <input type="number" min="0" max="100" [(ngModel)]="editForm.progress" name="progress" />
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">{{ 'pm.detail.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="submitting">
-          <span *ngIf="!submitting">Save Specifications</span>
+          <span *ngIf="!submitting">{{ 'pm.detail.saveSpecs' | translate }}</span>
           <div class="spinner" *ngIf="submitting"></div>
         </button>
       </div>
@@ -818,11 +821,11 @@
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
         </svg>
       </div>
-      <h3>Destroy Workspace</h3>
+      <h3>{{ 'pm.detail.destroyTitle' | translate }}</h3>
     </div>
     <div class="delete-modal-body">
       <p class="delete-message">
-        You are about to permanently destroy the project workspace
+        {{ 'pm.detail.deleteMessagePre' | translate }}
         <strong>"{{ project?.name }}"</strong>.
       </p>
       <div class="delete-warning-box">
@@ -831,13 +834,13 @@
           <line x1="12" y1="9" x2="12" y2="13"></line>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
-        <span>This action is irreversible. All tasks, assignments, milestones, and data linked to this workspace will be permanently erased.</span>
+        <span>{{ 'pm.detail.deleteWarning' | translate }}</span>
       </div>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">Cancel</button>
+      <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">{{ 'pm.detail.cancel' | translate }}</button>
       <button type="button" class="btn btn-danger-solid" (click)="submitDeleteProject()" [disabled]="submitting">
-        <span *ngIf="!submitting">Yes, Destroy Workspace</span>
+        <span *ngIf="!submitting">{{ 'pm.detail.confirmDestroy' | translate }}</span>
         <div class="spinner" *ngIf="submitting"></div>
       </button>
     </div>
@@ -856,16 +859,16 @@
           <line x1="23" y1="8" x2="18" y2="13"></line>
         </svg>
       </div>
-      <h3>Remove Team Member</h3>
+      <h3>{{ 'pm.detail.removeMemberTitle' | translate }}</h3>
     </div>
     <div class="delete-modal-body">
       <p class="delete-message">
-        Are you sure you want to remove <strong>{{ memberToUnassign?.firstName }} {{ memberToUnassign?.lastName }}</strong> from this project workspace?
+        {{ 'pm.detail.removeMemberPre' | translate }} <strong>{{ memberToUnassign?.firstName }} {{ memberToUnassign?.lastName }}</strong> {{ 'pm.detail.removeMemberPost' | translate }}
       </p>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" (click)="closeUnassignModal()">Cancel</button>
-      <button type="button" class="btn btn-danger" (click)="submitUnassignUser()">Remove Member</button>
+      <button type="button" class="btn btn-secondary" (click)="closeUnassignModal()">{{ 'pm.detail.cancel' | translate }}</button>
+      <button type="button" class="btn btn-danger" (click)="submitUnassignUser()">{{ 'pm.detail.removeMember' | translate }}</button>
     </div>
   </div>
 </div>
@@ -875,8 +878,8 @@
   <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()" style="max-width:520px;">
     <div class="modal-header">
       <div class="modal-title-group">
-        <h3>Sub-tasks</h3>
-        <span class="modal-subtitle">Checklist for <strong>{{ checklistTask?.name }}</strong></span>
+        <h3>{{ 'pm.detail.subtasks' | translate }}</h3>
+        <span class="modal-subtitle">{{ 'pm.detail.checklistFor' | translate }} <strong>{{ checklistTask?.name }}</strong></span>
       </div>
       <button class="modal-close-btn" (click)="closeChecklist()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -888,7 +891,7 @@
     <!-- Progress roll-up -->
     <div class="checklist-progress" *ngIf="checklistItems.length > 0">
       <div class="cl-prog-track"><div class="cl-prog-fill" [style.width.%]="checklistProgress"></div></div>
-      <span class="cl-prog-label">{{ checklistDoneCount }}/{{ checklistItems.length }} done · {{ checklistProgress }}%</span>
+      <span class="cl-prog-label">{{ 'pm.detail.checklistSummary' | translate:{ done: checklistDoneCount, total: checklistItems.length, pct: checklistProgress } }}</span>
     </div>
 
     <div class="checklist-body">
@@ -901,7 +904,7 @@
             <span class="cl-box"></span>
           </label>
           <span class="cl-title">{{ item.title }}</span>
-          <button class="cl-del" (click)="deleteChecklistItem(item)" title="Remove">
+          <button class="cl-del" (click)="deleteChecklistItem(item)" [title]="'pm.detail.removeWord' | translate">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -910,15 +913,15 @@
       </div>
 
       <div class="checklist-empty" *ngIf="!loadingChecklist && checklistItems.length === 0">
-        <span>No sub-tasks yet. Add the first one below.</span>
+        <span>{{ 'pm.detail.noSubtasks' | translate }}</span>
       </div>
     </div>
 
     <form class="checklist-add" (submit)="addChecklistItem(); $event.preventDefault()">
       <input type="text" [(ngModel)]="newChecklistTitle" name="newChecklistTitle"
-             placeholder="Add a sub-task and press Enter" maxlength="500" />
+             [placeholder]="'pm.detail.phAddSubtask' | translate" maxlength="500" />
       <button type="submit" class="btn btn-primary" [disabled]="savingChecklistItem || !newChecklistTitle.trim()">
-        <span *ngIf="!savingChecklistItem">Add</span>
+        <span *ngIf="!savingChecklistItem">{{ 'pm.detail.add' | translate }}</span>
         <div class="spinner" *ngIf="savingChecklistItem"></div>
       </button>
     </form>
@@ -935,8 +938,8 @@
         </svg>
       </div>
       <div class="modal-title-group">
-        <h3>Team Chat</h3>
-        <span class="modal-subtitle">Project channel · <strong>{{ project?.name }}</strong></span>
+        <h3>{{ 'pm.detail.teamChatTitle' | translate }}</h3>
+        <span class="modal-subtitle">{{ 'pm.detail.projectChannel' | translate }} <strong>{{ project?.name }}</strong></span>
       </div>
       <button class="modal-close-btn" (click)="closeChat()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -950,7 +953,7 @@
 
       <div class="chat-empty" *ngIf="!loadingChat && chatMessages.length === 0">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-        <span>No messages yet. Start the conversation with your team.</span>
+        <span>{{ 'pm.detail.noMessages' | translate }}</span>
       </div>
 
       <div class="chat-msg" *ngFor="let m of chatMessages" [class.own]="isOwnMessage(m)">
@@ -964,7 +967,7 @@
 
     <form class="chat-compose" (submit)="sendChat(); $event.preventDefault()">
       <input type="text" [(ngModel)]="chatInput" name="chatInput"
-             placeholder="Message the team…" maxlength="2000" autocomplete="off" />
+             [placeholder]="'pm.detail.phMessage' | translate" maxlength="2000" autocomplete="off" />
       <button type="submit" class="btn btn-primary" [disabled]="sendingChat || !chatInput.trim()">
         <svg *ngIf="!sendingChat" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>

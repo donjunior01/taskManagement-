@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AiAssistantService, AiChatTurn } from '../../../core/services/ai-assistant.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { LanguageService } from '../../../core/services/language.service';
 
 interface ChatMsg {
   text: string;
@@ -43,16 +44,27 @@ export class AiAssistantWidgetComponent implements AfterViewChecked {
   constructor(
     private ai: AiAssistantService,
     private auth: AuthService,
+    private language: LanguageService,
     private cdr: ChangeDetectorRef
   ) {
     this.loadHistory();
-    this.suggestions = this.suggestionsForRole();
+    // Starter prompts follow the selected language and update live when it's toggled.
+    this.language.lang$.subscribe(() => {
+      this.suggestions = this.suggestionsForRole();
+      this.cdr.detectChanges();
+    });
   }
 
   private suggestionsForRole(): string[] {
     const roles = this.auth.getUserRoles();
+    const fr = this.language.current === 'fr';
     if (roles.includes('ROLE_ADMIN')) {
-      return [
+      return fr ? [
+        'Comment utiliser mon tableau de bord administrateur ?',
+        'Comment créer un utilisateur ou réinitialiser son mot de passe ?',
+        'Donne-moi un aperçu de tous les projets et de leur statut',
+        'Quels projets sont à risque ou en retard ?'
+      ] : [
         'How do I use my admin dashboard?',
         'How do I create a user or reset their password?',
         'Give me an overview of all projects and their status',
@@ -60,14 +72,22 @@ export class AiAssistantWidgetComponent implements AfterViewChecked {
       ];
     }
     if (roles.includes('ROLE_PROJECT_MANAGER')) {
-      return [
+      return fr ? [
+        'Quels de mes projets sont en retard ?',
+        'Que doit prioriser mon équipe cette semaine ?',
+        'Résume le statut de mes projets'
+      ] : [
         'Which of my projects are behind schedule?',
         'What should my team prioritise this week?',
         'Summarise the status of my projects'
       ];
     }
     // Simple user / developer
-    return [
+    return fr ? [
+      'Sur quoi devrais-je travailler ensuite ?',
+      'Résume mes tâches assignées',
+      'Comment terminer ma tâche en cours ?'
+    ] : [
       'What should I work on next?',
       'Summarise my assigned tasks',
       'How do I complete my current task?'

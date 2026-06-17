@@ -6,13 +6,15 @@ import { AuthService } from '../../../core/services/auth.service';
 import { BrandingService } from '../../../core/services/branding.service';
 import { SystemSettingsService, PasswordPolicy } from '../../../core/services/system-settings.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LangToggleComponent } from '../../../shared/components/lang-toggle/lang-toggle';
 
 interface PasswordRule { label: string; met: boolean; }
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, LangToggleComponent],
   templateUrl: './register.html',
   styleUrls: ['./register.scss']
 })
@@ -37,6 +39,7 @@ export class RegisterComponent implements OnInit {
     public branding: BrandingService,
     private settings: SystemSettingsService,
     private toast: ToastService,
+    private translate: TranslateService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -52,11 +55,11 @@ export class RegisterComponent implements OnInit {
   get passwordRules(): PasswordRule[] {
     const pw = this.registerRequest.password || '';
     const rules: PasswordRule[] = [
-      { label: `Au moins ${this.policy.minLength} caractères`, met: pw.length >= (this.policy.minLength || 0) }
+      { label: this.translate.instant('auth.ruleMinLength', { n: this.policy.minLength || 0 }), met: pw.length >= (this.policy.minLength || 0) }
     ];
-    if (this.policy.requireUppercase) rules.push({ label: 'Une lettre majuscule', met: /[A-Z]/.test(pw) });
-    if (this.policy.requireDigit)     rules.push({ label: 'Un chiffre', met: /[0-9]/.test(pw) });
-    if (this.policy.requireSpecial)   rules.push({ label: 'Un caractère spécial', met: /[^A-Za-z0-9]/.test(pw) });
+    if (this.policy.requireUppercase) rules.push({ label: this.translate.instant('auth.ruleUppercase'), met: /[A-Z]/.test(pw) });
+    if (this.policy.requireDigit)     rules.push({ label: this.translate.instant('auth.ruleDigit'), met: /[0-9]/.test(pw) });
+    if (this.policy.requireSpecial)   rules.push({ label: this.translate.instant('auth.ruleSpecial'), met: /[^A-Za-z0-9]/.test(pw) });
     return rules;
   }
 
@@ -71,7 +74,7 @@ export class RegisterComponent implements OnInit {
     // Client-side guard so the user is guided before the request is even sent.
     if (!this.passwordValid) {
       this.passwordTouched = true;
-      this.errorMessage = 'Votre mot de passe ne respecte pas toutes les exigences de sécurité ci-dessous.';
+      this.errorMessage = this.translate.instant('auth.errPasswordReqs');
       this.toast.show(this.errorMessage, 'error');
       this.cdr.detectChanges();
       return;
@@ -95,19 +98,19 @@ export class RegisterComponent implements OnInit {
     });
   }
 
-  /** Map the backend's reason to a clear French message shown in the form. */
+  /** Map the backend's reason to a clear, localized message shown in the form. */
   private friendlyError(error: any): string {
     const raw: string = (typeof error === 'string' ? error : (error?.error?.message || error?.error?.error || error?.message || '')) || '';
     const low = raw.toLowerCase();
     if (low.includes('email') && (low.includes('exist') || low.includes('already') || low.includes('utilis'))) {
-      return 'Cette adresse e-mail est déjà associée à un compte. Essayez de vous connecter ou utilisez une autre adresse.';
+      return this.translate.instant('auth.errEmailExists');
     }
     if (low.includes('username') && (low.includes('exist') || low.includes('already') || low.includes('pris'))) {
-      return "Ce nom d'utilisateur est déjà pris. Veuillez en choisir un autre.";
+      return this.translate.instant('auth.errUsernameTaken');
     }
     if (low.includes('mot de passe') || low.includes('password')) {
-      return raw; // backend already returns a precise, French password-policy message
+      return raw; // backend already returns a precise password-policy message
     }
-    return raw || "L'inscription a échoué. Veuillez réessayer.";
+    return raw || this.translate.instant('auth.errRegisterFailed');
   }
 }

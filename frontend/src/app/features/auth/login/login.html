@@ -11,20 +11,20 @@
         </div>
       </div>
       <div class="suspended-modal-body">
-        <h3>Compte suspendu</h3>
-        <p class="suspended-lead">Votre accès à <strong>{{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</strong> a été suspendu par un administrateur.</p>
+        <h3>{{ 'auth.suspendedTitle' | translate }}</h3>
+        <p class="suspended-lead">{{ 'auth.suspendedLeadPre' | translate }} <strong>{{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</strong> {{ 'auth.suspendedLeadPost' | translate }}</p>
         <div class="suspended-info-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          <span>Si vous pensez qu'il s'agit d'une erreur, contactez votre administrateur système pour faire réviser et réactiver votre compte.</span>
+          <span>{{ 'auth.suspendedInfo' | translate }}</span>
         </div>
       </div>
       <div class="suspended-modal-footer">
         <button class="suspended-close-btn" (click)="showSuspendedModal = false">
-          Fermer
+          {{ 'auth.close' | translate }}
         </button>
       </div>
     </div>
@@ -32,6 +32,7 @@
 }
 
 <div class="login-container">
+  <div style="position:fixed;top:18px;right:18px;z-index:50;"><app-lang-toggle></app-lang-toggle></div>
   <div class="background-decor">
     <div class="circle circle-1"></div>
     <div class="circle circle-2"></div>
@@ -46,10 +47,10 @@
         </svg>
       </div>
       <h1>{{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</h1>
-      <p class="brand-subtitle">Espace de travail d'entreprise simplifié</p>
+      <p class="brand-subtitle">{{ 'auth.brandSubtitle' | translate }}</p>
     </div>
 
-    <h2 class="form-title">Bon retour</h2>
+    <h2 class="form-title">{{ 'auth.welcomeBack' | translate }}</h2>
 
     @if (infoMessage) {
       <div class="info-alert animate-fade-in-up" style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;margin-bottom:14px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;">
@@ -75,7 +76,7 @@
 
     <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
       <div class="form-group" [class.has-error]="emailInput.invalid && (emailInput.dirty || emailInput.touched)">
-        <label for="email">E-mail professionnel</label>
+        <label for="email">{{ 'auth.corporateEmail' | translate }}</label>
         <div class="input-wrapper">
           <span class="input-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -96,14 +97,14 @@
           />
         </div>
         @if (emailInput.invalid && (emailInput.dirty || emailInput.touched)) {
-          <span class="validation-msg">Veuillez saisir une adresse e-mail valide</span>
+          <span class="validation-msg">{{ 'auth.emailInvalid' | translate }}</span>
         }
       </div>
 
       <div class="form-group" [class.has-error]="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)">
         <div class="label-row">
-          <label for="password">Mot de passe</label>
-          <a routerLink="/forgot-password" class="forgot-link">Oublié ?</a>
+          <label for="password">{{ 'auth.securityPassword' | translate }}</label>
+          <a routerLink="/forgot-password" class="forgot-link">{{ 'auth.forgot' | translate }}</a>
         </div>
         <div class="input-wrapper">
           <span class="input-icon">
@@ -138,13 +139,13 @@
           </button>
         </div>
         @if (passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)) {
-          <span class="validation-msg">Le mot de passe doit contenir au moins 4 caractères</span>
+          <span class="validation-msg">{{ 'auth.passwordMin' | translate }}</span>
         }
       </div>
 
       @if (twoFactorRequired) {
         <div class="form-group">
-          <label for="twofa-code">Code d'authentification</label>
+          <label for="twofa-code">{{ 'auth.authCode' | translate }}</label>
           <input
             type="text"
             id="twofa-code"
@@ -153,18 +154,18 @@
             inputmode="numeric"
             autocomplete="one-time-code"
             maxlength="6"
-            placeholder="Code à 6 chiffres de votre application d'authentification"
+            [placeholder]="'auth.authCodePlaceholder' | translate"
             autofocus />
-          <span class="validation-msg" style="color: var(--text-muted);">Saisissez le code de votre application d'authentification pour terminer la connexion.</span>
+          <span class="validation-msg" style="color: var(--text-muted);">{{ 'auth.authCodeHint' | translate }}</span>
         </div>
       }
 
       <button type="submit" [disabled]="loading || loginForm.invalid" class="login-button">
         @if (loading) {
           <span class="spinner"></span>
-          <span>Connexion...</span>
+          <span>{{ 'auth.signingIn' | translate }}</span>
         } @else {
-          <span>Accéder à l'espace</span>
+          <span>{{ 'auth.accessWorkspace' | translate }}</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-arrow">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
@@ -174,7 +175,7 @@
     </form>
 
     <div class="card-footer">
-      <p>Nouveau sur {{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }} ? <a routerLink="/register" class="register-link">Créer un compte professionnel</a></p>
+      <p>{{ 'auth.newTo' | translate:{ app: ((branding.branding$ | async)?.appName || 'TaskMaster Pro') } }} <a routerLink="/register" class="register-link">{{ 'auth.createCorporate' | translate }}</a></p>
     </div>
   </div>
 </div>

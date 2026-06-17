@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { DashboardService, ManagerDashboardStats } from '../../../core/services/dashboard.service';
 import { ProjectService, Project } from '../../../core/services/project.service';
@@ -9,15 +10,15 @@ import { DeliverableService } from '../../../core/services/deliverable.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { BadgeCountsService } from '../../../core/services/badge-counts.service';
 
-interface HealthProject { id?: number; name: string; statusLabel: string; due: string; progress: number; health: { label: string; cls: string }; }
+interface HealthProject { id?: number; name: string; statusKey: string; due: string; progress: number; health: { labelKey: string; cls: string }; }
 interface TeamLoad { name: string; fullName: string; assignees: number; completed: number; assignPct: number; donePct: number; level: string; }
-interface Milestone { name: string; project: string; date: string; dotCls: string; }
+interface Milestone { name: string; countdownKey: string; countdownParams?: Record<string, unknown>; date: string; dotCls: string; }
 interface PendingDeliverable { file: string; submitter: string; meta: string; initials: string; color: string; }
 
 @Component({
   selector: 'app-pm-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslatePipe],
   template: `
   <div class="dash-wrap">
 
@@ -25,7 +26,7 @@ interface PendingDeliverable { file: string; submitter: string; meta: string; in
     <div class="kpi-grid">
       <div class="kpi-card anim" *ngFor="let k of kpis; let i = index; trackBy: trackKpi" [style.--d]="(i*0.05)+'s'">
         <div class="kpi-text">
-          <div class="kpi-label">{{ k.label }}</div>
+          <div class="kpi-label">{{ k.labelKey | translate }}</div>
           <div class="kpi-value">{{ k.value }}</div>
         </div>
         <div class="kpi-icon" [ngClass]="k.tint" [ngSwitch]="k.icon">
@@ -43,34 +44,34 @@ interface PendingDeliverable { file: string; submitter: string; meta: string; in
       <!-- Santé des projets -->
       <div class="card anim" style="--d:.1s">
         <div class="card-head">
-          <h2>Santé des projets</h2>
-          <a routerLink="/pm/projects" class="link">Tout voir →</a>
+          <h2>{{ 'pm.dashboard.projectHealth' | translate }}</h2>
+          <a routerLink="/pm/projects" class="link">{{ 'pm.dashboard.viewAll' | translate }}</a>
         </div>
         <div class="health-list">
           <div class="health-item" *ngFor="let p of healthProjects">
             <div class="hi-top">
               <div class="hi-id">
                 <span class="hi-name">{{ p.name }}</span>
-                <span class="hi-client">{{ p.statusLabel }}</span>
+                <span class="hi-client">{{ p.statusKey | translate }}</span>
               </div>
-              <span class="health-badge" [ngClass]="p.health.cls">{{ p.health.label }}</span>
+              <span class="health-badge" [ngClass]="p.health.cls">{{ p.health.labelKey | translate }}</span>
             </div>
-            <div class="hi-meta">Échéance : {{ p.due }}</div>
+            <div class="hi-meta">{{ 'pm.dashboard.deadline' | translate:{ date: p.due } }}</div>
             <div class="hi-progress">
               <div class="bar"><div class="bar-fill" [style.width.%]="animated ? p.progress : 0"></div></div>
               <span class="pct">{{ p.progress }}%</span>
-              <a [routerLink]="['/pm/projects', p.id]" class="link sm">Voir →</a>
+              <a [routerLink]="['/pm/projects', p.id]" class="link sm">{{ 'pm.dashboard.view' | translate }}</a>
             </div>
           </div>
-          <div class="empty" *ngIf="healthProjects.length === 0">Aucun projet géré pour le moment.</div>
+          <div class="empty" *ngIf="healthProjects.length === 0">{{ 'pm.dashboard.noProjects' | translate }}</div>
         </div>
       </div>
 
       <!-- Charge de l'équipe -->
       <div class="card anim" style="--d:.16s">
         <div class="card-head">
-          <h2>Charge de l'équipe</h2>
-          <span class="muted-sm">Cette semaine</span>
+          <h2>{{ 'pm.dashboard.teamLoad' | translate }}</h2>
+          <span class="muted-sm">{{ 'pm.dashboard.thisWeek' | translate }}</span>
         </div>
         <div class="team-load reveal">
           <div class="tl-row" *ngFor="let m of teamLoad; let i = index" (mouseenter)="hoverIdx = i" (mouseleave)="hoverIdx = -1">
@@ -88,18 +89,18 @@ interface PendingDeliverable { file: string; submitter: string; meta: string; in
             <!-- Hover detail (like the admin dashboard charts) -->
             <div class="tl-tip" *ngIf="hoverIdx === i">
               <div class="tt-name">{{ m.fullName }}</div>
-              <div class="tt-row"><i class="sw" [ngClass]="m.level"></i>Assignées<b>{{ m.assignees }}</b></div>
-              <div class="tt-row"><i class="sw blue"></i>Terminées<b>{{ m.completed }}</b></div>
-              <div class="tt-row"><i class="sw" [ngClass]="m.level"></i>Charge<b>{{ levelLabel(m.level) }}</b></div>
+              <div class="tt-row"><i class="sw" [ngClass]="m.level"></i>{{ 'pm.dashboard.assigned' | translate }}<b>{{ m.assignees }}</b></div>
+              <div class="tt-row"><i class="sw blue"></i>{{ 'pm.dashboard.completed' | translate }}<b>{{ m.completed }}</b></div>
+              <div class="tt-row"><i class="sw" [ngClass]="m.level"></i>{{ 'pm.dashboard.load' | translate }}<b>{{ levelLabel(m.level) | translate }}</b></div>
             </div>
           </div>
-          <div class="empty" *ngIf="teamLoad.length === 0">Aucune donnée d'équipe.</div>
+          <div class="empty" *ngIf="teamLoad.length === 0">{{ 'pm.dashboard.noTeamData' | translate }}</div>
         </div>
         <div class="tl-legend">
-          <span class="lg"><i class="sw green"></i> Disponible</span>
-          <span class="lg"><i class="sw orange"></i> Occupé</span>
-          <span class="lg"><i class="sw red"></i> Surchargé</span>
-          <span class="lg"><i class="sw blue"></i> Terminées</span>
+          <span class="lg"><i class="sw green"></i> {{ 'pm.dashboard.available' | translate }}</span>
+          <span class="lg"><i class="sw orange"></i> {{ 'pm.dashboard.busy' | translate }}</span>
+          <span class="lg"><i class="sw red"></i> {{ 'pm.dashboard.overloaded' | translate }}</span>
+          <span class="lg"><i class="sw blue"></i> {{ 'pm.dashboard.completed' | translate }}</span>
         </div>
       </div>
     </div>
@@ -108,27 +109,27 @@ interface PendingDeliverable { file: string; submitter: string; meta: string; in
     <div class="row-2">
       <!-- Jalons à venir -->
       <div class="card anim" style="--d:.22s">
-        <div class="card-head"><h2>Jalons à venir</h2></div>
+        <div class="card-head"><h2>{{ 'pm.dashboard.upcomingMilestones' | translate }}</h2></div>
         <ol class="timeline">
           <li class="tl-item" *ngFor="let j of milestones">
             <span class="tl-dot" [ngClass]="j.dotCls"></span>
             <div class="tl-line">
               <div class="tl-info">
                 <div class="tl-title">{{ j.name }}</div>
-                <div class="tl-sub">{{ j.project }} • {{ j.date }}</div>
+                <div class="tl-sub">{{ j.countdownKey | translate:j.countdownParams }} • {{ j.date }}</div>
               </div>
               <svg class="tl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             </div>
           </li>
-          <li class="empty" *ngIf="milestones.length === 0">Aucun jalon à venir.</li>
+          <li class="empty" *ngIf="milestones.length === 0">{{ 'pm.dashboard.noMilestones' | translate }}</li>
         </ol>
       </div>
 
       <!-- Livrables en attente -->
       <div class="card anim" style="--d:.28s">
         <div class="card-head">
-          <h2>Livrables en attente</h2>
-          <a routerLink="/pm/deliverables" class="link">Tout voir →</a>
+          <h2>{{ 'pm.dashboard.pendingDeliverables' | translate }}</h2>
+          <a routerLink="/pm/deliverables" class="link">{{ 'pm.dashboard.viewAll' | translate }}</a>
         </div>
         <div class="deliv-list">
           <div class="deliv-item" *ngFor="let d of pendingDeliverables">
@@ -137,9 +138,9 @@ interface PendingDeliverable { file: string; submitter: string; meta: string; in
               <div class="deliv-file">{{ d.file }}</div>
               <div class="deliv-meta">{{ d.meta }}</div>
             </div>
-            <a routerLink="/pm/deliverables" class="btn-review">Réviser →</a>
+            <a routerLink="/pm/deliverables" class="btn-review">{{ 'pm.dashboard.review' | translate }}</a>
           </div>
-          <div class="empty" *ngIf="pendingDeliverables.length === 0">Aucun livrable en attente. 🎉</div>
+          <div class="empty" *ngIf="pendingDeliverables.length === 0">{{ 'pm.dashboard.noPending' | translate }}</div>
         </div>
       </div>
     </div>
@@ -262,18 +263,19 @@ export class PmDashboardComponent implements OnInit, OnDestroy {
     private deliverableService: DeliverableService,
     private authService: AuthService,
     private badges: BadgeCountsService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private translate: TranslateService
   ) {}
 
-  trackKpi(_i: number, k: { label: string }): string { return k.label; }
+  trackKpi(_i: number, k: { labelKey: string }): string { return k.labelKey; }
 
   get kpis() {
     return [
-      { label: 'Projets Actifs', value: this.activeProjects, icon: 'folder', tint: 'primary' },
-      { label: 'Tâches En Cours', value: this.stats.activeTasks, icon: 'list', tint: 'info' },
-      { label: 'Tâches En Retard', value: this.stats.overdueTasks, icon: 'alert', tint: 'destructive' },
-      { label: "Membres d'Équipe", value: this.stats.teamMembers, icon: 'users', tint: 'success' },
-      { label: 'Livrables à Réviser', value: this.pendingDeliverables.length, icon: 'file', tint: 'warning' }
+      { labelKey: 'pm.dashboard.kpiActiveProjects', value: this.activeProjects, icon: 'folder', tint: 'primary' },
+      { labelKey: 'pm.dashboard.kpiTasksInProgress', value: this.stats.activeTasks, icon: 'list', tint: 'info' },
+      { labelKey: 'pm.dashboard.kpiTasksOverdue', value: this.stats.overdueTasks, icon: 'alert', tint: 'destructive' },
+      { labelKey: 'pm.dashboard.kpiTeamMembers', value: this.stats.teamMembers, icon: 'users', tint: 'success' },
+      { labelKey: 'pm.dashboard.kpiDeliverablesToReview', value: this.pendingDeliverables.length, icon: 'file', tint: 'warning' }
     ];
   }
 
@@ -325,8 +327,8 @@ export class PmDashboardComponent implements OnInit, OnDestroy {
     this.healthProjects = list.slice(0, 5).map(p => ({
       id: p.id,
       name: p.name,
-      statusLabel: this.statusLabel(p.status),
-      due: p.endDate ? new Date(p.endDate).toLocaleDateString('fr-FR') : '—',
+      statusKey: this.statusKey(p.status),
+      due: p.endDate ? new Date(p.endDate).toLocaleDateString(this.dateLocale()) : '—',
       progress: p.progress || 0,
       health: this.health(p, today)
     }));
@@ -341,9 +343,10 @@ export class PmDashboardComponent implements OnInit, OnDestroy {
       .slice(0, 5)
       .map(({ p, end }) => {
         const days = Math.round((end.getTime() - today.getTime()) / 86400000);
-        const countdown = days === 0 ? "Aujourd'hui" : days === 1 ? 'Demain' : `Dans ${days} jours`;
+        const countdownKey = days === 0 ? 'pm.dashboard.today' : days === 1 ? 'pm.dashboard.tomorrow' : 'pm.dashboard.inDays';
+        const countdownParams = days > 1 ? { days } : undefined;
         const dotCls = days <= 3 ? 'urgent' : 'avenir';
-        return { name: p.name, project: countdown, date: end.toLocaleDateString('fr-FR'), dotCls };
+        return { name: p.name, countdownKey, countdownParams, date: end.toLocaleDateString(this.dateLocale()), dotCls };
       });
     this.cdr.detectChanges();
   }
@@ -376,11 +379,12 @@ export class PmDashboardComponent implements OnInit, OnDestroy {
       next: (list: any[]) => {
         const arr = Array.isArray(list) ? list : [];
         this.badges.setDeliverables(arr.length);
+        const unknown = this.translate.instant('pm.dashboard.unknown');
         this.pendingDeliverables = arr.slice(0, 6).map(d => {
-          const submitter = d.submittedByName || 'Inconnu';
-          const date = d.createdAt ? new Date(d.createdAt).toLocaleDateString('fr-FR') : '';
+          const submitter = d.submittedByName || unknown;
+          const date = d.createdAt ? new Date(d.createdAt).toLocaleDateString(this.dateLocale()) : '';
           return {
-            file: d.fileName || 'Livrable',
+            file: d.fileName || this.translate.instant('pm.dashboard.deliverable'),
             submitter,
             meta: [submitter, d.taskName, date].filter(Boolean).join(' • '),
             initials: this.initials(submitter),
@@ -393,29 +397,35 @@ export class PmDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Translation key for a workload level (rendered with the translate pipe in the template). */
   levelLabel(level: string): string {
-    return level === 'red' ? 'Surchargé' : level === 'orange' ? 'Occupé' : 'Disponible';
+    return level === 'red' ? 'pm.dashboard.overloaded' : level === 'orange' ? 'pm.dashboard.busy' : 'pm.dashboard.available';
+  }
+
+  /** Locale for date formatting follows the active UI language. */
+  private dateLocale(): string {
+    return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR';
   }
 
   private midnight(dateStr: string): Date {
     const d = new Date(dateStr); d.setHours(0, 0, 0, 0); return d;
   }
 
-  private health(p: Project, today: Date): { label: string; cls: string } {
+  private health(p: Project, today: Date): { labelKey: string; cls: string } {
     const status = (p.status || '').toUpperCase();
     const progress = p.progress || 0;
-    if (status === 'COMPLETED' || progress >= 100) return { label: 'Terminé', cls: 'ok' };
-    if (p.endDate && new Date(p.endDate) < today) return { label: 'En retard', cls: 'danger' };
-    if (progress < 40) return { label: 'À surveiller', cls: 'warn' };
-    return { label: 'En bonne voie', cls: 'ok' };
+    if (status === 'COMPLETED' || progress >= 100) return { labelKey: 'pm.dashboard.healthCompleted', cls: 'ok' };
+    if (p.endDate && new Date(p.endDate) < today) return { labelKey: 'pm.dashboard.healthOverdue', cls: 'danger' };
+    if (progress < 40) return { labelKey: 'pm.dashboard.healthWatch', cls: 'warn' };
+    return { labelKey: 'pm.dashboard.healthOnTrack', cls: 'ok' };
   }
 
-  private statusLabel(s?: string): string {
+  private statusKey(s?: string): string {
     const map: Record<string, string> = {
-      ACTIVE: 'Actif', IN_PROGRESS: 'En cours', PLANNED: 'Planifié',
-      ON_HOLD: 'En pause', COMPLETED: 'Terminé', CANCELLED: 'Annulé'
+      ACTIVE: 'pm.dashboard.statusActive', IN_PROGRESS: 'pm.dashboard.statusInProgress', PLANNED: 'pm.dashboard.statusPlanned',
+      ON_HOLD: 'pm.dashboard.statusOnHold', COMPLETED: 'pm.dashboard.statusCompleted', CANCELLED: 'pm.dashboard.statusCancelled'
     };
-    return map[(s || '').toUpperCase()] || 'Actif';
+    return map[(s || '').toUpperCase()] || 'pm.dashboard.statusActive';
   }
 
   private initials(name: string): string {

@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TaskService, Task } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TimeLogService } from '../../../core/services/time-log.service';
@@ -12,19 +13,19 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
 @Component({
   selector: 'app-user-time-logs',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
   <div class="tl-wrap">
 
     <!-- ═══ Page header (preserved) ═══ -->
     <div class="page-head">
       <div>
-        <h1>Suivi du Temps</h1>
-        <p>Analysez les heures travaillées et suivez votre charge hebdomadaire.</p>
+        <h1>{{ 'timelogs.title' | translate }}</h1>
+        <p>{{ 'timelogs.subtitle' | translate }}</p>
       </div>
       <div class="head-actions">
-        <button class="btn-export" (click)="exportCsv()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Exporter CSV</button>
-        <button class="btn-log" (click)="openLog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Enregistrer du temps</button>
+        <button class="btn-export" (click)="exportCsv()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>{{ 'timelogs.exportCsv' | translate }}</button>
+        <button class="btn-log" (click)="openLog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>{{ 'timelogs.logTime' | translate }}</button>
       </div>
     </div>
 
@@ -33,7 +34,7 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
       <button class="nav" (click)="shiftWeek(-1)">‹</button>
       <span class="week-label">{{ weekLabel }}</span>
       <button class="nav" (click)="shiftWeek(1)">›</button>
-      <button class="this-week" (click)="goThisWeek()">Cette Semaine</button>
+      <button class="this-week" (click)="goThisWeek()">{{ 'timelogs.thisWeek' | translate }}</button>
       <span class="cap-badge" [class.over]="weekTotal > capacity">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
         {{ weekTotal }}h / {{ capacity }}h
@@ -44,7 +45,7 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
     <div class="sheet-card anim" style="--d:.06s">
       <table class="sheet">
         <thead>
-          <tr><th class="task-col">Tâche</th><th *ngFor="let d of days">{{ d }}</th><th class="total-col">Total</th></tr>
+          <tr><th class="task-col">{{ 'common.task' | translate }}</th><th *ngFor="let d of days">{{ d }}</th><th class="total-col">{{ 'common.total' | translate }}</th></tr>
         </thead>
         <tbody>
           <tr *ngFor="let r of rows">
@@ -55,11 +56,11 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
             </td>
             <td class="total-col"><strong>{{ r.total }}h</strong></td>
           </tr>
-          <tr *ngIf="rows.length === 0 && !loading"><td [attr.colspan]="9"><div class="empty">Aucune heure enregistrée cette semaine.</div></td></tr>
+          <tr *ngIf="rows.length === 0 && !loading"><td [attr.colspan]="9"><div class="empty">{{ 'timelogs.noHoursWeek' | translate }}</div></td></tr>
         </tbody>
         <tfoot>
           <tr>
-            <td class="task-col">Total journalier</td>
+            <td class="task-col">{{ 'timelogs.dailyTotal' | translate }}</td>
             <td *ngFor="let t of dailyTotals" class="day-total">{{ t }}h</td>
             <td class="total-col grand">{{ weekTotal }}h</td>
           </tr>
@@ -70,7 +71,7 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
     <!-- ═══ KPI cards ═══ -->
     <div class="kpi-grid">
       <div class="kpi anim" style="--d:.12s">
-        <div class="kpi-l">Total cette semaine</div>
+        <div class="kpi-l">{{ 'timelogs.weekTotal' | translate }}</div>
         <div class="kpi-v">{{ weekTotal }}h</div>
         <div class="kpi-trend" [class.up]="trendPct >= 0" [class.down]="trendPct < 0">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline [attr.points]="trendPct >= 0 ? '3 17 9 11 13 15 21 7' : '3 7 9 13 13 9 21 17'"></polyline><polyline [attr.points]="trendPct >= 0 ? '14 7 21 7 21 14' : '14 17 21 17 21 10'"></polyline></svg>
@@ -78,17 +79,17 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
         </div>
       </div>
       <div class="kpi anim" style="--d:.16s">
-        <div class="kpi-l">Moyenne par jour</div>
+        <div class="kpi-l">{{ 'timelogs.avgPerDay' | translate }}</div>
         <div class="kpi-v">{{ avgPerDay }}h</div>
-        <div class="kpi-sub">sur 5 jours ouvrés</div>
+        <div class="kpi-sub">{{ 'timelogs.over5days' | translate }}</div>
       </div>
       <div class="kpi anim" style="--d:.2s">
-        <div class="kpi-l">Tâche la plus chronophage</div>
+        <div class="kpi-l">{{ 'timelogs.mostTimeConsuming' | translate }}</div>
         <div class="kpi-task">{{ topTask?.name || '—' }}</div>
         <div class="kpi-chip" *ngIf="topTask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>{{ topTask.total }}h</div>
       </div>
       <div class="kpi anim" style="--d:.24s">
-        <div class="kpi-l">Par projet</div>
+        <div class="kpi-l">{{ 'timelogs.byProject' | translate }}</div>
         <div class="donut-split">
           <div class="donut-wrap reveal">
             <svg viewBox="0 0 36 36" class="donut">
@@ -109,21 +110,21 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
   <!-- ═══ Log time modal ═══ -->
   <div class="modal-backdrop" *ngIf="showLogModal" (click)="closeLog()">
     <div class="modal" (click)="$event.stopPropagation()">
-      <div class="m-head"><h3>Enregistrer du temps</h3><button class="x" (click)="closeLog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
+      <div class="m-head"><h3>{{ 'timelogs.logTime' | translate }}</h3><button class="x" (click)="closeLog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
       <div class="m-body">
-        <div class="fg"><label>Tâche *</label>
+        <div class="fg"><label>{{ 'timelogs.taskReq' | translate }}</label>
           <select [(ngModel)]="logForm.taskId">
-            <option [ngValue]="undefined">Sélectionner une tâche</option>
+            <option [ngValue]="undefined">{{ 'common.selectTask' | translate }}</option>
             <option *ngFor="let t of tasks" [ngValue]="t.id">{{ t.name }}<span *ngIf="t.projectName"> — {{ t.projectName }}</span></option>
           </select>
         </div>
         <div class="grid2">
-          <div class="fg"><label>Date *</label><input type="date" [(ngModel)]="logForm.date"></div>
-          <div class="fg"><label>Heures *</label><input type="number" min="0" step="0.5" [(ngModel)]="logForm.hours" placeholder="ex. 2.5"></div>
+          <div class="fg"><label>{{ 'timelogs.dateReq' | translate }}</label><input type="date" [(ngModel)]="logForm.date"></div>
+          <div class="fg"><label>{{ 'timelogs.hoursReq' | translate }}</label><input type="number" min="0" step="0.5" [(ngModel)]="logForm.hours" [placeholder]="'timelogs.phHours' | translate"></div>
         </div>
-        <div class="fg"><label>Description</label><textarea rows="3" [(ngModel)]="logForm.description" placeholder="Sur quoi avez-vous travaillé ?"></textarea></div>
+        <div class="fg"><label>{{ 'common.description' | translate }}</label><textarea rows="3" [(ngModel)]="logForm.description" [placeholder]="'timelogs.phWorkedOn' | translate"></textarea></div>
       </div>
-      <div class="m-foot"><button class="btn-ghost" (click)="closeLog()">Annuler</button><button class="btn-primary" (click)="submitLog()" [disabled]="savingLog">{{ savingLog ? 'Enregistrement…' : 'Enregistrer' }}</button></div>
+      <div class="m-foot"><button class="btn-ghost" (click)="closeLog()">{{ 'common.cancel' | translate }}</button><button class="btn-primary" (click)="submitLog()" [disabled]="savingLog">{{ savingLog ? 'Enregistrement…' : 'Enregistrer' }}</button></div>
     </div>
   </div>
   `,
@@ -227,6 +228,7 @@ export class UserTimeLogsComponent implements OnInit {
     private authService: AuthService,
     private timeLogService: TimeLogService,
     private toast: ToastService,
+    private translate: TranslateService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -323,7 +325,7 @@ export class UserTimeLogsComponent implements OnInit {
     const v = Math.max(0, +r.cells[d] || 0);
     const dayStr = this.iso(this.dayDate(d));
     const logs = r.logs[d] || [];
-    const finish = () => { this.fetchLogs(); this.toast.show('Temps enregistré.', 'success'); };
+    const finish = () => { this.fetchLogs(); this.toast.show(this.translate.instant('toast.timeSaved'), 'success'); };
     if (logs.length === 0) {
       if (v > 0) this.timeLogService.createTimeLog({ taskId: r.taskId, hours: v, date: dayStr, description: '', hoursSpent: v, logDate: dayStr } as any).subscribe({ next: finish, error: () => this.build() });
       else this.build();
@@ -343,10 +345,10 @@ export class UserTimeLogsComponent implements OnInit {
   }
   closeLog(): void { this.showLogModal = false; }
   submitLog(): void {
-    if (!this.logForm.taskId) { this.toast.show('Veuillez sélectionner une tâche.', 'error'); return; }
+    if (!this.logForm.taskId) { this.toast.show(this.translate.instant('toast.selectTask'), 'error'); return; }
     const hours = Number(this.logForm.hours);
-    if (!hours || hours <= 0) { this.toast.show('Veuillez saisir un nombre d\'heures valide.', 'error'); return; }
-    if (!this.logForm.date) { this.toast.show('Veuillez choisir une date.', 'error'); return; }
+    if (!hours || hours <= 0) { this.toast.show(this.translate.instant('toast.validHours'), 'error'); return; }
+    if (!this.logForm.date) { this.toast.show(this.translate.instant('toast.chooseDate'), 'error'); return; }
     this.savingLog = true;
     const dayStr = this.logForm.date;
     this.timeLogService.createTimeLog({
@@ -359,9 +361,9 @@ export class UserTimeLogsComponent implements OnInit {
         // Jump to the week of the logged day so the entry is visible, then refresh.
         this.weekStart = this.mondayOf(new Date(dayStr + 'T00:00:00'));
         this.fetchLogs();
-        this.toast.show('Temps enregistré.', 'success');
+        this.toast.show(this.translate.instant('toast.timeSaved'), 'success');
       },
-      error: () => { this.savingLog = false; this.toast.show('Échec de l\'enregistrement du temps.', 'error'); }
+      error: () => { this.savingLog = false; this.toast.show(this.translate.instant('toast.timeSaveFailed'), 'error'); }
     });
   }
 
@@ -371,9 +373,9 @@ export class UserTimeLogsComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'suivi-temps.csv'; a.click();
         window.URL.revokeObjectURL(url);
-        this.toast.show('Export CSV généré.', 'success');
+        this.toast.show(this.translate.instant('toast.csvGenerated'), 'success');
       },
-      error: () => this.toast.show("Échec de l'export.", 'error')
+      error: () => this.toast.show(this.translate.instant('toast.exportFailed'), 'error')
     });
   }
 }

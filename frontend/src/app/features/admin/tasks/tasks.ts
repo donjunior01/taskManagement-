@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
 import { ProjectService, Project } from '../../../core/services/project.service';
 import { UserService, User } from '../../../core/services/user.service';
@@ -10,7 +11,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-admin-tasks',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent, TranslatePipe],
   templateUrl: './tasks.html',
   styleUrls: ['./tasks.scss']
 })
@@ -77,8 +78,29 @@ export class AdminTasksComponent implements OnInit {
     private projectService: ProjectService,
     private userService: UserService,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService
+    private toast: ToastService,
+    private translate: TranslateService
   ) {}
+
+  /** Translation key for a task priority enum (rendered with the translate pipe). */
+  priorityKey(p?: string): string {
+    switch ((p || '').toUpperCase()) {
+      case 'CRITICAL': return 'admin.tasks.prioCritical';
+      case 'HIGH':     return 'admin.tasks.prioHigh';
+      case 'LOW':      return 'admin.tasks.prioLow';
+      default:         return 'admin.tasks.prioMedium';
+    }
+  }
+
+  /** Translation key for a task status enum. */
+  statusKey(s?: string): string {
+    switch ((s || '').toUpperCase()) {
+      case 'IN_PROGRESS': return 'admin.tasks.stInProgress';
+      case 'COMPLETED':   return 'admin.tasks.stCompleted';
+      case 'ON_HOLD':     return 'admin.tasks.stOnHold';
+      default:            return 'admin.tasks.stPlanned';
+    }
+  }
 
   ngOnInit(): void {
     this.loadTasks();
@@ -249,7 +271,7 @@ export class AdminTasksComponent implements OnInit {
   // Form Submissions
   submitAddTask(): void {
     if (!this.addForm.name || !this.addForm.projectId || !this.addForm.assignedToId || !this.addForm.deadline) {
-      this.triggerToast('Veuillez renseigner tous les champs obligatoires de la tâche.', 'error');
+      this.triggerToast(this.translate.instant('admin.tasks.toastFillRequired'), 'error');
       return;
     }
 
@@ -266,12 +288,12 @@ export class AdminTasksComponent implements OnInit {
       next: (newTask) => {
         this.submitting = false;
         this.showAddModal = false;
-        this.triggerToast(`Tâche "${newTask.name}" enregistrée avec succès !`, 'success');
+        this.triggerToast(this.translate.instant('admin.tasks.toastCreated', { name: newTask.name }), 'success');
         this.loadTasks();
       },
       error: (err) => {
         this.submitting = false;
-        const msg = err?.error?.message || 'Échec de la création de la tâche.';
+        const msg = err?.error?.message || this.translate.instant('admin.tasks.toastCreateFailed');
         this.triggerToast(msg, 'error');
       }
     });
@@ -281,7 +303,7 @@ export class AdminTasksComponent implements OnInit {
     if (!this.selectedTask || !this.selectedTask.id) return;
 
     if (!this.editForm.name || !this.editForm.projectId || !this.editForm.assignedToId || !this.editForm.deadline) {
-      this.triggerToast('Tous les paramètres obligatoires de la tâche sont requis.', 'error');
+      this.triggerToast(this.translate.instant('admin.tasks.toastEditRequired'), 'error');
       return;
     }
 
@@ -299,12 +321,12 @@ export class AdminTasksComponent implements OnInit {
       next: (updatedTask) => {
         this.submitting = false;
         this.showEditModal = false;
-        this.triggerToast(`Détails de la tâche "${updatedTask.name}" modifiés avec succès !`, 'success');
+        this.triggerToast(this.translate.instant('admin.tasks.toastUpdated', { name: updatedTask.name }), 'success');
         this.loadTasks();
       },
       error: (err) => {
         this.submitting = false;
-        const msg = err?.error?.message || 'Échec de la mise à jour de la tâche.';
+        const msg = err?.error?.message || this.translate.instant('admin.tasks.toastUpdateFailed');
         this.triggerToast(msg, 'error');
       }
     });
@@ -318,12 +340,12 @@ export class AdminTasksComponent implements OnInit {
       next: () => {
         this.submitting = false;
         this.showDeleteModal = false;
-        this.triggerToast(`La tâche "${this.selectedTask?.name}" a été supprimée définitivement.`, 'success');
+        this.triggerToast(this.translate.instant('admin.tasks.toastDeleted', { name: this.selectedTask?.name }), 'success');
         this.loadTasks();
       },
       error: (err) => {
         this.submitting = false;
-        const msg = err?.error?.message || 'Échec de la suppression de la tâche.';
+        const msg = err?.error?.message || this.translate.instant('admin.tasks.toastDeleteFailed');
         this.triggerToast(msg, 'error');
       }
     });

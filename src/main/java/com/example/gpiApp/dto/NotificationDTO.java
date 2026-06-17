@@ -21,6 +21,8 @@ public class NotificationDTO {
     private Boolean isRead;
     private Long referenceId;
     private String referenceType;
+    private String i18nKey;
+    private String i18nParams;
     private LocalDateTime createdAt;
     private LocalDateTime readAt;
 }

@@ -12,15 +12,15 @@
   @if (showNotifications) {
     <div class="notification-dropdown">
       <div class="notification-header">
-        <h4>Notifications</h4>
+        <h4>{{ 'notif.title' | translate }}</h4>
       </div>
       @if (notifications.length === 0) {
-        <p class="no-notifications">No notifications</p>
+        <p class="no-notifications">{{ 'notif.empty' | translate }}</p>
       } @else {
         <ul class="notification-list">
           <li *ngFor="let notif of notifications" class="notification-item" [ngClass]="{'unread': !notif.isRead}">
             <div class="notif-content">
-              <span class="notif-message">{{ notif.message }}</span>
+              <span class="notif-message">{{ dispMsg(notif) }}</span>
               <span class="notif-time">{{ notif.createdAt | date:'shortTime' }}</span>
             </div>
             <button class="delete-btn" (click)="deleteNotification(notif.id, $event)">

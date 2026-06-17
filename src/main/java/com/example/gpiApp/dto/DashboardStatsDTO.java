@@ -18,9 +18,12 @@ public class DashboardStatsDTO {
     
     // Project statistics
     private Long totalProjects;
-    private Long activeProjects;
+    private Long activeProjects;       // in-progress + planned (KPI "Projets Actifs")
+    private Long inProgressProjects;   // ACTIVE + IN_PROGRESS
+    private Long plannedProjects;      // PLANNED
     private Long completedProjects;
     private Long onHoldProjects;
+    private Long cancelledProjects;    // CANCELLED
     
     // Task statistics
     private Long totalTasks;

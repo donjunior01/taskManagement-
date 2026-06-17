@@ -4,8 +4,8 @@
   <!-- Governance Greeting Area -->
   <div class="tasks-header">
     <div class="header-text">
-      <h2>Gouvernance des tâches</h2>
-      <p>Auditez les portefeuilles de tâches du système, modifiez les attributions, priorisez les blocs et gérez les dates de livraison.</p>
+      <h2>{{ 'admin.tasks.title' | translate }}</h2>
+      <p>{{ 'admin.tasks.subtitle' | translate }}</p>
     </div>
     <div class="header-actions">
       <button class="btn btn-primary" (click)="openAddModal()">
@@ -13,7 +13,7 @@
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        Créer une tâche
+        {{ 'admin.tasks.createTask' | translate }}
       </button>
     </div>
   </div>
@@ -29,8 +29,8 @@
       </div>
       <input 
         type="text" 
-        placeholder="Rechercher des tâches par nom, projet, assigné..."
-        [(ngModel)]="searchTerm" 
+        [placeholder]="'admin.tasks.searchPlaceholder' | translate"
+        [(ngModel)]="searchTerm"
         (ngModelChange)="onFilterChange()"
       />
     </div>
@@ -39,7 +39,7 @@
       <!-- Project Filter -->
       <div class="select-wrapper">
         <select [(ngModel)]="projectFilter" (change)="onFilterChange()">
-          <option value="">Tous les projets</option>
+          <option value="">{{ 'admin.tasks.allProjects' | translate }}</option>
           <option *ngFor="let proj of projectList" [value]="proj.id">
             {{ proj.name }}
           </option>
@@ -49,22 +49,22 @@
       <!-- Priority Filter -->
       <div class="select-wrapper">
         <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
-          <option value="">Toutes les priorités</option>
-          <option value="CRITICAL">Critique</option>
-          <option value="HIGH">Élevée</option>
-          <option value="MEDIUM">Moyenne</option>
-          <option value="LOW">Faible</option>
+          <option value="">{{ 'admin.tasks.allPriorities' | translate }}</option>
+          <option value="CRITICAL">{{ 'admin.tasks.prioCritical' | translate }}</option>
+          <option value="HIGH">{{ 'admin.tasks.prioHigh' | translate }}</option>
+          <option value="MEDIUM">{{ 'admin.tasks.prioMedium' | translate }}</option>
+          <option value="LOW">{{ 'admin.tasks.prioLow' | translate }}</option>
         </select>
       </div>
 
       <!-- Status Filter -->
       <div class="select-wrapper">
         <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
-          <option value="">Tous les statuts</option>
-          <option value="PLANNED">Planifié</option>
-          <option value="IN_PROGRESS">En cours</option>
-          <option value="ON_HOLD">En pause</option>
-          <option value="COMPLETED">Terminé</option>
+          <option value="">{{ 'admin.tasks.allStatuses' | translate }}</option>
+          <option value="PLANNED">{{ 'admin.tasks.stPlanned' | translate }}</option>
+          <option value="IN_PROGRESS">{{ 'admin.tasks.stInProgress' | translate }}</option>
+          <option value="ON_HOLD">{{ 'admin.tasks.stOnHold' | translate }}</option>
+          <option value="COMPLETED">{{ 'admin.tasks.stCompleted' | translate }}</option>
         </select>
       </div>
     </div>
@@ -74,7 +74,7 @@
   <div class="glass-panel tasks-table-panel">
     <div class="loading-overlay" *ngIf="loading">
       <div class="spinner"></div>
-      <span>Interrogation de l'inventaire global des tâches...</span>
+      <span>{{ 'admin.tasks.loadingTasks' | translate }}</span>
     </div>
 
     <div class="empty-state" *ngIf="!loading && filteredTasks.length === 0">
@@ -88,8 +88,8 @@
           <line x1="3" y1="18" x2="3.01" y2="18"></line>
         </svg>
       </div>
-      <h3>Aucune tâche trouvée</h3>
-      <p>Aucune tâche de l'espace de travail ne correspond à vos recherches, projets ou priorités actifs.</p>
+      <h3>{{ 'admin.tasks.noTasksTitle' | translate }}</h3>
+      <p>{{ 'admin.tasks.noTasksText' | translate }}</p>
     </div>
 
     <div class="table-scroll-container" *ngIf="!loading && filteredTasks.length > 0">
@@ -97,21 +97,21 @@
         <thead>
           <tr>
             <th class="clickable" (click)="onSortChange('id')">
-              ID
+              {{ 'admin.tasks.colId' | translate }}
               <span class="sort-icon" *ngIf="sortBy === 'id'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
             </th>
             <th class="clickable" (click)="onSortChange('name')">
-              Livrable de la tâche / Espace de travail
+              {{ 'admin.tasks.colDeliverable' | translate }}
               <span class="sort-icon" *ngIf="sortBy === 'name'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
             </th>
-            <th>Assigné à</th>
+            <th>{{ 'admin.tasks.colAssignee' | translate }}</th>
             <th class="clickable" (click)="onSortChange('priority')">
-              Priorité
+              {{ 'admin.tasks.colPriority' | translate }}
               <span class="sort-icon" *ngIf="sortBy === 'priority'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
             </th>
-            <th>Progression</th>
-            <th>Échéance</th>
-            <th class="actions-col">Gouvernance</th>
+            <th>{{ 'admin.tasks.colProgress' | translate }}</th>
+            <th>{{ 'admin.tasks.colDeadline' | translate }}</th>
+            <th class="actions-col">{{ 'admin.tasks.colGovernance' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -129,13 +129,13 @@
                   {{ task.assignedToName[0] }}
                 </div>
                 <div class="assignee-info">
-                  <span class="assignee-name">{{ task.assignedToName || 'Non assigné' }}</span>
+                  <span class="assignee-name">{{ task.assignedToName || ('admin.tasks.unassigned' | translate) }}</span>
                 </div>
               </div>
             </td>
             <td>
               <span class="priority-badge" [ngClass]="task.priority?.toLowerCase() || 'medium'">
-                {{ task.priority }}
+                {{ priorityKey(task.priority) | translate }}
               </span>
             </td>
             <td>
@@ -146,23 +146,23 @@
                 <div class="progress-details">
                   <span class="percentage">{{ task.progress || 0 }}%</span>
                   <span class="status-indicator" [ngClass]="task.status?.toLowerCase() || 'planned'">
-                    {{ task.status === 'IN_PROGRESS' ? 'En cours' : (task.status === 'COMPLETED' ? 'Terminé' : (task.status === 'ON_HOLD' ? 'En pause' : 'Planifié')) }}
+                    {{ statusKey(task.status) | translate }}
                   </span>
                 </div>
               </div>
             </td>
             <td>
-              <span class="deadline-date">{{ task.deadline || 'N/D' }}</span>
+              <span class="deadline-date">{{ task.deadline || ('admin.tasks.deadlineNd' | translate) }}</span>
             </td>
             <td class="actions-col">
               <div class="action-buttons">
-                <button class="action-btn edit-btn" (click)="openEditModal(task)" title="Modifier les configurations">
+                <button class="action-btn edit-btn" (click)="openEditModal(task)" [title]="'admin.tasks.editConfig' | translate">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                     <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path>
                   </svg>
                 </button>
-                <button class="action-btn delete-btn" (click)="openDeleteModal(task)" title="Supprimer la tâche">
+                <button class="action-btn delete-btn" (click)="openDeleteModal(task)" [title]="'admin.tasks.deleteTask' | translate">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -178,7 +178,7 @@
     <!-- Pagination Footer -->
     <div class="table-footer" *ngIf="!loading && filteredTasks.length > 0">
       <div class="entries-info">
-        Affichage de 1 à {{ filteredTasks.length }} sur {{ totalElements }} entrées
+        {{ 'admin.tasks.showingRange' | translate:{ count: filteredTasks.length, total: totalElements } }}
       </div>
       <div class="pagination-controls">
         <button class="pag-btn" (click)="prevPage()" [disabled]="currentPage === 0">
@@ -212,7 +212,7 @@
 <div class="modal-backdrop" *ngIf="showAddModal" (click)="closeAddModal()">
   <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Créer une tâche</h3>
+      <h3>{{ 'admin.tasks.createTitle' | translate }}</h3>
       <button class="modal-close-btn" (click)="closeAddModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -223,30 +223,30 @@
 
     <form class="modal-form" (submit)="submitAddTask(); $event.preventDefault()">
       <div class="form-group">
-        <label>Titre de la tâche</label>
-        <input type="text" placeholder="ex. Implémenter les classes de survol glassmorphiques HSL" [(ngModel)]="addForm.name" name="name" required />
+        <label>{{ 'admin.tasks.fieldTitle' | translate }}</label>
+        <input type="text" [placeholder]="'admin.tasks.phTitle' | translate" [(ngModel)]="addForm.name" name="name" required />
       </div>
 
       <div class="form-group">
-        <label>Spécifications du livrable</label>
+        <label>{{ 'admin.tasks.fieldSpecs' | translate }}</label>
         <app-ai-describe [type]="'TASK'" [title]="addForm.name" (generated)="addForm.description = $event"></app-ai-describe>
-        <textarea rows="3" placeholder="Décrivez les objectifs de la tâche, les indicateurs cibles et les règles de résolution..." [(ngModel)]="addForm.description" name="description"></textarea>
+        <textarea rows="3" [placeholder]="'admin.tasks.phSpecs' | translate" [(ngModel)]="addForm.description" name="description"></textarea>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>Projet de l'espace de travail</label>
+          <label>{{ 'admin.tasks.fieldProject' | translate }}</label>
           <select [(ngModel)]="addForm.projectId" name="projectId" required>
-            <option [value]="undefined" disabled>-- Sélectionner un projet --</option>
+            <option [value]="undefined" disabled>{{ 'admin.tasks.selectProject' | translate }}</option>
             <option *ngFor="let proj of projectList" [value]="proj.id">
               {{ proj.name }}
             </option>
           </select>
         </div>
         <div class="form-group">
-          <label>Personne assignée</label>
+          <label>{{ 'admin.tasks.fieldAssignee' | translate }}</label>
           <select [(ngModel)]="addForm.assignedToId" name="assignedToId" required>
-            <option [value]="undefined" disabled>-- Sélectionner un assigné --</option>
+            <option [value]="undefined" disabled>{{ 'admin.tasks.selectAssignee' | translate }}</option>
             <option *ngFor="let user of assigneeList" [value]="user.id">
               {{ user.firstName }} {{ user.lastName }} (@{{ user.username }})
             </option>
@@ -256,44 +256,44 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label>Niveau de priorité</label>
+          <label>{{ 'admin.tasks.fieldPriority' | translate }}</label>
           <select [(ngModel)]="addForm.priority" name="priority" required>
-            <option value="LOW">Faible</option>
-            <option value="MEDIUM">Moyenne</option>
-            <option value="HIGH">Élevée</option>
-            <option value="CRITICAL">Critique</option>
+            <option value="LOW">{{ 'admin.tasks.prioLow' | translate }}</option>
+            <option value="MEDIUM">{{ 'admin.tasks.prioMedium' | translate }}</option>
+            <option value="HIGH">{{ 'admin.tasks.prioHigh' | translate }}</option>
+            <option value="CRITICAL">{{ 'admin.tasks.prioCritical' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Niveau de difficulté</label>
+          <label>{{ 'admin.tasks.fieldDifficulty' | translate }}</label>
           <select [(ngModel)]="addForm.difficulty" name="difficulty" required>
-            <option value="EASY">Facile</option>
-            <option value="MEDIUM">Moyenne</option>
-            <option value="HARD">Difficile</option>
+            <option value="EASY">{{ 'admin.tasks.diffEasy' | translate }}</option>
+            <option value="MEDIUM">{{ 'admin.tasks.diffMedium' | translate }}</option>
+            <option value="HARD">{{ 'admin.tasks.diffHard' | translate }}</option>
           </select>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>Date d'échéance</label>
+          <label>{{ 'admin.tasks.fieldDeadline' | translate }}</label>
           <input type="date" [(ngModel)]="addForm.deadline" name="deadline" required />
         </div>
         <div class="form-group">
-          <label>Statut de livraison</label>
+          <label>{{ 'admin.tasks.fieldStatus' | translate }}</label>
           <select [(ngModel)]="addForm.status" name="status" required>
-            <option value="PLANNED">Planifié</option>
-            <option value="IN_PROGRESS">En cours</option>
-            <option value="ON_HOLD">En pause</option>
-            <option value="COMPLETED">Terminé</option>
+            <option value="PLANNED">{{ 'admin.tasks.stPlanned' | translate }}</option>
+            <option value="IN_PROGRESS">{{ 'admin.tasks.stInProgress' | translate }}</option>
+            <option value="ON_HOLD">{{ 'admin.tasks.stOnHold' | translate }}</option>
+            <option value="COMPLETED">{{ 'admin.tasks.stCompleted' | translate }}</option>
           </select>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">{{ 'admin.tasks.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="submitting">
-          <span *ngIf="!submitting">Lancer la tâche</span>
+          <span *ngIf="!submitting">{{ 'admin.tasks.launchTask' | translate }}</span>
           <div class="spinner" *ngIf="submitting"></div>
         </button>
       </div>
@@ -305,7 +305,7 @@
 <div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()">
   <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Modifier les configurations de la tâche</h3>
+      <h3>{{ 'admin.tasks.editTitle' | translate }}</h3>
       <button class="modal-close-btn" (click)="closeEditModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -316,30 +316,30 @@
 
     <form class="modal-form" (submit)="submitEditTask(); $event.preventDefault()">
       <div class="form-group">
-        <label>Titre de la tâche</label>
+        <label>{{ 'admin.tasks.fieldTitle' | translate }}</label>
         <input type="text" [(ngModel)]="editForm.name" name="name" required />
       </div>
 
       <div class="form-group">
-        <label>Spécifications du livrable</label>
+        <label>{{ 'admin.tasks.fieldSpecs' | translate }}</label>
         <app-ai-describe [type]="'TASK'" [title]="editForm.name" (generated)="editForm.description = $event"></app-ai-describe>
         <textarea rows="3" [(ngModel)]="editForm.description" name="description"></textarea>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>Projet de l'espace de travail</label>
+          <label>{{ 'admin.tasks.fieldProject' | translate }}</label>
           <select [(ngModel)]="editForm.projectId" name="projectId" required>
-            <option [value]="undefined" disabled>-- Sélectionner un projet --</option>
+            <option [value]="undefined" disabled>{{ 'admin.tasks.selectProject' | translate }}</option>
             <option *ngFor="let proj of projectList" [value]="proj.id">
               {{ proj.name }}
             </option>
           </select>
         </div>
         <div class="form-group">
-          <label>Personne assignée</label>
+          <label>{{ 'admin.tasks.fieldAssignee' | translate }}</label>
           <select [(ngModel)]="editForm.assignedToId" name="assignedToId" required>
-            <option [value]="undefined" disabled>-- Sélectionner un assigné --</option>
+            <option [value]="undefined" disabled>{{ 'admin.tasks.selectAssignee' | translate }}</option>
             <option *ngFor="let user of assigneeList" [value]="user.id">
               {{ user.firstName }} {{ user.lastName }} (@{{ user.username }})
             </option>
@@ -349,49 +349,49 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label>Niveau de priorité</label>
+          <label>{{ 'admin.tasks.fieldPriority' | translate }}</label>
           <select [(ngModel)]="editForm.priority" name="priority" required>
-            <option value="LOW">Faible</option>
-            <option value="MEDIUM">Moyenne</option>
-            <option value="HIGH">Élevée</option>
-            <option value="CRITICAL">Critique</option>
+            <option value="LOW">{{ 'admin.tasks.prioLow' | translate }}</option>
+            <option value="MEDIUM">{{ 'admin.tasks.prioMedium' | translate }}</option>
+            <option value="HIGH">{{ 'admin.tasks.prioHigh' | translate }}</option>
+            <option value="CRITICAL">{{ 'admin.tasks.prioCritical' | translate }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Niveau de difficulté</label>
+          <label>{{ 'admin.tasks.fieldDifficulty' | translate }}</label>
           <select [(ngModel)]="editForm.difficulty" name="difficulty" required>
-            <option value="EASY">Facile</option>
-            <option value="MEDIUM">Moyenne</option>
-            <option value="HARD">Difficile</option>
+            <option value="EASY">{{ 'admin.tasks.diffEasy' | translate }}</option>
+            <option value="MEDIUM">{{ 'admin.tasks.diffMedium' | translate }}</option>
+            <option value="HARD">{{ 'admin.tasks.diffHard' | translate }}</option>
           </select>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>Date d'échéance</label>
+          <label>{{ 'admin.tasks.fieldDeadline' | translate }}</label>
           <input type="date" [(ngModel)]="editForm.deadline" name="deadline" required />
         </div>
         <div class="form-group">
-          <label>Statut de livraison</label>
+          <label>{{ 'admin.tasks.fieldStatus' | translate }}</label>
           <select [(ngModel)]="editForm.status" name="status" required>
-            <option value="PLANNED">Planifié</option>
-            <option value="IN_PROGRESS">En cours</option>
-            <option value="ON_HOLD">En pause</option>
-            <option value="COMPLETED">Terminé</option>
+            <option value="PLANNED">{{ 'admin.tasks.stPlanned' | translate }}</option>
+            <option value="IN_PROGRESS">{{ 'admin.tasks.stInProgress' | translate }}</option>
+            <option value="ON_HOLD">{{ 'admin.tasks.stOnHold' | translate }}</option>
+            <option value="COMPLETED">{{ 'admin.tasks.stCompleted' | translate }}</option>
           </select>
         </div>
       </div>
 
       <div class="form-group">
-        <label>Contrôle de la progression ({{ editForm.progress }}%)</label>
+        <label>{{ 'admin.tasks.progressControl' | translate:{ value: editForm.progress } }}</label>
         <input type="range" min="0" max="100" step="5" [(ngModel)]="editForm.progress" name="progress" />
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">{{ 'admin.tasks.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="submitting">
-          <span *ngIf="!submitting">Appliquer les modifications</span>
+          <span *ngIf="!submitting">{{ 'admin.tasks.applyChanges' | translate }}</span>
           <div class="spinner" *ngIf="submitting"></div>
         </button>
       </div>
@@ -403,7 +403,7 @@
 <div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
   <div class="glass-panel modal-card animate-scale-in" style="max-width: 440px; border-color: rgba(239, 68, 68, 0.2);" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3 style="color: var(--danger);">Supprimer la tâche</h3>
+      <h3 style="color: var(--danger);">{{ 'admin.tasks.deleteTitle' | translate }}</h3>
       <button class="modal-close-btn" (click)="closeDeleteModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -414,17 +414,16 @@
 
     <div class="modal-form">
       <p style="font-size:14px; color: var(--text-secondary); line-height: 1.5; font-weight: 500;">
-        Êtes-vous absolument sûr de vouloir **SUPPRIMER DÉFINITIVEMENT** la tâche
-        **"{{ selectedTask?.name }}"** ?
+        {{ 'admin.tasks.deleteBody' | translate:{ name: selectedTask?.name } }}
         <span style="display:block; margin-top:12px; font-size:13px; color: var(--danger); font-weight: 700; background: rgba(239,68,68,0.06); padding: 10px; border-radius: 6px; border: 1px solid rgba(239,68,68,0.15)">
-          ATTENTION : Cette action est irréversible. Elle effacera tous les journaux, commentaires et fichiers de la tâche, et modifiera le calcul global de la progression du projet.
+          {{ 'admin.tasks.deleteWarning' | translate }}
         </span>
       </p>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">{{ 'admin.tasks.cancel' | translate }}</button>
         <button type="button" class="btn btn-primary" style="background: var(--danger); border-color: var(--danger); box-shadow: 0 4px 14px rgba(239,68,68,0.25);" (click)="submitDeleteTask()" [disabled]="submitting">
-          <span *ngIf="!submitting">Supprimer la tâche</span>
+          <span *ngIf="!submitting">{{ 'admin.tasks.deleteConfirm' | translate }}</span>
           <div class="spinner" *ngIf="submitting"></div>
         </button>
       </div>

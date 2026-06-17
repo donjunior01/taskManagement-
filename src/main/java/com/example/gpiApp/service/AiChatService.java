@@ -126,10 +126,13 @@ public class AiChatService {
 
         // AI via the LangChain.js + Gemini sidecar; deterministic, data-grounded fallback otherwise.
         final List<Map<String, String>> chatTurns = turns;
-        return langChainClient.chat(withLanguage(ASSISTANT_SYSTEM_PROMPT), chatTurns)
+        // Language: the user's toggle (request.language) overrides the admin-configured default.
+        final String langName = langNameFor(request.getLanguage());
+        final boolean fr = "French".equalsIgnoreCase(langName);
+        return langChainClient.chat(withLanguage(ASSISTANT_SYSTEM_PROMPT, langName), chatTurns)
                 .map(reply -> AiChatResponseDTO.builder().reply(reply).source("AI").build())
                 .orElseGet(() -> AiChatResponseDTO.builder()
-                        .reply(fallbackChat(request, message, context))
+                        .reply(fallbackChat(request, message, context, fr))
                         .source("MOCK").build());
     }
 
@@ -207,9 +210,9 @@ public class AiChatService {
         return sb.toString();
     }
 
-    private String fallbackChat(AiChatRequestDTO request, String message, String context) {
+    private String fallbackChat(AiChatRequestDTO request, String message, String context, boolean fr) {
         // Deterministic, data-grounded reply when the AI sidecar is unavailable.
-        if (isFrench()) {
+        if (fr) {
             return "L'assistant IA est hors ligne pour le moment. Voici les informations pertinentes de votre espace de travail :\n\n"
                     + context
                     + "\nConseil : démarrez le service IA (cd ai-service && npm start) avec une clé GEMINI_API_KEY valide pour obtenir des réponses conversationnelles et des conseils personnalisés.";
@@ -234,7 +237,7 @@ public class AiChatService {
         String userContent = "Type: " + type + "\nTitle: " + name
                 + (context.isEmpty() ? "" : "\nContext: " + context);
 
-        return langChainClient.complete(withLanguage(DESCRIPTION_SYSTEM_PROMPT), userContent)
+        return langChainClient.complete(withLanguage(DESCRIPTION_SYSTEM_PROMPT, systemSettings.getAiLanguageName()), userContent)
                 .map(String::trim)
                 .orElseGet(() -> fallbackDescription(type, name, context));
     }
@@ -274,7 +277,7 @@ public class AiChatService {
                 + (task.getDeadline() != null ? "\nDeadline: " + task.getDeadline() : "")
                 + "\nPriority: " + task.getPriority();
 
-        return langChainClient.complete(withLanguage(GUIDANCE_SYSTEM_PROMPT), userContent)
+        return langChainClient.complete(withLanguage(GUIDANCE_SYSTEM_PROMPT, systemSettings.getAiLanguageName()), userContent)
                 .map(reply -> AiChatResponseDTO.builder().reply(reply).source("AI").build())
                 .orElseGet(() -> AiChatResponseDTO.builder()
                         .reply(fallbackGuidance(task)).source("MOCK").build());
@@ -308,11 +311,21 @@ public class AiChatService {
         return s == null ? "" : s;
     }
 
-    /** Append a language directive so the model replies in the admin-configured language. */
-    private String withLanguage(String systemPrompt) {
-        String lang = systemSettings.getAiLanguageName();
-        return systemPrompt + "\n\nLANGUAGE: Respond entirely in " + lang
-                + ". Every sentence, heading and list item must be written in " + lang
+    /** Resolve the response language: a "fr"/"en" override (user toggle) wins, else the admin default. */
+    private String langNameFor(String override) {
+        if (override != null && !override.isBlank()) {
+            String l = override.trim().toLowerCase();
+            if (l.startsWith("en")) return "English";
+            if (l.startsWith("fr")) return "French";
+            return override.trim();
+        }
+        return systemSettings.getAiLanguageName();
+    }
+
+    /** Append a language directive so the model replies in the given language. */
+    private String withLanguage(String systemPrompt, String langName) {
+        return systemPrompt + "\n\nLANGUAGE: Respond entirely in " + langName
+                + ". Every sentence, heading and list item must be written in " + langName
                 + ", using that language's normal accented characters.";
     }
 

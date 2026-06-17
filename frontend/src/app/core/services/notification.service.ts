@@ -12,6 +12,10 @@ export interface Notification {
   userId: number;
   referenceId?: number;
   referenceType?: string;
+  /** Translation key for localised title/body (e.g. "taskAssigned"); null for legacy rows. */
+  i18nKey?: string;
+  /** JSON string of interpolation params for the translation. */
+  i18nParams?: string;
 }
 
 @Injectable({

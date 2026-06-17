@@ -3,15 +3,15 @@
 
     <!-- LEFT: Page title (prototype) -->
     <div class="header-title-block">
-      <h1 class="page-title">{{ pageTitle }}</h1>
-      <p class="page-subtitle">{{ isAdmin() ? 'Vue Administrateur · accès global' : currentDate }}</p>
+      <h1 class="page-title">{{ pageTitle | translate }}</h1>
+      <p class="page-subtitle">{{ isAdmin() ? ('header.adminSubtitle' | translate) : currentDate }}</p>
     </div>
 
     <!-- CENTER: Quick search (PM + Admin) -->
     <div class="header-search quick-search" *ngIf="isAdmin() || isProjectManager()">
       <div class="search-bar">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" placeholder="Rechercher..." [(ngModel)]="searchQuery" (ngModelChange)="onSearch()" (focus)="onSearchFocus()" autocomplete="off">
+        <input type="text" [placeholder]="'header.searchPlaceholder' | translate" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()" (focus)="onSearchFocus()" autocomplete="off">
       </div>
       <div class="search-dropdown" *ngIf="searchFocused && searchQuery.trim()" (click)="$event.stopPropagation()">
         <ng-container *ngIf="searchGroups.length; else noRes">
@@ -29,12 +29,15 @@
             </button>
           </div>
         </ng-container>
-        <ng-template #noRes><div class="sd-empty">Aucun résultat pour « {{ searchQuery }} »</div></ng-template>
+        <ng-template #noRes><div class="sd-empty">{{ 'header.noResults' | translate }} « {{ searchQuery }} »</div></ng-template>
       </div>
     </div>
 
     <!-- RIGHT: Actions and Profile -->
     <div class="header-actions">
+
+      <!-- Language toggle (FR ⇄ EN) -->
+      <app-lang-toggle></app-lang-toggle>
 
       <!-- Messages (hidden for Admin) -->
       <div class="message-wrapper" *ngIf="!isAdmin()">
@@ -48,8 +51,8 @@
         <!-- Messages Dropdown -->
         <div class="messages-dropdown glass-panel animate-scale-in" *ngIf="showMessages" (click)="$event.stopPropagation()">
           <div class="dropdown-header">
-            <h4>Messages</h4>
-            <button class="mark-read-btn" (click)="markAllMessagesRead()" *ngIf="unreadMessagesCount > 0">Tout marquer comme lu</button>
+            <h4>{{ 'header.messages' | translate }}</h4>
+            <button class="mark-read-btn" (click)="markAllMessagesRead()" *ngIf="unreadMessagesCount > 0">{{ 'header.markAllRead' | translate }}</button>
           </div>
 
           <div class="conversation-list">
@@ -73,12 +76,12 @@
 
             <div class="empty-conversations" *ngIf="unreadConversations.length === 0">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-              <p>Aucun message.</p>
+              <p>{{ 'header.noMessages' | translate }}</p>
             </div>
           </div>
 
           <div class="dropdown-footer">
-            <a (click)="goToMessages()" class="view-all-link">Voir tous les messages</a>
+            <a (click)="goToMessages()" class="view-all-link">{{ 'header.viewAllMessages' | translate }}</a>
           </div>
         </div>
       </div>
@@ -106,8 +109,8 @@
         <!-- Notifications Dropdown -->
         <div class="notification-dropdown glass-panel animate-scale-in" *ngIf="showNotifications" (click)="$event.stopPropagation()">
           <div class="dropdown-header">
-            <h4>Notifications</h4>
-            <button class="mark-read-btn" (click)="markAllAsRead()" *ngIf="unreadCount > 0">Tout marquer comme lu</button>
+            <h4>{{ 'header.notifications' | translate }}</h4>
+            <button class="mark-read-btn" (click)="markAllAsRead()" *ngIf="unreadCount > 0">{{ 'header.markAllRead' | translate }}</button>
           </div>
 
           <div class="notification-list">
@@ -130,12 +133,12 @@
             </div>
 
             <div class="empty-notifications" *ngIf="notificationsList.length === 0">
-              <p>Vous êtes à jour !</p>
+              <p>{{ 'header.upToDate' | translate }}</p>
             </div>
           </div>
 
           <div class="dropdown-footer">
-            <a href="javascript:void(0)" class="view-all-link">Voir toute l'activité</a>
+            <a href="javascript:void(0)" class="view-all-link">{{ 'header.viewAllActivity' | translate }}</a>
           </div>
         </div>
       </div>
@@ -143,7 +146,7 @@
       <!-- Status pill (role) -->
       <div class="status-pill">
         <span class="status-dot"></span>
-        <span>{{ getDisplayRole() }}</span>
+        <span>{{ getDisplayRole() | translate }}</span>
       </div>
 
       <!-- User Profile -->
@@ -164,26 +167,26 @@
         <!-- Profile Dropdown -->
         <div class="profile-dropdown glass-panel animate-scale-in" *ngIf="showProfileDropdown" (click)="$event.stopPropagation()">
           <div class="profile-dropdown-header">
-            <span class="account-lbl">Mon compte</span>
+            <span class="account-lbl">{{ 'header.account' | translate }}</span>
             <span class="user-email">{{ currentUser?.email }}</span>
           </div>
           <div class="profile-dropdown-list">
             <div class="profile-dropdown-item" (click)="openProfileModal()">
               <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-              <span class="item-text">Modifier le profil</span>
+              <span class="item-text">{{ 'header.editProfile' | translate }}</span>
             </div>
             <div class="profile-dropdown-item" (click)="openPasswordModal()">
               <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-              <span class="item-text">Changer le mot de passe</span>
+              <span class="item-text">{{ 'header.changePassword' | translate }}</span>
             </div>
             <div class="profile-dropdown-item" (click)="openPrefsModal()">
               <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
-              <span class="item-text">Préférences de notification</span>
+              <span class="item-text">{{ 'header.notifPrefs' | translate }}</span>
             </div>
             <div class="dropdown-divider"></div>
             <div class="profile-dropdown-item signout-item" (click)="logout()">
               <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
-              <span class="item-text">Déconnexion</span>
+              <span class="item-text">{{ 'header.logout' | translate }}</span>
             </div>
           </div>
         </div>

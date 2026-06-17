@@ -3,8 +3,8 @@
   <!-- Header Title block -->
   <div class="support-header">
     <div class="header-text">
-      <h2>Centre d'aide et de support</h2>
-      <p>Obtenez des réponses rapides aux questions courantes ou ouvrez un ticket auprès de notre équipe de support.</p>
+      <h2>{{ 'support.headerTitle' | translate }}</h2>
+      <p>{{ 'support.headerSubtitle' | translate }}</p>
     </div>
   </div>
 
@@ -17,9 +17,9 @@
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
       </div>
-      <h3>Chat de support en direct</h3>
-      <p>Échangez en temps réel avec notre équipe technique.</p>
-      <a href="javascript:void(0)" class="contact-link text-blue">Démarrer le chat &rarr;</a>
+      <h3>{{ 'support.chatTitle' | translate }}</h3>
+      <p>{{ 'support.chatDesc' | translate }}</p>
+      <a href="javascript:void(0)" class="contact-link text-blue">{{ 'support.chatLink' | translate }}</a>
     </div>
 
     <!-- Card 2: Email -->
@@ -30,8 +30,8 @@
           <polyline points="22,6 12,13 2,6"></polyline>
         </svg>
       </div>
-      <h3>Support par e-mail</h3>
-      <p>Envoyez votre demande à notre support. Réponse moyenne : 2 heures.</p>
+      <h3>{{ 'support.emailTitle' | translate }}</h3>
+      <p>{{ 'support.emailDesc' | translate }}</p>
       <a href="mailto:support@taskmaster.com" class="contact-link text-green">support@taskmaster.com</a>
     </div>
 
@@ -44,8 +44,8 @@
           </path>
         </svg>
       </div>
-      <h3>Ligne d'assistance</h3>
-      <p>Parlez directement à un agent de support pour les besoins critiques.</p>
+      <h3>{{ 'support.hotlineTitle' | translate }}</h3>
+      <p>{{ 'support.hotlineDesc' | translate }}</p>
       <span class="contact-number text-orange">+237 699-226-444</span>
     </div>
   </div>
@@ -61,20 +61,20 @@
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
-        <h3>Questions fréquentes</h3>
+        <h3>{{ 'support.faqTitle' | translate }}</h3>
       </div>
 
       <div class="faq-accordion-list">
         <div class="faq-accordion-item" *ngFor="let faq of faqs" [ngClass]="{ expanded: faq.expanded }">
           <button class="faq-trigger-btn" (click)="toggleFaq(faq)">
-            <span>{{ faq.question }}</span>
+            <span>{{ faq.question | translate }}</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="faq-chevron-icon">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
 
           <div class="faq-content-wrapper" *ngIf="faq.expanded">
-            <p class="faq-answer-text">{{ faq.answer }}</p>
+            <p class="faq-answer-text">{{ faq.answer | translate }}</p>
           </div>
         </div>
       </div>
@@ -90,28 +90,28 @@
             <line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
-          <h3>Tickets actifs</h3>
+          <h3>{{ 'support.ticketsTitle' | translate }}</h3>
         </div>
         <button class="btn-create-ticket" (click)="openTicketModal()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="plus-icon">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          <span>Ouvrir un ticket</span>
+          <span>{{ 'support.openTicket' | translate }}</span>
         </button>
       </div>
 
       <!-- Tickets listing -->
       <div class="tickets-vertical-list">
         <div class="empty-tickets" *ngIf="tickets.length === 0">
-          <p>Aucun ticket de support actif.</p>
+          <p>{{ 'support.noTickets' | translate }}</p>
         </div>
 
         <div class="ticket-card animate-scale-in" *ngFor="let tkt of tickets">
           <div class="ticket-top">
             <span class="ticket-code">{{ tkt.id }}</span>
             <span class="ticket-status-badge" [ngClass]="tkt.status.toLowerCase()">
-              {{ tkt.status === 'OPEN' ? 'Ouvert' : (tkt.status === 'IN_PROGRESS' ? 'En cours' : 'Résolu') }}
+              {{ statusKey(tkt.status) | translate }}
             </span>
           </div>
 
@@ -120,7 +120,7 @@
 
           <div class="ticket-meta">
             <span class="ticket-priority-badge" [ngClass]="tkt.priority.toLowerCase()">
-              Priorité {{ priorityLabel(tkt.priority) }}
+              {{ 'support.priorityPrefix' | translate:{ p: (priorityLabelKey(tkt.priority) | translate) } }}
             </span>
             <span class="ticket-date">{{ tkt.date }}</span>
           </div>
@@ -136,8 +136,8 @@
   <div class="glass-panel modal-card ticket-modal animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="header-titles">
-        <span class="modal-label">Demande au support</span>
-        <h3>Ouvrir un ticket de support</h3>
+        <span class="modal-label">{{ 'support.modalLabel' | translate }}</span>
+        <h3>{{ 'support.modalTitle' | translate }}</h3>
       </div>
       <button class="modal-close-btn" (click)="closeTicketModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -153,35 +153,35 @@
 
         <!-- Subject -->
         <div class="form-group">
-          <label for="subject">Sujet / titre du ticket</label>
+          <label for="subject">{{ 'support.fldSubject' | translate }}</label>
           <input type="text" id="subject" name="subject" [(ngModel)]="ticketSubject"
-            placeholder="ex. : Le format de l'export CSV est décalé" required />
+            [placeholder]="'support.phSubject' | translate" required />
         </div>
 
         <!-- Row Grid for Category & Priority -->
         <div class="modal-row-grid">
           <!-- Category -->
           <div class="form-group">
-            <label for="category">Catégorie</label>
+            <label for="category">{{ 'support.fldCategory' | translate }}</label>
             <div class="select-wrapper">
               <select id="category" name="category" [(ngModel)]="ticketCategory">
-                <option value="General">Question générale</option>
-                <option value="Task Board">Tableau des tâches</option>
-                <option value="Reporting Bug">Signaler un bug</option>
-                <option value="Account/Access">Compte / Permissions</option>
+                <option value="General">{{ 'support.catGeneral' | translate }}</option>
+                <option value="Task Board">{{ 'support.catTaskBoard' | translate }}</option>
+                <option value="Reporting Bug">{{ 'support.catBug' | translate }}</option>
+                <option value="Account/Access">{{ 'support.catAccount' | translate }}</option>
               </select>
             </div>
           </div>
 
           <!-- Priority -->
           <div class="form-group">
-            <label for="priority">Niveau de priorité</label>
+            <label for="priority">{{ 'support.fldPriority' | translate }}</label>
             <div class="select-wrapper">
               <select id="priority" name="priority" [(ngModel)]="ticketPriority">
-                <option value="LOW">Faible</option>
-                <option value="MEDIUM">Moyenne</option>
-                <option value="HIGH">Haute</option>
-                <option value="URGENT">Urgente</option>
+                <option value="LOW">{{ 'support.priorityLow' | translate }}</option>
+                <option value="MEDIUM">{{ 'support.priorityMedium' | translate }}</option>
+                <option value="HIGH">{{ 'support.priorityHigh' | translate }}</option>
+                <option value="URGENT">{{ 'support.priorityUrgent' | translate }}</option>
               </select>
             </div>
           </div>
@@ -189,21 +189,21 @@
 
         <!-- Description -->
         <div class="form-group">
-          <label for="description">Description détaillée</label>
+          <label for="description">{{ 'support.fldDescription' | translate }}</label>
           <textarea id="description" name="description" rows="4" [(ngModel)]="ticketDescription"
-            placeholder="Décrivez étape par étape ce qui s'est passé, les messages d'erreur, ou ce que vous tentiez de faire…"
+            [placeholder]="'support.phDescription' | translate"
             required></textarea>
         </div>
 
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeTicketModal()">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeTicketModal()">{{ 'common.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="submittingTicket || !ticketForm.form.valid">
           <svg *ngIf="submittingTicket" class="spinner" viewBox="0 0 24 24">
             <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
           </svg>
-          <span>{{ submittingTicket ? 'Envoi du ticket…' : 'Envoyer le ticket' }}</span>
+          <span>{{ (submittingTicket ? 'support.submitting' : 'support.submit') | translate }}</span>
         </button>
       </div>
     </form>

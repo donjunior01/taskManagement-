@@ -20,4 +20,6 @@ public class AiChatRequestDTO {
     private Long projectId;
     private Long taskId;
     private List<Map<String, String>> history;
+    /** Optional UI language override ("fr"/"en"); falls back to the admin-configured default. */
+    private String language;
 }

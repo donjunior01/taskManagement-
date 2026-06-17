@@ -55,13 +55,18 @@ public class TaskService {
     private void notifyAssignee(Task task) {
         if (task.getAssignedTo() == null) return;
         try {
-            String when = task.getDeadline() != null ? " (échéance le " + task.getDeadline() + ")" : "";
+            boolean hasDeadline = task.getDeadline() != null;
+            String when = hasDeadline ? " (échéance le " + task.getDeadline() + ")" : "";
             notificationService.createNotification(
                     task.getAssignedTo().getId(),
                     "Nouvelle tâche assignée",
                     "La tâche « " + task.getName() + " » vous a été assignée" + when + ". Elle apparaît sur votre calendrier.",
                     com.example.gpiApp.entity.Notification.NotificationType.TASK_ASSIGNED,
-                    task.getId(), "TASK");
+                    task.getId(), "TASK",
+                    hasDeadline ? "taskAssignedDue" : "taskAssignedCal",
+                    hasDeadline
+                        ? java.util.Map.of("task", task.getName(), "deadline", String.valueOf(task.getDeadline()))
+                        : java.util.Map.of("task", task.getName()));
         } catch (Exception ignore) { }
     }
     

@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 
-interface Kpi { label: string; value: string; tone: string; }
+interface Kpi { labelKey: string; value: string; tone: string; }
 interface LoadPoint { minute: string; cpu: number; memory: number; requests: number; avgMs: number; }
 interface SlowEp { endpoint: string; avgMs: number; maxMs: number; count: number; }
 interface RecentErr { status: number; endpoint: string; at: string; }
@@ -10,7 +11,7 @@ interface RecentErr { status: number; endpoint: string; at: string; }
 @Component({
   selector: 'app-admin-performance',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
   <div class="perf-wrap">
 
@@ -18,7 +19,7 @@ interface RecentErr { status: number; endpoint: string; at: string; }
     <div class="kpi-row">
       <div class="kpi-tile anim" *ngFor="let k of kpis; let i = index" [style.--d]="(i*0.05)+'s'">
         <div class="kpi-val" [ngClass]="'t-' + k.tone">{{ k.value }}</div>
-        <div class="kpi-lbl">{{ k.label }}</div>
+        <div class="kpi-lbl">{{ k.labelKey | translate }}</div>
       </div>
     </div>
 
@@ -26,10 +27,10 @@ interface RecentErr { status: number; endpoint: string; at: string; }
     <div class="page-card anim" style="--d:.1s">
       <div class="page-card-header">
         <div>
-          <h3 class="card-title">Charge serveur — temps réel</h3>
-          <span class="card-sub">60 dernières minutes</span>
+          <h3 class="card-title">{{ 'admin.performance.serverLoad' | translate }}</h3>
+          <span class="card-sub">{{ 'admin.performance.last60' | translate }}</span>
         </div>
-        <span class="badge" [ngClass]="health.cls">● {{ health.label }}</span>
+        <span class="badge" [ngClass]="health.cls">● {{ health.labelKey | translate }}</span>
       </div>
       <div class="chart-body">
         <div class="rc xy">
@@ -53,9 +54,9 @@ interface RecentErr { status: number; endpoint: string; at: string; }
               <div class="rtip" [style.left.%]="leftPct" [class.flip]="leftPct > 65">
                 <div class="rtip-t">{{ serverLoad[hoverI].minute }}</div>
                 <div class="rtip-r"><i class="d" style="background:var(--primary)"></i>CPU<b>{{ serverLoad[hoverI].cpu }}%</b></div>
-                <div class="rtip-r"><i class="d" style="background:var(--accent)"></i>Mémoire<b>{{ serverLoad[hoverI].memory }}%</b></div>
-                <div class="rtip-r"><i class="d" style="background:var(--text-muted)"></i>Requêtes<b>{{ serverLoad[hoverI].requests }}</b></div>
-                <div class="rtip-r"><i class="d" style="background:var(--success)"></i>Latence<b>{{ serverLoad[hoverI].avgMs }} ms</b></div>
+                <div class="rtip-r"><i class="d" style="background:var(--accent)"></i>{{ 'admin.performance.memory' | translate }}<b>{{ serverLoad[hoverI].memory }}%</b></div>
+                <div class="rtip-r"><i class="d" style="background:var(--text-muted)"></i>{{ 'admin.performance.requests' | translate }}<b>{{ serverLoad[hoverI].requests }}</b></div>
+                <div class="rtip-r"><i class="d" style="background:var(--success)"></i>{{ 'admin.performance.latency' | translate }}<b>{{ serverLoad[hoverI].avgMs }} ms</b></div>
               </div>
             </ng-container>
           </div>
@@ -63,7 +64,7 @@ interface RecentErr { status: number; endpoint: string; at: string; }
         </div>
         <div class="chart-legend">
           <span class="lg"><i class="dot brand"></i> CPU %</span>
-          <span class="lg"><i class="dot purple"></i> Mémoire %</span>
+          <span class="lg"><i class="dot purple"></i> {{ 'admin.performance.memoryPct' | translate }}</span>
         </div>
       </div>
     </div>
@@ -71,18 +72,18 @@ interface RecentErr { status: number; endpoint: string; at: string; }
     <!-- Two lists -->
     <div class="perf-cols">
       <div class="page-card anim" style="--d:.16s">
-        <div class="page-card-header"><h3 class="card-title">Top endpoints les plus lents</h3></div>
+        <div class="page-card-header"><h3 class="card-title">{{ 'admin.performance.slowest' | translate }}</h3></div>
         <ul class="ep-list">
           <li *ngFor="let s of slowest">
             <span class="ep-path">{{ s.endpoint }}</span>
             <span class="badge" [ngClass]="latencyTone(s.avgMs)">{{ s.avgMs }} ms</span>
           </li>
-          <li *ngIf="slowest.length === 0"><span class="empty">Aucune requête enregistrée pour l'instant.</span></li>
+          <li *ngIf="slowest.length === 0"><span class="empty">{{ 'admin.performance.noRequests' | translate }}</span></li>
         </ul>
       </div>
 
       <div class="page-card anim" style="--d:.22s">
-        <div class="page-card-header"><h3 class="card-title">Erreurs récentes (5xx)</h3></div>
+        <div class="page-card-header"><h3 class="card-title">{{ 'admin.performance.recentErrors' | translate }}</h3></div>
         <ul class="ep-list">
           <li *ngFor="let e of recentErrors">
             <div class="err-left">
@@ -91,7 +92,7 @@ interface RecentErr { status: number; endpoint: string; at: string; }
             </div>
             <span class="ep-time">{{ timeAgo(e.at) }}</span>
           </li>
-          <li *ngIf="recentErrors.length === 0"><span class="empty">Aucune erreur serveur récente. 🎉</span></li>
+          <li *ngIf="recentErrors.length === 0"><span class="empty">{{ 'admin.performance.noErrors' | translate }}</span></li>
         </ul>
       </div>
     </div>
@@ -160,12 +161,12 @@ interface RecentErr { status: number; endpoint: string; at: string; }
 })
 export class AdminPerformanceComponent implements OnInit, OnDestroy {
   kpis: Kpi[] = [
-    { label: 'Temps de réponse API', value: '—', tone: 'success' },
-    { label: 'Requêtes / min', value: '—', tone: 'brand' },
-    { label: "Taux d'erreur (5xx)", value: '—', tone: 'warning' },
-    { label: 'Mémoire (heap)', value: '—', tone: 'purple' }
+    { labelKey: 'admin.performance.kpiResponse', value: '—', tone: 'success' },
+    { labelKey: 'admin.performance.kpiRequests', value: '—', tone: 'brand' },
+    { labelKey: 'admin.performance.kpiErrorRate', value: '—', tone: 'warning' },
+    { labelKey: 'admin.performance.kpiMemory', value: '—', tone: 'purple' }
   ];
-  health = { label: 'Sain', cls: 'badge-success' };
+  health = { labelKey: 'admin.performance.healthy', cls: 'badge-success' };
 
   serverLoad: LoadPoint[] = [];
   slowest: SlowEp[] = [];
@@ -178,7 +179,9 @@ export class AdminPerformanceComponent implements OnInit, OnDestroy {
 
   private timer: any;
 
-  constructor(private analytics: AnalyticsService, private cdr: ChangeDetectorRef) {}
+  constructor(private analytics: AnalyticsService, private cdr: ChangeDetectorRef, private translate: TranslateService) {}
+
+  private locale(): string { return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR'; }
 
   ngOnInit(): void {
     this.load();
@@ -198,15 +201,16 @@ export class AdminPerformanceComponent implements OnInit, OnDestroy {
         this.recentErrors = (d.recentErrors || []).map((e: any) => ({ status: e.status, endpoint: e.endpoint, at: e.at }));
 
         this.kpis[0].value = `${Math.round(d.avgResponseMs || 0)} ms`;
-        this.kpis[1].value = `${Number(d.requestsPerMin || 0).toLocaleString('fr-FR')}`;
+        this.kpis[1].value = `${Number(d.requestsPerMin || 0).toLocaleString(this.locale())}`;
         const err = Number(d.errorRate || 0);
-        this.kpis[2].value = `${err.toFixed(2).replace('.', ',')} %`;
+        const errStr = this.translate.currentLang() === 'en' ? err.toFixed(2) : err.toFixed(2).replace('.', ',');
+        this.kpis[2].value = `${errStr} %`;
         this.kpis[2].tone = err > 1 ? 'danger' : 'warning';
         this.kpis[3].value = `${Math.round(d.memoryUsedPct || 0)} %`;
 
         const mem = Number(d.memoryUsedPct || 0);
-        this.health = err > 1 || mem > 90 ? { label: 'Dégradé', cls: 'badge-warning' }
-          : { label: 'Sain', cls: 'badge-success' };
+        this.health = err > 1 || mem > 90 ? { labelKey: 'admin.performance.degraded', cls: 'badge-warning' }
+          : { labelKey: 'admin.performance.healthy', cls: 'badge-success' };
 
         this.computeGeometry();
         this.cdr.detectChanges();
@@ -241,10 +245,10 @@ export class AdminPerformanceComponent implements OnInit, OnDestroy {
     const diff = Date.now() - new Date(at).getTime();
     if (isNaN(diff)) return '';
     const min = Math.floor(diff / 60000);
-    if (min < 1) return "à l'instant";
-    if (min < 60) return `il y a ${min} min`;
+    if (min < 1) return this.translate.instant('relTime.justNow');
+    if (min < 60) return this.translate.instant('relTime.minAgo', { n: min });
     const h = Math.floor(min / 60);
-    if (h < 24) return `il y a ${h} h`;
-    return `il y a ${Math.floor(h / 24)} j`;
+    if (h < 24) return this.translate.instant('relTime.hAgo', { n: h });
+    return this.translate.instant('relTime.dAgo', { n: Math.floor(h / 24) });
   }
 }

@@ -654,8 +654,17 @@
   box-shadow: var(--shadow-xs);
   overflow: hidden;
 
+  /* Horizontal scroll so wide tables (or zoomed-in / narrow viewports) never clip
+     columns — the actions column in particular stays reachable. */
+  .table-scroll-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .premium-table {
     width: 100%;
+    min-width: 960px;          /* keep 10 columns legible; scroll kicks in below this */
     border-collapse: collapse;
 
     thead {
@@ -1430,6 +1439,19 @@
    LIST-VIEW ROW ACTIONS — single row + colored icons
    ════════════════════════════════════════════════ */
 .actions-col { text-align: right; white-space: nowrap; }
+
+/* Pin the actions column to the right edge so the Edit/Archive buttons stay
+   visible (never hidden/clipped) when the table scrolls horizontally on zoom. */
+.premium-table th.actions-col,
+.premium-table td.actions-col {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  box-shadow: -8px 0 12px -10px rgba(15, 23, 42, 0.18);
+}
+.premium-table thead th.actions-col { background: var(--bg-muted); }
+.premium-table tbody td.actions-col { background: var(--bg-card, #fff); }
+.premium-table tbody tr:hover td.actions-col { background: var(--bg-subtle); }
 
 .row-actions {
   display: flex;

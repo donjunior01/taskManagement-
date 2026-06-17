@@ -10,9 +10,12 @@ export interface AdminDashboardStats {
   
   totalProjects: number;
   activeProjects: number;
+  inProgressProjects: number;
+  plannedProjects: number;
   completedProjects: number;
   onHoldProjects: number;
-  
+  cancelledProjects: number;
+
   totalTasks: number;
   activeTasks: number;
   completedTasks: number;

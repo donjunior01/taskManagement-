@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { PdfService } from '../../../core/services/pdf.service';
@@ -11,19 +12,19 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
 @Component({
   selector: 'app-admin-reports',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
   <div class="rep-wrap">
 
     <!-- Toolbar -->
     <div class="rep-card pad-row anim" style="--d:0s">
       <div class="period-tabs">
-        <button *ngFor="let p of periods" class="ptab" [class.active]="period === p" (click)="selectPeriod(p)" [disabled]="loadingReports">{{ p }}</button>
+        <button *ngFor="let p of periods" class="ptab" [class.active]="period === p" (click)="selectPeriod(p)" [disabled]="loadingReports">{{ p | translate }}</button>
       </div>
       <div class="rep-actions">
-        <button class="btn btn-primary" (click)="toast.show('Génération du rapport lancée.', 'success')">
+        <button class="btn btn-primary" (click)="toast.show(t('admin.reports.toastGen'), 'success')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path></svg>
-          Générer le rapport
+          {{ 'admin.reports.generate' | translate }}
         </button>
         <button class="btn btn-outline" (click)="exportPdf()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> PDF</button>
         <button class="btn btn-outline" (click)="exportCsv()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> CSV</button>
@@ -32,10 +33,10 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
 
     <!-- Executive KPIs -->
     <div class="anim" style="--d:.05s">
-      <h2 class="section-eyebrow">Vue Exécutive</h2>
+      <h2 class="section-eyebrow">{{ 'admin.reports.execTitle' | translate }}</h2>
       <div class="exec-grid">
         <div class="exec-tile anim" *ngFor="let k of execKpis; let i = index" [ngClass]="'t-' + k.tone" [style.--d]="(0.08 + i*0.06) + 's'">
-          <div class="exec-top"><span class="exec-ico" [innerHTML]="k.icon"></span><span class="exec-label">{{ k.label }}</span></div>
+          <div class="exec-top"><span class="exec-ico" [innerHTML]="k.icon"></span><span class="exec-label">{{ k.labelKey | translate }}</span></div>
           <div class="exec-value">{{ k.value }}</div>
           <div class="exec-delta">{{ k.delta }}</div>
         </div>
@@ -45,7 +46,7 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
     <!-- Row: planned vs real (2col) + burndown -->
     <div class="grid-3">
       <div class="rep-card col-span-2 anim" style="--d:.12s">
-        <div class="rc-head"><h3>Progression : planifié vs réel</h3></div>
+        <div class="rc-head"><h3>{{ 'admin.reports.pvrTitle' | translate }}</h3></div>
         <div class="rc-body">
           <div class="rc xy">
             <div class="y-axis"><span *ngFor="let t of pct100Ticks">{{ t }}</span></div>
@@ -61,18 +62,18 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
               </div>
               <div class="rtip" *ngIf="hover?.chart === 'pvr' && plannedVsReal[hover!.i]" [style.left.%]="hover!.leftPct" [class.flip]="hover!.leftPct > 65">
                 <div class="rtip-t">{{ plannedVsReal[hover!.i].name }}</div>
-                <div class="rtip-r"><i class="d" style="background:var(--text-muted)"></i>Planifié<b>{{ plannedVsReal[hover!.i].planifie }}%</b></div>
-                <div class="rtip-r"><i class="d" style="background:var(--primary)"></i>Réel<b>{{ plannedVsReal[hover!.i].reel }}%</b></div>
+                <div class="rtip-r"><i class="d" style="background:var(--text-muted)"></i>{{ 'admin.reports.planned' | translate }}<b>{{ plannedVsReal[hover!.i].planifie }}%</b></div>
+                <div class="rtip-r"><i class="d" style="background:var(--primary)"></i>{{ 'admin.reports.real' | translate }}<b>{{ plannedVsReal[hover!.i].reel }}%</b></div>
               </div>
             </div>
             <div class="x-axis bars-x"><span *ngFor="let p of plannedVsReal">{{ p.name }}</span></div>
           </div>
-          <div class="legend"><span class="lg"><i class="d" style="background:var(--text-muted)"></i> Planifié</span><span class="lg"><i class="d" style="background:var(--primary)"></i> Réel</span></div>
+          <div class="legend"><span class="lg"><i class="d" style="background:var(--text-muted)"></i> {{ 'admin.reports.planned' | translate }}</span><span class="lg"><i class="d" style="background:var(--primary)"></i> {{ 'admin.reports.real' | translate }}</span></div>
         </div>
       </div>
 
       <div class="rep-card anim" style="--d:.18s">
-        <div class="rc-head"><h3>Burndown global</h3><span class="sub">14 derniers jours</span></div>
+        <div class="rc-head"><h3>{{ 'admin.reports.burnTitle' | translate }}</h3><span class="sub">{{ 'admin.reports.last14' | translate }}</span></div>
         <div class="rc-body">
           <div class="rc xy">
             <div class="y-axis"><span *ngFor="let t of burnTicks">{{ t }}</span></div>
@@ -87,8 +88,8 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
                 <div class="rdot" [style.left.%]="hover!.leftPct" [style.top.%]="(1 - burndown[hover!.i].reel/burnMax)*100" style="background:var(--primary)"></div>
                 <div class="rtip" [style.left.%]="hover!.leftPct" [class.flip]="hover!.leftPct > 65">
                   <div class="rtip-t">{{ burndown[hover!.i].jour }}</div>
-                  <div class="rtip-r"><i class="d" style="background:var(--text-muted)"></i>Idéal<b>{{ burndown[hover!.i].ideal }}</b></div>
-                  <div class="rtip-r"><i class="d" style="background:var(--primary)"></i>Réel<b>{{ burndown[hover!.i].reel }}</b></div>
+                  <div class="rtip-r"><i class="d" style="background:var(--text-muted)"></i>{{ 'admin.reports.ideal' | translate }}<b>{{ burndown[hover!.i].ideal }}</b></div>
+                  <div class="rtip-r"><i class="d" style="background:var(--primary)"></i>{{ 'admin.reports.real' | translate }}<b>{{ burndown[hover!.i].reel }}</b></div>
                 </div>
               </ng-container>
             </div>
@@ -100,7 +101,7 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
 
     <!-- Projets par statut dans le temps (STACKED AREA) -->
     <div class="rep-card anim" style="--d:.24s">
-      <div class="rc-head"><h3>Projets par statut dans le temps</h3><span class="sub">12 derniers mois</span></div>
+      <div class="rc-head"><h3>{{ 'admin.reports.sotTitle' | translate }}</h3><span class="sub">{{ 'admin.reports.last12' | translate }}</span></div>
       <div class="rc-body">
         <div class="rc xy">
           <div class="y-axis"><span *ngFor="let t of statusTicks">{{ t }}</span></div>
@@ -116,22 +117,22 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
               <div class="rcursor" [style.left.%]="hover!.leftPct"></div>
               <div class="rtip" [style.left.%]="hover!.leftPct" [class.flip]="hover!.leftPct > 70">
                 <div class="rtip-t">{{ statusOverTime[hover!.i].mois }}</div>
-                <div class="rtip-r"><i class="d" style="background:var(--primary)"></i>En cours<b>{{ statusOverTime[hover!.i].encours }}</b></div>
-                <div class="rtip-r"><i class="d" style="background:var(--success)"></i>Terminés<b>{{ statusOverTime[hover!.i].termine }}</b></div>
-                <div class="rtip-r"><i class="d" style="background:var(--danger)"></i>En retard<b>{{ statusOverTime[hover!.i].retard }}</b></div>
+                <div class="rtip-r"><i class="d" style="background:var(--primary)"></i>{{ 'admin.reports.inProgress' | translate }}<b>{{ statusOverTime[hover!.i].encours }}</b></div>
+                <div class="rtip-r"><i class="d" style="background:var(--success)"></i>{{ 'admin.reports.completedPlural' | translate }}<b>{{ statusOverTime[hover!.i].termine }}</b></div>
+                <div class="rtip-r"><i class="d" style="background:var(--danger)"></i>{{ 'admin.reports.late' | translate }}<b>{{ statusOverTime[hover!.i].retard }}</b></div>
               </div>
             </ng-container>
           </div>
           <div class="x-axis"><span *ngFor="let m of statusOverTime; let i = index" [style.left.%]="(i/(statusOverTime.length-1))*100">{{ m.mois }}</span></div>
         </div>
-        <div class="legend"><span class="lg"><i class="d" style="background:var(--primary)"></i> En cours</span><span class="lg"><i class="d" style="background:var(--success)"></i> Terminés</span><span class="lg"><i class="d" style="background:var(--danger)"></i> En retard</span></div>
+        <div class="legend"><span class="lg"><i class="d" style="background:var(--primary)"></i> {{ 'admin.reports.inProgress' | translate }}</span><span class="lg"><i class="d" style="background:var(--success)"></i> {{ 'admin.reports.completedPlural' | translate }}</span><span class="lg"><i class="d" style="background:var(--danger)"></i> {{ 'admin.reports.late' | translate }}</span></div>
       </div>
     </div>
 
     <!-- Row: top performers + radar + DAU -->
     <div class="grid-3">
       <div class="rep-card anim" style="--d:.30s">
-        <div class="rc-head"><h3>Top performers</h3><span class="sub">Tâches terminées</span></div>
+        <div class="rc-head"><h3>{{ 'admin.reports.topTitle' | translate }}</h3><span class="sub">{{ 'admin.reports.tasksDone' | translate }}</span></div>
         <div class="rc-body perf-list reveal">
           <div class="perf-item" *ngFor="let t of topPerformers; let i = index">
             <div class="perf-top"><span class="perf-name">#{{ i+1 }} {{ t.nom }}</span><span class="perf-val">{{ t.taches }}</span></div>
@@ -141,7 +142,7 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
       </div>
 
       <div class="rep-card anim" style="--d:.36s">
-        <div class="rc-head"><h3>Charge par équipe</h3></div>
+        <div class="rc-head"><h3>{{ 'admin.reports.teamLoadTitle' | translate }}</h3></div>
         <div class="rc-body radar-body reveal">
           <svg viewBox="0 0 200 180" class="radar">
             <polygon *ngFor="let ring of [1,0.66,0.33]" [attr.points]="radarRing(ring)" fill="none" stroke="var(--border)" stroke-width="1"></polygon>
@@ -153,7 +154,7 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
       </div>
 
       <div class="rep-card anim" style="--d:.42s">
-        <div class="rc-head"><h3>Connexions actives</h3><span class="sub">DAU · 30 jours</span></div>
+        <div class="rc-head"><h3>{{ 'admin.reports.dauTitle' | translate }}</h3><span class="sub">{{ 'admin.reports.dauSub' | translate }}</span></div>
         <div class="rc-body">
           <div class="rc xy">
             <div class="y-axis"><span *ngFor="let t of dauTicks">{{ t }}</span></div>
@@ -168,8 +169,8 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
                 <div class="rcursor" [style.left.%]="hover!.leftPct"></div>
                 <div class="rdot" [style.left.%]="hover!.leftPct" [style.top.%]="(1 - dau[hover!.i].dau/dauMax)*100" style="background:var(--accent)"></div>
                 <div class="rtip" [style.left.%]="hover!.leftPct" [class.flip]="hover!.leftPct > 65">
-                  <div class="rtip-t">Jour {{ dau[hover!.i].jour }}</div>
-                  <div class="rtip-r"><i class="d" style="background:var(--accent)"></i>Connexions<b>{{ dau[hover!.i].dau }}</b></div>
+                  <div class="rtip-t">{{ 'admin.reports.day' | translate:{ n: dau[hover!.i].jour } }}</div>
+                  <div class="rtip-r"><i class="d" style="background:var(--accent)"></i>{{ 'admin.reports.connections' | translate }}<b>{{ dau[hover!.i].dau }}</b></div>
                 </div>
               </ng-container>
             </div>
@@ -181,11 +182,11 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
 
     <!-- Récapitulatif par projet -->
     <div class="rep-card anim" style="--d:.48s">
-      <div class="rc-head"><h3>Récapitulatif par projet</h3></div>
+      <div class="rc-head"><h3>{{ 'admin.reports.recapTitle' | translate }}</h3></div>
       <div class="rc-body no-pad">
         <div class="table-wrapper">
           <table class="data-table">
-            <thead><tr><th>Projet</th><th>PM</th><th>Tâches</th><th>Terminées</th><th>En retard</th><th>Heures</th><th>Complétion</th><th>Statut</th></tr></thead>
+            <thead><tr><th>{{ 'admin.reports.thProject' | translate }}</th><th>{{ 'admin.reports.thPm' | translate }}</th><th>{{ 'admin.reports.thTasks' | translate }}</th><th>{{ 'admin.reports.thCompleted' | translate }}</th><th>{{ 'admin.reports.thLate' | translate }}</th><th>{{ 'admin.reports.thHours' | translate }}</th><th>{{ 'admin.reports.thCompletion' | translate }}</th><th>{{ 'admin.reports.thStatus' | translate }}</th></tr></thead>
             <tbody>
               <tr *ngFor="let r of pagedRecap">
                 <td class="td-name">{{ r.nom }}</td>
@@ -195,14 +196,14 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
                 <td class="bad">{{ r.retard }}</td>
                 <td class="muted">{{ r.heures }} h</td>
                 <td>{{ r.progression }}%</td>
-                <td><span class="badge" [ngClass]="statusBadge(r.statut)">{{ statusLabel(r.statut) }}</span></td>
+                <td><span class="badge" [ngClass]="statusBadge(r.statut)">{{ statusKey(r.statut) | translate }}</span></td>
               </tr>
-              <tr *ngIf="recap.length === 0"><td colspan="8"><div class="empty-row">Aucun projet à afficher.</div></td></tr>
+              <tr *ngIf="recap.length === 0"><td colspan="8"><div class="empty-row">{{ 'admin.reports.empty' | translate }}</div></td></tr>
             </tbody>
           </table>
         </div>
         <div class="recap-pager" *ngIf="recap.length > recapPageSize">
-          <span class="rp-info">{{ recapPage * recapPageSize + 1 }}–{{ recapEnd }} sur {{ recap.length }}</span>
+          <span class="rp-info">{{ 'admin.reports.pager' | translate:{ from: recapPage * recapPageSize + 1, to: recapEnd, total: recap.length } }}</span>
           <div class="rp-ctrl">
             <button class="rp-btn" (click)="recapPage = recapPage - 1" [disabled]="recapPage === 0">‹</button>
             <span class="rp-num">{{ recapPage + 1 }} / {{ recapTotalPages }}</span>
@@ -215,7 +216,7 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
     <!-- Row: tickets donut + avg resolution + resolution rate -->
     <div class="grid-3">
       <div class="rep-card anim" style="--d:.54s">
-        <div class="rc-head"><h3>Tickets par catégorie</h3></div>
+        <div class="rc-head"><h3>{{ 'admin.reports.ticketsTitle' | translate }}</h3></div>
         <div class="rc-body donut-split">
           <div class="donut-wrap reveal">
             <svg viewBox="0 0 36 36" class="donut">
@@ -230,16 +231,16 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
       </div>
 
       <div class="rep-card center-card anim" style="--d:.60s">
-        <div class="rc-head"><h3>Temps moyen de résolution</h3></div>
+        <div class="rc-head"><h3>{{ 'admin.reports.avgResTitle' | translate }}</h3></div>
         <div class="rc-body center-body">
           <div class="big-stat">{{ avgResolutionLabel }}</div>
-          <span class="badge badge-success">{{ fmtNumPub(resolvedRate) }} % de tickets résolus</span>
-          <p class="center-note">Délai moyen entre l'ouverture et la résolution des tickets sur la période</p>
+          <span class="badge badge-success">{{ 'admin.reports.resolvedPct' | translate:{ n: fmtNumPub(resolvedRate) } }}</span>
+          <p class="center-note">{{ 'admin.reports.avgResNote' | translate }}</p>
         </div>
       </div>
 
       <div class="rep-card anim" style="--d:.66s">
-        <div class="rc-head"><h3>Taux de résolution</h3><span class="sub">12 derniers mois</span></div>
+        <div class="rc-head"><h3>{{ 'admin.reports.resRateTitle' | translate }}</h3><span class="sub">{{ 'admin.reports.last12' | translate }}</span></div>
         <div class="rc-body">
           <div class="rc xy">
             <div class="y-axis"><span *ngFor="let t of pct100Ticks">{{ t }}</span></div>
@@ -253,7 +254,7 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
                 <div class="rdot" [style.left.%]="hover!.leftPct" [style.top.%]="(1 - resolutionRate[hover!.i].taux/100)*100" style="background:var(--success)"></div>
                 <div class="rtip" [style.left.%]="hover!.leftPct" [class.flip]="hover!.leftPct > 65">
                   <div class="rtip-t">{{ resolutionRate[hover!.i].mois }}</div>
-                  <div class="rtip-r"><i class="d" style="background:var(--success)"></i>Taux<b>{{ resolutionRate[hover!.i].taux }}%</b></div>
+                  <div class="rtip-r"><i class="d" style="background:var(--success)"></i>{{ 'admin.reports.rate' | translate }}<b>{{ resolutionRate[hover!.i].taux }}%</b></div>
                 </div>
               </ng-container>
             </div>
@@ -386,8 +387,8 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
   `]
 })
 export class AdminReportsComponent implements OnInit {
-  periods = ['Cette semaine', 'Ce mois', 'Ce trimestre', 'Personnalisé'];
-  period = 'Ce mois';
+  periods = ['admin.reports.periodWeek', 'admin.reports.periodMonth', 'admin.reports.periodQuarter', 'admin.reports.periodCustom'];
+  period = 'admin.reports.periodMonth';
   animated = false;
   hover: { chart: string; i: number; leftPct: number } | null = null;
   donutHover = -1;
@@ -404,10 +405,10 @@ export class AdminReportsComponent implements OnInit {
 
   // Values start as placeholders and are replaced by real backend data (no mock numbers).
   execKpis = [
-    { value: '—', label: 'Taux de complétion des projets', tone: 'success', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>' },
-    { value: '—', label: 'Taux de respect des délais', tone: 'brand', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>' },
-    { value: '—', label: 'Heures totales loguées', tone: 'navy', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"></circle><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path></svg>' },
-    { value: '—', label: 'Satisfaction support', tone: 'purple', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17a2 2 0 0 1-2 2H6.8a2 2 0 0 0-1.4.6L3 22V5a2 2 0 0 1 2-2h15a2 2 0 0 1 2 2z"></path></svg>' }
+    { value: '—', labelKey: 'admin.reports.kpiCompletion', tone: 'success', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>' },
+    { value: '—', labelKey: 'admin.reports.kpiOnTime', tone: 'brand', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>' },
+    { value: '—', labelKey: 'admin.reports.kpiHours', tone: 'navy', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"></circle><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path></svg>' },
+    { value: '—', labelKey: 'admin.reports.kpiSupport', tone: 'purple', delta: '', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17a2 2 0 0 1-2 2H6.8a2 2 0 0 0-1.4.6L3 22V5a2 2 0 0 1 2-2h15a2 2 0 0 1 2 2z"></path></svg>' }
   ];
 
   pct100Ticks = [100, 75, 50, 25, 0];
@@ -445,7 +446,11 @@ export class AdminReportsComponent implements OnInit {
   radarAxes: { x: number; y: number; lx: number; ly: number; label: string }[] = [];
   radarShape = '';
 
-  constructor(private projectService: ProjectService, public toast: ToastService, private cdr: ChangeDetectorRef, private analytics: AnalyticsService, private pdf: PdfService) {}
+  constructor(private projectService: ProjectService, public toast: ToastService, private cdr: ChangeDetectorRef, private analytics: AnalyticsService, private pdf: PdfService, private translate: TranslateService) {}
+
+  /** Translate helper for TS-side strings (toasts, exports, deltas). */
+  t(key: string, params?: any): string { return this.translate.instant(key, params); }
+  private locale(): string { return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR'; }
 
   ngOnInit(): void {
     this.loadProjects();
@@ -455,9 +460,9 @@ export class AdminReportsComponent implements OnInit {
   /** Map the visible period tab to the backend period parameter. */
   private periodParam(): string | undefined {
     switch (this.period) {
-      case 'Cette semaine': return 'week';
-      case 'Ce mois': return 'month';
-      case 'Ce trimestre': return 'quarter';
+      case 'admin.reports.periodWeek': return 'week';
+      case 'admin.reports.periodMonth': return 'month';
+      case 'admin.reports.periodQuarter': return 'quarter';
       default: return undefined; // Personnalisé → all-time
     }
   }
@@ -499,7 +504,7 @@ export class AdminReportsComponent implements OnInit {
 
     // Real per-project recap (replaces the previously fabricated rows).
     this.recap = (d.recap || []).map((row: any) => ({
-      nom: row.nom, pm: row.pm || 'Non assigné', taches: row.taches || 0, terminees: row.terminees || 0,
+      nom: row.nom, pm: row.pm || this.t('admin.reports.notAssigned'), taches: row.taches || 0, terminees: row.terminees || 0,
       retard: row.retard || 0, heures: row.heures || 0, progression: row.progression || 0, statut: row.statut || 'PLANNED'
     }));
     this.recapPage = 0;
@@ -511,13 +516,20 @@ export class AdminReportsComponent implements OnInit {
     const sat = Number(d.supportSatisfaction || 0);
     this.execKpis[0].value = `${this.fmtNum(d.completionRate)} %`;
     this.execKpis[1].value = `${this.fmtNum(d.onTimeRate)} %`;
-    this.execKpis[2].value = `${Math.round(hours).toLocaleString('fr-FR')} h`;
-    this.execKpis[2].delta = `Résolution moy. ${this.fmtNum(d.avgResolutionHours)} h`;
-    this.execKpis[3].value = `${sat.toFixed(1).replace('.', ',')} / 5`;
-    this.execKpis[3].delta = `${this.fmtNum(d.resolvedRate)} % résolus`;
+    this.execKpis[2].value = `${Math.round(hours).toLocaleString(this.locale())} h`;
+    this.execKpis[2].delta = this.t('admin.reports.deltaAvgRes', { n: this.fmtNum(d.avgResolutionHours) });
+    this.execKpis[3].value = `${this.fmtDec(sat)} / 5`;
+    this.execKpis[3].delta = this.t('admin.reports.deltaResolved', { n: this.fmtNum(d.resolvedRate) });
   }
 
-  private fmtNum(v: any): string { return `${Math.round(Number(v || 0) * 10) / 10}`.replace('.', ','); }
+  private fmtNum(v: any): string {
+    const s = `${Math.round(Number(v || 0) * 10) / 10}`;
+    return this.translate.currentLang() === 'en' ? s : s.replace('.', ',');
+  }
+  private fmtDec(v: number): string {
+    const s = v.toFixed(1);
+    return this.translate.currentLang() === 'en' ? s : s.replace('.', ',');
+  }
 
   private ticks5(max: number): number[] {
     return [max, Math.round(max * .75), Math.round(max * .5), Math.round(max * .25), 0];
@@ -630,26 +642,26 @@ export class AdminReportsComponent implements OnInit {
     });
   }
 
-  statusLabel(s: string): string { return ({ IN_PROGRESS: 'En cours', COMPLETED: 'Terminé', ON_HOLD: 'En pause', PLANNED: 'Planifié' } as any)[s] || 'Planifié'; }
+  statusKey(s: string): string { return ({ IN_PROGRESS: 'admin.reports.stIn', COMPLETED: 'admin.reports.stDone', ON_HOLD: 'admin.reports.stHold', PLANNED: 'admin.reports.stPlanned' } as any)[s] || 'admin.reports.stPlanned'; }
   statusBadge(s: string): string { return ({ IN_PROGRESS: 'badge-primary', COMPLETED: 'badge-success', ON_HOLD: 'badge-warning', PLANNED: 'badge-slate' } as any)[s] || 'badge-slate'; }
 
   exportCsv(): void {
-    const rows = [['Projet', 'PM', 'Tâches', 'Terminées', 'En retard', 'Heures', 'Complétion', 'Statut']];
-    this.recap.forEach(r => rows.push([r.nom, r.pm, `${r.taches}`, `${r.terminees}`, `${r.retard}`, `${r.heures}`, `${r.progression}%`, this.statusLabel(r.statut)]));
+    const rows = [[this.t('admin.reports.thProject'), this.t('admin.reports.thPm'), this.t('admin.reports.thTasks'), this.t('admin.reports.thCompleted'), this.t('admin.reports.thLate'), this.t('admin.reports.thHours'), this.t('admin.reports.thCompletion'), this.t('admin.reports.thStatus')]];
+    this.recap.forEach(r => rows.push([r.nom, r.pm, `${r.taches}`, `${r.terminees}`, `${r.retard}`, `${r.heures}`, `${r.progression}%`, this.t(this.statusKey(r.statut))]));
     const csv = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'rapport-projets.csv'; a.click();
     URL.revokeObjectURL(url);
-    this.toast.show('Export CSV généré.', 'success');
+    this.toast.show(this.t('admin.reports.toastCsv'), 'success');
   }
 
   exportPdf(): void {
     const esc = (s: any) => this.pdf.esc(s);
-    const rows = this.recap.map(r => `<tr><td>${esc(r.nom)}</td><td>${esc(r.pm)}</td><td>${r.terminees}/${r.taches}</td><td>${r.progression}%</td><td>${esc(this.statusLabel(r.statut))}</td></tr>`).join('');
-    const body = `<table><thead><tr><th>Projet</th><th>PM</th><th>Tâches</th><th>Complétion</th><th>Statut</th></tr></thead><tbody>${rows}</tbody></table>`;
-    const ok = this.pdf.open({ title: 'Rapport global', subtitle: `Récapitulatif par projet · ${this.recap.length} projet(s)`, bodyHtml: body });
-    if (!ok) { this.toast.show("Autorisez les pop-ups pour l'export PDF.", 'error'); return; }
-    this.toast.show('Aperçu PDF ouvert.', 'success');
+    const rows = this.recap.map(r => `<tr><td>${esc(r.nom)}</td><td>${esc(r.pm)}</td><td>${r.terminees}/${r.taches}</td><td>${r.progression}%</td><td>${esc(this.t(this.statusKey(r.statut)))}</td></tr>`).join('');
+    const body = `<table><thead><tr><th>${esc(this.t('admin.reports.thProject'))}</th><th>${esc(this.t('admin.reports.thPm'))}</th><th>${esc(this.t('admin.reports.thTasks'))}</th><th>${esc(this.t('admin.reports.thCompletion'))}</th><th>${esc(this.t('admin.reports.thStatus'))}</th></tr></thead><tbody>${rows}</tbody></table>`;
+    const ok = this.pdf.open({ title: this.t('admin.reports.pdfTitle'), subtitle: this.t('admin.reports.pdfSubtitle', { n: this.recap.length }), bodyHtml: body });
+    if (!ok) { this.toast.show(this.t('admin.reports.toastPdfPopup'), 'error'); return; }
+    this.toast.show(this.t('admin.reports.toastPdf'), 'success');
   }
 }

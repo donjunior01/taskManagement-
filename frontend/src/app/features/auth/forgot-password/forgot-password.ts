@@ -3,11 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { BrandingService } from '../../../core/services/branding.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LangToggleComponent } from '../../../shared/components/lang-toggle/lang-toggle';
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, LangToggleComponent],
   templateUrl: './forgot-password.html',
   styleUrls: ['./forgot-password.scss']
 })
@@ -17,10 +20,10 @@ export class ForgotPasswordComponent {
   errorMessage: string = '';
   loading: boolean = false;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router, private translate: TranslateService, public branding: BrandingService) {}
 
   onSubmit(): void {
-    if (!this.email || !this.email.trim()) { this.errorMessage = 'Veuillez saisir votre adresse e-mail.'; return; }
+    if (!this.email || !this.email.trim()) { this.errorMessage = this.translate.instant('auth.fpEnterEmailErr'); return; }
     this.loading = true;
     this.errorMessage = '';
     this.message = '';
@@ -30,15 +33,15 @@ export class ForgotPasswordComponent {
         this.loading = false;
         // The backend returns { success, message }. Confirmation when the e-mail exists, failure otherwise.
         if (response?.success === false) {
-          this.errorMessage = response?.message || 'Aucun compte n\'est associé à cette adresse e-mail.';
+          this.errorMessage = response?.message || this.translate.instant('auth.fpNoAccount');
         } else {
-          this.message = response?.message || 'Votre demande a été envoyée à l\'administrateur.';
+          this.message = response?.message || this.translate.instant('auth.fpSentDefault');
           setTimeout(() => this.router.navigate(['/login']), 3500);
         }
       },
       error: (error) => {
         this.loading = false;
-        this.errorMessage = error?.error?.message || 'Échec de l\'envoi de la demande. Veuillez réessayer.';
+        this.errorMessage = error?.error?.message || this.translate.instant('auth.fpRequestFailed');
       }
     });
   }
