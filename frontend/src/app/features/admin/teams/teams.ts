@@ -4,38 +4,39 @@ import { FormsModule } from '@angular/forms';
 import { TeamService, Team } from '../../../core/services/team.service';
 import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 
-interface TeamMember { id?: number; name: string; email: string; initials: string; roleLabel: string; lead: boolean; }
+interface TeamMember { id?: number; name: string; email: string; initials: string; roleLabelKey: string; lead: boolean; }
 
 @Component({
   selector: 'app-admin-teams',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent, TranslatePipe],
   template: `
   <div class="page-wrap">
     <div class="page-header">
       <div class="page-title-block">
-        <h1>Équipes</h1>
-        <p>Gestion des équipes et de leurs membres</p>
+        <h1>{{ 'admin.teams.title' | translate }}</h1>
+        <p>{{ 'admin.teams.subtitle' | translate }}</p>
       </div>
       <div class="page-actions">
         <button class="btn btn-primary" (click)="openCreate()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Nouvelle équipe</span>
+          <span>{{ 'admin.teams.newTeam' | translate }}</span>
         </button>
       </div>
     </div>
 
     <div class="teams-grid">
       @for (t of teams; track t.id) {
-        <div class="team-card" (click)="openTeam(t)" title="Voir les membres de l'équipe">
+        <div class="team-card" (click)="openTeam(t)" [title]="'admin.teams.viewMembersTitle' | translate">
           <div class="tc-top">
             <div class="tc-avatar">{{ initials(t.name) }}</div>
-            <span class="badge badge-primary">{{ memberCount(t) }} membre(s)</span>
+            <span class="badge badge-primary">{{ 'admin.teams.memberCount' | translate:{ count: memberCount(t) } }}</span>
           </div>
           <h3 class="tc-name">{{ t.name }}</h3>
-          <p class="tc-desc">{{ t.description || 'Aucune description.' }}</p>
+          <p class="tc-desc">{{ t.description || ('admin.teams.noDescription' | translate) }}</p>
 
           <div class="tc-members" *ngIf="memberCount(t) > 0">
             <span class="mini-avatar" *ngFor="let mi of previewInitials(t)">{{ mi }}</span>
@@ -45,14 +46,14 @@ interface TeamMember { id?: number; name: string; email: string; initials: strin
           <div class="tc-foot">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/></svg>
             <span>{{ projectName(t.projectId) }}</span>
-            <span class="tc-view">Voir les membres ›</span>
+            <span class="tc-view">{{ 'admin.teams.viewMembers' | translate }}</span>
           </div>
         </div>
       } @empty {
         <div class="empty-state" style="grid-column:1/-1;">
           <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
-          <h3>Aucune équipe</h3>
-          <p>Créez une équipe pour commencer à organiser vos collaborateurs.</p>
+          <h3>{{ 'admin.teams.noTeamsTitle' | translate }}</h3>
+          <p>{{ 'admin.teams.noTeamsText' | translate }}</p>
         </div>
       }
     </div>
@@ -67,16 +68,16 @@ interface TeamMember { id?: number; name: string; email: string; initials: strin
             <div class="tc-avatar sm">{{ initials(selectedTeam?.name || '') }}</div>
             <div>
               <h3>{{ selectedTeam?.name }}</h3>
-              <p>{{ projectName(selectedTeam?.projectId) }} · {{ teamMembers.length }} membre(s)</p>
+              <p>{{ projectName(selectedTeam?.projectId) }} · {{ 'admin.teams.memberCount' | translate:{ count: teamMembers.length } }}</p>
             </div>
           </div>
           <button class="modal-close" (click)="showMembers = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
         <div class="modal-body members-body">
           @if (loadingMembers) {
-            <div class="m-state">Chargement des membres…</div>
+            <div class="m-state">{{ 'admin.teams.loadingMembers' | translate }}</div>
           } @else if (teamMembers.length === 0) {
-            <div class="m-state">Aucun membre dans cette équipe.</div>
+            <div class="m-state">{{ 'admin.teams.noMembers' | translate }}</div>
           } @else {
             <div class="member-row" *ngFor="let m of teamMembers" [class.is-lead]="m.lead">
               <div class="m-avatar" [class.lead]="m.lead">{{ m.initials }}</div>
@@ -86,7 +87,7 @@ interface TeamMember { id?: number; name: string; email: string; initials: strin
               </div>
               <span class="m-role" [class.lead]="m.lead">
                 <svg *ngIf="m.lead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"/><circle cx="12" cy="8" r="6"/></svg>
-                {{ m.lead ? "Chef d'équipe" : m.roleLabel }}
+                {{ (m.lead ? 'admin.teams.teamLead' : m.roleLabelKey) | translate }}
               </span>
             </div>
           }
@@ -99,30 +100,30 @@ interface TeamMember { id?: number; name: string; email: string; initials: strin
     <div class="modal-backdrop" (click)="showCreate=false">
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <div><h3>Nouvelle équipe</h3><p>Définissez une nouvelle équipe de travail</p></div>
+          <div><h3>{{ 'admin.teams.createTitle' | translate }}</h3><p>{{ 'admin.teams.createSubtitle' | translate }}</p></div>
           <button class="modal-close" (click)="showCreate=false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label>Nom de l'équipe</label>
-            <input type="text" [(ngModel)]="form.name" placeholder="Équipe Backend" />
+            <label>{{ 'admin.teams.fieldName' | translate }}</label>
+            <input type="text" [(ngModel)]="form.name" [placeholder]="'admin.teams.phName' | translate" />
           </div>
           <div class="form-group">
-            <label>Projet associé</label>
+            <label>{{ 'admin.teams.fieldProject' | translate }}</label>
             <select [(ngModel)]="form.projectId">
-              <option [ngValue]="0">Sélectionner un projet</option>
+              <option [ngValue]="0">{{ 'admin.teams.selectProject' | translate }}</option>
               @for (p of projects; track p.id) { <option [ngValue]="p.id">{{ p.name }}</option> }
             </select>
           </div>
           <div class="form-group">
-            <label>Description</label>
+            <label>{{ 'admin.teams.fieldDescription' | translate }}</label>
             <app-ai-describe [type]="'TEAM'" [title]="form.name" (generated)="form.description = $event"></app-ai-describe>
-            <textarea rows="3" [(ngModel)]="form.description" placeholder="Rôle et périmètre de l'équipe..."></textarea>
+            <textarea rows="3" [(ngModel)]="form.description" [placeholder]="'admin.teams.phDescription' | translate"></textarea>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="showCreate=false">Annuler</button>
-          <button class="btn btn-primary" (click)="create()" [disabled]="!form.name">Créer l'équipe</button>
+          <button class="btn btn-secondary" (click)="showCreate=false">{{ 'admin.teams.cancel' | translate }}</button>
+          <button class="btn btn-primary" (click)="create()" [disabled]="!form.name">{{ 'admin.teams.createTeam' | translate }}</button>
         </div>
       </div>
     </div>
@@ -180,7 +181,8 @@ export class AdminTeamsComponent implements OnInit {
     private teamService: TeamService,
     private projectService: ProjectService,
     private toast: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -239,17 +241,17 @@ export class AdminTeamsComponent implements OnInit {
       const role = (m.role || m.userType || '').replace('ROLE_', '');
       return {
         id,
-        name: m.firstName ? `${m.firstName} ${m.lastName || ''}`.trim() : (m.name || m.username || m.email || 'Membre'),
+        name: m.firstName ? `${m.firstName} ${m.lastName || ''}`.trim() : (m.name || m.username || m.email || this.translate.instant('admin.teams.memberFallback')),
         email: m.email || '',
         initials: this.memberInitials(m),
-        roleLabel: this.roleLabel(role),
+        roleLabelKey: this.roleLabelKey(role),
         lead: false
       };
     });
 
     // Find the lead: project manager among members, else a PROJECT_MANAGER member.
     let leadIdx = managerId != null ? norm.findIndex(m => m.id === managerId) : -1;
-    if (leadIdx < 0) leadIdx = norm.findIndex(m => m.roleLabel === 'Chef de Projet');
+    if (leadIdx < 0) leadIdx = norm.findIndex(m => m.roleLabelKey === 'admin.teams.roleManager');
 
     let ordered: TeamMember[];
     if (leadIdx >= 0) {
@@ -258,7 +260,7 @@ export class AdminTeamsComponent implements OnInit {
       // manager not in members list → show as lead at the top
       ordered = [{
         name: managerName, email: '', initials: this.initials(managerName),
-        roleLabel: 'Chef de Projet', lead: false
+        roleLabelKey: 'admin.teams.roleManager', lead: false
       }, ...norm];
     } else {
       ordered = norm;
@@ -274,12 +276,12 @@ export class AdminTeamsComponent implements OnInit {
     return (`${f}${l}`.toUpperCase()) || (fromName ? fromName.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() : '?');
   }
 
-  private roleLabel(role: string): string {
+  private roleLabelKey(role: string): string {
     switch (role) {
-      case 'ADMIN':           return 'Administrateur';
-      case 'PROJECT_MANAGER': return 'Chef de Projet';
-      case 'USER':            return 'Collaborateur';
-      default:                return role || 'Membre';
+      case 'ADMIN':           return 'admin.teams.roleAdmin';
+      case 'PROJECT_MANAGER': return 'admin.teams.roleManager';
+      case 'USER':            return 'admin.teams.roleCollaborator';
+      default:                return role || 'admin.teams.roleMember';
     }
   }
 
@@ -290,14 +292,14 @@ export class AdminTeamsComponent implements OnInit {
 
   create(): void {
     this.teamService.createTeam(this.form).subscribe({
-      next: () => { this.toast.show(`Équipe « ${this.form.name} » créée.`, 'success'); this.showCreate = false; this.load(); },
-      error: (err: any) => { this.toast.show(err?.error?.message || 'Échec de la création de l\'équipe.', 'error'); }
+      next: () => { this.toast.show(this.translate.instant('admin.teams.toastCreated', { name: this.form.name }), 'success'); this.showCreate = false; this.load(); },
+      error: (err: any) => { this.toast.show(err?.error?.message || this.translate.instant('admin.teams.toastCreateFailed'), 'error'); }
     });
   }
 
   projectName(id: number | undefined): string {
     const p = this.projects.find(x => x.id === id);
-    return p ? p.name : 'Projet non assigné';
+    return p ? p.name : this.translate.instant('admin.teams.projectUnassigned');
   }
 
   initials(name: string): string {

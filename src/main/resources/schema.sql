@@ -197,11 +197,19 @@ CREATE TABLE IF NOT EXISTS `notifications` (
     `is_read` BOOLEAN DEFAULT FALSE,
     `reference_id` BIGINT,
     `reference_type` VARCHAR(100),
+    `i18n_key` VARCHAR(120),
+    `i18n_params` TEXT,
     `created_at` DATETIME,
     `read_at` DATETIME,
     PRIMARY KEY (`id`),
     FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Add localisation columns to notifications for existing databases.
+-- MySQL has no ADD COLUMN IF NOT EXISTS; spring.sql.init.continue-on-error=true makes the
+-- duplicate-column error on subsequent startups harmless.
+ALTER TABLE `notifications` ADD COLUMN `i18n_key` VARCHAR(120);
+ALTER TABLE `notifications` ADD COLUMN `i18n_params` TEXT;
 
 -- Create support_tickets table
 CREATE TABLE IF NOT EXISTS `support_tickets` (

@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { ProjectService, Project, ProjectRequest } from '../../../core/services/project.service';
 import { TeamService } from '../../../core/services/team.service';
@@ -14,7 +15,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-pm-projects',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AiDescribeButtonComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AiDescribeButtonComponent, TranslatePipe],
   template: `
   <div class="proj-wrap">
 
@@ -23,23 +24,23 @@ import { ToastService } from '../../../core/services/toast.service';
       <div class="filters">
         <div class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" placeholder="Rechercher un projet…" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" />
+          <input type="text" [placeholder]="'pm.projects.searchPlaceholder' | translate" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" />
         </div>
         <select class="sel w36" [(ngModel)]="statusFilter" (change)="applyFilters()">
-          <option value="all">Tous statuts</option>
-          <option value="en-cours">En cours</option>
-          <option value="termine">Terminé</option>
-          <option value="en-pause">En pause</option>
-          <option value="en-retard">En retard</option>
+          <option value="all">{{ 'pm.projects.filterStatusAll' | translate }}</option>
+          <option value="en-cours">{{ 'pm.projects.filterInProgress' | translate }}</option>
+          <option value="termine">{{ 'pm.projects.filterCompleted' | translate }}</option>
+          <option value="en-pause">{{ 'pm.projects.filterOnHold' | translate }}</option>
+          <option value="en-retard">{{ 'pm.projects.filterOverdue' | translate }}</option>
         </select>
         <select class="sel w32" [(ngModel)]="teamFilter" (change)="applyFilters()">
-          <option value="all">Toutes les équipes</option>
+          <option value="all">{{ 'pm.projects.filterTeamsAll' | translate }}</option>
           <option *ngFor="let t of teamOptions" [value]="t">{{ t }}</option>
         </select>
         <select class="sel w36" [(ngModel)]="periodFilter" (change)="applyFilters()">
-          <option value="all">Toute période</option>
-          <option value="month">Ce mois</option>
-          <option value="quarter">Ce trimestre</option>
+          <option value="all">{{ 'pm.projects.filterPeriodAll' | translate }}</option>
+          <option value="month">{{ 'pm.projects.filterPeriodMonth' | translate }}</option>
+          <option value="quarter">{{ 'pm.projects.filterPeriodQuarter' | translate }}</option>
         </select>
       </div>
 
@@ -47,16 +48,16 @@ import { ToastService } from '../../../core/services/toast.service';
         <div class="view-toggle">
           <button [class.on]="view === 'cards'" (click)="view = 'cards'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-            Cartes
+            {{ 'pm.projects.viewCards' | translate }}
           </button>
           <button [class.on]="view === 'list'" (click)="view = 'list'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-            Liste
+            {{ 'pm.projects.viewList' | translate }}
           </button>
         </div>
         <button class="btn-primary" (click)="openWizard()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Nouveau Projet
+          {{ 'pm.projects.newProject' | translate }}
         </button>
       </div>
     </div>
@@ -66,9 +67,9 @@ import { ToastService } from '../../../core/services/toast.service';
       <div class="proj-card anim" *ngFor="let p of filteredProjects; let i = index" [style.--d]="(i*0.04)+'s'">
         <div class="pc-top">
           <h3 class="pc-name">{{ p.name }}</h3>
-          <span class="status-badge" [ngClass]="statusInfo(p).cls">{{ statusInfo(p).label }}</span>
+          <span class="status-badge" [ngClass]="statusInfo(p).cls">{{ statusInfo(p).labelKey | translate }}</span>
         </div>
-        <p class="pc-desc">{{ p.description || 'Aucune description.' }}</p>
+        <p class="pc-desc">{{ p.description || ('pm.projects.noDescription' | translate) }}</p>
         <div class="pc-progress">
           <div class="bar"><div class="bar-fill" [style.width.%]="animated ? (p.progress || 0) : 0"></div></div>
           <span class="pct">{{ p.progress || 0 }}%</span>
@@ -84,9 +85,9 @@ import { ToastService } from '../../../core/services/toast.service';
             <span class="team-name">{{ teamName(p) }}</span>
             <span class="team-count" *ngIf="memberCount(p) > 0">· {{ memberCount(p) }}</span>
           </span>
-          <span class="tasks">{{ p.taskCount || 0 }} tâches<span class="late" *ngIf="late(p) > 0"> · {{ late(p) }} en retard</span></span>
+          <span class="tasks">{{ 'pm.projects.tasksCount' | translate:{ count: (p.taskCount || 0) } }}<span class="late" *ngIf="late(p) > 0"> · {{ 'pm.projects.lateSuffix' | translate:{ count: late(p) } }}</span></span>
         </div>
-        <a class="btn-open" [routerLink]="['/pm/projects', p.id]">Ouvrir le projet</a>
+        <a class="btn-open" [routerLink]="['/pm/projects', p.id]">{{ 'pm.projects.openProject' | translate }}</a>
       </div>
     </div>
 
@@ -94,7 +95,7 @@ import { ToastService } from '../../../core/services/toast.service';
     <div class="list-card" *ngIf="view === 'list' && filteredProjects.length > 0">
       <table class="proj-table">
         <thead>
-          <tr><th>Projet</th><th>Statut</th><th>Progression</th><th>Équipe</th><th>Échéance</th><th></th></tr>
+          <tr><th>{{ 'pm.projects.colProject' | translate }}</th><th>{{ 'pm.projects.colStatus' | translate }}</th><th>{{ 'pm.projects.colProgress' | translate }}</th><th>{{ 'pm.projects.colTeam' | translate }}</th><th>{{ 'pm.projects.colDeadline' | translate }}</th><th></th></tr>
         </thead>
         <tbody>
           <tr *ngFor="let p of filteredProjects">
@@ -102,7 +103,7 @@ import { ToastService } from '../../../core/services/toast.service';
               <div class="td-name">{{ p.name }}</div>
               <div class="td-sub">{{ p.managerName || '—' }}</div>
             </td>
-            <td><span class="status-badge" [ngClass]="statusInfo(p).cls">{{ statusInfo(p).label }}</span></td>
+            <td><span class="status-badge" [ngClass]="statusInfo(p).cls">{{ statusInfo(p).labelKey | translate }}</span></td>
             <td>
               <div class="td-progress">
                 <div class="bar sm"><div class="bar-fill" [style.width.%]="animated ? (p.progress || 0) : 0"></div></div>
@@ -111,7 +112,7 @@ import { ToastService } from '../../../core/services/toast.service';
             </td>
             <td><span class="team" [title]="teamName(p)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg><span class="team-name">{{ teamName(p) }}</span></span></td>
             <td class="muted">{{ p.endDate ? (p.endDate | date:'dd/MM/yyyy') : '—' }}</td>
-            <td class="right"><a class="open-link" [routerLink]="['/pm/projects', p.id]">Ouvrir →</a></td>
+            <td class="right"><a class="open-link" [routerLink]="['/pm/projects', p.id]">{{ 'pm.projects.open' | translate }}</a></td>
           </tr>
         </tbody>
       </table>
@@ -122,11 +123,11 @@ import { ToastService } from '../../../core/services/toast.service';
       <div class="empty-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
       </div>
-      <h3>Aucun projet pour l'instant</h3>
-      <p>Lancez votre premier projet pour commencer.</p>
+      <h3>{{ 'pm.projects.emptyTitle' | translate }}</h3>
+      <p>{{ 'pm.projects.emptySubtitle' | translate }}</p>
       <button class="btn-primary" (click)="openWizard()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Créer votre premier projet
+        {{ 'pm.projects.createFirst' | translate }}
       </button>
     </div>
   </div>
@@ -134,7 +135,7 @@ import { ToastService } from '../../../core/services/toast.service';
   <!-- ═══ Nouveau Projet — wizard 4 étapes ═══ -->
   <div class="modal-backdrop" *ngIf="showWizard" (click)="closeWizard()">
     <div class="wizard" (click)="$event.stopPropagation()">
-      <div class="wiz-head"><h3>Créer un nouveau projet</h3>
+      <div class="wiz-head"><h3>{{ 'pm.projects.wizTitle' | translate }}</h3>
         <button class="x" (click)="closeWizard()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
 
@@ -142,75 +143,75 @@ import { ToastService } from '../../../core/services/toast.service';
       <div class="stepper">
         <div class="step" *ngFor="let s of stepLabels; let n = index">
           <div class="dot" [class.on]="step >= n+1">{{ n+1 }}</div>
-          <span class="lbl">{{ s }}</span>
+          <span class="lbl">{{ s | translate }}</span>
           <div class="connector" *ngIf="n < 3" [class.on]="step > n+1"></div>
         </div>
       </div>
 
       <!-- Step 1 : Infos -->
       <div class="wiz-body" *ngIf="step === 1">
-        <div class="fg"><label>Nom du projet *</label><input type="text" [(ngModel)]="form.name" placeholder="Ex : Refonte Portail Client"></div>
-        <div class="fg"><label>Description</label><app-ai-describe [type]="'PROJECT'" [title]="form.name" (generated)="form.description = $event"></app-ai-describe><textarea rows="3" [(ngModel)]="form.description" placeholder="Brève description du projet…"></textarea></div>
+        <div class="fg"><label>{{ 'pm.projects.fieldName' | translate }}</label><input type="text" [(ngModel)]="form.name" [placeholder]="'pm.projects.phName' | translate"></div>
+        <div class="fg"><label>{{ 'pm.projects.fieldDescription' | translate }}</label><app-ai-describe [type]="'PROJECT'" [title]="form.name" (generated)="form.description = $event"></app-ai-describe><textarea rows="3" [(ngModel)]="form.description" [placeholder]="'pm.projects.phDescription' | translate"></textarea></div>
         <div class="grid2">
-          <div class="fg"><label>Date de début</label><input type="date" [(ngModel)]="form.startDate"></div>
-          <div class="fg"><label>Date de fin</label><input type="date" [(ngModel)]="form.endDate"></div>
+          <div class="fg"><label>{{ 'pm.projects.fieldStartDate' | translate }}</label><input type="date" [(ngModel)]="form.startDate"></div>
+          <div class="fg"><label>{{ 'pm.projects.fieldEndDate' | translate }}</label><input type="date" [(ngModel)]="form.endDate"></div>
         </div>
         <div class="grid2">
-          <div class="fg"><label>Priorité</label>
-            <select [(ngModel)]="priority"><option value="faible">Faible</option><option value="normale">Normale</option><option value="haute">Haute</option><option value="critique">Critique</option></select>
+          <div class="fg"><label>{{ 'pm.projects.fieldPriority' | translate }}</label>
+            <select [(ngModel)]="priority"><option value="faible">{{ 'pm.projects.prioLow' | translate }}</option><option value="normale">{{ 'pm.projects.prioNormal' | translate }}</option><option value="haute">{{ 'pm.projects.prioHigh' | translate }}</option><option value="critique">{{ 'pm.projects.prioCritical' | translate }}</option></select>
           </div>
-          <div class="fg"><label>Statut initial</label>
-            <select [(ngModel)]="form.status"><option value="PLANNED">Planifié</option><option value="IN_PROGRESS">En cours</option></select>
+          <div class="fg"><label>{{ 'pm.projects.fieldInitialStatus' | translate }}</label>
+            <select [(ngModel)]="form.status"><option value="PLANNED">{{ 'pm.projects.optPlanned' | translate }}</option><option value="IN_PROGRESS">{{ 'pm.projects.optInProgress' | translate }}</option></select>
           </div>
         </div>
       </div>
 
       <!-- Step 2 : Équipe -->
       <div class="wiz-body" *ngIf="step === 2">
-        <p class="muted">Sélectionnez les membres et leurs rôles… <strong>({{ selectedMemberCount }} sélectionné(s))</strong></p>
-        <div class="fg"><input type="text" placeholder="Rechercher un membre…" [(ngModel)]="memberSearch"></div>
+        <p class="muted">{{ 'pm.projects.step2Intro' | translate }} <strong>{{ 'pm.projects.selectedCount' | translate:{ count: selectedMemberCount } }}</strong></p>
+        <div class="fg"><input type="text" [placeholder]="'pm.projects.phSearchMember' | translate" [(ngModel)]="memberSearch"></div>
         <div class="member-list">
           <div class="member-row" *ngFor="let m of filteredWizMembers" [class.on]="m.selected">
             <label class="m-check"><input type="checkbox" [(ngModel)]="m.selected"><span class="m-avatar">{{ (m.name || '?').slice(0,1).toUpperCase() }}</span><span class="m-name">{{ m.name }}</span></label>
             <select class="m-role" [(ngModel)]="m.role" [disabled]="!m.selected">
-              <option *ngFor="let r of roleOptions" [value]="r">{{ r }}</option>
+              <option *ngFor="let r of roleOptions" [value]="r.value">{{ r.labelKey | translate }}</option>
             </select>
           </div>
-          <div class="member-empty" *ngIf="filteredWizMembers.length === 0">Aucun collaborateur disponible.</div>
+          <div class="member-empty" *ngIf="filteredWizMembers.length === 0">{{ 'pm.projects.noCollaborators' | translate }}</div>
         </div>
       </div>
 
       <!-- Step 3 : Jalons -->
       <div class="wiz-body" *ngIf="step === 3">
-        <p class="muted">Ajoutez des jalons à votre planning… Ils s'ajoutent à l'agenda des membres.</p>
+        <p class="muted">{{ 'pm.projects.step3Intro' | translate }}</p>
         <div class="milestone-row" *ngFor="let ms of milestones; let i = index">
-          <input type="text" class="ms-name" placeholder="Nom du jalon (ex : Livraison MVP)" [(ngModel)]="ms.name">
+          <input type="text" class="ms-name" [placeholder]="'pm.projects.phMilestoneName' | translate" [(ngModel)]="ms.name">
           <input type="date" class="ms-date" [(ngModel)]="ms.date">
-          <button class="ms-del" (click)="removeMilestone(i)" title="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+          <button class="ms-del" (click)="removeMilestone(i)" [title]="'common.delete' | translate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>
-        <div class="ms-empty" *ngIf="milestones.length === 0">Aucun jalon pour l'instant.</div>
-        <button class="btn-outline sm" (click)="addMilestone()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Ajouter un jalon</button>
+        <div class="ms-empty" *ngIf="milestones.length === 0">{{ 'pm.projects.noMilestonesYet' | translate }}</div>
+        <button class="btn-outline sm" (click)="addMilestone()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> {{ 'pm.projects.addMilestone' | translate }}</button>
       </div>
 
       <!-- Step 4 : Confirmation -->
       <div class="wiz-body" *ngIf="step === 4">
         <div class="recap">
-          <p><strong>{{ form.name || 'Projet sans nom' }}</strong> — récapitulatif prêt à être créé.</p>
+          <p><strong>{{ form.name || ('pm.projects.unnamedProject' | translate) }}</strong> — {{ 'pm.projects.recapReady' | translate }}</p>
           <ul>
-            <li>Statut : {{ form.status === 'IN_PROGRESS' ? 'En cours' : 'Planifié' }}</li>
-            <li>Priorité : {{ priority }}</li>
-            <li>Période : {{ form.startDate || '—' }} → {{ form.endDate || '—' }}</li>
-            <li>Membres : {{ selectedMemberCount }} sélectionné(s)</li>
-            <li>Jalons : {{ milestones.length }}</li>
+            <li>{{ 'pm.projects.recapStatusLabel' | translate }} : {{ (form.status === 'IN_PROGRESS' ? 'pm.projects.optInProgress' : 'pm.projects.optPlanned') | translate }}</li>
+            <li>{{ 'pm.projects.recapPriorityLabel' | translate }} : {{ priorityKey(priority) | translate }}</li>
+            <li>{{ 'pm.projects.recapPeriodLabel' | translate }} : {{ form.startDate || '—' }} → {{ form.endDate || '—' }}</li>
+            <li>{{ 'pm.projects.recapMembersLabel' | translate }} : {{ 'pm.projects.membersSelected' | translate:{ count: selectedMemberCount } }}</li>
+            <li>{{ 'pm.projects.recapMilestonesLabel' | translate }} : {{ milestones.length }}</li>
           </ul>
         </div>
       </div>
 
       <div class="wiz-foot">
-        <button class="btn-ghost" *ngIf="step > 1" (click)="step = step - 1">Retour</button>
+        <button class="btn-ghost" *ngIf="step > 1" (click)="step = step - 1">{{ 'pm.projects.back' | translate }}</button>
         <span class="spacer"></span>
-        <button class="btn-primary" *ngIf="step < 4" (click)="nextStep()">Suivant</button>
-        <button class="btn-primary" *ngIf="step === 4" (click)="submitProject()" [disabled]="submitting">Créer le projet</button>
+        <button class="btn-primary" *ngIf="step < 4" (click)="nextStep()">{{ 'pm.projects.next' | translate }}</button>
+        <button class="btn-primary" *ngIf="step === 4" (click)="submitProject()" [disabled]="submitting">{{ 'pm.projects.createProject' | translate }}</button>
       </div>
     </div>
   </div>
@@ -356,7 +357,7 @@ export class PmProjectsComponent implements OnInit {
   // Wizard
   showWizard = false;
   step = 1;
-  stepLabels = ['Infos', 'Équipe', 'Jalons', 'Confirmation'];
+  stepLabels = ['pm.projects.stepInfo', 'pm.projects.stepTeam', 'pm.projects.stepMilestones', 'pm.projects.stepConfirm'];
   submitting = false;
   priority = 'normale';
   form: ProjectRequest = { name: '', description: '', startDate: '', endDate: '', status: 'PLANNED' };
@@ -365,7 +366,14 @@ export class PmProjectsComponent implements OnInit {
   memberPool: User[] = [];                                   // all collaborators (loaded automatically)
   wizMembers: { id: number; name: string; role: string; selected: boolean }[] = [];
   memberSearch = '';
-  roleOptions = ['Membre', 'Lead', 'Développeur', 'Designer', 'QA', 'Analyste'];
+  roleOptions = [
+    { value: 'Membre', labelKey: 'pm.projects.roleMember' },
+    { value: 'Lead', labelKey: 'pm.projects.roleLead' },
+    { value: 'Développeur', labelKey: 'pm.projects.roleDeveloper' },
+    { value: 'Designer', labelKey: 'pm.projects.roleDesigner' },
+    { value: 'QA', labelKey: 'pm.projects.roleQA' },
+    { value: 'Analyste', labelKey: 'pm.projects.roleAnalyst' }
+  ];
   milestones: { name: string; date: string }[] = [];
 
   constructor(
@@ -378,8 +386,18 @@ export class PmProjectsComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService
+    private toast: ToastService,
+    private translate: TranslateService
   ) {}
+
+  /** Translation key for a wizard priority value (rendered with the translate pipe). */
+  priorityKey(priority: string): string {
+    const map: Record<string, string> = {
+      faible: 'pm.projects.prioLow', normale: 'pm.projects.prioNormal',
+      haute: 'pm.projects.prioHigh', critique: 'pm.projects.prioCritical'
+    };
+    return map[priority] || 'pm.projects.prioNormal';
+  }
 
   get filteredWizMembers() {
     const q = this.memberSearch.trim().toLowerCase();
@@ -452,7 +470,7 @@ export class PmProjectsComponent implements OnInit {
 
   teamName(p: Project): string {
     const names = p.id != null ? this.teamsByProject[p.id] : null;
-    return names && names.length ? names.join(', ') : 'Aucune équipe';
+    return names && names.length ? names.join(', ') : this.translate.instant('pm.projects.noTeam');
   }
   memberCount(p: Project): number {
     return (p.id != null ? this.membersByProject[p.id] : 0) || 0;
@@ -517,19 +535,19 @@ export class PmProjectsComponent implements OnInit {
     this.filteredProjects = result;
   }
 
-  statusInfo(p: Project): { label: string; cls: string } {
+  statusInfo(p: Project): { labelKey: string; cls: string } {
     const s = (p.status || '').toUpperCase();
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    if (s !== 'COMPLETED' && p.endDate && new Date(p.endDate) < today) return { label: 'En retard', cls: 'st-red' };
-    const map: Record<string, { label: string; cls: string }> = {
-      IN_PROGRESS: { label: 'En cours', cls: 'st-blue' },
-      ACTIVE: { label: 'En cours', cls: 'st-blue' },
-      COMPLETED: { label: 'Terminé', cls: 'st-green' },
-      ON_HOLD: { label: 'En pause', cls: 'st-amber' },
-      PLANNED: { label: 'Planifié', cls: 'st-slate' },
-      CANCELLED: { label: 'Annulé', cls: 'st-red' }
+    if (s !== 'COMPLETED' && p.endDate && new Date(p.endDate) < today) return { labelKey: 'pm.projects.stOverdue', cls: 'st-red' };
+    const map: Record<string, { labelKey: string; cls: string }> = {
+      IN_PROGRESS: { labelKey: 'pm.projects.stProgress', cls: 'st-blue' },
+      ACTIVE: { labelKey: 'pm.projects.stProgress', cls: 'st-blue' },
+      COMPLETED: { labelKey: 'pm.projects.stCompleted', cls: 'st-green' },
+      ON_HOLD: { labelKey: 'pm.projects.stOnHold', cls: 'st-amber' },
+      PLANNED: { labelKey: 'pm.projects.stPlanned', cls: 'st-slate' },
+      CANCELLED: { labelKey: 'pm.projects.stCancelled', cls: 'st-red' }
     };
-    return map[s] || { label: 'Planifié', cls: 'st-slate' };
+    return map[s] || { labelKey: 'pm.projects.stPlanned', cls: 'st-slate' };
   }
 
   openWizard(): void {
@@ -548,12 +566,12 @@ export class PmProjectsComponent implements OnInit {
   closeWizard(): void { this.showWizard = false; }
 
   nextStep(): void {
-    if (this.step === 1 && !this.form.name?.trim()) { this.toast.show('Le nom du projet est requis.', 'error'); return; }
+    if (this.step === 1 && !this.form.name?.trim()) { this.toast.show(this.translate.instant('pm.projects.toastNameRequired'), 'error'); return; }
     if (this.step < 4) this.step++;
   }
 
   submitProject(): void {
-    if (!this.form.name?.trim()) { this.step = 1; this.toast.show('Le nom du projet est requis.', 'error'); return; }
+    if (!this.form.name?.trim()) { this.step = 1; this.toast.show(this.translate.instant('pm.projects.toastNameRequired'), 'error'); return; }
     this.submitting = true;
     this.form.managerId = this.managerId;
     this.projectService.createProject(this.form).subscribe({
@@ -561,7 +579,7 @@ export class PmProjectsComponent implements OnInit {
         const created = res?.data ?? res;
         const projectId = created?.id;
         this.submitting = false; this.showWizard = false;
-        this.toast.show(`Projet « ${created?.name || this.form.name} » créé.`, 'success');
+        this.toast.show(this.translate.instant('pm.projects.toastCreated', { name: created?.name || this.form.name }), 'success');
         if (projectId) {
           this.createTeamAndMilestones(projectId, created?.name || this.form.name);
         }
@@ -569,7 +587,7 @@ export class PmProjectsComponent implements OnInit {
       },
       error: (err: any) => {
         this.submitting = false;
-        this.toast.show(err?.error?.message || 'Échec de la création du projet.', 'error');
+        this.toast.show(err?.error?.message || this.translate.instant('pm.projects.toastCreateFailed'), 'error');
       }
     });
   }
@@ -578,7 +596,7 @@ export class PmProjectsComponent implements OnInit {
   private createTeamAndMilestones(projectId: number, projectName: string): void {
     const chosen = this.wizMembers.filter(m => m.selected);
     if (chosen.length) {
-      this.teamService.createTeam({ name: `Équipe ${projectName}`, projectId, description: 'Équipe du projet' }).subscribe({
+      this.teamService.createTeam({ name: this.translate.instant('pm.projects.teamDefaultName', { project: projectName }), projectId, description: this.translate.instant('pm.projects.teamDescription') }).subscribe({
         next: (t: any) => {
           const teamId = (t?.data ?? t)?.id;
           if (teamId) chosen.forEach(m => this.teamService.addMemberToTeam(teamId, m.id).subscribe({ error: () => {} }));
@@ -591,8 +609,8 @@ export class PmProjectsComponent implements OnInit {
     this.milestones.filter(ms => ms.name.trim() && ms.date).forEach(ms => {
       const start = new Date(ms.date + 'T09:00:00');
       const payload: CalendarEvent = {
-        title: `Jalon : ${ms.name.trim()}`,
-        description: `Jalon du projet « ${projectName} » #type:milestone #proj:${projectName}`,
+        title: this.translate.instant('pm.projects.milestoneTitle', { name: ms.name.trim() }),
+        description: `${this.translate.instant('pm.projects.milestoneDesc', { project: projectName })} #type:milestone #proj:${projectName}`,
         startTime: start.toISOString(),
         endTime: new Date(start.getTime() + 3600000).toISOString(),
         isAllDay: false, userId: this.managerId, projectId, audience: 'PROJECT'

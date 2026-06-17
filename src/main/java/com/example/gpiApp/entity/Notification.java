@@ -43,6 +43,14 @@ public class Notification {
     @Column(name = "reference_type")
     private String referenceType;
 
+    /** Translation key for the notification's title/body (e.g. "taskAssigned"); null for legacy rows. */
+    @Column(name = "i18n_key", length = 120)
+    private String i18nKey;
+
+    /** JSON map of interpolation params for the translation (e.g. {"task":"X","deadline":"..."}). */
+    @Column(name = "i18n_params", columnDefinition = "TEXT")
+    private String i18nParams;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

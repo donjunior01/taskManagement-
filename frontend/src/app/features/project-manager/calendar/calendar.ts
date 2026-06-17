@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { ProjectService, Project } from '../../../core/services/project.service';
@@ -20,39 +21,39 @@ interface DayCell { date: Date; dateStr: string; day: number; inMonth: boolean; 
 @Component({
   selector: 'app-pm-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent, TranslatePipe],
   template: `
   <div class="cal-wrap">
 
     <!-- ═══ Top bar ═══ -->
     <div class="cal-top">
       <div class="nav">
-        <button class="nav-btn" (click)="shift(-1)" aria-label="Précédent">‹</button>
-        <button class="today-btn" (click)="goToday()">Aujourd'hui</button>
-        <button class="nav-btn" (click)="shift(1)" aria-label="Suivant">›</button>
+        <button class="nav-btn" (click)="shift(-1)" [attr.aria-label]="'pm.calendar.prev' | translate">‹</button>
+        <button class="today-btn" (click)="goToday()">{{ 'pm.calendar.today' | translate }}</button>
+        <button class="nav-btn" (click)="shift(1)" [attr.aria-label]="'pm.calendar.next' | translate">›</button>
         <h2 class="period">{{ periodLabel }}</h2>
       </div>
       <div class="top-right">
         <div class="view-toggle">
-          <button *ngFor="let v of views" [class.on]="view === v.key" (click)="view = v.key">{{ v.label }}</button>
+          <button *ngFor="let v of views" [class.on]="view === v.key" (click)="view = v.key">{{ v.labelKey | translate }}</button>
         </div>
-        <button class="btn-outline sync" (click)="importFromGoogle()" [disabled]="importing" title="Importer depuis Google Calendar">↧ Importer</button>
-        <button class="btn-outline sync" (click)="syncAllToGoogle()" [disabled]="syncing" title="Synchroniser vers Google Calendar">⟳ Sync</button>
+        <button class="btn-outline sync" (click)="importFromGoogle()" [disabled]="importing" [title]="'pm.calendar.importTitle' | translate">{{ 'pm.calendar.import' | translate }}</button>
+        <button class="btn-outline sync" (click)="syncAllToGoogle()" [disabled]="syncing" [title]="'pm.calendar.syncTitle' | translate">{{ 'pm.calendar.sync' | translate }}</button>
         <button class="btn-primary" (click)="openCreate()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Créer un Événement
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> {{ 'pm.calendar.createEvent' | translate }}
         </button>
       </div>
     </div>
 
     <!-- ═══ Filters ═══ -->
     <div class="cal-filters">
-      <span class="fl-label">Projets :</span>
+      <span class="fl-label">{{ 'pm.calendar.projectsLabel' | translate }}</span>
       <button class="proj-chip" *ngFor="let p of projectChips" [class.off]="!activeProjects.has(p.name)" (click)="toggleProject(p.name)">
         <span class="dot" [style.background]="p.color"></span>{{ p.name }}
       </button>
       <span class="divider">|</span>
       <label class="type-check" *ngFor="let t of typeOptions">
-        <input type="checkbox" [checked]="typeFlags[t.key]" (change)="toggleType(t.key)"> {{ t.label }}
+        <input type="checkbox" [checked]="typeFlags[t.key]" (change)="toggleType(t.key)"> {{ t.labelKey | translate }}
       </label>
     </div>
 
@@ -66,7 +67,7 @@ interface DayCell { date: Date; dateStr: string; day: number; inMonth: boolean; 
           <div class="cell-items">
             <div class="ev-pill" *ngFor="let it of c.items; trackBy: trackItem" [ngClass]="'t-' + it.type" [class.locked]="!isDraggable(it)"
                  [attr.draggable]="isDraggable(it)" (dragstart)="onDragStart($event, it)" (dragend)="onDragEnd()"
-                 (click)="handleClick(it)" [title]="it.name + ' · ' + it.project + (isDraggable(it) ? '' : ' · (non déplaçable)')">
+                 (click)="handleClick(it)" [title]="it.name + ' · ' + it.project + (isDraggable(it) ? '' : ' · ' + ('pm.calendar.notDraggable' | translate))">
               <span *ngIf="it.type === 'milestone'">◆ </span>{{ it.name }}
             </div>
           </div>
@@ -83,12 +84,12 @@ interface DayCell { date: Date; dateStr: string; day: number; inMonth: boolean; 
             <span class="ev-dot" [ngClass]="'t-' + it.type"></span>
             <div class="ai-body">
               <div class="ai-name">{{ it.name }}</div>
-              <div class="ai-meta">{{ typeLabel(it.type) }} · {{ it.project }}<span *ngIf="it.time"> · {{ it.time }}</span></div>
+              <div class="ai-meta">{{ typeLabel(it.type) | translate }} · {{ it.project }}<span *ngIf="it.time"> · {{ it.time }}</span></div>
             </div>
-            <span class="ai-badge" [ngClass]="'t-' + it.type">{{ typeLabel(it.type) }}</span>
+            <span class="ai-badge" [ngClass]="'t-' + it.type">{{ typeLabel(it.type) | translate }}</span>
           </div>
         </div>
-        <div class="empty" *ngIf="agendaGroups.length === 0">Aucun événement sur cette période.</div>
+        <div class="empty" *ngIf="agendaGroups.length === 0">{{ 'pm.calendar.noEvents' | translate }}</div>
       </div>
     </div>
   </div>
@@ -96,27 +97,27 @@ interface DayCell { date: Date; dateStr: string; day: number; inMonth: boolean; 
   <!-- ═══ Create event dialog ═══ -->
   <div class="modal-backdrop" *ngIf="showCreate" (click)="showCreate = false">
     <div class="modal" (click)="$event.stopPropagation()">
-      <div class="m-head"><h3>Nouvel événement</h3><button class="x" (click)="showCreate = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
+      <div class="m-head"><h3>{{ 'pm.calendar.newEvent' | translate }}</h3><button class="x" (click)="showCreate = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
       <div class="m-body">
-        <div class="fg"><label>Titre *</label><input type="text" [(ngModel)]="form.title" placeholder="Ex : Démo client"></div>
+        <div class="fg"><label>{{ 'pm.calendar.fieldTitle' | translate }}</label><input type="text" [(ngModel)]="form.title" [placeholder]="'pm.calendar.phTitle' | translate"></div>
         <div class="grid2">
-          <div class="fg"><label>Type</label><select [(ngModel)]="form.type"><option value="meeting">Réunion</option><option value="milestone">Jalon</option><option value="reminder">Rappel</option></select></div>
-          <div class="fg"><label>Projet</label><select [(ngModel)]="form.projectId"><option [ngValue]="undefined">Aucun</option><option *ngFor="let p of projectsList" [ngValue]="p.id">{{ p.name }}</option></select></div>
+          <div class="fg"><label>{{ 'pm.calendar.fieldType' | translate }}</label><select [(ngModel)]="form.type"><option value="meeting">{{ 'pm.calendar.optMeeting' | translate }}</option><option value="milestone">{{ 'pm.calendar.optMilestone' | translate }}</option><option value="reminder">{{ 'pm.calendar.optReminder' | translate }}</option></select></div>
+          <div class="fg"><label>{{ 'pm.calendar.fieldProject' | translate }}</label><select [(ngModel)]="form.projectId"><option [ngValue]="undefined">{{ 'pm.calendar.none' | translate }}</option><option *ngFor="let p of projectsList" [ngValue]="p.id">{{ p.name }}</option></select></div>
         </div>
         <div class="grid2">
-          <div class="fg"><label>Date *</label><input type="date" [(ngModel)]="form.date"></div>
-          <div class="fg"><label>Heure</label><input type="time" [(ngModel)]="form.time"></div>
+          <div class="fg"><label>{{ 'pm.calendar.fieldDate' | translate }}</label><input type="date" [(ngModel)]="form.date"></div>
+          <div class="fg"><label>{{ 'pm.calendar.fieldTime' | translate }}</label><input type="time" [(ngModel)]="form.time"></div>
         </div>
-        <div class="fg"><label>Destinataires</label>
+        <div class="fg"><label>{{ 'pm.calendar.fieldAudience' | translate }}</label>
           <select [(ngModel)]="form.audience">
-            <option value="PROJECT">Membres du projet sélectionné</option>
-            <option value="SELF">Moi uniquement</option>
+            <option value="PROJECT">{{ 'pm.calendar.audienceProject' | translate }}</option>
+            <option value="SELF">{{ 'pm.calendar.audienceSelf' | translate }}</option>
           </select>
-          <span class="hint">L'événement s'ajoute à l'agenda des destinataires et ils reçoivent une notification.</span>
+          <span class="hint">{{ 'pm.calendar.audienceHint' | translate }}</span>
         </div>
-        <div class="fg"><label>Description</label><app-ai-describe [type]="'EVENT'" [title]="form.title" (generated)="form.description = $event"></app-ai-describe><textarea rows="3" [(ngModel)]="form.description"></textarea></div>
+        <div class="fg"><label>{{ 'pm.calendar.fieldDescription' | translate }}</label><app-ai-describe [type]="'EVENT'" [title]="form.title" (generated)="form.description = $event"></app-ai-describe><textarea rows="3" [(ngModel)]="form.description"></textarea></div>
       </div>
-      <div class="m-foot"><button class="btn-ghost" (click)="showCreate = false">Annuler</button><button class="btn-primary" (click)="saveEvent()" [disabled]="saving">Enregistrer</button></div>
+      <div class="m-foot"><button class="btn-ghost" (click)="showCreate = false">{{ 'pm.calendar.cancel' | translate }}</button><button class="btn-primary" (click)="saveEvent()" [disabled]="saving">{{ 'pm.calendar.save' | translate }}</button></div>
     </div>
   </div>
 
@@ -125,13 +126,13 @@ interface DayCell { date: Date; dateStr: string; day: number; inMonth: boolean; 
     <div class="modal sm" (click)="$event.stopPropagation()">
       <div class="m-head"><h3>{{ detail!.name }}</h3><button class="x" (click)="detail = null"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
       <div class="m-body">
-        <div class="det-row"><span class="det-k">Type</span><span class="ai-badge" [ngClass]="'t-' + detail!.type">{{ typeLabel(detail!.type) }}</span></div>
-        <div class="det-row"><span class="det-k">Projet</span><span>{{ detail!.project }}</span></div>
-        <div class="det-row"><span class="det-k">Date</span><span>{{ longDateStr(detail!.date) }}</span></div>
-        <div class="det-row" *ngIf="detail!.time"><span class="det-k">Heure</span><span>{{ detail!.time }}</span></div>
+        <div class="det-row"><span class="det-k">{{ 'pm.calendar.detType' | translate }}</span><span class="ai-badge" [ngClass]="'t-' + detail!.type">{{ typeLabel(detail!.type) | translate }}</span></div>
+        <div class="det-row"><span class="det-k">{{ 'pm.calendar.detProject' | translate }}</span><span>{{ detail!.project }}</span></div>
+        <div class="det-row"><span class="det-k">{{ 'pm.calendar.detDate' | translate }}</span><span>{{ longDateStr(detail!.date) }}</span></div>
+        <div class="det-row" *ngIf="detail!.time"><span class="det-k">{{ 'pm.calendar.detTime' | translate }}</span><span>{{ detail!.time }}</span></div>
         <div class="det-desc" *ngIf="cleanDesc(detail!.rawDesc)">{{ cleanDesc(detail!.rawDesc) }}</div>
       </div>
-      <div class="m-foot"><button class="btn-ghost" (click)="detail = null">Fermer</button></div>
+      <div class="m-foot"><button class="btn-ghost" (click)="detail = null">{{ 'pm.calendar.close' | translate }}</button></div>
     </div>
   </div>
   `,
@@ -210,12 +211,21 @@ export class PmCalendarComponent implements OnInit {
   loading = true;
 
   view: 'month' | 'week' | 'day' | 'list' = 'month';
-  views = [{ key: 'month' as const, label: 'Mois' }, { key: 'week' as const, label: 'Semaine' }, { key: 'day' as const, label: 'Jour' }, { key: 'list' as const, label: 'Liste' }];
+  views = [{ key: 'month' as const, labelKey: 'pm.calendar.viewMonth' }, { key: 'week' as const, labelKey: 'pm.calendar.viewWeek' }, { key: 'day' as const, labelKey: 'pm.calendar.viewDay' }, { key: 'list' as const, labelKey: 'pm.calendar.viewList' }];
   ref: Date = new Date();
   selectedDate: Date = new Date();
-  dows = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
-  typeOptions = [{ key: 'task' as ItemType, label: 'Tâches' }, { key: 'milestone' as ItemType, label: 'Jalons' }, { key: 'meeting' as ItemType, label: 'Réunions' }, { key: 'overdue' as ItemType, label: 'Échéances' }];
+  /** Localized short weekday names (Mon→Sun), derived from the active UI language. */
+  get dows(): string[] {
+    const base = new Date(2024, 0, 1); // a Monday
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(base); d.setDate(base.getDate() + i);
+      const s = d.toLocaleDateString(this.dateLocale(), { weekday: 'short' });
+      return s.charAt(0).toUpperCase() + s.slice(1).replace('.', '');
+    });
+  }
+
+  typeOptions = [{ key: 'task' as ItemType, labelKey: 'pm.calendar.typeTask' }, { key: 'milestone' as ItemType, labelKey: 'pm.calendar.typeMilestone' }, { key: 'meeting' as ItemType, labelKey: 'pm.calendar.typeMeeting' }, { key: 'overdue' as ItemType, labelKey: 'pm.calendar.typeOverdue' }];
   typeFlags: Record<ItemType, boolean> = { task: true, milestone: true, meeting: true, overdue: true };
   projectChips: { name: string; color: string }[] = [];
   activeProjects = new Set<string>();
@@ -233,7 +243,6 @@ export class PmCalendarComponent implements OnInit {
   importing = false;
 
   private palette = ['#2D6BE4', '#A855F7', '#22C55E', '#EF4444', '#F97316', '#0891b2', '#d97706'];
-  private monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
   constructor(
     private projectService: ProjectService,
@@ -242,8 +251,14 @@ export class PmCalendarComponent implements OnInit {
     private calendarService: CalendarService,
     private toast: ToastService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private translate: TranslateService
   ) {}
+
+  /** Date-format locale follows the active UI language. */
+  private dateLocale(): string {
+    return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR';
+  }
 
   ngOnInit(): void {
     this.managerId = this.authService.getCurrentUser()?.id || 0;
@@ -279,12 +294,12 @@ export class PmCalendarComponent implements OnInit {
           if (!t.deadline) return;
           const d = new Date(t.deadline); if (isNaN(d.getTime())) return;
           const overdue = (t.status || '').toUpperCase() !== 'COMPLETED' && d < today;
-          items.push({ id: 'task-' + t.id, date: d, dateStr: this.iso(d), name: t.name, type: overdue ? 'overdue' : 'task', project: t.projectName || nameById[t.projectId!] || 'Projet', tid: t.id, pid: t.projectId, rawTask: t });
+          items.push({ id: 'task-' + t.id, date: d, dateStr: this.iso(d), name: t.name, type: overdue ? 'overdue' : 'task', project: t.projectName || nameById[t.projectId!] || this.translate.instant('pm.calendar.projectFallback'), tid: t.id, pid: t.projectId, rawTask: t });
         });
         this.projectsList.forEach(p => {
           if (!p.endDate) return;
           const d = new Date(p.endDate); if (isNaN(d.getTime())) return;
-          items.push({ id: 'proj-' + p.id, date: d, dateStr: this.iso(d), name: `Échéance — ${p.name}`, type: 'milestone', project: p.name, pid: p.id });
+          items.push({ id: 'proj-' + p.id, date: d, dateStr: this.iso(d), name: this.translate.instant('pm.calendar.deadlinePrefix', { name: p.name }), type: 'milestone', project: p.name, pid: p.id });
         });
         evList.forEach(e => {
           const d = new Date(e.startTime); if (isNaN(d.getTime())) return;
@@ -292,7 +307,7 @@ export class PmCalendarComponent implements OnInit {
           if ((e.title || '').startsWith('Task Due:')) return;
           const meta = this.parseMeta(e.description);
           const projName = e.projectId != null ? (nameById[e.projectId] || meta.proj) : meta.proj;
-          items.push({ id: 'evt-' + e.id, date: d, dateStr: this.iso(d), name: e.title, type: meta.type, project: projName || 'Général', time: d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), eid: e.id, pid: e.projectId, rawEvent: e, rawDesc: e.description });
+          items.push({ id: 'evt-' + e.id, date: d, dateStr: this.iso(d), name: e.title, type: meta.type, project: projName || this.translate.instant('pm.calendar.generalFallback'), time: d.toLocaleTimeString(this.dateLocale(), { hour: '2-digit', minute: '2-digit' }), eid: e.id, pid: e.projectId, rawEvent: e, rawDesc: e.description });
         });
 
         this.items = items;
@@ -344,10 +359,10 @@ export class PmCalendarComponent implements OnInit {
   }
 
   get periodLabel(): string {
-    if (this.view === 'month') return `${this.cap(this.monthNames[this.ref.getMonth()])} ${this.ref.getFullYear()}`;
+    if (this.view === 'month') return this.cap(this.ref.toLocaleDateString(this.dateLocale(), { month: 'long', year: 'numeric' }));
     if (this.view === 'day') return this.cap(this.longDateStr(this.selectedDate));
-    if (this.view === 'week') { const { start, end } = this.weekRange(); return `${start.getDate()} – ${end.getDate()} ${this.monthNames[end.getMonth()]} ${end.getFullYear()}`; }
-    return 'Tous les événements';
+    if (this.view === 'week') { const { start, end } = this.weekRange(); return `${start.getDate()} – ${end.getDate()} ${end.toLocaleDateString(this.dateLocale(), { month: 'long' })} ${end.getFullYear()}`; }
+    return this.translate.instant('pm.calendar.allEvents');
   }
   private weekRange(): { start: Date; end: Date } {
     const d = new Date(this.selectedDate); const dow = (d.getDay() + 6) % 7;
@@ -365,7 +380,8 @@ export class PmCalendarComponent implements OnInit {
 
   toggleProject(name: string): void { if (this.activeProjects.has(name)) this.activeProjects.delete(name); else this.activeProjects.add(name); this.activeProjects = new Set(this.activeProjects); }
   toggleType(t: ItemType): void { this.typeFlags = { ...this.typeFlags, [t]: !this.typeFlags[t] }; }
-  typeLabel(t: ItemType): string { return ({ task: 'Tâche', milestone: 'Jalon', meeting: 'Réunion', overdue: 'Échéance' } as Record<ItemType, string>)[t]; }
+  /** Translation key for an item type (rendered with the translate pipe). */
+  typeLabel(t: ItemType): string { return ({ task: 'pm.calendar.lblTask', milestone: 'pm.calendar.lblMilestone', meeting: 'pm.calendar.lblMeeting', overdue: 'pm.calendar.lblOverdue' } as Record<ItemType, string>)[t]; }
 
   // ── Click routing ──
   handleClick(it: CalItem): void {
@@ -413,7 +429,7 @@ export class PmCalendarComponent implements OnInit {
     const it = this.dragged; this.dragOver = null;
     if (!it || it.dateStr === c.dateStr) { this.dragged = null; return; }
     if (this.isPastDate(c)) {
-      this.toast.show('Impossible de déplacer un événement vers une date passée.', 'error');
+      this.toast.show(this.translate.instant('pm.calendar.toastNoPastDate'), 'error');
       this.dragged = null; return;
     }
     if (it.type === 'meeting' && it.eid != null && it.rawEvent) {
@@ -422,8 +438,8 @@ export class PmCalendarComponent implements OnInit {
       const durationMs = it.rawEvent.endTime ? (new Date(it.rawEvent.endTime).getTime() - src.getTime()) : 3600000;
       const payload: ApiEvent = { ...it.rawEvent, startTime: start.toISOString(), endTime: new Date(start.getTime() + Math.max(0, durationMs)).toISOString() };
       this.calendarService.updateEvent(it.eid, payload).subscribe({
-        next: () => { this.toast.show(`« ${it.name} » déplacé au ${c.date.toLocaleDateString('fr-FR')}.`, 'success'); this.loadAll(); },
-        error: () => { this.toast.show('Déplacement enregistré.', 'success'); this.loadAll(); }
+        next: () => { this.toast.show(this.translate.instant('pm.calendar.toastEventMoved', { name: it.name, date: c.date.toLocaleDateString(this.dateLocale()) }), 'success'); this.loadAll(); },
+        error: () => { this.toast.show(this.translate.instant('pm.calendar.toastMoveSaved'), 'success'); this.loadAll(); }
       });
     } else if ((it.type === 'task' || it.type === 'overdue') && it.tid != null && it.rawTask) {
       const req: TaskRequest = {
@@ -432,8 +448,8 @@ export class PmCalendarComponent implements OnInit {
         status: it.rawTask.status || 'TODO', progress: it.rawTask.progress || 0, deadline: c.dateStr, reminderType: it.rawTask.reminderType || 'NONE'
       };
       this.taskService.updateTask(it.tid, req).subscribe({
-        next: () => { this.toast.show(`Échéance de « ${it.name} » déplacée au ${c.date.toLocaleDateString('fr-FR')}.`, 'success'); this.loadAll(); },
-        error: () => { this.toast.show('Échéance mise à jour.', 'success'); this.loadAll(); }
+        next: () => { this.toast.show(this.translate.instant('pm.calendar.toastDeadlineMoved', { name: it.name, date: c.date.toLocaleDateString(this.dateLocale()) }), 'success'); this.loadAll(); },
+        error: () => { this.toast.show(this.translate.instant('pm.calendar.toastDeadlineUpdated'), 'success'); this.loadAll(); }
       });
     }
     this.dragged = null;
@@ -442,7 +458,7 @@ export class PmCalendarComponent implements OnInit {
   // ── Create event ──
   openCreate(): void { this.form = { title: '', type: 'meeting', projectId: this.projectsList[0]?.id, date: this.iso(this.selectedDate), time: '09:00', audience: 'PROJECT', description: '' }; this.showCreate = true; }
   saveEvent(): void {
-    if (!this.form.title.trim() || !this.form.date) { this.toast.show('Titre et date sont requis.', 'error'); return; }
+    if (!this.form.title.trim() || !this.form.date) { this.toast.show(this.translate.instant('pm.calendar.toastTitleDateRequired'), 'error'); return; }
     this.saving = true;
     const [h, mi] = (this.form.time || '09:00').split(':').map(Number);
     const start = new Date(this.form.date + 'T00:00:00'); start.setHours(h || 9, mi || 0, 0, 0);
@@ -450,14 +466,14 @@ export class PmCalendarComponent implements OnInit {
     const desc = `${this.form.description || ''} #type:${this.form.type}${projName ? ' #proj:' + projName : ''}`.trim();
     const audience = this.form.audience || (this.form.projectId ? 'PROJECT' : 'SELF');
     const payload: ApiEvent = { title: this.form.title.trim(), description: desc, startTime: start.toISOString(), endTime: new Date(start.getTime() + 3600000).toISOString(), isAllDay: false, userId: this.managerId, projectId: this.form.projectId, audience };
-    if (audience === 'PROJECT' && !this.form.projectId) { this.saving = false; this.toast.show('Sélectionnez un projet pour notifier ses membres.', 'error'); return; }
+    if (audience === 'PROJECT' && !this.form.projectId) { this.saving = false; this.toast.show(this.translate.instant('pm.calendar.toastProjectRequired'), 'error'); return; }
     this.calendarService.createEvent(payload).subscribe({
       next: () => {
         this.saving = false; this.showCreate = false;
-        const msg = audience === 'ALL' ? 'Événement envoyé à tous les utilisateurs.' : audience === 'PROJECT' ? 'Événement envoyé aux membres du projet.' : 'Événement enregistré.';
+        const msg = audience === 'ALL' ? this.translate.instant('pm.calendar.toastSentAll') : audience === 'PROJECT' ? this.translate.instant('pm.calendar.toastSentProject') : this.translate.instant('pm.calendar.toastSaved');
         this.toast.show(msg, 'success'); this.loadAll();
       },
-      error: () => { this.saving = false; this.toast.show('Échec de l\'enregistrement de l\'événement.', 'error'); }
+      error: () => { this.saving = false; this.toast.show(this.translate.instant('pm.calendar.toastSaveFailed'), 'error'); }
     });
   }
 
@@ -465,20 +481,20 @@ export class PmCalendarComponent implements OnInit {
   syncAllToGoogle(): void {
     if (this.syncing) return; this.syncing = true;
     this.calendarService.syncAllToGoogle().subscribe({
-      next: (res: any) => { const r = res?.data || res; this.syncing = false; this.toast.show(r?.message || (r?.enabled ? 'Synchronisé.' : 'Google Calendar non configuré.'), r?.enabled ? 'success' : 'error'); this.cdr.detectChanges(); },
-      error: () => { this.syncing = false; this.toast.show('Échec de la synchronisation.', 'error'); this.cdr.detectChanges(); }
+      next: (res: any) => { const r = res?.data || res; this.syncing = false; this.toast.show(r?.message || (r?.enabled ? this.translate.instant('pm.calendar.toastSynced') : this.translate.instant('pm.calendar.toastGoogleNotConfigured')), r?.enabled ? 'success' : 'error'); this.cdr.detectChanges(); },
+      error: () => { this.syncing = false; this.toast.show(this.translate.instant('pm.calendar.toastSyncFailed'), 'error'); this.cdr.detectChanges(); }
     });
   }
   importFromGoogle(): void {
     if (this.importing) return; this.importing = true;
     const s = new Date(); s.setMonth(s.getMonth() - 1); const e = new Date(); e.setMonth(e.getMonth() + 5);
     this.calendarService.importFromGoogle(s.toISOString(), e.toISOString()).subscribe({
-      next: (res: any) => { const r = res?.data || res; this.importing = false; if (r?.enabled) { this.toast.show(r.message || 'Importé.', 'success'); this.loadAll(); } else { this.toast.show(r?.message || 'Google Calendar non configuré.', 'error'); } this.cdr.detectChanges(); },
-      error: () => { this.importing = false; this.toast.show("Échec de l'import.", 'error'); this.cdr.detectChanges(); }
+      next: (res: any) => { const r = res?.data || res; this.importing = false; if (r?.enabled) { this.toast.show(r.message || this.translate.instant('pm.calendar.toastImported'), 'success'); this.loadAll(); } else { this.toast.show(r?.message || this.translate.instant('pm.calendar.toastGoogleNotConfigured'), 'error'); } this.cdr.detectChanges(); },
+      error: () => { this.importing = false; this.toast.show(this.translate.instant('pm.calendar.toastImportFailed'), 'error'); this.cdr.detectChanges(); }
     });
   }
 
   private iso(d: Date): string { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
-  longDateStr(d: Date): string { return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
+  longDateStr(d: Date): string { return d.toLocaleDateString(this.dateLocale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
   private cap(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
 }

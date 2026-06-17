@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ProjectService, Project, ProjectRequest } from '../../../core/services/project.service';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -23,7 +24,7 @@ interface TaskStats {
 @Component({
   selector: 'app-pm-project-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent, TranslatePipe],
   templateUrl: './project-detail.html',
   styleUrls: ['./project-detail.scss']
 })
@@ -114,8 +115,14 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
     private toast: ToastService,
     private aiService: AiAssistantService,
     private checklistService: ChecklistService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private translate: TranslateService
   ) {}
+
+  /** Date-format locale follows the active UI language. */
+  private dateLocale(): string {
+    return this.translate.currentLang() === 'en' ? 'en-US' : 'fr-FR';
+  }
 
   ngOnInit(): void {
     this.projectId = Number(this.route.snapshot.paramMap.get('id'));
@@ -214,7 +221,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
   submitEditProject(): void {
     if (!this.projectId) return;
     if (!this.editForm.name) {
-      this.toast.show('Le nom du projet est requis.', 'error');
+      this.toast.show(this.translate.instant('pm.detail.toastNameRequired'), 'error');
       return;
     }
     this.submitting = true;
@@ -224,7 +231,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       next: (updated) => {
         this.submitting = false;
         this.showEditModal = false;
-        this.toast.show(`Successfully updated "${updated.name}"!`, 'success');
+        this.toast.show(this.translate.instant('pm.detail.toastUpdated', { name: updated.name }), 'success');
         this.loadProject();
       },
       error: () => {
@@ -233,7 +240,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
         if (this.project) {
           this.project = { ...this.project, ...this.editForm };
         }
-        this.toast.show('Optimistic update: Saved project specifications!', 'success');
+        this.toast.show(this.translate.instant('pm.detail.toastUpdatedOptimistic'), 'success');
         this.cdr.detectChanges();
       }
     });
@@ -249,12 +256,12 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
     this.projectService.deleteProject(this.projectId).subscribe({
       next: () => {
         this.submitting = false;
-        this.toast.show(`Project "${this.project?.name}" permanently deleted.`, 'success');
+        this.toast.show(this.translate.instant('pm.detail.toastDeleted', { name: this.project?.name }), 'success');
         this.router.navigate(['/pm/projects']);
       },
       error: () => {
         this.submitting = false;
-        this.toast.show(`Project "${this.project?.name}" removed successfully.`, 'success');
+        this.toast.show(this.translate.instant('pm.detail.toastRemoved', { name: this.project?.name }), 'success');
         this.router.navigate(['/pm/projects']);
       }
     });
@@ -319,7 +326,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       .filter(id => this.selectedUserIds[id]);
 
     if (userIdsToAssign.length === 0) {
-      this.toast.show('Please select at least one user to assign.', 'error');
+      this.toast.show(this.translate.instant('pm.detail.toastSelectUser'), 'error');
       return;
     }
 
@@ -332,8 +339,8 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
           this.addMembersToTeam(teams[0].id, userIdsToAssign);
         } else {
           this.projectService.createTeam({
-            name: `${this.project?.name} Team`,
-            description: `Team for ${this.project?.name}`,
+            name: this.translate.instant('pm.detail.teamNameDefault', { project: this.project?.name }),
+            description: this.translate.instant('pm.detail.teamDescDefault', { project: this.project?.name }),
             projectId: this.projectId,
             managerId: this.managerId
           }).subscribe({
@@ -343,14 +350,14 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
                 this.addMembersToTeam(teamId, userIdsToAssign);
               } else {
                 this.assigningUsers = false;
-                this.toast.show('Could not resolve team for assignment.', 'error');
+                this.toast.show(this.translate.instant('pm.detail.toastNoTeam'), 'error');
                 this.cdr.detectChanges();
               }
             },
             error: () => {
               this.assigningUsers = false;
               this.closeAddUsersModal();
-              this.toast.show(`Assigned ${userIdsToAssign.length} user(s) to project!`, 'success');
+              this.toast.show(this.translate.instant('pm.detail.toastAssigned', { count: userIdsToAssign.length }), 'success');
               this.loadMembers();
               this.loadProject();
             }
@@ -360,7 +367,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       error: () => {
         this.assigningUsers = false;
         this.closeAddUsersModal();
-        this.toast.show(`Assigned ${userIdsToAssign.length} user(s) to project!`, 'success');
+        this.toast.show(this.translate.instant('pm.detail.toastAssigned', { count: userIdsToAssign.length }), 'success');
         this.loadMembers();
         this.loadProject();
       }
@@ -381,7 +388,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
     if (done === total) {
       this.assigningUsers = false;
       this.closeAddUsersModal();
-      this.toast.show(`Successfully assigned ${total} user(s) to project team!`, 'success');
+      this.toast.show(this.translate.instant('pm.detail.toastAssignedTeam', { count: total }), 'success');
       this.loadMembers();
       this.loadProject();
     }
@@ -430,7 +437,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
   private afterUnassign(userId: number): void {
     this.members = this.members.filter(m => m.id !== userId);
     this.closeUnassignModal();
-    this.toast.show('User successfully removed from project team.', 'success');
+    this.toast.show(this.translate.instant('pm.detail.toastMemberRemoved'), 'success');
     this.loadProject();
     this.cdr.detectChanges();
   }
@@ -445,7 +452,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
 
   submitAddTask(): void {
     if (!this.taskForm.name.trim() || !this.taskForm.deadline) {
-      this.toast.show('Task name and deadline are required.', 'error');
+      this.toast.show(this.translate.instant('pm.detail.toastTaskFieldsRequired'), 'error');
       return;
     }
     this.submittingTask = true;
@@ -466,7 +473,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       next: (created) => {
         this.submittingTask = false;
         this.showAddTaskModal = false;
-        this.toast.show(`Task "${created.name}" created successfully!`, 'success');
+        this.toast.show(this.translate.instant('pm.detail.toastTaskCreated', { name: created.name }), 'success');
         this.loadTasks();
         this.loadProject();
       },
@@ -486,7 +493,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
         };
         this.tasks.push(mock);
         this.computeTaskStats();
-        this.toast.show(`Task "${this.taskForm.name}" added!`, 'success');
+        this.toast.show(this.translate.instant('pm.detail.toastTaskAdded', { name: this.taskForm.name }), 'success');
         this.cdr.detectChanges();
       }
     });
@@ -499,13 +506,13 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       next: () => {
         this.tasks = this.tasks.filter(t => t.id !== taskId);
         this.computeTaskStats();
-        this.toast.show('Task deleted successfully.', 'success');
+        this.toast.show(this.translate.instant('pm.detail.toastTaskDeleted'), 'success');
         this.cdr.detectChanges();
       },
       error: () => {
         this.tasks = this.tasks.filter(t => t.id !== taskId);
         this.computeTaskStats();
-        this.toast.show('Task removed.', 'success');
+        this.toast.show(this.translate.instant('pm.detail.toastTaskRemoved'), 'success');
         this.cdr.detectChanges();
       }
     });
@@ -559,10 +566,11 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
 
   getStatusLabel(status: string | undefined): string {
     const map: Record<string, string> = {
-      IN_PROGRESS: 'In Progress', COMPLETED: 'Completed',
-      ON_HOLD: 'On Hold', PLANNED: 'Planned'
+      IN_PROGRESS: 'pm.detail.statusInProgress', COMPLETED: 'pm.detail.statusCompleted',
+      ON_HOLD: 'pm.detail.statusOnHold', PLANNED: 'pm.detail.statusPlanned'
     };
-    return map[status || ''] || status || 'Unknown';
+    const key = map[status || ''];
+    return key ? this.translate.instant(key) : (status || this.translate.instant('pm.detail.statusUnknown'));
   }
 
   getPriorityClass(priority: string | undefined): string {
@@ -598,7 +606,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loadingAiSummary = false;
-        this.toast.show('Could not generate the project summary.', 'error');
+        this.toast.show(this.translate.instant('pm.detail.toastSummaryFailed'), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -615,7 +623,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loadingAiPriorities = false;
-        this.toast.show('Could not generate priority suggestions.', 'error');
+        this.toast.show(this.translate.instant('pm.detail.toastPrioritiesFailed'), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -648,7 +656,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loadingAiRisks = false;
-        this.toast.show('Could not generate the risk assessment.', 'error');
+        this.toast.show(this.translate.instant('pm.detail.toastRisksFailed'), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -739,7 +747,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
     while (d.getTime() <= r.end && guard++ < 60) {
       const left = Math.round(((d.getTime() - r.start) / total) * 10000) / 100; // Round to 2 decimals
       if (left >= 0 && left <= 100) {
-        out.push({ label: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), left });
+        out.push({ label: d.toLocaleDateString(this.dateLocale(), { month: 'short', year: '2-digit' }), left });
       }
       d.setMonth(d.getMonth() + 1);
     }
@@ -800,7 +808,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.savingChecklistItem = false;
-        this.toast.show('Could not add the sub-task.', 'error');
+        this.toast.show(this.translate.instant('pm.detail.toastSubtaskAddFailed'), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -818,7 +826,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       },
       error: () => {
         item.completed = previous; // revert
-        this.toast.show('Could not update the sub-task.', 'error');
+        this.toast.show(this.translate.instant('pm.detail.toastSubtaskUpdateFailed'), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -860,7 +868,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.generatingTaskDesc = false;
-        this.toast.show('Could not generate a description.', 'error');
+        this.toast.show(this.translate.instant('pm.detail.toastDescFailed'), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -878,7 +886,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.generatingProjectDesc = false;
-        this.toast.show('Could not generate a description.', 'error');
+        this.toast.show(this.translate.instant('pm.detail.toastDescFailed'), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -938,7 +946,7 @@ export class PmProjectDetailComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.sendingChat = false;
-        this.toast.show('Could not send the message. Please try again.', 'error');
+        this.toast.show(this.translate.instant('pm.detail.toastChatFailed'), 'error');
         this.cdr.detectChanges();
       }
     });

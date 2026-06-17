@@ -88,7 +88,8 @@ public class UserServiceImpl implements UserService {
             notificationService.createNotification(user.getId(),
                     "Mot de passe réinitialisé",
                     "Un administrateur a réinitialisé votre mot de passe. Vérifiez votre e-mail pour le mot de passe temporaire, puis modifiez-le.",
-                    com.example.gpiApp.entity.Notification.NotificationType.SYSTEM, null, null);
+                    com.example.gpiApp.entity.Notification.NotificationType.SYSTEM, null, null,
+                    "pwdReset", null);
         } catch (Exception ignore) { }
 
         java.util.Map<String, String> result = new java.util.HashMap<>();
@@ -159,6 +160,8 @@ public class UserServiceImpl implements UserService {
                 "Your account has been created. You can now receive task assignments and project updates.",
                 Notification.NotificationType.SYSTEM,
                 null,
+                null,
+                "welcome",
                 null
             );
             logUserAction(com.example.gpiApp.entity.ActivityLog.ActivityType.USER_CREATED,

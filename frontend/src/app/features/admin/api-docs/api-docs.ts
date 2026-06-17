@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../../environments/environment';
 
 interface Endpoint { method: string; path: string; desc: string; secure: boolean; req?: string; res?: string; }
@@ -9,7 +10,7 @@ interface ApiGroup { title: string; endpoints: Endpoint[]; }
 @Component({
   selector: 'app-admin-api-docs',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
   <div class="api-wrap">
 
@@ -22,11 +23,11 @@ interface ApiGroup { title: string; endpoints: Endpoint[]; }
       <div class="head-right">
         <div class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input placeholder="Filtrer les endpoints..." [(ngModel)]="filter" />
+          <input [placeholder]="'admin.apiDocs.filterPlaceholder' | translate" [(ngModel)]="filter" />
         </div>
         <button class="btn btn-outline" (click)="openSpec()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          OpenAPI JSON
+          {{ 'admin.apiDocs.openApiJson' | translate }}
         </button>
       </div>
     </div>
@@ -36,8 +37,8 @@ interface ApiGroup { title: string; endpoints: Endpoint[]; }
       <div class="api-card" *ngFor="let g of visibleGroups()">
         <button class="grp-head" (click)="toggleGroup(g.title)">
           <svg class="chev" [class.collapsed]="!isOpen(g.title)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          <span class="grp-title">{{ g.title }}</span>
-          <span class="grp-badge">{{ g.endpoints.length }} endpoints</span>
+          <span class="grp-title">{{ g.title | translate }}</span>
+          <span class="grp-badge">{{ 'admin.apiDocs.endpointsCount' | translate:{ count: g.endpoints.length } }}</span>
         </button>
 
         <ul class="ep-list" *ngIf="isOpen(g.title)">
@@ -45,28 +46,28 @@ interface ApiGroup { title: string; endpoints: Endpoint[]; }
             <button class="ep-row" (click)="toggleEp(g, e)">
               <span class="method" [ngClass]="e.method.toLowerCase()">{{ e.method }}</span>
               <code class="ep-path">{{ e.path }}</code>
-              <span class="ep-desc">{{ e.desc }}</span>
+              <span class="ep-desc">{{ e.desc | translate }}</span>
               <svg *ngIf="e.secure" class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             </button>
 
             <div class="ep-detail" *ngIf="isEpOpen(g, e)">
               <div class="detail-grid">
                 <div>
-                  <div class="detail-lbl">Request</div>
+                  <div class="detail-lbl">{{ 'admin.apiDocs.requestLabel' | translate }}</div>
                   <pre><code>{{ sampleReq(e) }}</code></pre>
                 </div>
                 <div>
-                  <div class="detail-lbl">Response 200</div>
+                  <div class="detail-lbl">{{ 'admin.apiDocs.response200' | translate }}</div>
                   <pre><code>{{ sampleRes(e) }}</code></pre>
                 </div>
               </div>
-              <button class="btn btn-primary btn-sm" (click)="tryIt()">▶ Essayer</button>
+              <button class="btn btn-primary btn-sm" (click)="tryIt()">{{ 'admin.apiDocs.tryIt' | translate }}</button>
             </div>
           </li>
         </ul>
       </div>
 
-      <div class="no-result" *ngIf="visibleGroups().length === 0">Aucun endpoint ne correspond à « {{ filter }} ».</div>
+      <div class="no-result" *ngIf="visibleGroups().length === 0">{{ 'admin.apiDocs.noResult' | translate:{ filter: filter } }}</div>
     </div>
   </div>
   `,
@@ -130,43 +131,45 @@ interface ApiGroup { title: string; endpoints: Endpoint[]; }
 export class AdminApiDocsComponent {
   baseUrl = environment.apiUrl;
   filter = '';
-  private openGroups = new Set<string>(['Authentification']);
+  private openGroups = new Set<string>(['admin.apiDocs.grpAuth']);
   private openEp: string | null = null;
 
+  constructor(private translate: TranslateService) {}
+
   groups: ApiGroup[] = [
-    { title: 'Authentification', endpoints: [
-      { method: 'POST', path: '/auth/login', desc: 'Authentifier un utilisateur', secure: false,
+    { title: 'admin.apiDocs.grpAuth', endpoints: [
+      { method: 'POST', path: '/auth/login', desc: 'admin.apiDocs.epLogin', secure: false,
         req: '{\n  "email": "user@gpi.app",\n  "password": "••••••••"\n}', res: '{\n  "token": "eyJhbGciOiJIUzI1NiIs...",\n  "expiresIn": 3600\n}' },
-      { method: 'POST', path: '/auth/register', desc: 'Créer un compte', secure: false,
+      { method: 'POST', path: '/auth/register', desc: 'admin.apiDocs.epRegister', secure: false,
         req: '{\n  "firstName": "Awa",\n  "lastName": "Diop",\n  "email": "awa@gpi.app",\n  "password": "••••••••"\n}', res: '{\n  "id": 42,\n  "email": "awa@gpi.app",\n  "role": "USER"\n}' },
-      { method: 'POST', path: '/auth/refresh', desc: 'Rafraîchir le jeton JWT', secure: true,
+      { method: 'POST', path: '/auth/refresh', desc: 'admin.apiDocs.epRefresh', secure: true,
         req: '{\n  "refreshToken": "..."\n}', res: '{\n  "token": "eyJhbGci...",\n  "expiresIn": 3600\n}' }
     ]},
-    { title: 'Utilisateurs', endpoints: [
-      { method: 'GET', path: '/users', desc: 'Lister les utilisateurs', secure: true },
-      { method: 'POST', path: '/users', desc: 'Créer un utilisateur', secure: true },
-      { method: 'PUT', path: '/users/{id}', desc: 'Modifier un utilisateur', secure: true },
-      { method: 'DELETE', path: '/users/{id}', desc: 'Supprimer un utilisateur', secure: true }
+    { title: 'admin.apiDocs.grpUsers', endpoints: [
+      { method: 'GET', path: '/users', desc: 'admin.apiDocs.epListUsers', secure: true },
+      { method: 'POST', path: '/users', desc: 'admin.apiDocs.epCreateUser', secure: true },
+      { method: 'PUT', path: '/users/{id}', desc: 'admin.apiDocs.epEditUser', secure: true },
+      { method: 'DELETE', path: '/users/{id}', desc: 'admin.apiDocs.epDeleteUser', secure: true }
     ]},
-    { title: 'Projets', endpoints: [
-      { method: 'GET', path: '/projects', desc: 'Lister les projets', secure: true },
-      { method: 'POST', path: '/projects', desc: 'Créer un projet', secure: true },
-      { method: 'PUT', path: '/projects/{id}', desc: 'Modifier un projet', secure: true }
+    { title: 'admin.apiDocs.grpProjects', endpoints: [
+      { method: 'GET', path: '/projects', desc: 'admin.apiDocs.epListProjects', secure: true },
+      { method: 'POST', path: '/projects', desc: 'admin.apiDocs.epCreateProject', secure: true },
+      { method: 'PUT', path: '/projects/{id}', desc: 'admin.apiDocs.epEditProject', secure: true }
     ]},
-    { title: 'Tâches', endpoints: [
-      { method: 'GET', path: '/tasks', desc: 'Lister les tâches', secure: true },
-      { method: 'POST', path: '/tasks', desc: 'Créer une tâche', secure: true },
-      { method: 'DELETE', path: '/tasks/{id}', desc: 'Supprimer une tâche', secure: true }
+    { title: 'admin.apiDocs.grpTasks', endpoints: [
+      { method: 'GET', path: '/tasks', desc: 'admin.apiDocs.epListTasks', secure: true },
+      { method: 'POST', path: '/tasks', desc: 'admin.apiDocs.epCreateTask', secure: true },
+      { method: 'DELETE', path: '/tasks/{id}', desc: 'admin.apiDocs.epDeleteTask', secure: true }
     ]},
-    { title: 'Support', endpoints: [
-      { method: 'GET', path: '/tickets', desc: 'Lister les tickets', secure: true },
-      { method: 'POST', path: '/tickets', desc: 'Créer un ticket', secure: true },
-      { method: 'PUT', path: '/tickets/{id}', desc: 'Mettre à jour un ticket', secure: true }
+    { title: 'admin.apiDocs.grpSupport', endpoints: [
+      { method: 'GET', path: '/tickets', desc: 'admin.apiDocs.epListTickets', secure: true },
+      { method: 'POST', path: '/tickets', desc: 'admin.apiDocs.epCreateTicket', secure: true },
+      { method: 'PUT', path: '/tickets/{id}', desc: 'admin.apiDocs.epUpdateTicket', secure: true }
     ]},
-    { title: 'Rapports', endpoints: [
-      { method: 'GET', path: '/analytics/admin/reports', desc: 'Rapport global agrégé', secure: true },
-      { method: 'GET', path: '/analytics/admin/performance', desc: 'Métriques de performance', secure: true },
-      { method: 'GET', path: '/analytics/manager', desc: 'Analytique chef de projet', secure: true }
+    { title: 'admin.apiDocs.grpReports', endpoints: [
+      { method: 'GET', path: '/analytics/admin/reports', desc: 'admin.apiDocs.epReportGlobal', secure: true },
+      { method: 'GET', path: '/analytics/admin/performance', desc: 'admin.apiDocs.epPerfMetrics', secure: true },
+      { method: 'GET', path: '/analytics/manager', desc: 'admin.apiDocs.epManagerAnalytics', secure: true }
     ]}
   ];
 
@@ -191,12 +194,12 @@ export class AdminApiDocsComponent {
   filteredEndpoints(g: ApiGroup): Endpoint[] {
     const f = this.filter.trim().toLowerCase();
     if (!f) return g.endpoints;
-    return g.endpoints.filter(e => e.path.toLowerCase().includes(f) || e.desc.toLowerCase().includes(f) || e.method.toLowerCase().includes(f));
+    return g.endpoints.filter(e => e.path.toLowerCase().includes(f) || this.translate.instant(e.desc).toLowerCase().includes(f) || e.method.toLowerCase().includes(f));
   }
 
   sampleReq(e: Endpoint): string {
     if (e.req) return e.req;
-    if (e.method === 'GET' || e.method === 'DELETE') return '// Aucun corps de requête';
+    if (e.method === 'GET' || e.method === 'DELETE') return this.translate.instant('admin.apiDocs.noBody');
     return '{\n  "name": "...",\n  "description": "..."\n}';
   }
   sampleRes(e: Endpoint): string {

@@ -10,25 +10,25 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
       </div>
-      <input type="text" placeholder="Rechercher un utilisateur (nom, email)..."
+      <input type="text" [placeholder]="'admin.users.searchPlaceholder' | translate"
         [(ngModel)]="searchTerm" (ngModelChange)="onFilterChange()" />
     </div>
 
     <div class="filter-controls">
       <div class="select-wrapper proto-filter">
         <select [(ngModel)]="roleFilter" (change)="onFilterChange()">
-          <option value="">Rôle : Tous</option>
-          <option value="ADMIN">Rôle : Administrateur</option>
-          <option value="PROJECT_MANAGER">Rôle : Chef de Projet</option>
-          <option value="USER">Rôle : Collaborateur</option>
+          <option value="">{{ 'admin.users.roleAll' | translate }}</option>
+          <option value="ADMIN">{{ 'admin.users.roleAdmin' | translate }}</option>
+          <option value="PROJECT_MANAGER">{{ 'admin.users.roleManager' | translate }}</option>
+          <option value="USER">{{ 'admin.users.roleUser' | translate }}</option>
         </select>
         <svg class="funnel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
       </div>
       <div class="select-wrapper proto-filter">
         <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
-          <option value="">Statut : Tous</option>
-          <option value="ACTIVE">Statut : Actif</option>
-          <option value="INACTIVE">Statut : Inactif</option>
+          <option value="">{{ 'admin.users.statusAll' | translate }}</option>
+          <option value="ACTIVE">{{ 'admin.users.statusActiveOpt' | translate }}</option>
+          <option value="INACTIVE">{{ 'admin.users.statusInactiveOpt' | translate }}</option>
         </select>
         <svg class="funnel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
       </div>
@@ -37,25 +37,25 @@
     <div class="toolbar-actions">
       <button class="btn btn-secondary" (click)="exportCsv()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        Exporter CSV
+        {{ 'admin.users.exportCsv' | translate }}
       </button>
       <button class="btn btn-primary" (click)="openAddModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Créer un utilisateur
+        {{ 'admin.users.createUser' | translate }}
       </button>
     </div>
   </div>
 
   <!-- Bulk-action bar -->
   <div class="glass-panel bulk-bar" *ngIf="selected.size > 0">
-    <span class="count-badge brand">{{ selected.size }} sélectionné(s)</span>
-    <span class="bulk-label">Actions groupées :</span>
+    <span class="count-badge brand">{{ 'admin.users.selectedCount' | translate:{ count: selected.size } }}</span>
+    <span class="bulk-label">{{ 'admin.users.bulkActions' | translate }}</span>
     <div class="bulk-actions">
-      <button class="btn btn-secondary btn-sm" (click)="bulkSetActive(true)">Activer</button>
-      <button class="btn btn-secondary btn-sm" (click)="bulkSetActive(false)">Désactiver</button>
+      <button class="btn btn-secondary btn-sm" (click)="bulkSetActive(true)">{{ 'admin.users.activate' | translate }}</button>
+      <button class="btn btn-secondary btn-sm" (click)="bulkSetActive(false)">{{ 'admin.users.deactivate' | translate }}</button>
       <button class="btn btn-danger btn-sm" (click)="bulkDelete()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
-        Supprimer
+        {{ 'admin.users.delete' | translate }}
       </button>
     </div>
   </div>
@@ -64,7 +64,7 @@
   <div class="glass-panel users-table-panel">
     <div class="loading-overlay" *ngIf="loading">
       <div class="spinner"></div>
-      <span>Interrogation des entrées de la base de données...</span>
+      <span>{{ 'admin.users.loadingDb' | translate }}</span>
     </div>
 
     <div class="empty-state" *ngIf="!loading && filteredUsers.length === 0">
@@ -76,8 +76,8 @@
           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
       </div>
-      <h3>Aucun Compte Trouvé</h3>
-      <p>Aucun compte utilisateur ne correspond à vos termes de recherche ou filtres actifs.</p>
+      <h3>{{ 'admin.users.noAccountsTitle' | translate }}</h3>
+      <p>{{ 'admin.users.noAccountsText' | translate }}</p>
     </div>
 
     <div class="table-scroll-container" *ngIf="!loading && filteredUsers.length > 0">
@@ -85,13 +85,13 @@
         <thead>
           <tr>
             <th class="check-col"><input type="checkbox" [checked]="allVisibleSelected" (change)="toggleSelectAll()" /></th>
-            <th>Utilisateur</th>
-            <th>Email</th>
-            <th>Rôle</th>
-            <th>Statut</th>
-            <th>Dernière connexion</th>
-            <th>Projets</th>
-            <th class="actions-col">Actions</th>
+            <th>{{ 'admin.users.colUser' | translate }}</th>
+            <th>{{ 'admin.users.colEmail' | translate }}</th>
+            <th>{{ 'admin.users.colRole' | translate }}</th>
+            <th>{{ 'admin.users.colStatus' | translate }}</th>
+            <th>{{ 'admin.users.colLastLogin' | translate }}</th>
+            <th>{{ 'admin.users.colProjects' | translate }}</th>
+            <th class="actions-col">{{ 'admin.users.colActions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -105,31 +105,31 @@
             </td>
             <td class="email-cell">{{ user.email }}</td>
             <td>
-              <span class="role-badge" [ngClass]="roleOf(user).toLowerCase()">{{ roleLabel(user) }}</span>
+              <span class="role-badge" [ngClass]="roleOf(user).toLowerCase()">{{ roleLabelKey(user) | translate }}</span>
             </td>
             <td>
               <div class="status-cell">
                 <button type="button" class="user-switch" [class.on]="user.isActive !== false"
-                        (click)="openStatusModal(user)" [title]="user.isActive !== false ? 'Désactiver le compte' : 'Activer le compte'">
+                        (click)="openStatusModal(user)" [title]="(user.isActive !== false ? 'admin.users.deactivateAccount' : 'admin.users.activateAccount') | translate">
                   <span class="knob"></span>
                 </button>
-                <span class="status-text" [class.muted]="user.isActive === false">{{ user.isActive !== false ? 'Actif' : 'Inactif' }}</span>
+                <span class="status-text" [class.muted]="user.isActive === false">{{ (user.isActive !== false ? 'admin.users.active' : 'admin.users.inactive') | translate }}</span>
               </div>
             </td>
             <td class="muted-cell">{{ lastLogin(user) }}</td>
             <td><span class="count-badge brand">{{ projectCount(user) }}</span></td>
             <td class="actions-col">
               <div class="action-buttons">
-                <button class="action-btn act-edit" (click)="openEditModal(user)" title="Modifier">
+                <button class="action-btn act-edit" (click)="openEditModal(user)" [title]="'admin.users.edit' | translate">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path></svg>
                 </button>
-                <button class="action-btn act-reset" (click)="resetPassword(user)" title="Réinitialiser MDP">
+                <button class="action-btn act-reset" (click)="resetPassword(user)" [title]="'admin.users.resetPwd' | translate">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3"></path></svg>
                 </button>
-                <button class="action-btn act-warn" (click)="openStatusModal(user)" [title]="user.isActive !== false ? 'Désactiver' : 'Activer'">
+                <button class="action-btn act-warn" (click)="openStatusModal(user)" [title]="(user.isActive !== false ? 'admin.users.deactivateShort' : 'admin.users.activateShort') | translate">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
                 </button>
-                <button class="action-btn act-danger" (click)="openDeleteModal(user)" title="Supprimer">
+                <button class="action-btn act-danger" (click)="openDeleteModal(user)" [title]="'admin.users.delete' | translate">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 </button>
               </div>
@@ -142,17 +142,17 @@
     <!-- Pagination Footer -->
     <div class="table-footer" *ngIf="!loading && filteredUsers.length > 0">
       <div class="entries-info">
-        Affichage 1–{{ filteredUsers.length }} sur {{ totalElements }} utilisateurs
+        {{ 'admin.users.showingRange' | translate:{ count: filteredUsers.length, total: totalElements } }}
       </div>
       <div class="pagination-controls">
-        <button class="pag-btn text" (click)="prevPage()" [disabled]="currentPage === 0">Précédent</button>
+        <button class="pag-btn text" (click)="prevPage()" [disabled]="currentPage === 0">{{ 'admin.users.prev' | translate }}</button>
         <div class="page-numbers">
           <button class="pag-btn num-btn"
             *ngFor="let page of [].constructor(totalPages); let idx = index"
             [ngClass]="{ active: idx === currentPage }"
             (click)="goToPage(idx)">{{ idx + 1 }}</button>
         </div>
-        <button class="pag-btn text" (click)="nextPage()" [disabled]="currentPage === totalPages - 1">Suivant</button>
+        <button class="pag-btn text" (click)="nextPage()" [disabled]="currentPage === totalPages - 1">{{ 'admin.users.next' | translate }}</button>
       </div>
     </div>
   </div>
@@ -164,7 +164,7 @@
 <div class="modal-backdrop" *ngIf="showAddModal" (click)="closeAddModal()">
   <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Intégrer un Compte</h3>
+      <h3>{{ 'admin.users.addTitle' | translate }}</h3>
       <button class="modal-close-btn" (click)="closeAddModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -176,43 +176,43 @@
     <form class="modal-form" (submit)="submitAddUser(); $event.preventDefault()">
       <div class="form-row">
         <div class="form-group">
-          <label>Prénom</label>
-          <input type="text" placeholder="Jean" [(ngModel)]="addUserForm.firstName" name="firstName" required />
+          <label>{{ 'admin.users.firstName' | translate }}</label>
+          <input type="text" [placeholder]="'admin.users.phFirstName' | translate" [(ngModel)]="addUserForm.firstName" name="firstName" required />
         </div>
         <div class="form-group">
-          <label>Nom</label>
-          <input type="text" placeholder="Dupont" [(ngModel)]="addUserForm.lastName" name="lastName" required />
+          <label>{{ 'admin.users.lastName' | translate }}</label>
+          <input type="text" [placeholder]="'admin.users.phLastName' | translate" [(ngModel)]="addUserForm.lastName" name="lastName" required />
         </div>
       </div>
 
       <div class="form-group">
-        <label>Identifiant d'Entreprise</label>
-        <input type="text" placeholder="jean.dupont" [(ngModel)]="addUserForm.username" name="username" required />
+        <label>{{ 'admin.users.companyId' | translate }}</label>
+        <input type="text" [placeholder]="'admin.users.phUsername' | translate" [(ngModel)]="addUserForm.username" name="username" required />
       </div>
 
       <div class="form-group">
-        <label>Email d'Entreprise</label>
-        <input type="email" placeholder="jean.dupont@entreprise.com" [(ngModel)]="addUserForm.email" name="email" required />
+        <label>{{ 'admin.users.companyEmail' | translate }}</label>
+        <input type="email" [placeholder]="'admin.users.phEmail' | translate" [(ngModel)]="addUserForm.email" name="email" required />
       </div>
 
       <div class="form-group">
-        <label>Mot de Passe Temporaire</label>
+        <label>{{ 'admin.users.tempPassword' | translate }}</label>
         <input type="password" placeholder="••••••••" [(ngModel)]="addUserForm.password" name="password" required />
       </div>
 
       <div class="form-group">
-        <label>Niveau d'Autorisation d'Accès</label>
+        <label>{{ 'admin.users.accessLevel' | translate }}</label>
         <select [(ngModel)]="addUserForm.role" name="role" required>
-          <option value="USER">Collaborateur / Utilisateur</option>
-          <option value="PROJECT_MANAGER">Chef de Projet</option>
-          <option value="ADMIN">Administrateur Système</option>
+          <option value="USER">{{ 'admin.users.optUser' | translate }}</option>
+          <option value="PROJECT_MANAGER">{{ 'admin.users.optManager' | translate }}</option>
+          <option value="ADMIN">{{ 'admin.users.optAdmin' | translate }}</option>
         </select>
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">{{ 'admin.users.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="submitting">
-          <span *ngIf="!submitting">Créer le Compte</span>
+          <span *ngIf="!submitting">{{ 'admin.users.createAccount' | translate }}</span>
           <div class="spinner" *ngIf="submitting"></div>
         </button>
       </div>
@@ -224,7 +224,7 @@
 <div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()">
   <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Modifier le Compte</h3>
+      <h3>{{ 'admin.users.editTitle' | translate }}</h3>
       <button class="modal-close-btn" (click)="closeEditModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -236,38 +236,38 @@
     <form class="modal-form" (submit)="submitEditUser(); $event.preventDefault()">
       <div class="form-row">
         <div class="form-group">
-          <label>Prénom</label>
+          <label>{{ 'admin.users.firstName' | translate }}</label>
           <input type="text" [(ngModel)]="editUserForm.firstName" name="firstName" required />
         </div>
         <div class="form-group">
-          <label>Nom</label>
+          <label>{{ 'admin.users.lastName' | translate }}</label>
           <input type="text" [(ngModel)]="editUserForm.lastName" name="lastName" required />
         </div>
       </div>
 
       <div class="form-group">
-        <label>Identifiant d'Entreprise</label>
+        <label>{{ 'admin.users.companyId' | translate }}</label>
         <input type="text" [(ngModel)]="editUserForm.username" name="username" required />
       </div>
 
       <div class="form-group">
-        <label>Email d'Entreprise</label>
+        <label>{{ 'admin.users.companyEmail' | translate }}</label>
         <input type="email" [(ngModel)]="editUserForm.email" name="email" required />
       </div>
 
       <div class="form-group">
-        <label>Niveau d'Autorisation d'Accès</label>
+        <label>{{ 'admin.users.accessLevel' | translate }}</label>
         <select [(ngModel)]="editUserForm.role" name="role" required>
-          <option value="USER">Collaborateur / Utilisateur</option>
-          <option value="PROJECT_MANAGER">Chef de Projet</option>
-          <option value="ADMIN">Administrateur Système</option>
+          <option value="USER">{{ 'admin.users.optUser' | translate }}</option>
+          <option value="PROJECT_MANAGER">{{ 'admin.users.optManager' | translate }}</option>
+          <option value="ADMIN">{{ 'admin.users.optAdmin' | translate }}</option>
         </select>
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">{{ 'admin.users.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="submitting">
-          <span *ngIf="!submitting">Enregistrer les Modifications</span>
+          <span *ngIf="!submitting">{{ 'admin.users.saveChanges' | translate }}</span>
           <div class="spinner" *ngIf="submitting"></div>
         </button>
       </div>
@@ -300,10 +300,10 @@
     <!-- Dynamic Title -->
     <div class="modal-header" style="border: none; padding-top: 0; justify-content: center; flex-direction: column; text-align: center; gap: 6px;">
       <h3 [ngClass]="(selectedUser?.isActive !== false) ? 'text-warn' : 'text-success'">
-        {{ (selectedUser?.isActive !== false) ? 'Suspendre le Compte' : 'Activer le Compte' }}
+        {{ ((selectedUser?.isActive !== false) ? 'admin.users.suspendTitle' : 'admin.users.activateTitle') | translate }}
       </h3>
       <p style="font-size: 13px; color: var(--text-muted); font-weight: 500; margin: 0;">
-        {{ (selectedUser?.isActive !== false) ? 'Cet utilisateur perdra tout accès à son espace de travail.' : 'Cet utilisateur récupérera un accès complet à son espace de travail.' }}
+        {{ ((selectedUser?.isActive !== false) ? 'admin.users.suspendSubtitle' : 'admin.users.activateSubtitle') | translate }}
       </p>
     </div>
 
@@ -318,7 +318,7 @@
           <span class="status-user-meta">
             @{{ selectedUser?.username }} ·
             <span class="status-pill" [ngClass]="(selectedUser?.isActive !== false) ? 'active' : 'suspended'">
-              {{ (selectedUser?.isActive !== false) ? 'Actif' : 'Suspendu' }}
+              {{ ((selectedUser?.isActive !== false) ? 'admin.users.active' : 'admin.users.statusSuspended') | translate }}
             </span>
           </span>
         </div>
@@ -337,21 +337,21 @@
         </svg>
         <p>
           <ng-container *ngIf="selectedUser?.isActive !== false">
-            La suspension de ce compte <strong>révoquera immédiatement l'accès à la connexion</strong>. Les données et les affectations de l'utilisateur resteront intactes et pourront être restaurées en réactivant le compte à tout moment.
+            {{ 'admin.users.suspendBodyPre' | translate }} <strong>{{ 'admin.users.suspendBodyStrong' | translate }}</strong>{{ 'admin.users.suspendBodyPost' | translate }}
           </ng-container>
           <ng-container *ngIf="selectedUser?.isActive === false">
-            L'activation de ce compte <strong>restaurera l'accès complet à l'espace de travail</strong>. L'utilisateur pourra se connecter, consulter ses tâches et collaborer immédiatement sur les projets qui lui sont assignés.
+            {{ 'admin.users.activateBodyPre' | translate }} <strong>{{ 'admin.users.activateBodyStrong' | translate }}</strong>{{ 'admin.users.activateBodyPost' | translate }}
           </ng-container>
         </p>
       </div>
 
       <div class="modal-footer" style="margin-top: 8px;">
-        <button type="button" class="btn btn-secondary" (click)="closeStatusModal()">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeStatusModal()">{{ 'admin.users.cancel' | translate }}</button>
         <button type="button"
                 [ngClass]="(selectedUser?.isActive !== false) ? 'btn btn-warn' : 'btn btn-success'"
                 (click)="submitToggleStatus()" [disabled]="submitting">
           <span *ngIf="!submitting">
-            {{ (selectedUser?.isActive !== false) ? 'Oui, Suspendre le Compte' : 'Oui, Activer le Compte' }}
+            {{ ((selectedUser?.isActive !== false) ? 'admin.users.confirmSuspend' : 'admin.users.confirmActivate') | translate }}
           </span>
           <div class="spinner" *ngIf="submitting"></div>
         </button>
@@ -377,8 +377,8 @@
     </div>
 
     <div class="modal-header" style="border: none; padding-top: 0; justify-content: center; flex-direction: column; text-align: center; gap: 6px;">
-      <h3 style="color: var(--danger); font-size: 20px;">Supprimer le Compte Définitivement</h3>
-      <p style="font-size: 13px; color: var(--text-muted); font-weight: 500; margin: 0;">Cette action est irréversible.</p>
+      <h3 style="color: var(--danger); font-size: 20px;">{{ 'admin.users.deleteTitle' | translate }}</h3>
+      <p style="font-size: 13px; color: var(--text-muted); font-weight: 500; margin: 0;">{{ 'admin.users.irreversible' | translate }}</p>
     </div>
 
     <div class="modal-form">
@@ -389,7 +389,7 @@
         </div>
         <div class="delete-user-info">
           <span class="delete-user-name">{{ selectedUser?.firstName }} {{ selectedUser?.lastName }}</span>
-          <span class="delete-user-meta">@{{ selectedUser?.username }} · {{ selectedUser?.role === 'PROJECT_MANAGER' ? 'Chef de Projet' : (selectedUser?.role === 'ADMIN' ? 'Administrateur' : 'Collaborateur') }}</span>
+          <span class="delete-user-meta">@{{ selectedUser?.username }} · {{ (selectedUser?.role === 'PROJECT_MANAGER' ? 'admin.users.roleManagerShort' : (selectedUser?.role === 'ADMIN' ? 'admin.users.roleAdminShort' : 'admin.users.roleCollaboratorShort')) | translate }}</span>
         </div>
       </div>
 
@@ -400,18 +400,18 @@
           <line x1="12" y1="9" x2="12" y2="13"></line>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
-        <p>Toutes les affectations de tâches, les adhésions aux projets et l'historique de l'espace de travail liés à ce compte seront <strong>définitivement orphelins ou effacés</strong> du système.</p>
+        <p>{{ 'admin.users.deleteWarningPre' | translate }} <strong>{{ 'admin.users.deleteWarningStrong' | translate }}</strong> {{ 'admin.users.deleteWarningPost' | translate }}</p>
       </div>
 
       <div class="modal-footer" style="margin-top: 8px;">
-        <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">{{ 'admin.users.cancel' | translate }}</button>
         <button type="button" class="btn btn-danger" (click)="submitDeleteUser()" [disabled]="submitting">
           <span *ngIf="!submitting">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
-            Supprimer Définitivement
+            {{ 'admin.users.deletePermanently' | translate }}
           </span>
           <div class="spinner" *ngIf="submitting"></div>
         </button>

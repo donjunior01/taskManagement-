@@ -1,30 +1,31 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { ToastService } from '../../../core/services/toast.service';
 
-interface Donut { name: string; value: number; color: string; dash: string; offset: number; }
+interface Donut { nameKey: string; value: number; color: string; dash: string; offset: number; }
 
 @Component({
   selector: 'app-pm-analytics',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
   <div class="an-wrap">
 
     <!-- ═══ KPI cards ═══ -->
     <div class="kpi-grid">
       <div class="kpi anim" *ngFor="let k of kpis; let i = index" [style.--d]="(i*0.05)+'s'">
-        <div class="kpi-l">{{ k.label }}</div>
+        <div class="kpi-l">{{ k.labelKey | translate }}</div>
         <div class="kpi-v" [ngClass]="k.tone">{{ k.value }}</div>
-        <div class="kpi-s">{{ k.sub }}</div>
+        <div class="kpi-s">{{ k.subKey | translate:k.subParams }}</div>
       </div>
     </div>
 
     <div class="charts">
       <!-- Tendance hebdomadaire -->
       <div class="card anim" style="--d:.2s">
-        <h3>Tendance hebdomadaire <span class="sub">(8 semaines)</span></h3>
+        <h3>{{ 'pm.analytics.trendTitle' | translate }} <span class="sub">{{ 'pm.analytics.trendSub' | translate }}</span></h3>
         <div class="rc xy">
           <div class="y-axis"><span *ngFor="let t of trendTicks">{{ t }}</span></div>
           <div class="plot" (mousemove)="onMove($event, 'trend', trend.length)" (mouseleave)="hover = null">
@@ -37,29 +38,29 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
             </div>
             <div class="rtip" *ngIf="hover?.chart === 'trend' && trend[hover!.i]" [style.left.%]="hover!.leftPct" [class.flip]="hover!.leftPct > 60">
               <div class="rtip-t">{{ trend[hover!.i].label }}</div>
-              <div class="rtip-r"><i class="d" style="background:#94a3b8"></i>Créées<b>{{ trend[hover!.i].created }}</b></div>
-              <div class="rtip-r"><i class="d" style="background:#2563eb"></i>Terminées<b>{{ trend[hover!.i].completed }}</b></div>
+              <div class="rtip-r"><i class="d" style="background:#94a3b8"></i>{{ 'pm.analytics.created' | translate }}<b>{{ trend[hover!.i].created }}</b></div>
+              <div class="rtip-r"><i class="d" style="background:#2563eb"></i>{{ 'pm.analytics.completed' | translate }}<b>{{ trend[hover!.i].completed }}</b></div>
             </div>
           </div>
           <div class="x-axis bars-x"><span *ngFor="let p of trend">{{ p.label }}</span></div>
         </div>
-        <div class="legend"><span class="lg"><i class="d" style="background:#94a3b8"></i> Créées</span><span class="lg"><i class="d" style="background:#2563eb"></i> Terminées</span></div>
+        <div class="legend"><span class="lg"><i class="d" style="background:#94a3b8"></i> {{ 'pm.analytics.created' | translate }}</span><span class="lg"><i class="d" style="background:#2563eb"></i> {{ 'pm.analytics.completed' | translate }}</span></div>
       </div>
 
       <!-- Répartition des tâches -->
       <div class="card anim" style="--d:.26s">
-        <h3>Répartition des tâches</h3>
+        <h3>{{ 'pm.analytics.distribution' | translate }}</h3>
         <div class="donut-split">
           <div class="donut-wrap reveal">
             <svg viewBox="0 0 36 36" class="donut">
               <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#eef2f7" stroke-width="4"></circle>
               <circle class="dseg" *ngFor="let s of donut; let i = index" cx="18" cy="18" r="15.9155" fill="none" [attr.stroke]="s.color" stroke-width="4" [attr.stroke-dasharray]="s.dash" [attr.stroke-dashoffset]="s.offset" (mouseenter)="donutHover = i" (mouseleave)="donutHover = -1"></circle>
             </svg>
-            <div class="donut-center"><span class="dc-num">{{ totalTasks }}</span><span class="dc-lbl">tâches</span></div>
+            <div class="donut-center"><span class="dc-num">{{ totalTasks }}</span><span class="dc-lbl">{{ 'pm.analytics.tasks' | translate }}</span></div>
           </div>
           <ul class="donut-legend">
-            <li *ngFor="let s of donut; let i = index" [class.on]="donutHover === i"><span class="d" [style.background]="s.color"></span><span class="nm">{{ s.name }}</span><span class="vl">{{ s.value }}</span></li>
-            <li *ngIf="donut.length === 0" class="empty-li">Aucune tâche.</li>
+            <li *ngFor="let s of donut; let i = index" [class.on]="donutHover === i"><span class="d" [style.background]="s.color"></span><span class="nm">{{ s.nameKey | translate }}</span><span class="vl">{{ s.value }}</span></li>
+            <li *ngIf="donut.length === 0" class="empty-li">{{ 'pm.analytics.noTasks' | translate }}</li>
           </ul>
         </div>
       </div>
@@ -67,7 +68,7 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
 
     <!-- Charge par membre -->
     <div class="card anim" style="--d:.32s">
-      <h3>Charge par membre</h3>
+      <h3>{{ 'pm.analytics.loadPerMember' | translate }}</h3>
       <div class="work reveal">
         <div class="work-row" *ngFor="let m of workload; let i = index" (mouseenter)="whover = i" (mouseleave)="whover = -1">
           <span class="w-name" [title]="m.name">{{ m.name }}</span>
@@ -78,13 +79,13 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
           <span class="w-total">{{ m.open + m.done }}</span>
           <div class="w-tip" *ngIf="whover === i">
             <div class="rtip-t">{{ m.name }}</div>
-            <div class="rtip-r"><i class="d" style="background:#f97316"></i>En cours<b>{{ m.open }}</b></div>
-            <div class="rtip-r"><i class="d" style="background:#2563eb"></i>Terminées<b>{{ m.done }}</b></div>
+            <div class="rtip-r"><i class="d" style="background:#f97316"></i>{{ 'pm.analytics.inProgress' | translate }}<b>{{ m.open }}</b></div>
+            <div class="rtip-r"><i class="d" style="background:#2563eb"></i>{{ 'pm.analytics.completed' | translate }}<b>{{ m.done }}</b></div>
           </div>
         </div>
-        <div class="empty" *ngIf="workload.length === 0">Aucune donnée d'équipe.</div>
+        <div class="empty" *ngIf="workload.length === 0">{{ 'pm.analytics.noTeamData' | translate }}</div>
       </div>
-      <div class="legend"><span class="lg"><i class="d" style="background:#f97316"></i> En cours</span><span class="lg"><i class="d" style="background:#2563eb"></i> Terminées</span></div>
+      <div class="legend"><span class="lg"><i class="d" style="background:#f97316"></i> {{ 'pm.analytics.inProgress' | translate }}</span><span class="lg"><i class="d" style="background:#2563eb"></i> {{ 'pm.analytics.completed' | translate }}</span></div>
     </div>
   </div>
   `,
@@ -149,21 +150,21 @@ export class PmAnalyticsComponent implements OnInit {
   donutHover = -1;
   whover = -1;
 
-  kpis: { label: string; value: string; sub: string; tone: string }[] = [];
+  kpis: { labelKey: string; value: string; subKey: string; subParams?: Record<string, unknown>; tone: string }[] = [];
   trend: { label: string; created: number; completed: number }[] = [];
   trendMax = 1; trendTicks: number[] = [];
   workload: { name: string; open: number; done: number }[] = [];
   workMax = 1;
   donut: Donut[] = []; totalTasks = 0;
 
-  constructor(private analyticsService: AnalyticsService, private toast: ToastService, private cdr: ChangeDetectorRef) {}
+  constructor(private analyticsService: AnalyticsService, private toast: ToastService, private cdr: ChangeDetectorRef, private translate: TranslateService) {}
 
   ngOnInit(): void { this.load(); }
 
   load(): void {
     this.analyticsService.getManagerAnalytics().subscribe({
       next: (r: any) => { this.apply(r?.data || r || {}); this.loading = false; this.reveal(); },
-      error: () => { this.loading = false; this.toast.show('Impossible de charger les analyses.', 'error'); this.cdr.detectChanges(); }
+      error: () => { this.loading = false; this.toast.show(this.translate.instant('pm.analytics.toastLoadFailed'), 'error'); this.cdr.detectChanges(); }
     });
   }
 
@@ -174,10 +175,10 @@ export class PmAnalyticsComponent implements OnInit {
 
   private apply(a: any): void {
     this.kpis = [
-      { label: 'Tâches terminées', value: `${a.completedTasks ?? 0}`, sub: `${a.totalTasks ?? 0} au total`, tone: 'success' },
-      { label: 'Taux à temps', value: `${Math.round(a.onTimeCompletionRate ?? 0)}%`, sub: 'des tâches avec échéance', tone: 'primary' },
-      { label: 'Tâches en retard', value: `${a.overdueTasks ?? 0}`, sub: `${a.openTasks ?? 0} ouvertes`, tone: 'danger' },
-      { label: 'Vélocité (4 sem.)', value: `${a.velocityLast4Weeks ?? 0}`, sub: `délai moyen ${a.avgCompletionDays ?? 0} j`, tone: 'navy' }
+      { labelKey: 'pm.analytics.kpiCompleted', value: `${a.completedTasks ?? 0}`, subKey: 'pm.analytics.kpiCompletedSub', subParams: { total: a.totalTasks ?? 0 }, tone: 'success' },
+      { labelKey: 'pm.analytics.kpiOnTime', value: `${Math.round(a.onTimeCompletionRate ?? 0)}%`, subKey: 'pm.analytics.kpiOnTimeSub', tone: 'primary' },
+      { labelKey: 'pm.analytics.kpiOverdue', value: `${a.overdueTasks ?? 0}`, subKey: 'pm.analytics.kpiOverdueSub', subParams: { open: a.openTasks ?? 0 }, tone: 'danger' },
+      { labelKey: 'pm.analytics.kpiVelocity', value: `${a.velocityLast4Weeks ?? 0}`, subKey: 'pm.analytics.kpiVelocitySub', subParams: { days: a.avgCompletionDays ?? 0 }, tone: 'navy' }
     ];
 
     this.trend = (a.weeklyTrend || []).map((p: any) => ({ label: p.label, created: p.created || 0, completed: p.completed || 0 }));
@@ -190,17 +191,17 @@ export class PmAnalyticsComponent implements OnInit {
     this.workMax = Math.max(1, ...this.workload.map(m => m.open + m.done));
 
     const groups = [
-      { name: 'À faire', value: a.todoTasks ?? 0, color: '#1e293b' },
-      { name: 'En cours', value: a.inProgressTasks ?? 0, color: '#2563eb' },
-      { name: 'Terminé', value: a.completedTasks ?? 0, color: '#22c55e' },
-      { name: 'En pause', value: a.onHoldTasks ?? 0, color: '#f97316' },
-      { name: 'En retard', value: a.overdueTasks ?? 0, color: '#a855f7' }
+      { nameKey: 'pm.analytics.dTodo', value: a.todoTasks ?? 0, color: '#1e293b' },
+      { nameKey: 'pm.analytics.dInProgress', value: a.inProgressTasks ?? 0, color: '#2563eb' },
+      { nameKey: 'pm.analytics.dCompleted', value: a.completedTasks ?? 0, color: '#22c55e' },
+      { nameKey: 'pm.analytics.dOnHold', value: a.onHoldTasks ?? 0, color: '#f97316' },
+      { nameKey: 'pm.analytics.dOverdue', value: a.overdueTasks ?? 0, color: '#a855f7' }
     ];
     this.totalTasks = groups.reduce((s, g) => s + g.value, 0);
     const total = this.totalTasks || 1; let acc = 0;
     this.donut = groups.filter(g => g.value > 0).map(g => {
       const pct = (g.value / total) * 100;
-      const seg: Donut = { name: g.name, value: g.value, color: g.color, dash: `${Math.max(0, pct - 1.2)} ${100 - Math.max(0, pct - 1.2)}`, offset: -acc };
+      const seg: Donut = { nameKey: g.nameKey, value: g.value, color: g.color, dash: `${Math.max(0, pct - 1.2)} ${100 - Math.max(0, pct - 1.2)}`, offset: -acc };
       acc += pct; return seg;
     });
   }

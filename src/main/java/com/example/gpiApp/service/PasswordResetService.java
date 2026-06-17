@@ -53,16 +53,21 @@ public class PasswordResetService {
         // Notify all admins so they can approve the reset.
         List<allUsers> admins = userRepository.findByRole(allUsers.Role.ADMIN);
         for (allUsers admin : admins) {
+            boolean hasReason = reason != null && !reason.isEmpty();
             notificationService.createNotification(
                 admin.getId(),
                 "Demande de réinitialisation de mot de passe",
                 String.format("%s (%s) a demandé la réinitialisation de son mot de passe.%s",
                     user.getFirstName() + " " + user.getLastName(),
                     email,
-                    reason != null && !reason.isEmpty() ? " Motif : " + reason : ""),
+                    hasReason ? " Motif : " + reason : ""),
                 Notification.NotificationType.SYSTEM,
                 savedRequest.getId(),
-                "PASSWORD_RESET_REQUEST"
+                "PASSWORD_RESET_REQUEST",
+                hasReason ? "pwdResetRequestReason" : "pwdResetRequest",
+                hasReason
+                    ? java.util.Map.of("name", user.getFirstName() + " " + user.getLastName(), "email", email, "reason", reason)
+                    : java.util.Map.of("name", user.getFirstName() + " " + user.getLastName(), "email", email)
             );
         }
 
@@ -128,7 +133,9 @@ public class PasswordResetService {
                 "Your password reset request has been rejected. Please contact support for assistance.",
                 Notification.NotificationType.SYSTEM,
                 savedRequest.getId(),
-                "PASSWORD_RESET_REQUEST"
+                "PASSWORD_RESET_REQUEST",
+                "pwdResetRejected",
+                null
             );
         }
         

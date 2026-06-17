@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UserService, User, UserRequest } from '../../../core/services/user.service';
 import { AdminSecurityService } from '../../../core/services/admin-security.service';
 import { ProjectService } from '../../../core/services/project.service';
@@ -9,7 +10,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './users.html',
   styleUrls: ['./users.scss']
 })
@@ -73,8 +74,13 @@ export class AdminUsersComponent implements OnInit {
     private security: AdminSecurityService,
     private projectService: ProjectService,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService
+    private toast: ToastService,
+    private translate: TranslateService
   ) {}
+
+  private locale(): string {
+    return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR';
+  }
 
   ngOnInit(): void {
     this.loadUsers();
@@ -189,11 +195,11 @@ export class AdminUsersComponent implements OnInit {
     return (u.role || u.userType || 'USER').replace('ROLE_', '');
   }
 
-  roleLabel(u: User): string {
+  roleLabelKey(u: User): string {
     switch (this.roleOf(u)) {
-      case 'ADMIN':           return 'Administrateur';
-      case 'PROJECT_MANAGER': return 'Chef de Projet';
-      default:                return 'Collaborateur';
+      case 'ADMIN':           return 'admin.users.roleAdminShort';
+      case 'PROJECT_MANAGER': return 'admin.users.roleManagerShort';
+      default:                return 'admin.users.roleCollaboratorShort';
     }
   }
 
@@ -209,11 +215,11 @@ export class AdminUsersComponent implements OnInit {
     const v = this.lastLoginMap.get((u.username || '').toLowerCase())
            ?? this.lastLoginMap.get((u.email || '').toLowerCase())
            ?? (u as any).lastLogin ?? (u as any).lastLoginAt;
-    if (!v) return 'Jamais connecté';
+    if (!v) return this.translate.instant('admin.users.neverLoggedIn');
     const d = new Date(v);
     if (isNaN(d.getTime())) return '—';
-    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) +
-           ' · ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(this.locale(), { day: '2-digit', month: 'short', year: 'numeric' }) +
+           ' · ' + d.toLocaleTimeString(this.locale(), { hour: '2-digit', minute: '2-digit' });
   }
 
   projectCount(u: User): number {
@@ -255,7 +261,7 @@ export class AdminUsersComponent implements OnInit {
 
   bulkSetActive(target: boolean): void {
     const targets = this.selectedUsers().filter(u => (u.isActive !== false) !== target);
-    if (targets.length === 0) { this.triggerToast('Aucun changement à appliquer.', 'error'); return; }
+    if (targets.length === 0) { this.triggerToast(this.translate.instant('admin.users.toastNoChange'), 'error'); return; }
     let done = 0;
     targets.forEach(u => {
       this.userService.toggleUserStatus(u.id!).subscribe({
@@ -263,7 +269,7 @@ export class AdminUsersComponent implements OnInit {
         error: () => { const i = this.usersList.findIndex(x => x.id === u.id); if (i !== -1) this.usersList[i].isActive = target; done++; if (done === targets.length) { this.applyClientFilters(); this.cdr.detectChanges(); } }
       });
     });
-    this.triggerToast(`${targets.length} compte(s) ${target ? 'activé(s)' : 'désactivé(s)'}.`, 'success');
+    this.triggerToast(this.translate.instant(target ? 'admin.users.toastBulkActivated' : 'admin.users.toastBulkDeactivated', { count: targets.length }), 'success');
     this.clearSelection();
   }
 
@@ -273,27 +279,28 @@ export class AdminUsersComponent implements OnInit {
     targets.forEach(u => this.userService.deleteUser(u.id!).subscribe({ error: () => {} }));
     this.usersList = this.usersList.filter(u => !(u.id != null && this.selected.has(u.id)));
     this.totalElements = Math.max(0, this.totalElements - targets.length);
-    this.triggerToast(`${targets.length} compte(s) supprimé(s).`, 'success');
+    this.triggerToast(this.translate.instant('admin.users.toastBulkDeleted', { count: targets.length }), 'success');
     this.clearSelection();
     this.applyClientFilters();
   }
 
   exportCsv(): void {
-    const rows = [['Nom', 'Email', 'Rôle', 'Statut', 'Dernière connexion']];
+    const T = (k: string) => this.translate.instant(k);
+    const rows = [[T('admin.users.csvName'), T('admin.users.colEmail'), T('admin.users.colRole'), T('admin.users.colStatus'), T('admin.users.colLastLogin')]];
     this.filteredUsers.forEach(u => rows.push([
       `${u.firstName} ${u.lastName}`,
       u.email,
-      this.roleLabel(u),
-      u.isActive !== false ? 'Actif' : 'Inactif',
+      T(this.roleLabelKey(u)),
+      u.isActive !== false ? T('admin.users.active') : T('admin.users.inactive'),
       this.lastLogin(u)
     ]));
     const csv = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'utilisateurs.csv'; a.click();
+    a.href = url; a.download = T('admin.users.csvFilename'); a.click();
     URL.revokeObjectURL(url);
-    this.triggerToast('Export CSV généré.', 'success');
+    this.triggerToast(T('admin.users.toastCsvGenerated'), 'success');
   }
 
   onFilterChange(): void {
@@ -382,7 +389,7 @@ export class AdminUsersComponent implements OnInit {
   // Onboard Action (Create User)
   submitAddUser(): void {
     if (!this.addUserForm.username || !this.addUserForm.email || !this.addUserForm.password || !this.addUserForm.firstName || !this.addUserForm.lastName) {
-      this.triggerToast('Veuillez remplir tous les champs d\'identification obligatoires.', 'error');
+      this.triggerToast(this.translate.instant('admin.users.toastFillRequired'), 'error');
       return;
     }
 
@@ -391,12 +398,12 @@ export class AdminUsersComponent implements OnInit {
       next: (newUser) => {
         this.submitting = false;
         this.showAddModal = false;
-        this.triggerToast(`Compte créé avec succès pour ${newUser.firstName} ${newUser.lastName} !`, 'success');
+        this.triggerToast(this.translate.instant('admin.users.toastAccountCreated', { name: `${newUser.firstName} ${newUser.lastName}` }), 'success');
         this.loadUsers();
       },
       error: (err) => {
         this.submitting = false;
-        this.triggerToast(err?.error?.message || 'Échec de la création du compte.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.users.toastAccountFailed'), 'error');
       }
     });
   }
@@ -406,7 +413,7 @@ export class AdminUsersComponent implements OnInit {
     if (!this.selectedUser || !this.selectedUser.id) return;
     
     if (!this.editUserForm.username || !this.editUserForm.email || !this.editUserForm.firstName || !this.editUserForm.lastName) {
-      this.triggerToast('Tous les champs de détails doivent être correctement renseignés.', 'error');
+      this.triggerToast(this.translate.instant('admin.users.toastFillDetails'), 'error');
       return;
     }
 
@@ -415,12 +422,12 @@ export class AdminUsersComponent implements OnInit {
       next: (updatedUser) => {
         this.submitting = false;
         this.showEditModal = false;
-        this.triggerToast(`Détails du compte mis à jour avec succès pour ${updatedUser.firstName} !`, 'success');
+        this.triggerToast(this.translate.instant('admin.users.toastAccountUpdated', { name: updatedUser.firstName }), 'success');
         this.loadUsers();
       },
       error: (err) => {
         this.submitting = false;
-        this.triggerToast(err?.error?.message || 'Échec de la mise à jour du compte.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.users.toastUpdateFailed'), 'error');
       }
     });
   }
@@ -434,12 +441,12 @@ export class AdminUsersComponent implements OnInit {
       next: () => {
         this.submitting = false;
         this.showDeleteModal = false;
-        this.triggerToast(`Le compte de ${this.selectedUser?.firstName} a été supprimé définitivement.`, 'success');
+        this.triggerToast(this.translate.instant('admin.users.toastAccountDeleted', { name: this.selectedUser?.firstName }), 'success');
         this.loadUsers();
       },
       error: (err) => {
         this.submitting = false;
-        this.triggerToast(err?.error?.message || 'Échec de la suppression du compte.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.users.toastDeleteFailed'), 'error');
       }
     });
   }
@@ -467,7 +474,7 @@ export class AdminUsersComponent implements OnInit {
           this.applyClientFilters();
         }
         this.triggerToast(
-          `Le compte de ${user?.firstName} ${user?.lastName} a été ${newState ? 'activé' : 'suspendu'} avec succès.`,
+          this.translate.instant(newState ? 'admin.users.toastUserActivated' : 'admin.users.toastUserSuspended', { name: `${user?.firstName} ${user?.lastName}` }),
           'success'
         );
         this.selectedUser = null;
@@ -476,7 +483,7 @@ export class AdminUsersComponent implements OnInit {
         this.submitting = false;
         this.showStatusModal = false;
         this.cdr.detectChanges();
-        this.triggerToast(err?.error?.message || 'Échec du changement de statut. Veuillez réessayer.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.users.toastStatusFailed'), 'error');
         this.selectedUser = null;
       }
     });
@@ -492,13 +499,13 @@ export class AdminUsersComponent implements OnInit {
         // returned so the admin can relay it if e-mail delivery is disabled.
         this.triggerToast(
           temp
-            ? `Mot de passe réinitialisé pour ${u.firstName}. Mot de passe temporaire : ${temp} (envoyé à ${u.email}).`
-            : `Mot de passe réinitialisé et envoyé à ${u.email}.`,
+            ? this.translate.instant('admin.users.toastPwdResetTemp', { name: u.firstName, temp, email: u.email })
+            : this.translate.instant('admin.users.toastPwdResetSent', { email: u.email }),
           'success'
         );
       },
       error: (err: any) => {
-        this.triggerToast(err?.error?.message || 'Échec de la réinitialisation du mot de passe.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.users.toastPwdResetFailed'), 'error');
       }
     });
   }

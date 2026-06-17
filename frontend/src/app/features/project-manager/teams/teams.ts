@@ -7,13 +7,14 @@ import { TaskService, Task } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TeamService, Team } from '../../../core/services/team.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 
 interface MemberVital {
   id?: number;
   name: string;
   role: string;
-  roleLabel: string;
+  roleLabelKey: string;
   teams: string[];
   active: number;
   completed: number;
@@ -25,7 +26,7 @@ interface MemberVital {
 @Component({
   selector: 'app-pm-teams',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent, TranslatePipe],
   template: `
   <div class="tm-wrap">
 
@@ -33,23 +34,23 @@ interface MemberVital {
     <div class="toolbar">
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" placeholder="Rechercher un membre…" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" />
+        <input type="text" [placeholder]="'pm.teams.searchPlaceholder' | translate" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" />
       </div>
       <select class="sel" [(ngModel)]="roleFilter" (change)="applyFilters()">
-        <option value="">Tous rôles</option>
-        <option value="USER">Collaborateur</option>
-        <option value="PROJECT_MANAGER">Chef de Projet</option>
+        <option value="">{{ 'pm.teams.allRoles' | translate }}</option>
+        <option value="USER">{{ 'pm.teams.roleCollaborator' | translate }}</option>
+        <option value="PROJECT_MANAGER">{{ 'pm.teams.roleManager' | translate }}</option>
       </select>
       <select class="sel" [(ngModel)]="projectFilter" (change)="applyFilters()">
-        <option value="">Tous projets</option>
+        <option value="">{{ 'pm.teams.allProjects' | translate }}</option>
         <option *ngFor="let p of projectsList" [value]="p.id">{{ p.name }}</option>
       </select>
       <select class="sel" [(ngModel)]="availFilter" (change)="applyFilters()">
-        <option value="">Toute disponibilité</option>
-        <option value="dispo">Disponible</option><option value="occupe">Occupé</option><option value="surcharge">Surchargé</option>
+        <option value="">{{ 'pm.teams.allAvailability' | translate }}</option>
+        <option value="dispo">{{ 'pm.teams.availAvailable' | translate }}</option><option value="occupe">{{ 'pm.teams.availBusy' | translate }}</option><option value="surcharge">{{ 'pm.teams.availOverloaded' | translate }}</option>
       </select>
       <button class="btn-primary tb-add" (click)="openCreateTeam()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Constituer une Équipe
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> {{ 'pm.teams.buildTeam' | translate }}
       </button>
     </div>
 
@@ -67,38 +68,38 @@ interface MemberVital {
               <div class="mc-head">
                 <div>
                   <div class="mc-name">{{ m.name }}</div>
-                  <div class="mc-role">{{ m.roleLabel }}</div>
+                  <div class="mc-role">{{ m.roleLabelKey | translate }}</div>
                 </div>
-                <span class="role-badge">{{ m.roleLabel }}</span>
+                <span class="role-badge">{{ m.roleLabelKey | translate }}</span>
               </div>
               <div class="team-chips">
                 <span class="chip" *ngFor="let t of m.teams.slice(0,3)">{{ t }}</span>
                 <span class="chip more" *ngIf="m.teams.length > 3">+{{ m.teams.length - 3 }}</span>
-                <span class="chip empty" *ngIf="m.teams.length === 0">Aucune équipe</span>
+                <span class="chip empty" *ngIf="m.teams.length === 0">{{ 'pm.teams.noTeam' | translate }}</span>
               </div>
             </div>
           </div>
 
           <div class="mc-stats">
-            <div><span class="num">{{ m.active }}</span> tâches actives</div>
-            <div><span class="num">{{ m.hours }}h</span> loguées</div>
+            <div><span class="num">{{ m.active }}</span> {{ 'pm.teams.activeTasks' | translate }}</div>
+            <div><span class="num">{{ m.hours }}h</span> {{ 'pm.teams.loggedHours' | translate }}</div>
           </div>
 
           <div class="mc-charge">
-            <div class="charge-row"><span class="lbl">Charge</span><span class="val" [ngClass]="loadInfo(m.load).text">{{ loadInfo(m.load).label }}</span></div>
+            <div class="charge-row"><span class="lbl">{{ 'pm.teams.chargeLabel' | translate }}</span><span class="val" [ngClass]="loadInfo(m.load).text">{{ loadInfo(m.load).labelKey | translate }}</span></div>
             <div class="charge-bar"><div class="charge-fill" [ngClass]="loadInfo(m.load).bg" [style.width.%]="animated ? chargePct(m) : 0"></div></div>
           </div>
 
-          <button class="btn-outline full" (click)="openAllocation(m)">Assigner à un projet</button>
+          <button class="btn-outline full" (click)="openAllocation(m)">{{ 'pm.teams.assignToProject' | translate }}</button>
         </div>
-        <div class="empty-card" *ngIf="!loading && filtered.length === 0">Aucun membre pour ces critères.</div>
+        <div class="empty-card" *ngIf="!loading && filtered.length === 0">{{ 'pm.teams.noMembers' | translate }}</div>
       </div>
 
       <!-- Vue d'ensemble (chart) -->
       <div class="overview anim" style="--d:.1s">
         <div class="ov-head">
-          <h3>Vue d'ensemble</h3>
-          <span class="muted-sm">Charge par membre</span>
+          <h3>{{ 'pm.teams.overview' | translate }}</h3>
+          <span class="muted-sm">{{ 'pm.teams.loadPerMember' | translate }}</span>
         </div>
         <div class="chart reveal">
           <div class="ch-row" *ngFor="let m of chartData; let i = index" (mouseenter)="hoverIdx = i" (mouseleave)="hoverIdx = -1">
@@ -109,18 +110,18 @@ interface MemberVital {
             </div>
             <div class="ch-tip" *ngIf="hoverIdx === i">
               <div class="tt-name">{{ m.name }}</div>
-              <div class="tt-row"><i class="sw" [ngClass]="loadInfo(m.load).bg"></i>Tâches actives<b>{{ m.active }}</b></div>
-              <div class="tt-row"><i class="sw blue"></i>Terminées<b>{{ m.completed }}</b></div>
-              <div class="tt-row"><i class="sw slate"></i>Heures loguées<b>{{ m.hours }}h</b></div>
-              <div class="tt-row"><i class="sw" [ngClass]="loadInfo(m.load).bg"></i>Statut<b>{{ loadInfo(m.load).label }}</b></div>
+              <div class="tt-row"><i class="sw" [ngClass]="loadInfo(m.load).bg"></i>{{ 'pm.teams.tipActiveTasks' | translate }}<b>{{ m.active }}</b></div>
+              <div class="tt-row"><i class="sw blue"></i>{{ 'pm.teams.tipCompleted' | translate }}<b>{{ m.completed }}</b></div>
+              <div class="tt-row"><i class="sw slate"></i>{{ 'pm.teams.tipHours' | translate }}<b>{{ m.hours }}h</b></div>
+              <div class="tt-row"><i class="sw" [ngClass]="loadInfo(m.load).bg"></i>{{ 'pm.teams.tipStatus' | translate }}<b>{{ loadInfo(m.load).labelKey | translate }}</b></div>
             </div>
           </div>
-          <div class="empty" *ngIf="chartData.length === 0">Aucune donnée.</div>
+          <div class="empty" *ngIf="chartData.length === 0">{{ 'pm.teams.noData' | translate }}</div>
         </div>
         <div class="ov-legend">
-          <span class="lg"><i class="sw green"></i> Normal</span>
-          <span class="lg"><i class="sw orange"></i> Proche capacité</span>
-          <span class="lg"><i class="sw red"></i> Surchargé</span>
+          <span class="lg"><i class="sw green"></i> {{ 'pm.teams.legendNormal' | translate }}</span>
+          <span class="lg"><i class="sw orange"></i> {{ 'pm.teams.legendNearCapacity' | translate }}</span>
+          <span class="lg"><i class="sw red"></i> {{ 'pm.teams.legendOverloaded' | translate }}</span>
         </div>
       </div>
     </div>
@@ -129,25 +130,25 @@ interface MemberVital {
   <!-- ═══ Allocation modal ═══ -->
   <div class="modal-backdrop" *ngIf="showAlloc" (click)="showAlloc = false">
     <div class="modal sm" (click)="$event.stopPropagation()">
-      <div class="m-head"><h3>Assigner à un projet</h3><button class="x" (click)="showAlloc = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
+      <div class="m-head"><h3>{{ 'pm.teams.assignToProject' | translate }}</h3><button class="x" (click)="showAlloc = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
       <div class="m-body">
-        <div class="fg"><label>Membre</label><select [(ngModel)]="allocForm.developerId"><option *ngFor="let m of allMembers" [ngValue]="m.id">{{ m.name }}</option></select></div>
-        <div class="fg"><label>Projet</label><select [(ngModel)]="allocForm.projectId"><option *ngFor="let p of projectsList" [ngValue]="p.id">{{ p.name }}</option></select></div>
+        <div class="fg"><label>{{ 'pm.teams.member' | translate }}</label><select [(ngModel)]="allocForm.developerId"><option *ngFor="let m of allMembers" [ngValue]="m.id">{{ m.name }}</option></select></div>
+        <div class="fg"><label>{{ 'pm.teams.project' | translate }}</label><select [(ngModel)]="allocForm.projectId"><option *ngFor="let p of projectsList" [ngValue]="p.id">{{ p.name }}</option></select></div>
       </div>
-      <div class="m-foot"><button class="btn-ghost" (click)="showAlloc = false">Annuler</button><button class="btn-primary" (click)="submitAllocation()" [disabled]="submitting">Assigner</button></div>
+      <div class="m-foot"><button class="btn-ghost" (click)="showAlloc = false">{{ 'pm.teams.cancel' | translate }}</button><button class="btn-primary" (click)="submitAllocation()" [disabled]="submitting">{{ 'pm.teams.assign' | translate }}</button></div>
     </div>
   </div>
 
   <!-- ═══ Create team modal ═══ -->
   <div class="modal-backdrop" *ngIf="showCreateTeam" (click)="showCreateTeam = false">
     <div class="modal sm" (click)="$event.stopPropagation()">
-      <div class="m-head"><h3>Constituer une équipe</h3><button class="x" (click)="showCreateTeam = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
+      <div class="m-head"><h3>{{ 'pm.teams.buildTeamTitle' | translate }}</h3><button class="x" (click)="showCreateTeam = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
       <div class="m-body">
-        <div class="fg"><label>Nom de l'équipe *</label><input type="text" [(ngModel)]="teamForm.name" placeholder="Ex : Équipe Frontend"></div>
-        <div class="fg"><label>Projet *</label><select [(ngModel)]="teamForm.projectId"><option [ngValue]="undefined">Sélectionner…</option><option *ngFor="let p of projectsList" [ngValue]="p.id">{{ p.name }}</option></select></div>
-        <div class="fg"><label>Description</label><app-ai-describe [type]="'TEAM'" [title]="teamForm.name" (generated)="teamForm.description = $event"></app-ai-describe><textarea rows="2" [(ngModel)]="teamForm.description"></textarea></div>
+        <div class="fg"><label>{{ 'pm.teams.teamName' | translate }}</label><input type="text" [(ngModel)]="teamForm.name" [placeholder]="'pm.teams.phTeamName' | translate"></div>
+        <div class="fg"><label>{{ 'pm.teams.projectReq' | translate }}</label><select [(ngModel)]="teamForm.projectId"><option [ngValue]="undefined">{{ 'pm.teams.selectPlaceholder' | translate }}</option><option *ngFor="let p of projectsList" [ngValue]="p.id">{{ p.name }}</option></select></div>
+        <div class="fg"><label>{{ 'pm.teams.description' | translate }}</label><app-ai-describe [type]="'TEAM'" [title]="teamForm.name" (generated)="teamForm.description = $event"></app-ai-describe><textarea rows="2" [(ngModel)]="teamForm.description"></textarea></div>
       </div>
-      <div class="m-foot"><button class="btn-ghost" (click)="showCreateTeam = false">Annuler</button><button class="btn-primary" (click)="submitCreateTeam()" [disabled]="submitting">Créer l'équipe</button></div>
+      <div class="m-foot"><button class="btn-ghost" (click)="showCreateTeam = false">{{ 'pm.teams.cancel' | translate }}</button><button class="btn-primary" (click)="submitCreateTeam()" [disabled]="submitting">{{ 'pm.teams.createTeam' | translate }}</button></div>
     </div>
   </div>
   `,
@@ -269,7 +270,8 @@ export class PmTeamsComponent implements OnInit {
     private teamService: TeamService,
     private authService: AuthService,
     private toast: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -338,9 +340,9 @@ export class PmTeamsComponent implements OnInit {
       ].filter(Boolean)));
       return {
         id: u.id,
-        name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || 'Membre',
+        name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || this.translate.instant('pm.teams.memberFallback'),
         role: (u.role || 'USER').replace('ROLE_', ''),
-        roleLabel: this.roleLabel(u.role),
+        roleLabelKey: this.roleLabelKey(u.role),
         teams: teamsByMember[u.id!] || [],
         active, completed, hours, load,
         online: active > 0
@@ -373,14 +375,14 @@ export class PmTeamsComponent implements OnInit {
   barPct(m: MemberVital): number { return (m.active / this.maxActive) * 100; }
   chargePct(m: MemberVital): number { return Math.min(100, (m.active / 6) * 100); }
 
-  loadInfo(load: string): { label: string; bg: string; text: string } {
-    if (load === 'surcharge') return { label: 'Surchargé', bg: 'b-red', text: 't-red' };
-    if (load === 'occupe') return { label: 'Occupé', bg: 'b-orange', text: 't-orange' };
-    return { label: 'Disponible', bg: 'b-green', text: 't-green' };
+  loadInfo(load: string): { labelKey: string; bg: string; text: string } {
+    if (load === 'surcharge') return { labelKey: 'pm.teams.loadOverloaded', bg: 'b-red', text: 't-red' };
+    if (load === 'occupe') return { labelKey: 'pm.teams.loadBusy', bg: 'b-orange', text: 't-orange' };
+    return { labelKey: 'pm.teams.loadAvailable', bg: 'b-green', text: 't-green' };
   }
-  private roleLabel(role?: string): string {
+  private roleLabelKey(role?: string): string {
     const r = (role || '').replace('ROLE_', '').toUpperCase();
-    return r === 'PROJECT_MANAGER' ? 'Chef de Projet' : r === 'ADMIN' ? 'Administrateur' : 'Collaborateur';
+    return r === 'PROJECT_MANAGER' ? 'pm.teams.roleManagerLabel' : r === 'ADMIN' ? 'pm.teams.roleAdmin' : 'pm.teams.roleCollaboratorLabel';
   }
   firstName(name: string): string { return (name || '').split(' ')[0]; }
   initials(name?: string): string {
@@ -400,7 +402,7 @@ export class PmTeamsComponent implements OnInit {
     this.showAlloc = true;
   }
   submitAllocation(): void {
-    if (!this.allocForm.developerId || !this.allocForm.projectId) { this.toast.show('Sélectionnez un membre et un projet.', 'error'); return; }
+    if (!this.allocForm.developerId || !this.allocForm.projectId) { this.toast.show(this.translate.instant('pm.teams.toastSelectMemberProject'), 'error'); return; }
     const devId = +this.allocForm.developerId, projId = +this.allocForm.projectId;
     this.submitting = true;
     this.teamService.getTeamsByProject(projId).subscribe({
@@ -409,7 +411,7 @@ export class PmTeamsComponent implements OnInit {
         if (teams.length > 0 && teams[0].id) {
           this.teamService.addMemberToTeam(teams[0].id, devId).subscribe({ next: () => this.afterAlloc(projId), error: () => this.afterAlloc(projId) });
         } else {
-          this.teamService.createTeam({ name: 'Équipe projet', projectId: projId }).subscribe({
+          this.teamService.createTeam({ name: this.translate.instant('pm.teams.teamProjectName'), projectId: projId }).subscribe({
             next: (team: Team) => this.teamService.addMemberToTeam(team.id!, devId).subscribe({ next: () => this.afterAlloc(projId), error: () => this.afterAlloc(projId) }),
             error: () => this.afterAlloc(projId)
           });
@@ -420,7 +422,7 @@ export class PmTeamsComponent implements OnInit {
   }
   private afterAlloc(projId: number): void {
     this.submitting = false; this.showAlloc = false;
-    this.toast.show(`Membre assigné à « ${this.projectNameById[projId] || 'projet'} ».`, 'success');
+    this.toast.show(this.translate.instant('pm.teams.toastMemberAssigned', { project: this.projectNameById[projId] || this.translate.instant('pm.teams.projectFallback') }), 'success');
     this.loadData();
   }
 
@@ -430,11 +432,11 @@ export class PmTeamsComponent implements OnInit {
     this.showCreateTeam = true;
   }
   submitCreateTeam(): void {
-    if (!this.teamForm.name?.trim() || !this.teamForm.projectId) { this.toast.show("Nom et projet de l'équipe requis.", 'error'); return; }
+    if (!this.teamForm.name?.trim() || !this.teamForm.projectId) { this.toast.show(this.translate.instant('pm.teams.toastTeamNameRequired'), 'error'); return; }
     this.submitting = true;
     this.teamService.createTeam({ name: this.teamForm.name, projectId: this.teamForm.projectId, description: this.teamForm.description }).subscribe({
-      next: () => { this.submitting = false; this.showCreateTeam = false; this.toast.show(`Équipe « ${this.teamForm.name} » créée.`, 'success'); this.loadData(); },
-      error: () => { this.submitting = false; this.showCreateTeam = false; this.toast.show('Équipe créée localement.', 'success'); }
+      next: () => { this.submitting = false; this.showCreateTeam = false; this.toast.show(this.translate.instant('pm.teams.toastTeamCreated', { name: this.teamForm.name }), 'success'); this.loadData(); },
+      error: () => { this.submitting = false; this.showCreateTeam = false; this.toast.show(this.translate.instant('pm.teams.toastTeamCreatedLocal'), 'success'); }
     });
   }
 }

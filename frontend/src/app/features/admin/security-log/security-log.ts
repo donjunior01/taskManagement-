@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AdminSecurityService, LoginAttempt, SecurityMetrics } from '../../../core/services/admin-security.service';
 import { UserService, User } from '../../../core/services/user.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -12,7 +13,7 @@ interface ProfileView { found: boolean; name: string; email: string; role: strin
 @Component({
   selector: 'app-admin-security-log',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
   <div class="sec-wrap">
 
@@ -21,28 +22,28 @@ interface ProfileView { found: boolean; name: string; email: string; role: strin
       <div class="date-range">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
         <input type="date" [(ngModel)]="dateStart" (change)="applyFilters()" />
-        <span class="sep">au</span>
+        <span class="sep">{{ 'admin.securityLog.dateSep' | translate }}</span>
         <input type="date" [(ngModel)]="dateEnd" (change)="applyFilters()" />
       </div>
 
       <div class="filters">
         <select [(ngModel)]="typeFilter" (change)="applyFilters()">
-          <option value="">Type d'événement</option>
-          <option value="success">Connexion réussie</option>
-          <option value="failed">Tentative échouée</option>
+          <option value="">{{ 'admin.securityLog.typeEvent' | translate }}</option>
+          <option value="success">{{ 'admin.securityLog.typeSuccessOpt' | translate }}</option>
+          <option value="failed">{{ 'admin.securityLog.typeFailedOpt' | translate }}</option>
         </select>
         <select [(ngModel)]="userFilter" (change)="applyFilters()">
-          <option value="">Utilisateur</option>
+          <option value="">{{ 'admin.securityLog.user' | translate }}</option>
           <option *ngFor="let u of userOptions" [value]="u">{{ u }}</option>
         </select>
         <select [(ngModel)]="ipFilter" (change)="applyFilters()">
-          <option value="">IP</option>
+          <option value="">{{ 'admin.securityLog.ip' | translate }}</option>
           <option *ngFor="let ip of ipOptions" [value]="ip">{{ ip }}</option>
         </select>
         <select [(ngModel)]="resultFilter" (change)="applyFilters()">
-          <option value="">Résultat</option>
-          <option value="Succès">Succès</option>
-          <option value="Échec">Échec</option>
+          <option value="">{{ 'admin.securityLog.result' | translate }}</option>
+          <option value="admin.securityLog.resSuccess">{{ 'admin.securityLog.resSuccess' | translate }}</option>
+          <option value="admin.securityLog.resFailure">{{ 'admin.securityLog.resFailure' | translate }}</option>
         </select>
       </div>
 
@@ -50,54 +51,54 @@ interface ProfileView { found: boolean; name: string; email: string; role: strin
         <label class="auto-toggle">
           <svg class="ico refresh" [class.spin]="autoRefresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
           <button type="button" class="switch" [class.on]="autoRefresh" (click)="toggleAuto()"><span class="knob"></span></button>
-          Auto 30s
+          {{ 'admin.securityLog.auto30' | translate }}
         </label>
         <button class="btn btn-secondary" (click)="exportCsv()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Exporter
+          {{ 'admin.securityLog.export' | translate }}
         </button>
       </div>
     </div>
 
     <!-- ═══ 4 KPI cards ═══ -->
     <div class="kpi-grid">
-      <div class="kpi-tile t-success"><div class="kv">{{ kpi.success }}</div><div class="kl">Connexions réussies (24h)</div></div>
-      <div class="kpi-tile t-danger"><div class="kv">{{ kpi.failed }}</div><div class="kl">Tentatives échouées (24h)</div></div>
-      <div class="kpi-tile t-warning"><div class="kv">{{ kpi.locked }}</div><div class="kl">Comptes verrouillés</div></div>
-      <div class="kpi-tile t-purple"><div class="kv">{{ kpi.suspicious }}</div><div class="kl">IPs suspectes</div></div>
+      <div class="kpi-tile t-success"><div class="kv">{{ kpi.success }}</div><div class="kl">{{ 'admin.securityLog.kpiSuccess' | translate }}</div></div>
+      <div class="kpi-tile t-danger"><div class="kv">{{ kpi.failed }}</div><div class="kl">{{ 'admin.securityLog.kpiFailed' | translate }}</div></div>
+      <div class="kpi-tile t-warning"><div class="kv">{{ kpi.locked }}</div><div class="kl">{{ 'admin.securityLog.kpiLocked' | translate }}</div></div>
+      <div class="kpi-tile t-purple"><div class="kv">{{ kpi.suspicious }}</div><div class="kl">{{ 'admin.securityLog.kpiSuspicious' | translate }}</div></div>
     </div>
 
     <!-- ═══ Journal card ═══ -->
     <div class="sec-card">
       <div class="card-head">
-        <div><h3>Événements de sécurité</h3><span class="sub">Cliquer une ligne pour les détails complets</span></div>
+        <div><h3>{{ 'admin.securityLog.securityEvents' | translate }}</h3><span class="sub">{{ 'admin.securityLog.clickRow' | translate }}</span></div>
       </div>
       <div class="table-scroll">
         <table class="sec-table">
           <thead>
-            <tr><th>Horodatage</th><th>Utilisateur</th><th>Adresse IP</th><th>Type</th><th>Résultat</th><th>Détails</th><th class="ar">Actions</th></tr>
+            <tr><th>{{ 'admin.securityLog.colTimestamp' | translate }}</th><th>{{ 'admin.securityLog.colUser' | translate }}</th><th>{{ 'admin.securityLog.colIp' | translate }}</th><th>{{ 'admin.securityLog.colType' | translate }}</th><th>{{ 'admin.securityLog.colResult' | translate }}</th><th>{{ 'admin.securityLog.colDetails' | translate }}</th><th class="ar">{{ 'admin.securityLog.colActions' | translate }}</th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let s of pagedEvents">
               <td class="mono">{{ s.time }}</td>
               <td>{{ s.user }}</td>
               <td class="mono">{{ s.ip }}</td>
-              <td><span class="ev-badge" [ngClass]="s.type">{{ typeMap[s.type]?.label || s.type }}</span></td>
-              <td class="muted">{{ s.result }}</td>
-              <td class="muted">{{ s.details }}</td>
+              <td><span class="ev-badge" [ngClass]="s.type">{{ (typeMap[s.type]?.labelKey || s.type) | translate }}</span></td>
+              <td class="muted">{{ s.result | translate }}</td>
+              <td class="muted">{{ s.details | translate }}</td>
               <td class="ar">
                 <div class="row-actions">
-                  <button class="ico-btn danger" title="Bloquer l'IP" (click)="blockIp(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>
-                  <button class="ico-btn" title="Voir le profil" (click)="viewProfile(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
+                  <button class="ico-btn danger" [title]="'admin.securityLog.blockIpTitle' | translate" (click)="blockIp(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>
+                  <button class="ico-btn" [title]="'admin.securityLog.viewProfileTitle' | translate" (click)="viewProfile(s)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
                 </div>
               </td>
             </tr>
-            <tr *ngIf="filteredEvents.length === 0"><td colspan="7"><div class="empty">Aucun événement de sécurité pour ces critères.</div></td></tr>
+            <tr *ngIf="filteredEvents.length === 0"><td colspan="7"><div class="empty">{{ 'admin.securityLog.noEvents' | translate }}</div></td></tr>
           </tbody>
         </table>
       </div>
       <div class="pager" *ngIf="filteredEvents.length > secPageSize">
-        <span class="pg-info">{{ secPage * secPageSize + 1 }}–{{ pageEnd }} sur {{ filteredEvents.length }}</span>
+        <span class="pg-info">{{ 'admin.securityLog.pageRange' | translate:{ start: (secPage * secPageSize + 1), end: pageEnd, total: filteredEvents.length } }}</span>
         <div class="pg-ctrl">
           <button class="pg-btn" (click)="secPage = secPage - 1" [disabled]="secPage === 0">‹</button>
           <span class="pg-num">{{ secPage + 1 }} / {{ secTotalPages }}</span>
@@ -108,15 +109,15 @@ interface ProfileView { found: boolean; name: string; email: string; role: strin
 
     <!-- ═══ Heatmap card ═══ -->
     <div class="sec-card">
-      <div class="card-head"><div><h3>Heatmap des tentatives échouées</h3><span class="sub">90 derniers jours · densité quotidienne</span></div></div>
+      <div class="card-head"><div><h3>{{ 'admin.securityLog.heatmapTitle' | translate }}</h3><span class="sub">{{ 'admin.securityLog.heatmapSub' | translate }}</span></div></div>
       <div class="heat-body">
         <div class="heat-grid">
-          <div class="heat-cell" *ngFor="let c of heatmap" [ngClass]="'h' + c.level" [title]="c.count + ' tentative(s)'"></div>
+          <div class="heat-cell" *ngFor="let c of heatmap" [ngClass]="'h' + c.level" [title]="'admin.securityLog.attemptsTooltip' | translate:{ count: c.count }"></div>
         </div>
         <div class="heat-legend">
-          <span>Moins</span>
+          <span>{{ 'admin.securityLog.less' | translate }}</span>
           <div class="heat-cell h0"></div><div class="heat-cell h1"></div><div class="heat-cell h2"></div><div class="heat-cell h3"></div><div class="heat-cell h4"></div>
-          <span>Plus</span>
+          <span>{{ 'admin.securityLog.more' | translate }}</span>
         </div>
       </div>
     </div>
@@ -125,7 +126,7 @@ interface ProfileView { found: boolean; name: string; email: string; role: strin
   <!-- ═══ User profile modal ("Voir le profil") ═══ -->
   <div class="modal-backdrop" *ngIf="profile" (click)="profile = null">
     <div class="modal" (click)="$event.stopPropagation()">
-      <div class="m-head"><h3>Profil utilisateur</h3><button class="x" (click)="profile = null"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+      <div class="m-head"><h3>{{ 'admin.securityLog.profileTitle' | translate }}</h3><button class="x" (click)="profile = null"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
       <div class="m-body">
         <div class="prof-head">
           <span class="prof-avatar">{{ (profile!.name || '?').slice(0, 1).toUpperCase() }}</span>
@@ -133,18 +134,18 @@ interface ProfileView { found: boolean; name: string; email: string; role: strin
             <div class="prof-name">{{ profile!.name }}</div>
             <div class="prof-sub">{{ profile!.email }}</div>
           </div>
-          <span class="badge" [class.badge-success]="profile!.active" [class.badge-danger]="!profile!.active">{{ profile!.active ? 'Actif' : 'Désactivé' }}</span>
+          <span class="badge" [class.badge-success]="profile!.active" [class.badge-danger]="!profile!.active">{{ (profile!.active ? 'admin.securityLog.active' : 'admin.securityLog.disabled') | translate }}</span>
         </div>
-        <div class="prof-warn" *ngIf="!profile!.found">Aucun compte ne correspond à « {{ profile!.username }} » — il s'agit probablement d'un identifiant inexistant utilisé lors de tentatives.</div>
+        <div class="prof-warn" *ngIf="!profile!.found">{{ 'admin.securityLog.noAccountWarn' | translate:{ username: profile!.username } }}</div>
         <div class="prof-rows">
-          <div class="prow"><span class="pk">Identifiant</span><span class="pv mono">{{ profile!.username }}</span></div>
-          <div class="prow"><span class="pk">Rôle</span><span class="pv">{{ profile!.role }}</span></div>
-          <div class="prow"><span class="pk">Tentatives totales</span><span class="pv">{{ profile!.total }}</span></div>
-          <div class="prow"><span class="pk">Échecs</span><span class="pv">{{ profile!.failed }}</span></div>
-          <div class="prow"><span class="pk">Dernière activité</span><span class="pv">{{ profile!.lastSeen }}</span></div>
+          <div class="prow"><span class="pk">{{ 'admin.securityLog.lblUsername' | translate }}</span><span class="pv mono">{{ profile!.username }}</span></div>
+          <div class="prow"><span class="pk">{{ 'admin.securityLog.lblRole' | translate }}</span><span class="pv">{{ profile!.role }}</span></div>
+          <div class="prow"><span class="pk">{{ 'admin.securityLog.lblTotal' | translate }}</span><span class="pv">{{ profile!.total }}</span></div>
+          <div class="prow"><span class="pk">{{ 'admin.securityLog.lblFailures' | translate }}</span><span class="pv">{{ profile!.failed }}</span></div>
+          <div class="prow"><span class="pk">{{ 'admin.securityLog.lblLastActivity' | translate }}</span><span class="pv">{{ profile!.lastSeen }}</span></div>
         </div>
       </div>
-      <div class="m-foot"><button class="btn btn-secondary" (click)="profile = null">Fermer</button></div>
+      <div class="m-foot"><button class="btn btn-secondary" (click)="profile = null">{{ 'admin.securityLog.close' | translate }}</button></div>
     </div>
   </div>
   `,
@@ -297,13 +298,13 @@ export class AdminSecurityLogComponent implements OnInit, OnDestroy {
   autoRefresh = false;
   private timer: any = null;
 
-  typeMap: Record<string, { label: string }> = {
-    success: { label: 'Connexion réussie' },
-    failed: { label: 'Tentative échouée' },
-    locked: { label: 'Compte verrouillé' },
-    reset: { label: 'Réinitialisation MDP' },
-    logout: { label: 'Déconnexion' },
-    suspicious: { label: 'Activité suspecte' }
+  typeMap: Record<string, { labelKey: string }> = {
+    success: { labelKey: 'admin.securityLog.typeSuccessLabel' },
+    failed: { labelKey: 'admin.securityLog.typeFailedLabel' },
+    locked: { labelKey: 'admin.securityLog.typeLocked' },
+    reset: { labelKey: 'admin.securityLog.typeReset' },
+    logout: { labelKey: 'admin.securityLog.typeLogout' },
+    suspicious: { labelKey: 'admin.securityLog.typeSuspicious' }
   };
 
   private usersByKey = new Map<string, User>();
@@ -313,8 +314,11 @@ export class AdminSecurityLogComponent implements OnInit, OnDestroy {
     private security: AdminSecurityService,
     private userService: UserService,
     private toast: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private translate: TranslateService
   ) {}
+
+  private locale(): string { return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR'; }
 
   ngOnInit(): void {
     const today = new Date();
@@ -365,8 +369,8 @@ export class AdminSecurityLogComponent implements OnInit, OnDestroy {
           user: a.username || '—',
           ip: a.ipAddress,
           type: a.success ? 'success' : 'failed',
-          result: a.success ? 'Succès' : 'Échec',
-          details: a.success ? 'Connexion réussie' : 'Identifiants invalides'
+          result: a.success ? 'admin.securityLog.resSuccess' : 'admin.securityLog.resFailure',
+          details: a.success ? 'admin.securityLog.detailsSuccess' : 'admin.securityLog.detailsInvalid'
         }));
         this.userOptions = Array.from(new Set(this.events.map(e => e.user).filter(u => u && u !== '—'))).slice(0, 50);
         this.ipOptions = Array.from(new Set(this.events.map(e => e.ip).filter(Boolean))).slice(0, 50);
@@ -420,9 +424,9 @@ export class AdminSecurityLogComponent implements OnInit, OnDestroy {
   }
 
   blockIp(s: SecEvent): void {
-    this.security.blockIp(s.ip, 'Bloquée depuis le journal de sécurité').subscribe({
-      next: () => this.toast.show(`Adresse IP ${s.ip} bloquée.`, 'success'),
-      error: (err: any) => this.toast.show(err?.error?.message || `Échec du blocage de ${s.ip}.`, 'error')
+    this.security.blockIp(s.ip, this.translate.instant('admin.securityLog.blockReason')).subscribe({
+      next: () => this.toast.show(this.translate.instant('admin.securityLog.toastIpBlocked', { ip: s.ip }), 'success'),
+      error: (err: any) => this.toast.show(err?.error?.message || this.translate.instant('admin.securityLog.toastBlockFailed', { ip: s.ip }), 'error')
     });
   }
 
@@ -447,20 +451,21 @@ export class AdminSecurityLogComponent implements OnInit, OnDestroy {
   }
 
   exportCsv(): void {
-    const rows = [['Horodatage', 'Utilisateur', 'IP', 'Type', 'Résultat', 'Détails']];
-    this.filteredEvents.forEach(e => rows.push([e.time, e.user, e.ip, this.typeMap[e.type]?.label || e.type, e.result, e.details]));
+    const T = (k: string) => this.translate.instant(k);
+    const rows = [[T('admin.securityLog.colTimestamp'), T('admin.securityLog.colUser'), T('admin.securityLog.colIp'), T('admin.securityLog.colType'), T('admin.securityLog.colResult'), T('admin.securityLog.colDetails')]];
+    this.filteredEvents.forEach(e => rows.push([e.time, e.user, e.ip, T(this.typeMap[e.type]?.labelKey || e.type), T(e.result), T(e.details)]));
     const csv = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'journal-securite.csv'; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = T('admin.securityLog.csvFilename'); a.click();
     URL.revokeObjectURL(url);
-    this.toast.show('Journal de sécurité exporté.', 'success');
+    this.toast.show(T('admin.securityLog.toastExported'), 'success');
   }
 
   private fmt(dateStr: string): string {
     if (!dateStr) return '—';
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return d.toLocaleString(this.locale(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 }

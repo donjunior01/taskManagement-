@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
@@ -13,7 +14,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-pm-tasks',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AiDescribeButtonComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AiDescribeButtonComponent, TranslatePipe],
   template: `
   <div class="tk-wrap">
 
@@ -22,64 +23,64 @@ import { ToastService } from '../../../core/services/toast.service';
       <div class="filters">
         <div class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" placeholder="Rechercher une tâche…" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" />
+          <input type="text" [placeholder]="'pm.tasks.searchPlaceholder' | translate" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" />
         </div>
         <select class="sel" [(ngModel)]="projectFilter" (change)="applyFilters()">
-          <option value="">Tous projets</option>
+          <option value="">{{ 'pm.tasks.allProjects' | translate }}</option>
           <option *ngFor="let p of projectsList" [value]="p.id">{{ p.name }}</option>
         </select>
         <select class="sel" [(ngModel)]="assigneeFilter" (change)="applyFilters()">
-          <option value="">Tous (assignés)</option>
+          <option value="">{{ 'pm.tasks.allAssignees' | translate }}</option>
           <option *ngFor="let d of developersList" [value]="d.id">{{ d.firstName }} {{ d.lastName }}</option>
         </select>
         <select class="sel" [(ngModel)]="priorityFilter" (change)="applyFilters()">
-          <option value="">Toutes priorités</option>
-          <option value="LOW">Faible</option><option value="MEDIUM">Moyenne</option><option value="HIGH">Haute</option><option value="CRITICAL">Critique</option>
+          <option value="">{{ 'pm.tasks.allPriorities' | translate }}</option>
+          <option value="LOW">{{ 'pm.tasks.prioLow' | translate }}</option><option value="MEDIUM">{{ 'pm.tasks.prioMedium' | translate }}</option><option value="HIGH">{{ 'pm.tasks.prioHigh' | translate }}</option><option value="CRITICAL">{{ 'pm.tasks.prioCritical' | translate }}</option>
         </select>
         <select class="sel" [(ngModel)]="statusFilter" (change)="applyFilters()">
-          <option value="">Tous statuts</option>
-          <option value="TODO">À faire</option><option value="IN_PROGRESS">En cours</option><option value="ON_HOLD">En pause</option><option value="COMPLETED">Terminé</option>
+          <option value="">{{ 'pm.tasks.allStatuses' | translate }}</option>
+          <option value="TODO">{{ 'pm.tasks.stTodo' | translate }}</option><option value="IN_PROGRESS">{{ 'pm.tasks.stInProgress' | translate }}</option><option value="ON_HOLD">{{ 'pm.tasks.stOnHold' | translate }}</option><option value="COMPLETED">{{ 'pm.tasks.stCompleted' | translate }}</option>
         </select>
       </div>
 
       <div class="toolbar-right">
         <div class="view-toggle">
           <button [class.on]="view === 'list'" (click)="view = 'list'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> Liste
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> {{ 'pm.tasks.viewList' | translate }}
           </button>
           <button [class.on]="view === 'kanban'" (click)="view = 'kanban'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"></rect><rect x="14" y="3" width="7" height="11"></rect></svg> Kanban
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"></rect><rect x="14" y="3" width="7" height="11"></rect></svg> {{ 'pm.tasks.viewKanban' | translate }}
           </button>
           <button [class.on]="view === 'cal'" (click)="view = 'cal'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Cal.
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {{ 'pm.tasks.viewCal' | translate }}
           </button>
         </div>
         <button class="btn-primary" (click)="openCreate()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Nouvelle Tâche
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> {{ 'pm.tasks.newTask' | translate }}
         </button>
       </div>
     </div>
 
     <!-- ═══ Bulk action bar ═══ -->
     <div class="bulk-bar" *ngIf="selected.length > 0">
-      <span class="bulk-count">{{ selected.length }} sélectionnée(s)</span>
+      <span class="bulk-count">{{ 'pm.tasks.selectedCount' | translate:{ count: selected.length } }}</span>
       <div class="bulk-actions">
         <button class="btn-outline" (click)="bulkPanel = bulkPanel === 'assignee' ? '' : 'assignee'">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg> Assigner à…
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg> {{ 'pm.tasks.assignTo' | translate }}
         </button>
-        <button class="btn-outline" (click)="bulkPanel = bulkPanel === 'status' ? '' : 'status'">Changer le statut</button>
-        <button class="btn-outline" (click)="bulkPanel = bulkPanel === 'priority' ? '' : 'priority'">Changer la priorité</button>
+        <button class="btn-outline" (click)="bulkPanel = bulkPanel === 'status' ? '' : 'status'">{{ 'pm.tasks.changeStatus' | translate }}</button>
+        <button class="btn-outline" (click)="bulkPanel = bulkPanel === 'priority' ? '' : 'priority'">{{ 'pm.tasks.changePriority' | translate }}</button>
         <button class="btn-outline danger" (click)="bulkDelete()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Supprimer
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> {{ 'pm.tasks.delete' | translate }}
         </button>
       </div>
       <div class="bulk-panel" *ngIf="bulkPanel">
         <select class="sel" [(ngModel)]="bulkValue">
-          <ng-container *ngIf="bulkPanel === 'assignee'"><option value="">Choisir un membre…</option><option *ngFor="let d of developersList" [value]="d.id">{{ d.firstName }} {{ d.lastName }}</option></ng-container>
-          <ng-container *ngIf="bulkPanel === 'status'"><option value="">Choisir un statut…</option><option value="TODO">À faire</option><option value="IN_PROGRESS">En cours</option><option value="ON_HOLD">En pause</option><option value="COMPLETED">Terminé</option></ng-container>
-          <ng-container *ngIf="bulkPanel === 'priority'"><option value="">Choisir une priorité…</option><option value="LOW">Faible</option><option value="MEDIUM">Moyenne</option><option value="HIGH">Haute</option><option value="CRITICAL">Critique</option></ng-container>
+          <ng-container *ngIf="bulkPanel === 'assignee'"><option value="">{{ 'pm.tasks.chooseMember' | translate }}</option><option *ngFor="let d of developersList" [value]="d.id">{{ d.firstName }} {{ d.lastName }}</option></ng-container>
+          <ng-container *ngIf="bulkPanel === 'status'"><option value="">{{ 'pm.tasks.chooseStatus' | translate }}</option><option value="TODO">{{ 'pm.tasks.stTodo' | translate }}</option><option value="IN_PROGRESS">{{ 'pm.tasks.stInProgress' | translate }}</option><option value="ON_HOLD">{{ 'pm.tasks.stOnHold' | translate }}</option><option value="COMPLETED">{{ 'pm.tasks.stCompleted' | translate }}</option></ng-container>
+          <ng-container *ngIf="bulkPanel === 'priority'"><option value="">{{ 'pm.tasks.choosePriority' | translate }}</option><option value="LOW">{{ 'pm.tasks.prioLow' | translate }}</option><option value="MEDIUM">{{ 'pm.tasks.prioMedium' | translate }}</option><option value="HIGH">{{ 'pm.tasks.prioHigh' | translate }}</option><option value="CRITICAL">{{ 'pm.tasks.prioCritical' | translate }}</option></ng-container>
         </select>
-        <button class="btn-primary sm" (click)="applyBulk()" [disabled]="!bulkValue">Appliquer</button>
+        <button class="btn-primary sm" (click)="applyBulk()" [disabled]="!bulkValue">{{ 'pm.tasks.apply' | translate }}</button>
       </div>
     </div>
 
@@ -90,7 +91,7 @@ import { ToastService } from '../../../core/services/toast.service';
           <thead>
             <tr>
               <th class="cb"><input type="checkbox" [checked]="allSelected()" (change)="toggleAll($event)"></th>
-              <th>Titre</th><th>Projet</th><th>Assigné</th><th>Priorité</th><th>Statut</th><th>Échéance</th><th>Progression</th><th></th>
+              <th>{{ 'pm.tasks.colTitle' | translate }}</th><th>{{ 'pm.tasks.colProject' | translate }}</th><th>{{ 'pm.tasks.colAssignee' | translate }}</th><th>{{ 'pm.tasks.colPriority' | translate }}</th><th>{{ 'pm.tasks.colStatus' | translate }}</th><th>{{ 'pm.tasks.colDeadline' | translate }}</th><th>{{ 'pm.tasks.colProgress' | translate }}</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -104,8 +105,8 @@ import { ToastService } from '../../../core/services/toast.service';
                   <span class="aname">{{ t.assignedToName || '—' }}</span>
                 </div>
               </td>
-              <td><span class="badge" [ngClass]="priorityInfo(t.priority).cls">{{ priorityInfo(t.priority).label }}</span></td>
-              <td><span class="badge" [ngClass]="statusInfo(t).cls">{{ statusInfo(t).label }}</span></td>
+              <td><span class="badge" [ngClass]="priorityInfo(t.priority).cls">{{ priorityInfo(t.priority).labelKey | translate }}</span></td>
+              <td><span class="badge" [ngClass]="statusInfo(t).cls">{{ statusInfo(t).labelKey | translate }}</span></td>
               <td class="due" [class.late]="isOverdue(t)">
                 <svg *ngIf="isOverdue(t)" class="warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 {{ t.deadline ? (t.deadline | date:'dd/MM/yyyy') : '—' }}
@@ -114,12 +115,12 @@ import { ToastService } from '../../../core/services/toast.service';
                 <div class="prog"><div class="bar"><div class="bar-fill" [style.width.%]="animated ? (t.progress || 0) : 0"></div></div><span>{{ t.progress || 0 }}%</span></div>
               </td>
               <td class="actions">
-                <button class="icon-btn" title="Modifier" (click)="openEdit(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg></button>
-                <button class="icon-btn" title="Assigner" (click)="openAssign(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg></button>
-                <button class="icon-btn danger" title="Supprimer" (click)="deleteTask(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                <button class="icon-btn" [title]="'pm.tasks.edit' | translate" (click)="openEdit(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg></button>
+                <button class="icon-btn" [title]="'pm.tasks.assign' | translate" (click)="openAssign(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg></button>
+                <button class="icon-btn danger" [title]="'pm.tasks.delete' | translate" (click)="deleteTask(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
               </td>
             </tr>
-            <tr *ngIf="filtered.length === 0"><td colspan="9"><div class="empty">Aucune tâche pour ces critères.</div></td></tr>
+            <tr *ngIf="filtered.length === 0"><td colspan="9"><div class="empty">{{ 'pm.tasks.emptyTasks' | translate }}</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -128,11 +129,11 @@ import { ToastService } from '../../../core/services/toast.service';
     <!-- ═══ Kanban view ═══ -->
     <div class="kanban anim" *ngIf="view === 'kanban'">
       <div class="kan-col" *ngFor="let col of kanbanColumns">
-        <div class="kan-head"><span class="badge" [ngClass]="col.cls">{{ col.label }}</span><span class="kan-count">{{ col.tasks.length }}</span></div>
+        <div class="kan-head"><span class="badge" [ngClass]="col.cls">{{ col.labelKey | translate }}</span><span class="kan-count">{{ col.tasks.length }}</span></div>
         <div class="kan-list">
           <div class="kan-card" *ngFor="let t of col.tasks" (click)="openEdit(t)">
             <div class="kc-title">{{ t.name }}</div>
-            <div class="kc-meta"><span class="proj-badge">{{ t.projectName || projectName(t.projectId) }}</span><span class="badge sm" [ngClass]="priorityInfo(t.priority).cls">{{ priorityInfo(t.priority).label }}</span></div>
+            <div class="kc-meta"><span class="proj-badge">{{ t.projectName || projectName(t.projectId) }}</span><span class="badge sm" [ngClass]="priorityInfo(t.priority).cls">{{ priorityInfo(t.priority).labelKey | translate }}</span></div>
             <div class="kc-foot"><span class="avatar sm" [style.background]="avatarColor(t.assignedToName)">{{ initials(t.assignedToName) }}</span><span class="due" [class.late]="isOverdue(t)">{{ t.deadline ? (t.deadline | date:'dd/MM') : '—' }}</span></div>
           </div>
           <div class="kan-empty" *ngIf="col.tasks.length === 0">—</div>
@@ -143,17 +144,17 @@ import { ToastService } from '../../../core/services/toast.service';
     <!-- ═══ Calendar view ═══ -->
     <div class="cal-card anim" *ngIf="view === 'cal'">
       <div class="cal-head">
-        <button class="nav" (click)="calShift(-1)" aria-label="Mois précédent">‹</button>
+        <button class="nav" (click)="calShift(-1)" [attr.aria-label]="'pm.tasks.prevMonth' | translate">‹</button>
         <h3>{{ calLabel }}</h3>
-        <button class="nav" (click)="calShift(1)" aria-label="Mois suivant">›</button>
-        <span class="cal-legend">{{ projectsList.length }} projet(s) · échéances</span>
+        <button class="nav" (click)="calShift(1)" [attr.aria-label]="'pm.tasks.nextMonth' | translate">›</button>
+        <span class="cal-legend">{{ 'pm.tasks.calLegend' | translate:{ count: projectsList.length } }}</span>
       </div>
       <div class="cal-grid">
-        <div class="cal-dow" *ngFor="let d of dows">{{ d }}</div>
+        <div class="cal-dow" *ngFor="let d of dows">{{ d | translate }}</div>
         <div class="cal-cell" *ngFor="let c of calWeeks" [class.out]="!c.inMonth" [class.today]="c.isToday">
           <span class="cal-num">{{ c.day }}</span>
           <div class="cal-items">
-            <span class="cal-pill" *ngFor="let p of c.items" [ngClass]="projStatusCls(p)" [title]="p.name + ' — échéance'" (click)="openProject(p)">{{ p.name }}</span>
+            <span class="cal-pill" *ngFor="let p of c.items" [ngClass]="projStatusCls(p)" [title]="'pm.tasks.dueTooltip' | translate:{ name: p.name }" (click)="openProject(p)">{{ p.name }}</span>
           </div>
         </div>
       </div>
@@ -164,29 +165,29 @@ import { ToastService } from '../../../core/services/toast.service';
   <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="m-head">
-        <h3>{{ modalMode === 'create' ? 'Nouvelle tâche' : 'Modifier la tâche' }}</h3>
+        <h3>{{ (modalMode === 'create' ? 'pm.tasks.titleCreate' : 'pm.tasks.titleEdit') | translate }}</h3>
         <button class="x" (click)="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
       <div class="m-body">
-        <div class="fg"><label>Titre *</label><input type="text" [(ngModel)]="form.name" placeholder="Intitulé de la tâche"></div>
-        <div class="fg"><label>Description</label><app-ai-describe [type]="'TASK'" [title]="form.name" (generated)="form.description = $event"></app-ai-describe><textarea rows="2" [(ngModel)]="form.description"></textarea></div>
+        <div class="fg"><label>{{ 'pm.tasks.fieldTitle' | translate }}</label><input type="text" [(ngModel)]="form.name" [placeholder]="'pm.tasks.phTitle' | translate"></div>
+        <div class="fg"><label>{{ 'pm.tasks.fieldDescription' | translate }}</label><app-ai-describe [type]="'TASK'" [title]="form.name" (generated)="form.description = $event"></app-ai-describe><textarea rows="2" [(ngModel)]="form.description"></textarea></div>
         <div class="grid2">
-          <div class="fg"><label>Projet *</label><select [(ngModel)]="form.projectId"><option [ngValue]="undefined">Sélectionner…</option><option *ngFor="let p of projectsList" [ngValue]="p.id">{{ p.name }}</option></select></div>
-          <div class="fg"><label>Assigné à *</label><select [(ngModel)]="form.assignedToId"><option [ngValue]="undefined">Sélectionner…</option><option *ngFor="let d of developersList" [ngValue]="d.id">{{ d.firstName }} {{ d.lastName }}</option></select></div>
+          <div class="fg"><label>{{ 'pm.tasks.fieldProject' | translate }}</label><select [(ngModel)]="form.projectId"><option [ngValue]="undefined">{{ 'pm.tasks.selectPlaceholder' | translate }}</option><option *ngFor="let p of projectsList" [ngValue]="p.id">{{ p.name }}</option></select></div>
+          <div class="fg"><label>{{ 'pm.tasks.fieldAssignee' | translate }}</label><select [(ngModel)]="form.assignedToId"><option [ngValue]="undefined">{{ 'pm.tasks.selectPlaceholder' | translate }}</option><option *ngFor="let d of developersList" [ngValue]="d.id">{{ d.firstName }} {{ d.lastName }}</option></select></div>
         </div>
         <div class="grid2">
-          <div class="fg"><label>Priorité</label><select [(ngModel)]="form.priority"><option value="LOW">Faible</option><option value="MEDIUM">Moyenne</option><option value="HIGH">Haute</option><option value="CRITICAL">Critique</option></select></div>
-          <div class="fg"><label>Difficulté</label><select [(ngModel)]="form.difficulty"><option value="EASY">Facile</option><option value="MEDIUM">Moyenne</option><option value="DIFFICULT">Difficile</option><option value="HARD">Ardue</option></select></div>
+          <div class="fg"><label>{{ 'pm.tasks.fieldPriority' | translate }}</label><select [(ngModel)]="form.priority"><option value="LOW">{{ 'pm.tasks.prioLow' | translate }}</option><option value="MEDIUM">{{ 'pm.tasks.prioMedium' | translate }}</option><option value="HIGH">{{ 'pm.tasks.prioHigh' | translate }}</option><option value="CRITICAL">{{ 'pm.tasks.prioCritical' | translate }}</option></select></div>
+          <div class="fg"><label>{{ 'pm.tasks.fieldDifficulty' | translate }}</label><select [(ngModel)]="form.difficulty"><option value="EASY">{{ 'pm.tasks.diffEasy' | translate }}</option><option value="MEDIUM">{{ 'pm.tasks.diffMedium' | translate }}</option><option value="DIFFICULT">{{ 'pm.tasks.diffDifficult' | translate }}</option><option value="HARD">{{ 'pm.tasks.diffHard' | translate }}</option></select></div>
         </div>
         <div class="grid2">
-          <div class="fg"><label>Statut</label><select [(ngModel)]="form.status"><option value="TODO">À faire</option><option value="IN_PROGRESS">En cours</option><option value="ON_HOLD">En pause</option><option value="COMPLETED">Terminé</option></select></div>
-          <div class="fg"><label>Échéance *</label><input type="date" [(ngModel)]="form.deadline"></div>
+          <div class="fg"><label>{{ 'pm.tasks.fieldStatus' | translate }}</label><select [(ngModel)]="form.status"><option value="TODO">{{ 'pm.tasks.stTodo' | translate }}</option><option value="IN_PROGRESS">{{ 'pm.tasks.stInProgress' | translate }}</option><option value="ON_HOLD">{{ 'pm.tasks.stOnHold' | translate }}</option><option value="COMPLETED">{{ 'pm.tasks.stCompleted' | translate }}</option></select></div>
+          <div class="fg"><label>{{ 'pm.tasks.fieldDeadline' | translate }}</label><input type="date" [(ngModel)]="form.deadline"></div>
         </div>
-        <div class="fg"><label>Progression : {{ form.progress || 0 }}%</label><input type="range" min="0" max="100" step="5" [(ngModel)]="form.progress"></div>
+        <div class="fg"><label>{{ 'pm.tasks.fieldProgress' | translate:{ value: (form.progress || 0) } }}</label><input type="range" min="0" max="100" step="5" [(ngModel)]="form.progress"></div>
       </div>
       <div class="m-foot">
-        <button class="btn-ghost" (click)="closeModal()">Annuler</button>
-        <button class="btn-primary" (click)="submitTask()" [disabled]="submitting">{{ modalMode === 'create' ? 'Créer la tâche' : 'Enregistrer' }}</button>
+        <button class="btn-ghost" (click)="closeModal()">{{ 'pm.tasks.cancel' | translate }}</button>
+        <button class="btn-primary" (click)="submitTask()" [disabled]="submitting">{{ (modalMode === 'create' ? 'pm.tasks.createTask' : 'pm.tasks.save') | translate }}</button>
       </div>
     </div>
   </div>
@@ -195,23 +196,23 @@ import { ToastService } from '../../../core/services/toast.service';
   <div class="modal-backdrop" *ngIf="showAssign" (click)="closeAssign()">
     <div class="modal sm" (click)="$event.stopPropagation()">
       <div class="m-head">
-        <h3>Assigner la tâche</h3>
+        <h3>{{ 'pm.tasks.assignTaskTitle' | translate }}</h3>
         <button class="x" (click)="closeAssign()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
       <div class="m-body">
-        <p class="assign-task">Tâche : <strong>{{ assignTaskName }}</strong></p>
+        <p class="assign-task">{{ 'pm.tasks.taskLabel' | translate }} <strong>{{ assignTaskName }}</strong></p>
         <div class="member-list">
           <button class="member" *ngFor="let d of developersList" [class.on]="assignUserId === d.id" (click)="assignUserId = d.id">
             <span class="avatar" [style.background]="avatarColor(d.firstName + ' ' + d.lastName)">{{ initials(d.firstName + ' ' + d.lastName) }}</span>
             <span class="m-name">{{ d.firstName }} {{ d.lastName }}</span>
             <svg class="check" *ngIf="assignUserId === d.id" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </button>
-          <div class="empty" *ngIf="developersList.length === 0">Aucun collaborateur disponible.</div>
+          <div class="empty" *ngIf="developersList.length === 0">{{ 'pm.tasks.noCollaborators' | translate }}</div>
         </div>
       </div>
       <div class="m-foot">
-        <button class="btn-ghost" (click)="closeAssign()">Annuler</button>
-        <button class="btn-primary" (click)="confirmAssign()" [disabled]="!assignUserId || submitting">Assigner</button>
+        <button class="btn-ghost" (click)="closeAssign()">{{ 'pm.tasks.cancel' | translate }}</button>
+        <button class="btn-primary" (click)="confirmAssign()" [disabled]="!assignUserId || submitting">{{ 'pm.tasks.assign' | translate }}</button>
       </div>
     </div>
   </div>
@@ -372,7 +373,7 @@ export class PmTasksComponent implements OnInit {
 
   // Calendar
   calRef: Date = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
-  dows = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  dows = ['pm.tasks.dowMon', 'pm.tasks.dowTue', 'pm.tasks.dowWed', 'pm.tasks.dowThu', 'pm.tasks.dowFri', 'pm.tasks.dowSat', 'pm.tasks.dowSun'];
 
   constructor(
     private taskService: TaskService,
@@ -381,8 +382,14 @@ export class PmTasksComponent implements OnInit {
     private authService: AuthService,
     private toast: ToastService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private translate: TranslateService
   ) {}
+
+  /** Date-format locale follows the active UI language. */
+  private dateLocale(): string {
+    return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR';
+  }
 
   ngOnInit(): void {
     this.managerId = this.authService.getCurrentUser()?.id || 0;
@@ -440,10 +447,10 @@ export class PmTasksComponent implements OnInit {
 
   get kanbanColumns() {
     const cols = [
-      { key: 'TODO', label: 'À faire', cls: 'st-muted' },
-      { key: 'IN_PROGRESS', label: 'En cours', cls: 'st-blue' },
-      { key: 'ON_HOLD', label: 'En pause', cls: 'st-amber' },
-      { key: 'COMPLETED', label: 'Terminé', cls: 'st-green' }
+      { key: 'TODO', labelKey: 'pm.tasks.stTodo', cls: 'st-muted' },
+      { key: 'IN_PROGRESS', labelKey: 'pm.tasks.stInProgress', cls: 'st-blue' },
+      { key: 'ON_HOLD', labelKey: 'pm.tasks.stOnHold', cls: 'st-amber' },
+      { key: 'COMPLETED', labelKey: 'pm.tasks.stCompleted', cls: 'st-green' }
     ];
     return cols.map(c => ({ ...c, tasks: this.filtered.filter(t => this.normStatus(t.status) === c.key) }));
   }
@@ -473,11 +480,11 @@ export class PmTasksComponent implements OnInit {
     });
     forkJoin(ops).subscribe({
       next: () => this.afterBulk(),
-      error: () => { this.toast.show('Échec de la mise à jour des tâches.', 'error'); this.loadTasks(); }
+      error: () => { this.toast.show(this.translate.instant('pm.tasks.toastBulkUpdateFailed'), 'error'); this.loadTasks(); }
     });
   }
   private afterBulk(): void {
-    this.toast.show('Tâches mises à jour.', 'success');
+    this.toast.show(this.translate.instant('pm.tasks.toastBulkUpdated'), 'success');
     this.bulkPanel = ''; this.bulkValue = ''; this.selected = [];
     this.loadTasks();
   }
@@ -486,8 +493,8 @@ export class PmTasksComponent implements OnInit {
     const count = this.selected.length;
     const ops = this.selected.map(id => this.taskService.deleteTask(id));
     forkJoin(ops).subscribe({
-      next: () => { this.toast.show(`${count} tâche(s) supprimée(s).`, 'success'); this.selected = []; this.loadTasks(); },
-      error: () => { this.toast.show('Échec de la suppression.', 'error'); this.loadTasks(); }
+      next: () => { this.toast.show(this.translate.instant('pm.tasks.toastDeletedCount', { count }), 'success'); this.selected = []; this.loadTasks(); },
+      error: () => { this.toast.show(this.translate.instant('pm.tasks.toastDeleteFailed'), 'error'); this.loadTasks(); }
     });
   }
 
@@ -507,14 +514,14 @@ export class PmTasksComponent implements OnInit {
     req.assignedToId = this.assignUserId;
     this.submitting = true;
     this.taskService.updateTask(this.assignTaskId, req).subscribe({
-      next: () => { this.submitting = false; this.showAssign = false; this.toast.show('Tâche assignée.', 'success'); this.loadTasks(); },
-      error: () => { this.submitting = false; this.toast.show('Échec de l\'assignation.', 'error'); }
+      next: () => { this.submitting = false; this.showAssign = false; this.toast.show(this.translate.instant('pm.tasks.toastAssigned'), 'success'); this.loadTasks(); },
+      error: () => { this.submitting = false; this.toast.show(this.translate.instant('pm.tasks.toastAssignFailed'), 'error'); }
     });
   }
 
   // ─── Calendar ───
   get calLabel(): string {
-    const s = this.calRef.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    const s = this.calRef.toLocaleDateString(this.dateLocale(), { month: 'long', year: 'numeric' });
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
   calShift(delta: number): void {
@@ -573,7 +580,7 @@ export class PmTasksComponent implements OnInit {
 
   submitTask(): void {
     if (!this.form.name?.trim() || !this.form.projectId || !this.form.assignedToId || !this.form.deadline) {
-      this.toast.show('Veuillez compléter les champs obligatoires (titre, projet, assigné, échéance).', 'error');
+      this.toast.show(this.translate.instant('pm.tasks.toastRequiredFields'), 'error');
       return;
     }
     this.submitting = true;
@@ -583,18 +590,18 @@ export class PmTasksComponent implements OnInit {
     obs.subscribe({
       next: (t: any) => {
         this.submitting = false; this.showModal = false;
-        this.toast.show(this.modalMode === 'create' ? `Tâche « ${t?.name || this.form.name} » créée.` : 'Tâche mise à jour.', 'success');
+        this.toast.show(this.modalMode === 'create' ? this.translate.instant('pm.tasks.toastCreated', { name: t?.name || this.form.name }) : this.translate.instant('pm.tasks.toastUpdated'), 'success');
         this.loadTasks();
       },
-      error: () => { this.submitting = false; this.toast.show('Échec de l\'enregistrement de la tâche.', 'error'); }
+      error: () => { this.submitting = false; this.toast.show(this.translate.instant('pm.tasks.toastSaveFailed'), 'error'); }
     });
   }
 
   deleteTask(t: Task): void {
     if (!t.id) return;
     this.taskService.deleteTask(t.id).subscribe({
-      next: () => { this.toast.show('Tâche supprimée.', 'success'); this.loadTasks(); },
-      error: () => { this.toast.show('Échec de la suppression de la tâche.', 'error'); }
+      next: () => { this.toast.show(this.translate.instant('pm.tasks.toastDeleted'), 'success'); this.loadTasks(); },
+      error: () => { this.toast.show(this.translate.instant('pm.tasks.toastTaskDeleteFailed'), 'error'); }
     });
   }
 
@@ -605,25 +612,25 @@ export class PmTasksComponent implements OnInit {
     return d < today;
   }
   projectName(id?: number): string { return this.projectsList.find(p => p.id === id)?.name || '—'; }
-  statusInfo(t: Task): { label: string; cls: string } {
-    if (this.isOverdue(t)) return { label: 'En retard', cls: 'st-red' };
-    const map: Record<string, { label: string; cls: string }> = {
-      TODO: { label: 'À faire', cls: 'st-muted' },
-      IN_PROGRESS: { label: 'En cours', cls: 'st-blue' },
-      ON_HOLD: { label: 'En pause', cls: 'st-amber' },
-      COMPLETED: { label: 'Terminé', cls: 'st-green' },
-      OVERDUE: { label: 'En retard', cls: 'st-red' }
+  statusInfo(t: Task): { labelKey: string; cls: string } {
+    if (this.isOverdue(t)) return { labelKey: 'pm.tasks.stOverdue', cls: 'st-red' };
+    const map: Record<string, { labelKey: string; cls: string }> = {
+      TODO: { labelKey: 'pm.tasks.stTodo', cls: 'st-muted' },
+      IN_PROGRESS: { labelKey: 'pm.tasks.stInProgress', cls: 'st-blue' },
+      ON_HOLD: { labelKey: 'pm.tasks.stOnHold', cls: 'st-amber' },
+      COMPLETED: { labelKey: 'pm.tasks.stCompleted', cls: 'st-green' },
+      OVERDUE: { labelKey: 'pm.tasks.stOverdue', cls: 'st-red' }
     };
-    return map[this.normStatus(t.status)] || { label: 'À faire', cls: 'st-muted' };
+    return map[this.normStatus(t.status)] || { labelKey: 'pm.tasks.stTodo', cls: 'st-muted' };
   }
-  priorityInfo(p?: string): { label: string; cls: string } {
-    const map: Record<string, { label: string; cls: string }> = {
-      LOW: { label: 'Faible', cls: 'pr-slate' },
-      MEDIUM: { label: 'Moyenne', cls: 'pr-blue' },
-      HIGH: { label: 'Haute', cls: 'pr-amber' },
-      CRITICAL: { label: 'Critique', cls: 'pr-red' }
+  priorityInfo(p?: string): { labelKey: string; cls: string } {
+    const map: Record<string, { labelKey: string; cls: string }> = {
+      LOW: { labelKey: 'pm.tasks.prioLow', cls: 'pr-slate' },
+      MEDIUM: { labelKey: 'pm.tasks.prioMedium', cls: 'pr-blue' },
+      HIGH: { labelKey: 'pm.tasks.prioHigh', cls: 'pr-amber' },
+      CRITICAL: { labelKey: 'pm.tasks.prioCritical', cls: 'pr-red' }
     };
-    return map[(p || '').toUpperCase()] || { label: 'Moyenne', cls: 'pr-blue' };
+    return map[(p || '').toUpperCase()] || { labelKey: 'pm.tasks.prioMedium', cls: 'pr-blue' };
   }
   initials(name?: string): string {
     if (!name) return 'U';

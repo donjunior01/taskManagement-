@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ProjectService, Project, ProjectRequest } from '../../../core/services/project.service';
 import { UserService, User } from '../../../core/services/user.service';
 import { TeamService, Team } from '../../../core/services/team.service';
@@ -11,7 +12,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-admin-projects',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent, TranslatePipe],
   templateUrl: './projects.html',
   styleUrls: ['./projects.scss']
 })
@@ -64,7 +65,8 @@ export class AdminProjectsComponent implements OnInit {
     private teamService: TeamService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
-    private router: Router
+    private router: Router,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -108,7 +110,7 @@ export class AdminProjectsComponent implements OnInit {
   teamNames(p: Project): string {
     const names = p.id != null ? this.teamsByProject.get(p.id) : undefined;
     if (names && names.length) return names.join(', ');
-    return p.teamCount ? `${p.teamCount} équipe(s)` : 'Aucune équipe';
+    return p.teamCount ? this.translate.instant('admin.projects.teamsCount', { count: p.teamCount }) : this.translate.instant('admin.projects.noTeam');
   }
 
   /** Completed tasks = progress% of total, with total from taskCount. */
@@ -255,13 +257,13 @@ export class AdminProjectsComponent implements OnInit {
 
   // ── Prototype display helpers ────────────────────────────────────────────────
   // French status label, mirroring the prototype's badge text
-  statusLabel(status?: string): string {
+  statusLabelKey(status?: string): string {
     switch (status) {
-      case 'IN_PROGRESS': return 'En cours';
-      case 'COMPLETED':   return 'Terminé';
-      case 'ON_HOLD':     return 'En pause';
-      case 'PLANNED':     return 'Planifié';
-      default:            return 'Planifié';
+      case 'IN_PROGRESS': return 'admin.projects.stInProgress';
+      case 'COMPLETED':   return 'admin.projects.stCompleted';
+      case 'ON_HOLD':     return 'admin.projects.stOnHold';
+      case 'PLANNED':     return 'admin.projects.stPlanned';
+      default:            return 'admin.projects.stPlanned';
     }
   }
 
@@ -301,11 +303,11 @@ export class AdminProjectsComponent implements OnInit {
         // Drop it from the current view immediately; it's now excluded from the backend lists.
         this.projectsList = this.projectsList.filter(p => p.id !== project.id);
         this.applyClientFilters();
-        this.triggerToast(`Projet "${project.name}" archivé.`, 'success');
+        this.triggerToast(this.translate.instant('admin.projects.toastArchived', { name: project.name }), 'success');
         this.cdr.detectChanges();
       },
       error: (err: any) => {
-        this.triggerToast(err?.error?.message || `Échec de l'archivage du projet "${project.name}".`, 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.projects.toastArchiveFailed', { name: project.name }), 'error');
       }
     });
   }
@@ -323,7 +325,7 @@ export class AdminProjectsComponent implements OnInit {
   // DTO Submissions
   submitAddProject(): void {
     if (!this.addForm.name || !this.addForm.startDate || !this.addForm.endDate) {
-      this.triggerToast('Veuillez renseigner tous les champs obligatoires de l\'espace de travail.', 'error');
+      this.triggerToast(this.translate.instant('admin.projects.toastFillRequired'), 'error');
       return;
     }
 
@@ -338,12 +340,12 @@ export class AdminProjectsComponent implements OnInit {
       next: (newProj) => {
         this.submitting = false;
         this.showAddModal = false;
-        this.triggerToast(`Projet "${newProj.name}" lancé avec succès !`, 'success');
+        this.triggerToast(this.translate.instant('admin.projects.toastLaunched', { name: newProj.name }), 'success');
         this.loadProjects();
       },
       error: (err) => {
         this.submitting = false;
-        this.triggerToast(err?.error?.message || 'Échec du lancement du projet.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.projects.toastLaunchFailed'), 'error');
       }
     });
   }

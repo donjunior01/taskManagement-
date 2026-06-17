@@ -92,9 +92,12 @@ public class DeliverableService {
             );
 
             String notifTitle = "New Deliverable Submitted";
-            String notifMsg = user.getFirstName() + " " + user.getLastName()
+            String submitter = user.getFirstName() + " " + user.getLastName();
+            String notifMsg = submitter
                     + " submitted \"" + savedDeliverable.getFileName()
                     + "\" for task \"" + task.getName() + "\"";
+            java.util.Map<String, Object> submitParams = java.util.Map.of(
+                    "user", submitter, "file", savedDeliverable.getFileName(), "task", task.getName());
 
             // Notify the project manager
             if (task.getProject() != null && task.getProject().getManager() != null) {
@@ -102,7 +105,8 @@ public class DeliverableService {
                         task.getProject().getManager().getId(),
                         notifTitle, notifMsg,
                         Notification.NotificationType.TASK_UPDATED,
-                        savedDeliverable.getId(), "DELIVERABLE"
+                        savedDeliverable.getId(), "DELIVERABLE",
+                        "deliverableSubmitted", submitParams
                 );
             }
 
@@ -112,7 +116,8 @@ public class DeliverableService {
                         admin.getId(),
                         notifTitle, notifMsg,
                         Notification.NotificationType.TASK_UPDATED,
-                        savedDeliverable.getId(), "DELIVERABLE"
+                        savedDeliverable.getId(), "DELIVERABLE",
+                        "deliverableSubmitted", submitParams
                 )
             );
 
@@ -157,7 +162,9 @@ public class DeliverableService {
                                 "Deliverable " + (statusLabel.equals("approved") ? "Approved" : "Rejected"),
                                 "Your deliverable \"" + updatedDeliverable.getFileName() + "\" has been " + statusLabel + ".",
                                 Notification.NotificationType.TASK_UPDATED,
-                                updatedDeliverable.getId(), "DELIVERABLE"
+                                updatedDeliverable.getId(), "DELIVERABLE",
+                                statusLabel.equals("approved") ? "deliverableApproved" : "deliverableRejected",
+                                java.util.Map.of("file", updatedDeliverable.getFileName())
                         );
                     }
 

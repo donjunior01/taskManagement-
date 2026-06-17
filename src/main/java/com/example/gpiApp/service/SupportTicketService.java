@@ -93,14 +93,16 @@ public class SupportTicketService {
 
         // Notify all admins about the new support ticket
         String notifTitle = "New Support Ticket";
-        String notifMsg = user.getFirstName() + " " + user.getLastName()
-                + " submitted a ticket: \"" + subject + "\"";
+        String requester = user.getFirstName() + " " + user.getLastName();
+        String notifMsg = requester + " submitted a ticket: \"" + subject + "\"";
+        java.util.Map<String, Object> newParams = java.util.Map.of("user", requester, "subject", subject);
         List<allUsers> admins = userRepository.findByRole(allUsers.Role.ADMIN);
         for (allUsers admin : admins) {
             notificationService.createNotification(
                     admin.getId(), notifTitle, notifMsg,
                     Notification.NotificationType.SYSTEM,
-                    saved.getId(), "SUPPORT_TICKET"
+                    saved.getId(), "SUPPORT_TICKET",
+                    "supportTicketNew", newParams
             );
         }
 
@@ -117,14 +119,17 @@ public class SupportTicketService {
                     }
                     SupportTicket saved = ticketRepository.save(ticket);
 
-                    // Notify the ticket owner of the status change
+                    // Notify the ticket owner of the status change (one key per status so the
+                    // status word itself is translated, not just the surrounding sentence).
                     String statusLabel = status.charAt(0) + status.substring(1).toLowerCase().replace('_', ' ');
+                    String statusKey = "supportTicket" + status.charAt(0) + status.substring(1).toLowerCase().replace("_", "");
                     notificationService.createNotification(
                             saved.getUser().getId(),
                             "Support Ticket Updated",
                             "Your ticket \"" + saved.getSubject() + "\" status changed to: " + statusLabel,
                             Notification.NotificationType.SYSTEM,
-                            saved.getId(), "SUPPORT_TICKET"
+                            saved.getId(), "SUPPORT_TICKET",
+                            statusKey, java.util.Map.of("subject", saved.getSubject())
                     );
 
                     return ApiResponse.success("Ticket status updated", convertToDTO(saved));

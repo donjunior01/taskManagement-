@@ -15,10 +15,10 @@
         <span class="pulse-dot" *ngIf="k.pulse"></span>
       </div>
       <div class="kpi-value">{{ k.value }}</div>
-      <div class="kpi-label">{{ k.label }}</div>
+      <div class="kpi-label">{{ k.labelKey | translate }}</div>
       <div class="kpi-delta">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg>
-        {{ k.delta }}
+        {{ k.deltaKey | translate:k.deltaParams }}
       </div>
     </div>
   </div>
@@ -29,8 +29,8 @@
     <!-- Activité Utilisateurs -->
     <div class="dash-card">
       <div class="card-head">
-        <div><h3>Activité Utilisateurs</h3><span class="sub">30 derniers jours</span></div>
-        <span class="badge badge-primary">Temps réel</span>
+        <div><h3>{{ 'admin.dashboard.userActivity' | translate }}</h3><span class="sub">{{ 'admin.dashboard.last30Days' | translate }}</span></div>
+        <span class="badge badge-primary">{{ 'admin.dashboard.realTime' | translate }}</span>
       </div>
       <div class="card-body">
         <div class="xy-chart area-wrap">
@@ -53,48 +53,48 @@
               <div class="cursor-dot conn" [style.left.%]="actHover.leftPct" [style.top.%]="actHover.connTop"></div>
               <div class="float-tip" [style.left.%]="actHover.leftPct" [class.flip]="actHover.leftPct > 62">
                 <div class="tip-title">{{ actHover.label }}</div>
-                <div class="tip-row"><span class="tdot" style="background:var(--primary)"></span>Connexions : <b>{{ actHover.conn }}</b></div>
-                <div class="tip-row"><span class="tdot" style="background:var(--accent)"></span>Inscriptions : <b>{{ actHover.insc }}</b></div>
+                <div class="tip-row"><span class="tdot" style="background:var(--primary)"></span>{{ 'admin.dashboard.logins' | translate }} : <b>{{ actHover.conn }}</b></div>
+                <div class="tip-row"><span class="tdot" style="background:var(--accent)"></span>{{ 'admin.dashboard.registrations' | translate }} : <b>{{ actHover.insc }}</b></div>
               </div>
             </ng-container>
           </div>
           <div class="x-axis"><span *ngFor="let t of actXTicks" [style.left.%]="(t.i/(activityData.length-1))*100">{{ t.label }}</span></div>
         </div>
         <div class="chart-legend">
-          <span class="lg"><i class="dot" style="background:var(--primary)"></i> Connexions</span>
-          <span class="lg"><i class="dot" style="background:var(--accent)"></i> Inscriptions</span>
+          <span class="lg"><i class="dot" style="background:var(--primary)"></i> {{ 'admin.dashboard.logins' | translate }}</span>
+          <span class="lg"><i class="dot" style="background:var(--accent)"></i> {{ 'admin.dashboard.registrations' | translate }}</span>
         </div>
       </div>
     </div>
 
     <!-- Projets par Statut -->
     <div class="dash-card">
-      <div class="card-head"><div><h3>Projets par Statut</h3><span class="sub">{{ projectStatusTotal }} projets au total</span></div></div>
+      <div class="card-head"><div><h3>{{ 'admin.dashboard.projectsByStatus' | translate }}</h3><span class="sub">{{ 'admin.dashboard.projectsTotal' | translate:{ count: projectStatusTotal } }}</span></div></div>
       <div class="card-body donut-split">
         <div class="donut-wrapper">
           <svg viewBox="0 0 36 36" class="donut-chart">
             <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--border)" stroke-width="3.4"></circle>
             <circle class="donut-seg" *ngFor="let s of statusDonut" cx="18" cy="18" r="15.9155" fill="none" [attr.stroke]="s.color" stroke-width="3.4" [attr.stroke-dasharray]="s.dash" [attr.stroke-dashoffset]="s.offset">
-              <title>{{ s.label }} : {{ s.value }} ({{ s.percent | number:'1.0-0' }} %)</title>
+              <title>{{ (s.labelKey | translate) }} : {{ s.value }} ({{ s.percent | number:'1.0-0' }} %)</title>
             </circle>
           </svg>
         </div>
         <ul class="donut-legend">
-          <li *ngFor="let s of statusDonut" [title]="s.label + ' : ' + s.value + ' (' + (s.percent | number:'1.0-0') + ' %)'"><span class="dot" [style.background]="s.color"></span><span class="nm">{{ s.label }}</span><span class="vl">{{ s.value }}</span></li>
+          <li *ngFor="let s of statusDonut" [title]="(s.labelKey | translate) + ' : ' + s.value + ' (' + (s.percent | number:'1.0-0') + ' %)'"><span class="dot" [style.background]="s.color"></span><span class="nm">{{ s.labelKey | translate }}</span><span class="vl">{{ s.value }}</span></li>
         </ul>
       </div>
     </div>
 
     <!-- Répartition des Rôles -->
     <div class="dash-card">
-      <div class="card-head"><div><h3>Répartition des Rôles</h3><span class="sub">{{ roleTotal }} utilisateurs</span></div></div>
+      <div class="card-head"><div><h3>{{ 'admin.dashboard.roleDistribution' | translate }}</h3><span class="sub">{{ 'admin.dashboard.usersCount' | translate:{ count: roleTotal } }}</span></div></div>
       <div class="card-body roles-body">
-        <div class="role-bar" *ngFor="let r of rolesBars" [title]="r.name + ' : ' + r.value + ' (' + r.pct + ' %)'">
-          <div class="role-top"><span class="nm">{{ r.name }}</span><span class="vl">{{ r.value }} · {{ r.pct }}%</span></div>
+        <div class="role-bar" *ngFor="let r of rolesBars" [title]="(r.nameKey | translate) + ' : ' + r.value + ' (' + r.pct + ' %)'">
+          <div class="role-top"><span class="nm">{{ r.nameKey | translate }}</span><span class="vl">{{ r.value }} · {{ r.pct }}%</span></div>
           <div class="role-track"><div class="role-fill" [style.width.%]="r.pct" [style.background]="r.color"></div></div>
         </div>
         <div class="roles-foot">
-          <span>Nouveaux ce mois</span>
+          <span>{{ 'admin.dashboard.newThisMonth' | translate }}</span>
           <span class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="18 15 12 9 6 15"></polyline></svg> +{{ stats.newUsersThisMonth }}</span>
         </div>
       </div>
@@ -107,16 +107,16 @@
     <!-- Alertes de Sécurité Récentes -->
     <div class="dash-card">
       <div class="card-head">
-        <div><h3>Alertes de Sécurité Récentes</h3><span class="sub">{{ securityFeed.length }} derniers événements</span></div>
-        <a class="head-link" routerLink="/admin/security-log">Voir tout</a>
+        <div><h3>{{ 'admin.dashboard.recentSecurityAlerts' | translate }}</h3><span class="sub">{{ 'admin.dashboard.lastEvents' | translate:{ count: securityFeed.length } }}</span></div>
+        <a class="head-link" routerLink="/admin/security-log">{{ 'admin.dashboard.viewAll' | translate }}</a>
       </div>
       <ul class="feed-list">
-        <li *ngFor="let a of securityFeed" class="sec-row" [ngClass]="a.severity" routerLink="/admin/security-log" title="Ouvrir le journal de sécurité">
+        <li *ngFor="let a of securityFeed" class="sec-row" [ngClass]="a.severity" routerLink="/admin/security-log" [title]="'admin.dashboard.openSecurityLog' | translate">
           <span class="sev-dot" [ngClass]="a.severity"></span>
           <div class="sec-main">
             <div class="sec-line">
-              <span class="sec-msg">{{ a.message }}</span>
-              <span class="sec-type" [ngClass]="a.severity">{{ a.severity === 'danger' ? 'Échec' : 'Succès' }}</span>
+              <span class="sec-msg">{{ a.messageKey | translate }}</span>
+              <span class="sec-type" [ngClass]="a.severity">{{ (a.severity === 'danger' ? 'admin.dashboard.failed' : 'admin.dashboard.success') | translate }}</span>
             </div>
             <div class="sec-meta">
               <span class="m-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>{{ a.user }}</span>
@@ -126,15 +126,15 @@
           </div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"></path></svg>
         </li>
-        <li *ngIf="securityFeed.length === 0" class="feed-empty">Aucun événement de sécurité récent.</li>
+        <li *ngIf="securityFeed.length === 0" class="feed-empty">{{ 'admin.dashboard.noSecurityEvents' | translate }}</li>
       </ul>
     </div>
 
     <!-- Dernières Actions du Journal -->
     <div class="dash-card">
       <div class="card-head">
-        <div><h3>Dernières Actions du Journal</h3><span class="sub">Activité globale</span></div>
-        <a class="head-link" routerLink="/admin/activity-logs">Voir le journal</a>
+        <div><h3>{{ 'admin.dashboard.latestLogActions' | translate }}</h3><span class="sub">{{ 'admin.dashboard.globalActivity' | translate }}</span></div>
+        <a class="head-link" routerLink="/admin/activity-logs">{{ 'admin.dashboard.viewLog' | translate }}</a>
       </div>
       <ul class="feed-list">
         <li *ngFor="let l of recentActivity" class="log-row">
@@ -143,14 +143,14 @@
           <span class="log-dot" [ngClass]="l.type"></span>
           <span class="log-time">{{ l.timestamp }}</span>
         </li>
-        <li *ngIf="recentActivity.length === 0" class="feed-empty">Aucune activité récente.</li>
+        <li *ngIf="recentActivity.length === 0" class="feed-empty">{{ 'admin.dashboard.noRecentActivity' | translate }}</li>
       </ul>
     </div>
   </div>
 
   <!-- ═══ Tickets Support par Statut (stacked) ═══ -->
   <div class="dash-card">
-    <div class="card-head"><div><h3>Tickets Support par Statut</h3><span class="sub">6 dernières semaines</span></div></div>
+    <div class="card-head"><div><h3>{{ 'admin.dashboard.supportByStatus' | translate }}</h3><span class="sub">{{ 'admin.dashboard.last6Weeks' | translate }}</span></div></div>
     <div class="card-body">
       <div class="xy-chart bars-wrap">
         <div class="y-axis"><span *ngFor="let t of supportYTicks">{{ t }}</span></div>
@@ -167,10 +167,10 @@
               </div>
               <div class="float-tip bar-tip" *ngIf="barHover === w" [class.flip]="i > 3">
                 <div class="tip-title">{{ w.week }}</div>
-                <div class="tip-row"><span class="tdot" style="background:var(--warning)"></span>Ouverts : <b>{{ w.ouverts }}</b></div>
-                <div class="tip-row"><span class="tdot" style="background:var(--primary)"></span>En cours : <b>{{ w.encours }}</b></div>
-                <div class="tip-row"><span class="tdot" style="background:var(--success)"></span>Résolus : <b>{{ w.resolus }}</b></div>
-                <div class="tip-row"><span class="tdot" style="background:var(--text-muted)"></span>Fermés : <b>{{ w.fermes }}</b></div>
+                <div class="tip-row"><span class="tdot" style="background:var(--warning)"></span>{{ 'admin.dashboard.open' | translate }} : <b>{{ w.ouverts }}</b></div>
+                <div class="tip-row"><span class="tdot" style="background:var(--primary)"></span>{{ 'admin.dashboard.inProgress' | translate }} : <b>{{ w.encours }}</b></div>
+                <div class="tip-row"><span class="tdot" style="background:var(--success)"></span>{{ 'admin.dashboard.resolved' | translate }} : <b>{{ w.resolus }}</b></div>
+                <div class="tip-row"><span class="tdot" style="background:var(--text-muted)"></span>{{ 'admin.dashboard.closed' | translate }} : <b>{{ w.fermes }}</b></div>
               </div>
             </div>
           </div>
@@ -178,10 +178,10 @@
         <div class="x-axis bars-x"><span *ngFor="let w of supportData">{{ w.week }}</span></div>
       </div>
       <div class="chart-legend">
-        <span class="lg"><i class="dot" style="background:var(--warning)"></i> Ouverts</span>
-        <span class="lg"><i class="dot" style="background:var(--primary)"></i> En cours</span>
-        <span class="lg"><i class="dot" style="background:var(--success)"></i> Résolus</span>
-        <span class="lg"><i class="dot" style="background:var(--text-muted)"></i> Fermés</span>
+        <span class="lg"><i class="dot" style="background:var(--warning)"></i> {{ 'admin.dashboard.open' | translate }}</span>
+        <span class="lg"><i class="dot" style="background:var(--primary)"></i> {{ 'admin.dashboard.inProgress' | translate }}</span>
+        <span class="lg"><i class="dot" style="background:var(--success)"></i> {{ 'admin.dashboard.resolved' | translate }}</span>
+        <span class="lg"><i class="dot" style="background:var(--text-muted)"></i> {{ 'admin.dashboard.closed' | translate }}</span>
       </div>
     </div>
   </div>

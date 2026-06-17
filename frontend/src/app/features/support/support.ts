@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
 import { SupportTicketService } from '../../core/services/support-ticket.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -25,7 +26,7 @@ export interface SupportTicket {
 @Component({
   selector: 'app-support',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './support.html',
   styleUrls: ['./support.scss']
 })
@@ -40,31 +41,12 @@ export class SupportComponent implements OnInit {
   ticketDescription: string = '';
 
   // FAQ Items
+  // question/answer hold translation KEYS, rendered via the translate pipe.
   faqs: FAQItem[] = [
-    {
-      id: 1,
-      question: 'Comment créer un nouveau jalon dans mon tableau de projet ?',
-      answer: 'Allez sur la page des projets, sélectionnez votre projet actif, ouvrez l\'onglet « Jalons » puis cliquez sur « + Ajouter un jalon ». Saisissez le nom, la période et choisissez les tâches à regrouper.',
-      expanded: false
-    },
-    {
-      id: 2,
-      question: 'Où puis-je télécharger les rapports d\'analyse de projet ?',
-      answer: 'Rendez-vous sur la page Rapports dans la barre latérale. Vous pouvez y choisir les paramètres, sélectionner vos projets, choisir le format PDF ou CSV et les exporter immédiatement.',
-      expanded: false
-    },
-    {
-      id: 3,
-      question: 'Comment réinitialiser le mot de passe de mon compte ?',
-      answer: 'Cliquez sur votre avatar en haut à droite de l\'en-tête, ouvrez « Modifier le profil » puis l\'onglet « Sécurité ». Saisissez votre ancien mot de passe et définissez-en un nouveau, sécurisé.',
-      expanded: false
-    },
-    {
-      id: 4,
-      question: 'Sur quoi se base le score de vélocité des tâches ?',
-      answer: 'La tendance de vélocité mesure la vitesse à laquelle votre équipe résout le backlog. Elle divise le nombre total de tâches terminées par le nombre de jours des cycles de sprint actifs.',
-      expanded: false
-    }
+    { id: 1, question: 'support.faq1q', answer: 'support.faq1a', expanded: false },
+    { id: 2, question: 'support.faq2q', answer: 'support.faq2a', expanded: false },
+    { id: 3, question: 'support.faq3q', answer: 'support.faq3a', expanded: false },
+    { id: 4, question: 'support.faq4q', answer: 'support.faq4a', expanded: false }
   ];
 
   // Active tickets list
@@ -78,8 +60,11 @@ export class SupportComponent implements OnInit {
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private ticketService: SupportTicketService,
-    private toast: ToastService
+    private toast: ToastService,
+    private translate: TranslateService
   ) {}
+
+  private locale(): string { return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR'; }
 
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
@@ -104,7 +89,7 @@ export class SupportComponent implements OnInit {
             category: t.category || 'General',
             priority: (t.priority || 'MEDIUM') as any,
             status: (t.status || 'OPEN') as any,
-            date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
+            date: t.createdAt ? new Date(t.createdAt).toLocaleDateString(this.locale(), { day: 'numeric', month: 'short', year: 'numeric' }) : '',
             description: t.description || ''
           }));
           this.cdr.detectChanges();
@@ -118,8 +103,12 @@ export class SupportComponent implements OnInit {
     faq.expanded = !faq.expanded;
   }
 
-  priorityLabel(p: string): string {
-    return ({ LOW: 'Faible', MEDIUM: 'Moyenne', HIGH: 'Haute', URGENT: 'Urgente' } as Record<string, string>)[(p || '').toUpperCase()] || p;
+  priorityLabelKey(p: string): string {
+    return ({ LOW: 'support.priorityLow', MEDIUM: 'support.priorityMedium', HIGH: 'support.priorityHigh', URGENT: 'support.priorityUrgent' } as Record<string, string>)[(p || '').toUpperCase()] || p;
+  }
+
+  statusKey(s: string): string {
+    return ({ OPEN: 'support.statusOpen', IN_PROGRESS: 'support.statusInProgress', RESOLVED: 'support.statusResolved' } as Record<string, string>)[(s || '').toUpperCase()] || 'support.statusOpen';
   }
 
   openTicketModal(): void {
@@ -156,7 +145,7 @@ export class SupportComponent implements OnInit {
           category: this.ticketCategory,
           priority: this.ticketPriority,
           status: 'OPEN',
-          date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+          date: new Date().toLocaleDateString(this.locale(), { day: 'numeric', month: 'short', year: 'numeric' }),
           description: this.ticketDescription
         };
         this.tickets.unshift(newTicket);
@@ -171,7 +160,7 @@ export class SupportComponent implements OnInit {
           category: this.ticketCategory,
           priority: this.ticketPriority,
           status: 'OPEN',
-          date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+          date: new Date().toLocaleDateString(this.locale(), { day: 'numeric', month: 'short', year: 'numeric' }),
           description: this.ticketDescription
         };
         this.tickets.unshift(newTicket);
@@ -184,7 +173,7 @@ export class SupportComponent implements OnInit {
     this.submittingTicket = false;
     this.showTicketModal = false;
     this.resetTicketForm();
-    this.toast.show(`Ticket de support ${ticketId} créé avec succès !`, 'success');
+    this.toast.show(this.translate.instant('support.toastCreated', { id: ticketId }), 'success');
     this.cdr.detectChanges();
   }
 }

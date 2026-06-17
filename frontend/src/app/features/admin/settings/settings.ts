@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AdminSecurityService, LoginAttempt, SecurityMetrics } from '../../../core/services/admin-security.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { TwoFactorService, TwoFactorSetup } from '../../../core/services/twofa.service';
@@ -11,19 +12,19 @@ import { BrandingService } from '../../../core/services/branding.service';
 @Component({
   selector: 'app-admin-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './settings.html',
   styleUrls: ['./settings.scss']
 })
 export class AdminSettingsComponent implements OnInit, OnDestroy {
   // Active configuration tab (prototype)
   activeTab: 'general' | 'security' | 'notifications' | 'integrations' | 'backup' = 'general';
-  tabs: { id: 'general' | 'security' | 'notifications' | 'integrations' | 'backup'; label: string }[] = [
-    { id: 'general',        label: 'Général' },
-    { id: 'security',       label: 'Sécurité' },
-    { id: 'notifications',  label: 'Notifications' },
-    { id: 'integrations',   label: 'Intégrations' },
-    { id: 'backup',         label: 'Sauvegarde & Maintenance' }
+  tabs: { id: 'general' | 'security' | 'notifications' | 'integrations' | 'backup'; labelKey: string }[] = [
+    { id: 'general',        labelKey: 'admin.settings.tabGeneral' },
+    { id: 'security',       labelKey: 'admin.settings.tabSecurity' },
+    { id: 'notifications',  labelKey: 'admin.settings.tabNotifications' },
+    { id: 'integrations',   labelKey: 'admin.settings.tabIntegrations' },
+    { id: 'backup',         labelKey: 'admin.settings.tabBackup' }
   ];
 
   // Général tab
@@ -35,7 +36,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   logoUrl: string | null = null;
   pdfHeaderColor: string = '#1e2540';
   pdfFooterColor: string = '#2563eb';
-  pdfFooterText: string = 'Document confidentiel — généré automatiquement';
+  pdfFooterText: string = '';
 
   // Sécurité tab (cosmetic policy fields)
   jwtValidity: number = 60;
@@ -49,20 +50,20 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
 
   // Notifications tab (SMTP + triggers)
   smtp = { host: 'smtp.gpi.app', port: 587, username: 'noreply@gpi.app', password: '••••••••••••', sender: 'TaskMaster Pro <noreply@gpi.app>' };
-  notifTriggers: { key: string; label: string; on: boolean }[] = [
-    { key: 'notifyOnRegistration',          label: 'Nouvelle inscription', on: true },
-    { key: 'notifyOnTaskAssigned',          label: 'Tâche assignée', on: false },
-    { key: 'notifyOnDeliverableSubmitted',  label: 'Livrable soumis', on: true },
-    { key: 'notifyOnSuspiciousLogin',       label: 'Tentative de connexion suspecte', on: true },
-    { key: 'notifyOnProjectOverdue',        label: 'Projet en retard', on: true }
+  notifTriggers: { key: string; labelKey: string; on: boolean }[] = [
+    { key: 'notifyOnRegistration',          labelKey: 'admin.settings.trigRegistration', on: true },
+    { key: 'notifyOnTaskAssigned',          labelKey: 'admin.settings.trigTaskAssigned', on: false },
+    { key: 'notifyOnDeliverableSubmitted',  labelKey: 'admin.settings.trigDeliverable', on: true },
+    { key: 'notifyOnSuspiciousLogin',       labelKey: 'admin.settings.trigSuspicious', on: true },
+    { key: 'notifyOnProjectOverdue',        labelKey: 'admin.settings.trigOverdue', on: true }
   ];
 
   // Intégrations — live Google Calendar connection state
   googleConnected: boolean = false;
-  googleStatusLabel: string = 'Vérification…';
+  googleStatusKey: string = 'admin.settings.googleChecking';
 
   // Backup tab
-  backupRetention: string = '30 jours';
+  backupRetentionDays: number = 30;
 
   // System Configurations Form State
   maxFileUploadSize: number = 50; // MB
@@ -107,7 +108,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     private twoFactorService: TwoFactorService,
     private settingsService: SystemSettingsService,
     private api: ApiService,
-    private branding: BrandingService
+    private branding: BrandingService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -153,7 +155,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
           if (typeof sAny[t.key] === 'boolean') t.on = sAny[t.key];
         });
         // Sauvegarde
-        if (s.backupRetentionDays != null) this.backupRetention = `${s.backupRetentionDays} jours`;
+        if (s.backupRetentionDays != null) this.backupRetentionDays = s.backupRetentionDays;
       },
       error: () => { /* keep defaults; backend may be momentarily offline */ }
     });
@@ -166,11 +168,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         const data = res?.data ?? res;
         const connected = !!(data?.connected ?? data?.configured ?? data?.enabled);
         this.googleConnected = connected;
-        this.googleStatusLabel = connected ? '● Connecté' : '● Non configuré';
+        this.googleStatusKey = connected ? 'admin.settings.googleConnected' : 'admin.settings.googleNotConfigured';
       },
       error: () => {
         this.googleConnected = false;
-        this.googleStatusLabel = '● Non configuré';
+        this.googleStatusKey = 'admin.settings.googleNotConfigured';
       }
     });
   }
@@ -192,18 +194,18 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     this.settingsService.updateNotifications(patch).subscribe({
       next: () => {
         this.submitting = false;
-        this.triggerToast('Paramètres de notification enregistrés avec succès.', 'success');
+        this.triggerToast(this.translate.instant('admin.settings.toastNotifSaved'), 'success');
       },
       error: () => {
         this.submitting = false;
-        this.triggerToast('Échec de l\'enregistrement des paramètres de notification.', 'error');
+        this.triggerToast(this.translate.instant('admin.settings.toastNotifFailed'), 'error');
       }
     });
   }
 
   /** Persist the Sauvegarde tab (retention + maintenance mode). */
   saveBackup(): void {
-    const days = parseInt((this.backupRetention || '').replace(/\D/g, ''), 10) || 30;
+    const days = this.backupRetentionDays || 30;
     this.submitting = true;
     this.settingsService.updateBackup({
       backupRetentionDays: days,
@@ -211,11 +213,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: () => {
         this.submitting = false;
-        this.triggerToast('Paramètres de sauvegarde enregistrés avec succès.', 'success');
+        this.triggerToast(this.translate.instant('admin.settings.toastBackupSaved'), 'success');
       },
       error: () => {
         this.submitting = false;
-        this.triggerToast('Échec de l\'enregistrement des paramètres de sauvegarde.', 'error');
+        this.triggerToast(this.translate.instant('admin.settings.toastBackupFailed'), 'error');
       }
     });
   }
@@ -223,7 +225,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   /** Persist the Général tab. */
   saveGeneral(): void {
     if (!this.appName || !this.appName.trim()) {
-      this.triggerToast('Le nom de l\'application ne peut pas être vide.', 'error');
+      this.triggerToast(this.translate.instant('admin.settings.toastAppNameEmpty'), 'error');
       return;
     }
     this.submitting = true;
@@ -242,11 +244,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         this.submitting = false;
         // Reflect the new identity everywhere live (sidebar, login, register, PDFs).
         this.branding.apply(s);
-        this.triggerToast('Paramètres généraux enregistrés avec succès.', 'success');
+        this.triggerToast(this.translate.instant('admin.settings.toastGeneralSaved'), 'success');
       },
       error: () => {
         this.submitting = false;
-        this.triggerToast('Échec de l\'enregistrement des paramètres généraux.', 'error');
+        this.triggerToast(this.translate.instant('admin.settings.toastGeneralFailed'), 'error');
       }
     });
   }
@@ -257,16 +259,16 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     const file = input.files && input.files[0];
     if (!file) return;
     if (!/^image\//.test(file.type)) {
-      this.triggerToast('Veuillez choisir un fichier image (PNG, JPG, SVG…).', 'error');
+      this.triggerToast(this.translate.instant('admin.settings.toastImageOnly'), 'error');
       return;
     }
     if (file.size > 512 * 1024) {
-      this.triggerToast('Le logo doit faire moins de 512 Ko.', 'error');
+      this.triggerToast(this.translate.instant('admin.settings.toastLogoTooBig'), 'error');
       return;
     }
     const reader = new FileReader();
     reader.onload = () => { this.logoUrl = reader.result as string; };
-    reader.onerror = () => this.triggerToast('Impossible de lire le fichier image.', 'error');
+    reader.onerror = () => this.triggerToast(this.translate.instant('admin.settings.toastLogoReadFail'), 'error');
     reader.readAsDataURL(file);
     input.value = '';
   }
@@ -276,11 +278,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   /** Persist the Sécurité tab (password policy + session/lockout limits). */
   saveSecurity(): void {
     if (this.passwordMinLength < 4 || this.passwordMinLength > 64) {
-      this.triggerToast('La longueur minimale du mot de passe doit être comprise entre 4 et 64.', 'error');
+      this.triggerToast(this.translate.instant('admin.settings.toastPwdLenRange'), 'error');
       return;
     }
     if (this.jwtValidity < 5) {
-      this.triggerToast('La durée de validité JWT doit être d\'au moins 5 minutes.', 'error');
+      this.triggerToast(this.translate.instant('admin.settings.toastJwtMin'), 'error');
       return;
     }
     this.submitting = true;
@@ -296,11 +298,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: () => {
         this.submitting = false;
-        this.triggerToast('Politique de sécurité enregistrée avec succès.', 'success');
+        this.triggerToast(this.translate.instant('admin.settings.toastSecuritySaved'), 'success');
       },
       error: () => {
         this.submitting = false;
-        this.triggerToast('Échec de l\'enregistrement de la politique de sécurité.', 'error');
+        this.triggerToast(this.translate.instant('admin.settings.toastSecurityFailed'), 'error');
       }
     });
   }
@@ -323,7 +325,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.twoFaBusy = false;
-        this.triggerToast('Impossible de démarrer la configuration de la 2FA.', 'error');
+        this.triggerToast(this.translate.instant('admin.settings.toastTwoFaStartFail'), 'error');
       }
     });
   }
@@ -337,11 +339,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         this.twoFaSetup = null;
         this.twoFaCode = '';
         this.twoFaBusy = false;
-        this.triggerToast('Authentification à deux facteurs activée.', 'success');
+        this.triggerToast(this.translate.instant('admin.settings.toastTwoFaEnabled'), 'success');
       },
       error: () => {
         this.twoFaBusy = false;
-        this.triggerToast('Code invalide — veuillez réessayer.', 'error');
+        this.triggerToast(this.translate.instant('admin.settings.toastTwoFaInvalidCode'), 'error');
       }
     });
   }
@@ -353,7 +355,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
 
   disableTwoFa(): void {
     if (!this.twoFaCode.trim()) {
-      this.triggerToast('Saisissez un code actuel pour désactiver la 2FA.', 'error');
+      this.triggerToast(this.translate.instant('admin.settings.toastTwoFaNeedCode'), 'error');
       return;
     }
     this.twoFaBusy = true;
@@ -362,11 +364,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         this.twoFaEnabled = false;
         this.twoFaCode = '';
         this.twoFaBusy = false;
-        this.triggerToast('Authentification à deux facteurs désactivée.', 'success');
+        this.triggerToast(this.translate.instant('admin.settings.toastTwoFaDisabled'), 'success');
       },
       error: () => {
         this.twoFaBusy = false;
-        this.triggerToast('Code invalide — veuillez réessayer.', 'error');
+        this.triggerToast(this.translate.instant('admin.settings.toastTwoFaInvalidCode'), 'error');
       }
     });
   }
@@ -427,10 +429,10 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     this.securityService.approvePasswordReset(id).subscribe({
       next: () => {
         this.pendingResets = this.pendingResets.filter(r => r.id !== id);
-        this.triggerToast('Réinitialisation du mot de passe approuvée avec succès.', 'success');
+        this.triggerToast(this.translate.instant('admin.settings.toastResetApproved'), 'success');
       },
       error: (err: any) => {
-        this.triggerToast(err?.error?.message || 'Échec de l\'approbation de la réinitialisation.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.settings.toastResetApproveFail'), 'error');
       }
     });
   }
@@ -439,10 +441,10 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     this.securityService.rejectPasswordReset(id).subscribe({
       next: () => {
         this.pendingResets = this.pendingResets.filter(r => r.id !== id);
-        this.triggerToast('Réinitialisation du mot de passe rejetée.', 'success');
+        this.triggerToast(this.translate.instant('admin.settings.toastResetRejected'), 'success');
       },
       error: (err: any) => {
-        this.triggerToast(err?.error?.message || 'Échec du rejet de la réinitialisation.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.settings.toastResetRejectFail'), 'error');
       }
     });
   }
@@ -451,22 +453,22 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     this.securityService.deleteAllLoginAttempts().subscribe({
       next: () => {
         this.loginAttempts = [];
-        this.triggerToast('Tentatives de connexion effacées.', 'success');
+        this.triggerToast(this.translate.instant('admin.settings.toastAttemptsCleared'), 'success');
       },
       error: (err: any) => {
-        this.triggerToast(err?.error?.message || 'Échec de l\'effacement des tentatives.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.settings.toastAttemptsClearFail'), 'error');
       }
     });
   }
 
   saveConfiguration(): void {
     if (this.maxFileUploadSize <= 0 || this.maxFileUploadSize > 500) {
-      this.triggerToast('La limite de téléversement doit être comprise entre 1 Mo et 500 Mo.', 'error');
+      this.triggerToast(this.translate.instant('admin.settings.toastUploadRange'), 'error');
       return;
     }
 
     if (!this.allowedEmailDomains.trim()) {
-      this.triggerToast('La liste des domaines e-mail autorisés ne peut pas être vide.', 'error');
+      this.triggerToast(this.translate.instant('admin.settings.toastDomainsEmpty'), 'error');
       return;
     }
 
@@ -475,7 +477,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     // Emulate API latency
     setTimeout(() => {
       this.submitting = false;
-      this.triggerToast('Paramètres système de l\'entreprise enregistrés avec succès.', 'success');
+      this.triggerToast(this.translate.instant('admin.settings.toastConfigSaved'), 'success');
     }, 800);
   }
 
@@ -483,7 +485,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     this.clearingCache = true;
     setTimeout(() => {
       this.clearingCache = false;
-      this.triggerToast('Cache de session et de données Redis vidé avec succès. 12,4 ko libérés.', 'success');
+      this.triggerToast(this.translate.instant('admin.settings.toastCacheCleared'), 'success');
     }, 1200);
   }
 
@@ -492,7 +494,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.backingUp = false;
       const stamp = new Date().toISOString().split('T')[0];
-      this.triggerToast(`Sauvegarde à froid de la base de données générée : db_backup_${stamp}.sql (42,8 Mo)`, 'success');
+      this.triggerToast(this.translate.instant('admin.settings.toastBackupGenerated', { stamp }), 'success');
     }, 2000);
   }
 
@@ -501,24 +503,24 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     this.settingsService.updateBackup({ maintenanceMode: this.maintenanceMode }).subscribe({
       next: () => {
         if (this.maintenanceMode) {
-          this.triggerToast('Mode maintenance activé : seuls les administrateurs peuvent se connecter.', 'error');
+          this.triggerToast(this.translate.instant('admin.settings.toastMaintOn'), 'error');
         } else {
-          this.triggerToast('Mode maintenance désactivé. Connexions des employés rétablies.', 'success');
+          this.triggerToast(this.translate.instant('admin.settings.toastMaintOff'), 'success');
         }
       },
       error: () => {
         this.maintenanceMode = !this.maintenanceMode; // revert the optimistic UI flip
-        this.triggerToast('Échec de la mise à jour du mode maintenance.', 'error');
+        this.triggerToast(this.translate.instant('admin.settings.toastMaintFail'), 'error');
       }
     });
   }
 
   testSmtp(): void {
-    this.triggerToast('Connexion SMTP testée avec succès.', 'success');
+    this.triggerToast(this.translate.instant('admin.settings.toastSmtpTested'), 'success');
   }
 
   reconnectGoogle(): void {
-    this.triggerToast('Reconnexion à Google Calendar lancée.', 'success');
+    this.triggerToast(this.translate.instant('admin.settings.toastGoogleReconnect'), 'success');
   }
 
   private triggerToast(message: string, type: 'success' | 'error' = 'success'): void {

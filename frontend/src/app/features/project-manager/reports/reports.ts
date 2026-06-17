@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { ProjectService, Project } from '../../../core/services/project.service';
 import { TaskService, Task } from '../../../core/services/task.service';
@@ -9,12 +10,12 @@ import { ToastService } from '../../../core/services/toast.service';
 import { PdfService } from '../../../core/services/pdf.service';
 
 interface MemberRow { name: string; assignees: number; done: number; late: number; hours: number; rate: number; }
-interface Donut { name: string; value: number; color: string; dash: string; offset: number; }
+interface Donut { nameKey: string; value: number; color: string; dash: string; offset: number; }
 
 @Component({
   selector: 'app-pm-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
   <div class="rep-wrap">
 
@@ -22,27 +23,27 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
     <div class="toolbar anim" style="--d:0s">
       <div class="filters">
         <select class="sel w48" [(ngModel)]="projectFilter" (change)="recompute()">
-          <option value="">Tous les projets</option>
+          <option value="">{{ 'pm.reports.allProjects' | translate }}</option>
           <option *ngFor="let p of projectsList" [value]="p.id">{{ p.name }}</option>
         </select>
         <select class="sel w40" [(ngModel)]="periodFilter" (change)="recompute()">
-          <option value="week">Cette semaine</option>
-          <option value="month">Ce mois</option>
-          <option value="all">Toute période</option>
+          <option value="week">{{ 'pm.reports.periodWeek' | translate }}</option>
+          <option value="month">{{ 'pm.reports.periodMonth' | translate }}</option>
+          <option value="all">{{ 'pm.reports.periodAll' | translate }}</option>
         </select>
       </div>
       <div class="exports">
-        <button class="btn-outline" (click)="exportPdf()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Exporter en PDF</button>
-        <button class="btn-outline" (click)="exportCsv()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Exporter en CSV</button>
+        <button class="btn-outline" (click)="exportPdf()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> {{ 'pm.reports.exportPdf' | translate }}</button>
+        <button class="btn-outline" (click)="exportCsv()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> {{ 'pm.reports.exportCsv' | translate }}</button>
       </div>
     </div>
 
     <!-- ═══ KPI cards ═══ -->
     <div class="kpi-grid">
       <div class="kpi anim" *ngFor="let k of kpis; let i = index" [style.--d]="(0.05 + i*0.05)+'s'">
-        <div class="kpi-l">{{ k.label }}</div>
+        <div class="kpi-l">{{ k.labelKey | translate }}</div>
         <div class="kpi-v" [ngClass]="k.tone">{{ k.value }}</div>
-        <div class="kpi-s">{{ k.sub }}</div>
+        <div class="kpi-s">{{ k.subKey | translate:k.subParams }}</div>
       </div>
     </div>
 
@@ -50,7 +51,7 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
     <div class="charts">
       <!-- Burndown -->
       <div class="card anim" style="--d:.2s">
-        <h3>Burndown</h3>
+        <h3>{{ 'pm.reports.burndown' | translate }}</h3>
         <div class="rc xy">
           <div class="y-axis"><span *ngFor="let t of burnTicks">{{ t }}</span></div>
           <div class="plot" (mousemove)="onMove($event, 'burn', burndown.length)" (mouseleave)="hover = null">
@@ -64,19 +65,19 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
               <div class="rdot" [style.left.%]="hover!.leftPct" [style.top.%]="(1 - burndown[hover!.i].reel/burnMax)*100" style="background:#2563eb"></div>
               <div class="rtip" [style.left.%]="hover!.leftPct" [class.flip]="hover!.leftPct > 60">
                 <div class="rtip-t">{{ burndown[hover!.i].label }}</div>
-                <div class="rtip-r"><i class="d" style="background:#94a3b8"></i>Idéal<b>{{ burndown[hover!.i].ideal }}</b></div>
-                <div class="rtip-r"><i class="d" style="background:#2563eb"></i>Réel<b>{{ burndown[hover!.i].reel }}</b></div>
+                <div class="rtip-r"><i class="d" style="background:#94a3b8"></i>{{ 'pm.reports.ideal' | translate }}<b>{{ burndown[hover!.i].ideal }}</b></div>
+                <div class="rtip-r"><i class="d" style="background:#2563eb"></i>{{ 'pm.reports.real' | translate }}<b>{{ burndown[hover!.i].reel }}</b></div>
               </div>
             </ng-container>
           </div>
           <div class="x-axis"><span *ngFor="let t of burnXTicks" [style.left.%]="(t.i/(burndown.length-1))*100">{{ t.label }}</span></div>
         </div>
-        <div class="legend"><span class="lg"><i class="d dash" style="background:#94a3b8"></i> Idéal</span><span class="lg"><i class="d" style="background:#2563eb"></i> Réel</span></div>
+        <div class="legend"><span class="lg"><i class="d dash" style="background:#94a3b8"></i> {{ 'pm.reports.ideal' | translate }}</span><span class="lg"><i class="d" style="background:#2563eb"></i> {{ 'pm.reports.real' | translate }}</span></div>
       </div>
 
       <!-- Vélocité -->
       <div class="card anim" style="--d:.26s">
-        <h3>Vélocité <span class="sub">(tâches / semaine)</span></h3>
+        <h3>{{ 'pm.reports.velocity' | translate }} <span class="sub">{{ 'pm.reports.velocitySub' | translate }}</span></h3>
         <div class="rc xy">
           <div class="y-axis"><span *ngFor="let t of velTicks">{{ t }}</span></div>
           <div class="plot" (mousemove)="onMove($event, 'vel', velocity.length)" (mouseleave)="hover = null">
@@ -86,7 +87,7 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
             </div>
             <div class="rtip" *ngIf="hover?.chart === 'vel' && velocity[hover!.i]" [style.left.%]="hover!.leftPct" [class.flip]="hover!.leftPct > 60">
               <div class="rtip-t">{{ velocity[hover!.i].week }}</div>
-              <div class="rtip-r"><i class="d" style="background:#2563eb"></i>Terminées<b>{{ velocity[hover!.i].done }}</b></div>
+              <div class="rtip-r"><i class="d" style="background:#2563eb"></i>{{ 'pm.reports.completed' | translate }}<b>{{ velocity[hover!.i].done }}</b></div>
             </div>
           </div>
           <div class="x-axis bars-x"><span *ngFor="let v of velocity">{{ v.week }}</span></div>
@@ -95,25 +96,25 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
 
       <!-- Répartition du temps (donut) -->
       <div class="card anim" style="--d:.32s">
-        <h3>Répartition des tâches</h3>
+        <h3>{{ 'pm.reports.distribution' | translate }}</h3>
         <div class="donut-split">
           <div class="donut-wrap reveal">
             <svg viewBox="0 0 36 36" class="donut">
               <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#eef2f7" stroke-width="4"></circle>
               <circle class="dseg" *ngFor="let s of donut; let i = index" cx="18" cy="18" r="15.9155" fill="none" [attr.stroke]="s.color" stroke-width="4" [attr.stroke-dasharray]="s.dash" [attr.stroke-dashoffset]="s.offset" (mouseenter)="donutHover = i" (mouseleave)="donutHover = -1"></circle>
             </svg>
-            <div class="donut-center"><span class="dc-num">{{ donutTotal }}</span><span class="dc-lbl">tâches</span></div>
+            <div class="donut-center"><span class="dc-num">{{ donutTotal }}</span><span class="dc-lbl">{{ 'pm.reports.tasks' | translate }}</span></div>
           </div>
           <ul class="donut-legend">
-            <li *ngFor="let s of donut; let i = index" [class.on]="donutHover === i"><span class="d" [style.background]="s.color"></span><span class="nm">{{ s.name }}</span><span class="vl">{{ s.value }}</span></li>
-            <li *ngIf="donut.length === 0" class="empty-li">Aucune tâche.</li>
+            <li *ngFor="let s of donut; let i = index" [class.on]="donutHover === i"><span class="d" [style.background]="s.color"></span><span class="nm">{{ s.nameKey | translate }}</span><span class="vl">{{ s.value }}</span></li>
+            <li *ngIf="donut.length === 0" class="empty-li">{{ 'pm.reports.noTasks' | translate }}</li>
           </ul>
         </div>
       </div>
 
       <!-- Taux de complétion par projet -->
       <div class="card anim" style="--d:.38s">
-        <h3>Taux de complétion par projet</h3>
+        <h3>{{ 'pm.reports.completionByProject' | translate }}</h3>
         <div class="rc xy">
           <div class="y-axis"><span *ngFor="let t of pctTicks">{{ t }}</span></div>
           <div class="plot" (mousemove)="onMove($event, 'cmp', completion.length)" (mouseleave)="hover = null">
@@ -126,22 +127,22 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
             </div>
             <div class="rtip" *ngIf="hover?.chart === 'cmp' && completion[hover!.i]" [style.left.%]="hover!.leftPct" [class.flip]="hover!.leftPct > 60">
               <div class="rtip-t">{{ completion[hover!.i].name }}</div>
-              <div class="rtip-r"><i class="d" style="background:#1e293b"></i>Planifié<b>{{ completion[hover!.i].planned }}%</b></div>
-              <div class="rtip-r"><i class="d" style="background:#2563eb"></i>Réel<b>{{ completion[hover!.i].actual }}%</b></div>
+              <div class="rtip-r"><i class="d" style="background:#1e293b"></i>{{ 'pm.reports.planned' | translate }}<b>{{ completion[hover!.i].planned }}%</b></div>
+              <div class="rtip-r"><i class="d" style="background:#2563eb"></i>{{ 'pm.reports.real' | translate }}<b>{{ completion[hover!.i].actual }}%</b></div>
             </div>
           </div>
           <div class="x-axis bars-x"><span *ngFor="let c of completion">{{ c.name }}</span></div>
         </div>
-        <div class="legend"><span class="lg"><i class="d" style="background:#1e293b"></i> Planifié</span><span class="lg"><i class="d" style="background:#2563eb"></i> Réel</span></div>
+        <div class="legend"><span class="lg"><i class="d" style="background:#1e293b"></i> {{ 'pm.reports.planned' | translate }}</span><span class="lg"><i class="d" style="background:#2563eb"></i> {{ 'pm.reports.real' | translate }}</span></div>
       </div>
     </div>
 
     <!-- ═══ Performance par membre ═══ -->
     <div class="card no-pad anim" style="--d:.44s">
-      <div class="card-bar">Performance par membre</div>
+      <div class="card-bar">{{ 'pm.reports.perfByMember' | translate }}</div>
       <div class="table-scroll">
         <table class="perf-table">
-          <thead><tr><th>Membre</th><th>Assignées</th><th>Terminées</th><th>En retard</th><th>Heures loguées</th><th>Taux</th></tr></thead>
+          <thead><tr><th>{{ 'pm.reports.colMember' | translate }}</th><th>{{ 'pm.reports.colAssigned' | translate }}</th><th>{{ 'pm.reports.colCompleted' | translate }}</th><th>{{ 'pm.reports.colLate' | translate }}</th><th>{{ 'pm.reports.colHours' | translate }}</th><th>{{ 'pm.reports.colRate' | translate }}</th></tr></thead>
           <tbody>
             <tr *ngFor="let m of members">
               <td class="td-name">{{ m.name }}</td>
@@ -151,7 +152,7 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
               <td>{{ m.hours }}h</td>
               <td class="rate">{{ m.rate }}%</td>
             </tr>
-            <tr *ngIf="members.length === 0"><td colspan="6"><div class="empty">Aucune donnée membre.</div></td></tr>
+            <tr *ngIf="members.length === 0"><td colspan="6"><div class="empty">{{ 'pm.reports.noMemberData' | translate }}</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -159,16 +160,16 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
 
     <!-- ═══ Jalons ═══ -->
     <div class="card anim" style="--d:.5s">
-      <h3>Jalons</h3>
+      <h3>{{ 'pm.reports.milestones' | translate }}</h3>
       <ol class="timeline">
         <li class="ti" *ngFor="let j of milestones">
           <span class="dot" [ngClass]="j.cls"></span>
           <div class="ti-line">
-            <div><div class="ti-name">{{ j.name }}</div><div class="ti-sub">Prévu : {{ j.planned }} · Réel : {{ j.actual }}</div></div>
-            <span class="ti-status" [ngClass]="j.cls">{{ j.statusLabel }}</span>
+            <div><div class="ti-name">{{ j.name }}</div><div class="ti-sub">{{ 'pm.reports.plannedActual' | translate:{ planned: j.planned, actual: j.actual } }}</div></div>
+            <span class="ti-status" [ngClass]="j.cls">{{ j.statusLabelKey | translate }}</span>
           </div>
         </li>
-        <li *ngIf="milestones.length === 0" class="empty">Aucun jalon.</li>
+        <li *ngIf="milestones.length === 0" class="empty">{{ 'pm.reports.noMilestones' | translate }}</li>
       </ol>
     </div>
   </div>
@@ -263,7 +264,7 @@ export class PmReportsComponent implements OnInit {
   projectFilter = '';
   periodFilter = 'month';
 
-  kpis: { label: string; value: string; sub: string; tone: string }[] = [];
+  kpis: { labelKey: string; value: string; subKey: string; subParams?: Record<string, unknown>; tone: string }[] = [];
   burndown: { label: string; ideal: number; reel: number }[] = [];
   burnMax = 1; burnTicks: number[] = []; burnXTicks: { i: number; label: string }[] = []; burnIdeal = ''; burnReal = '';
   velocity: { week: string; done: number }[] = [];
@@ -272,7 +273,7 @@ export class PmReportsComponent implements OnInit {
   completion: { name: string; planned: number; actual: number }[] = [];
   pctTicks = [100, 75, 50, 25, 0];
   members: MemberRow[] = [];
-  milestones: { name: string; planned: string; actual: string; cls: string; statusLabel: string }[] = [];
+  milestones: { name: string; planned: string; actual: string; cls: string; statusLabelKey: string }[] = [];
 
   hover: { chart: string; i: number; leftPct: number } | null = null;
 
@@ -282,8 +283,14 @@ export class PmReportsComponent implements OnInit {
     private authService: AuthService,
     private toast: ToastService,
     private cdr: ChangeDetectorRef,
-    private pdf: PdfService
+    private pdf: PdfService,
+    private translate: TranslateService
   ) {}
+
+  /** Locale for number/date formatting follows the active UI language. */
+  private locale(): string {
+    return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR';
+  }
 
   ngOnInit(): void {
     this.managerId = this.authService.getCurrentUser()?.id || 0;
@@ -326,10 +333,10 @@ export class PmReportsComponent implements OnInit {
     const onTimeRate = withDeadline.length ? Math.round(onTime / withDeadline.length * 100) : 0;
     const hours = Math.round(ts.reduce((s, t) => s + (t.totalHoursLogged || 0), 0));
     this.kpis = [
-      { label: 'Projets terminés', value: `${completedProjects}`, sub: `${projs.length} projet(s) suivis`, tone: 'success' },
-      { label: 'Taux de respect des délais', value: `${onTimeRate}%`, sub: `${onTime}/${withDeadline.length} à temps`, tone: 'primary' },
-      { label: 'Heures totales loguées', value: `${hours.toLocaleString('fr-FR')}h`, sub: this.periodLabel(), tone: 'navy' },
-      { label: 'Tâches livrées', value: `${completedTasks.length}`, sub: `${ts.length} au total`, tone: 'info' }
+      { labelKey: 'pm.reports.kpiCompletedProjects', value: `${completedProjects}`, subKey: 'pm.reports.kpiCompletedProjectsSub', subParams: { count: projs.length }, tone: 'success' },
+      { labelKey: 'pm.reports.kpiOnTime', value: `${onTimeRate}%`, subKey: 'pm.reports.kpiOnTimeSub', subParams: { onTime, total: withDeadline.length }, tone: 'primary' },
+      { labelKey: 'pm.reports.kpiHours', value: `${hours.toLocaleString(this.locale())}h`, subKey: this.periodLabelKey(), tone: 'navy' },
+      { labelKey: 'pm.reports.kpiDelivered', value: `${completedTasks.length}`, subKey: 'pm.reports.kpiDeliveredSub', subParams: { total: ts.length }, tone: 'info' }
     ];
 
     this.buildBurndown(ts, today);
@@ -344,7 +351,7 @@ export class PmReportsComponent implements OnInit {
     setTimeout(() => { this.animated = true; this.cdr.detectChanges(); }, 60);
   }
 
-  private periodLabel(): string { return this.periodFilter === 'week' ? '7 derniers jours' : this.periodFilter === 'month' ? '30 derniers jours' : 'Toute période'; }
+  private periodLabelKey(): string { return this.periodFilter === 'week' ? 'pm.reports.period7' : this.periodFilter === 'month' ? 'pm.reports.period30' : 'pm.reports.periodAllLabel'; }
 
   /** Weekly buckets (last 8 weeks) — remaining open per week (burndown) + completed per week (velocity). */
   private weekBuckets(ts: Task[], today: Date): { label: string; created: number; completed: number }[] {
@@ -389,11 +396,11 @@ export class PmReportsComponent implements OnInit {
 
   private buildDonut(ts: Task[]): void {
     const groups = [
-      { name: 'À faire', keys: ['TODO', 'PLANNED'], color: '#1e293b' },
-      { name: 'En cours', keys: ['IN_PROGRESS'], color: '#2563eb' },
-      { name: 'Terminé', keys: ['COMPLETED'], color: '#22c55e' },
-      { name: 'En pause', keys: ['ON_HOLD'], color: '#f97316' },
-      { name: 'En retard', keys: ['OVERDUE'], color: '#a855f7' }
+      { nameKey: 'pm.reports.dTodo', keys: ['TODO', 'PLANNED'], color: '#1e293b' },
+      { nameKey: 'pm.reports.dInProgress', keys: ['IN_PROGRESS'], color: '#2563eb' },
+      { nameKey: 'pm.reports.dCompleted', keys: ['COMPLETED'], color: '#22c55e' },
+      { nameKey: 'pm.reports.dOnHold', keys: ['ON_HOLD'], color: '#f97316' },
+      { nameKey: 'pm.reports.dOverdue', keys: ['OVERDUE'], color: '#a855f7' }
     ];
     const counts = groups.map(g => ({ ...g, value: ts.filter(t => g.keys.includes((t.status || '').toUpperCase())).length }));
     this.donutTotal = counts.reduce((s, c) => s + c.value, 0);
@@ -401,7 +408,7 @@ export class PmReportsComponent implements OnInit {
     let acc = 0;
     this.donut = counts.filter(c => c.value > 0).map(c => {
       const pct = (c.value / total) * 100;
-      const seg: Donut = { name: c.name, value: c.value, color: c.color, dash: `${Math.max(0, pct - 1.2)} ${100 - Math.max(0, pct - 1.2)}`, offset: -acc };
+      const seg: Donut = { nameKey: c.nameKey, value: c.value, color: c.color, dash: `${Math.max(0, pct - 1.2)} ${100 - Math.max(0, pct - 1.2)}`, offset: -acc };
       acc += pct; return seg;
     });
   }
@@ -431,7 +438,7 @@ export class PmReportsComponent implements OnInit {
       const completed = (p.status || '').toUpperCase() === 'COMPLETED';
       const overdue = !completed && end < today;
       const cls = completed ? 'ok' : overdue ? 'bad' : 'soon';
-      return { name: p.name, planned: end.toLocaleDateString('fr-FR'), actual: completed ? end.toLocaleDateString('fr-FR') : '—', cls, statusLabel: completed ? 'Atteint' : overdue ? 'Manqué' : 'À venir' };
+      return { name: p.name, planned: end.toLocaleDateString(this.locale()), actual: completed ? end.toLocaleDateString(this.locale()) : '—', cls, statusLabelKey: completed ? 'pm.reports.msReached' : overdue ? 'pm.reports.msMissed' : 'pm.reports.msUpcoming' };
     });
   }
 
@@ -451,21 +458,23 @@ export class PmReportsComponent implements OnInit {
 
   // ── exports ──
   exportCsv(): void {
-    const rows = [['Membre', 'Assignées', 'Terminées', 'En retard', 'Heures', 'Taux']];
+    const T = (k: string) => this.translate.instant(k);
+    const rows = [[T('pm.reports.colMember'), T('pm.reports.colAssigned'), T('pm.reports.colCompleted'), T('pm.reports.colLate'), T('pm.reports.colHours'), T('pm.reports.colRate')]];
     this.members.forEach(m => rows.push([m.name, `${m.assignees}`, `${m.done}`, `${m.late}`, `${m.hours}`, `${m.rate}%`]));
     const csv = rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'rapport-performance.csv'; a.click(); URL.revokeObjectURL(url);
-    this.toast.show('Export CSV généré.', 'success');
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = T('pm.reports.csvFilename'); a.click(); URL.revokeObjectURL(url);
+    this.toast.show(T('pm.reports.toastCsvGenerated'), 'success');
   }
   exportPdf(): void {
     const esc = (s: any) => this.pdf.esc(s);
+    const T = (k: string, p?: any) => this.translate.instant(k, p);
     const rows = this.members.map(m => `<tr><td>${esc(m.name)}</td><td>${m.assignees}</td><td>${m.done}</td><td>${m.late}</td><td>${m.hours}h</td><td>${m.rate}%</td></tr>`).join('');
-    const kpi = this.kpis.map(k => `<span style="display:inline-block;margin-right:18px"><b>${esc(k.label)} :</b> ${esc(k.value)}</span>`).join('');
+    const kpi = this.kpis.map(k => `<span style="display:inline-block;margin-right:18px"><b>${esc(T(k.labelKey))} :</b> ${esc(k.value)}</span>`).join('');
     const body = `<p class="kpis">${kpi}</p>`
-      + `<table><thead><tr><th>Membre</th><th>Assignées</th><th>Terminées</th><th>En retard</th><th>Heures</th><th>Taux</th></tr></thead><tbody>${rows}</tbody></table>`;
-    const ok = this.pdf.open({ title: "Rapport — Performance de l'équipe", subtitle: `${this.members.length} membre(s)`, bodyHtml: body });
-    if (!ok) { this.toast.show('Autorisez les pop-ups pour le PDF.', 'error'); return; }
-    this.toast.show('Aperçu PDF ouvert.', 'success');
+      + `<table><thead><tr><th>${esc(T('pm.reports.colMember'))}</th><th>${esc(T('pm.reports.colAssigned'))}</th><th>${esc(T('pm.reports.colCompleted'))}</th><th>${esc(T('pm.reports.colLate'))}</th><th>${esc(T('pm.reports.colHours'))}</th><th>${esc(T('pm.reports.colRate'))}</th></tr></thead><tbody>${rows}</tbody></table>`;
+    const ok = this.pdf.open({ title: T('pm.reports.pdfTitle'), subtitle: T('pm.reports.pdfSubtitle', { count: this.members.length }), bodyHtml: body });
+    if (!ok) { this.toast.show(T('pm.reports.toastPopupBlocked'), 'error'); return; }
+    this.toast.show(T('pm.reports.toastPdfOpened'), 'success');
   }
 }

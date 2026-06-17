@@ -8,6 +8,7 @@ import { TaskService, Task } from '../../../core/services/task.service';
 import { UserService, User } from '../../../core/services/user.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AiAssistantService, ProjectInsight, PrioritizationResult, RiskAssessment } from '../../../core/services/ai-assistant.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 interface TaskStats {
   planned: number;
@@ -20,7 +21,7 @@ interface TaskStats {
 @Component({
   selector: 'app-admin-project-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiDescribeButtonComponent],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent, TranslatePipe],
   templateUrl: './project-detail.html',
   styleUrls: ['./project-detail.scss']
 })
@@ -68,8 +69,12 @@ export class AdminProjectDetailComponent implements OnInit {
     private userService: UserService,
     private aiService: AiAssistantService,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService
+    private toast: ToastService,
+    private translate: TranslateService
   ) {}
+
+  /** Translate helper for TS-side strings (toasts, exports). */
+  t(key: string, params?: any): string { return this.translate.instant(key, params); }
 
   ngOnInit(): void {
     this.projectId = Number(this.route.snapshot.paramMap.get('id'));
@@ -180,7 +185,7 @@ export class AdminProjectDetailComponent implements OnInit {
   submitEditProject(): void {
     if (!this.projectId) return;
     if (!this.editForm.name) {
-      this.toast.show('Le nom du projet est requis.', 'error');
+      this.toast.show(this.t('admin.projectDetail.toastNameRequired'), 'error');
       return;
     }
     this.submitting = true;
@@ -192,12 +197,12 @@ export class AdminProjectDetailComponent implements OnInit {
       next: (updated) => {
         this.submitting = false;
         this.showEditModal = false;
-        this.toast.show(`"${updated.name}" mis à jour avec succès !`, 'success');
+        this.toast.show(this.t('admin.projectDetail.toastUpdated', { name: updated.name }), 'success');
         this.loadProject();
       },
       error: (err: any) => {
         this.submitting = false;
-        this.toast.show(err?.error?.message || 'Échec de la mise à jour du projet.', 'error');
+        this.toast.show(err?.error?.message || this.t('admin.projectDetail.toastUpdateFailed'), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -209,12 +214,12 @@ export class AdminProjectDetailComponent implements OnInit {
     this.projectService.deleteProject(this.projectId).subscribe({
       next: () => {
         this.submitting = false;
-        this.toast.show(`Projet "${this.project?.name}" supprimé définitivement.`, 'success');
+        this.toast.show(this.t('admin.projectDetail.toastDeleted', { name: this.project?.name }), 'success');
         this.router.navigate(['/admin/projects']);
       },
       error: () => {
         this.submitting = false;
-        this.toast.show(`Projet "${this.project?.name}" supprimé avec succès.`, 'success');
+        this.toast.show(this.t('admin.projectDetail.toastDeletedOk', { name: this.project?.name }), 'success');
         this.router.navigate(['/admin/projects']);
       }
     });
@@ -269,14 +274,14 @@ export class AdminProjectDetailComponent implements OnInit {
     return Math.min(100, Math.max(0, (elapsed / total) * 100));
   }
 
-  getStatusLabel(status: string | undefined): string {
+  getStatusKey(status: string | undefined): string {
     const map: Record<string, string> = {
-      IN_PROGRESS: 'En cours',
-      COMPLETED: 'Terminé',
-      ON_HOLD: 'En attente',
-      PLANNED: 'Planifié'
+      IN_PROGRESS: 'admin.projectDetail.statusInProgress',
+      COMPLETED: 'admin.projectDetail.statusCompleted',
+      ON_HOLD: 'admin.projectDetail.statusOnHold',
+      PLANNED: 'admin.projectDetail.statusPlanned'
     };
-    return map[status || ''] || status || 'Inconnu';
+    return map[status || ''] || 'admin.projectDetail.statusUnknown';
   }
 
   getPriorityClass(priority: string | undefined): string {
@@ -306,7 +311,7 @@ export class AdminProjectDetailComponent implements OnInit {
     this.loadingAiSummary = true;
     this.aiService.getProjectSummary(this.projectId).subscribe({
       next: (response: any) => { this.aiInsight = response?.data || response; this.loadingAiSummary = false; this.cdr.detectChanges(); },
-      error: () => { this.loadingAiSummary = false; this.toast.show('Impossible de générer le résumé du projet.', 'error'); this.cdr.detectChanges(); }
+      error: () => { this.loadingAiSummary = false; this.toast.show(this.t('admin.projectDetail.toastAiSummaryFail'), 'error'); this.cdr.detectChanges(); }
     });
   }
 
@@ -315,7 +320,7 @@ export class AdminProjectDetailComponent implements OnInit {
     this.loadingAiPriorities = true;
     this.aiService.getTaskPriorities(this.projectId).subscribe({
       next: (response: any) => { this.aiPriorities = response?.data || response; this.loadingAiPriorities = false; this.cdr.detectChanges(); },
-      error: () => { this.loadingAiPriorities = false; this.toast.show('Impossible de générer les suggestions de priorité.', 'error'); this.cdr.detectChanges(); }
+      error: () => { this.loadingAiPriorities = false; this.toast.show(this.t('admin.projectDetail.toastAiPrioFail'), 'error'); this.cdr.detectChanges(); }
     });
   }
 
@@ -324,7 +329,7 @@ export class AdminProjectDetailComponent implements OnInit {
     this.loadingAiRisks = true;
     this.aiService.getRiskAssessment(this.projectId).subscribe({
       next: (response: any) => { this.aiRisks = response?.data || response; this.loadingAiRisks = false; this.cdr.detectChanges(); },
-      error: () => { this.loadingAiRisks = false; this.toast.show('Impossible de générer l\'évaluation des risques.', 'error'); this.cdr.detectChanges(); }
+      error: () => { this.loadingAiRisks = false; this.toast.show(this.t('admin.projectDetail.toastAiRiskFail'), 'error'); this.cdr.detectChanges(); }
     });
   }
 

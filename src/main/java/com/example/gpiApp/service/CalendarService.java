@@ -156,7 +156,11 @@ public class CalendarService {
                     notificationService.createNotification(u.getId(),
                             "Nouvel événement à l'agenda",
                             creatorName + " a planifié « " + request.getTitle() + " »" + (whenLabel.isEmpty() ? "." : " le " + whenLabel + "."),
-                            Notification.NotificationType.REMINDER, saved.getId(), "CALENDAR");
+                            Notification.NotificationType.REMINDER, saved.getId(), "CALENDAR",
+                            whenLabel.isEmpty() ? "eventAdded" : "eventAddedWhen",
+                            whenLabel.isEmpty()
+                                ? java.util.Map.of("creator", creatorName, "title", request.getTitle())
+                                : java.util.Map.of("creator", creatorName, "title", request.getTitle(), "when", whenLabel));
                 } catch (Exception ignore) { }
             }
         }
@@ -228,7 +232,11 @@ public class CalendarService {
                                 notificationService.createNotification(e.getUser().getId(),
                                         "Événement mis à jour",
                                         "L'événement « " + request.getTitle() + " » a été modifié" + (whenLabel.isEmpty() ? "." : " — " + whenLabel + "."),
-                                        Notification.NotificationType.REMINDER, e.getId(), "CALENDAR");
+                                        Notification.NotificationType.REMINDER, e.getId(), "CALENDAR",
+                                        whenLabel.isEmpty() ? "eventUpdated" : "eventUpdatedWhen",
+                                        whenLabel.isEmpty()
+                                            ? java.util.Map.of("title", request.getTitle())
+                                            : java.util.Map.of("title", request.getTitle(), "when", whenLabel));
                             } catch (Exception ignore) { }
                         }
                     }

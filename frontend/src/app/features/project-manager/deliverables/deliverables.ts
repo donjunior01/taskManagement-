@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { forkJoin, Subscription } from 'rxjs';
 import { ProjectService } from '../../../core/services/project.service';
 import { TaskService, Task } from '../../../core/services/task.service';
@@ -17,37 +18,37 @@ interface DelRow extends Deliverable {
 @Component({
   selector: 'app-pm-deliverables',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
   <div class="dl-wrap">
 
     <!-- ═══ Tabs ═══ -->
     <div class="tabs">
-      <button class="tab" [class.on]="tab === 'all'" (click)="tab = 'all'">Tous <span class="cnt">{{ counts.all }}</span></button>
-      <button class="tab" [class.on]="tab === 'PENDING'" (click)="tab = 'PENDING'">En Attente <span class="cnt warn">{{ counts.pending }}</span></button>
-      <button class="tab" [class.on]="tab === 'APPROVED'" (click)="tab = 'APPROVED'">Approuvés <span class="cnt ok">{{ counts.approved }}</span></button>
-      <button class="tab" [class.on]="tab === 'REJECTED'" (click)="tab = 'REJECTED'">Rejetés <span class="cnt ko">{{ counts.rejected }}</span></button>
+      <button class="tab" [class.on]="tab === 'all'" (click)="tab = 'all'">{{ 'pm.deliverables.tabAll' | translate }} <span class="cnt">{{ counts.all }}</span></button>
+      <button class="tab" [class.on]="tab === 'PENDING'" (click)="tab = 'PENDING'">{{ 'pm.deliverables.tabPending' | translate }} <span class="cnt warn">{{ counts.pending }}</span></button>
+      <button class="tab" [class.on]="tab === 'APPROVED'" (click)="tab = 'APPROVED'">{{ 'pm.deliverables.tabApproved' | translate }} <span class="cnt ok">{{ counts.approved }}</span></button>
+      <button class="tab" [class.on]="tab === 'REJECTED'" (click)="tab = 'REJECTED'">{{ 'pm.deliverables.tabRejected' | translate }} <span class="cnt ko">{{ counts.rejected }}</span></button>
     </div>
 
     <!-- ═══ Filters ═══ -->
     <div class="filters">
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" placeholder="Rechercher un fichier…" [(ngModel)]="searchTerm" />
+        <input type="text" [placeholder]="'pm.deliverables.searchPlaceholder' | translate" [(ngModel)]="searchTerm" />
       </div>
       <select class="sel" [(ngModel)]="projectFilter">
-        <option value="">Tous projets</option>
+        <option value="">{{ 'pm.deliverables.allProjects' | translate }}</option>
         <option *ngFor="let p of projectsList" [value]="p.id">{{ p.name }}</option>
       </select>
       <select class="sel" [(ngModel)]="submitterFilter">
-        <option value="">Soumis par : tous</option>
+        <option value="">{{ 'pm.deliverables.submitterAll' | translate }}</option>
         <option *ngFor="let s of submitterOptions" [value]="s">{{ s }}</option>
       </select>
       <select class="sel" [(ngModel)]="dateFilter">
-        <option value="all">Toute date</option>
-        <option value="today">Aujourd'hui</option>
-        <option value="7">7 derniers jours</option>
-        <option value="30">30 derniers jours</option>
+        <option value="all">{{ 'pm.deliverables.allDates' | translate }}</option>
+        <option value="today">{{ 'pm.deliverables.dateToday' | translate }}</option>
+        <option value="7">{{ 'pm.deliverables.date7' | translate }}</option>
+        <option value="30">{{ 'pm.deliverables.date30' | translate }}</option>
       </select>
     </div>
 
@@ -56,7 +57,7 @@ interface DelRow extends Deliverable {
       <div class="table-scroll">
         <table class="dl-table">
           <thead>
-            <tr><th>Fichier</th><th>Projet</th><th>Tâche</th><th>Soumis par</th><th>Date</th><th>Statut</th><th class="right">Actions</th></tr>
+            <tr><th>{{ 'pm.deliverables.colFile' | translate }}</th><th>{{ 'pm.deliverables.colProject' | translate }}</th><th>{{ 'pm.deliverables.colTask' | translate }}</th><th>{{ 'pm.deliverables.colSubmitter' | translate }}</th><th>{{ 'pm.deliverables.colDate' | translate }}</th><th>{{ 'pm.deliverables.colStatus' | translate }}</th><th class="right">{{ 'pm.deliverables.colActions' | translate }}</th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let d of filtered" [class.pending]="d.status === 'PENDING'">
@@ -75,18 +76,18 @@ interface DelRow extends Deliverable {
                 </div>
               </td>
               <td class="muted">{{ d.createdAt ? (d.createdAt | date:'dd/MM/yyyy') : '—' }}</td>
-              <td><span class="badge" [ngClass]="statusInfo(d.status).cls">{{ statusInfo(d.status).label }}</span></td>
+              <td><span class="badge" [ngClass]="statusInfo(d.status).cls">{{ statusInfo(d.status).labelKey | translate }}</span></td>
               <td class="right">
                 <div class="row-actions">
-                  <button class="btn-sm ok" *ngIf="d.status !== 'APPROVED'" (click)="approve(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Approuver</button>
-                  <button class="btn-sm ko" *ngIf="d.status !== 'REJECTED'" (click)="openReject(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Rejeter</button>
-                  <button class="icon-btn" title="Aperçu" (click)="openPreview(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
-                  <button class="icon-btn" title="Télécharger" (click)="download(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
+                  <button class="btn-sm ok" *ngIf="d.status !== 'APPROVED'" (click)="approve(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> {{ 'pm.deliverables.approve' | translate }}</button>
+                  <button class="btn-sm ko" *ngIf="d.status !== 'REJECTED'" (click)="openReject(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> {{ 'pm.deliverables.reject' | translate }}</button>
+                  <button class="icon-btn" [title]="'pm.deliverables.preview' | translate" (click)="openPreview(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+                  <button class="icon-btn" [title]="'pm.deliverables.download' | translate" (click)="download(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
                 </div>
               </td>
             </tr>
-            <tr *ngIf="!loading && filtered.length === 0"><td colspan="7"><div class="empty">Aucun livrable pour ces critères.</div></td></tr>
-            <tr *ngIf="loading"><td colspan="7"><div class="empty">Chargement…</div></td></tr>
+            <tr *ngIf="!loading && filtered.length === 0"><td colspan="7"><div class="empty">{{ 'pm.deliverables.emptyDeliverables' | translate }}</div></td></tr>
+            <tr *ngIf="loading"><td colspan="7"><div class="empty">{{ 'pm.deliverables.loading' | translate }}</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -96,11 +97,11 @@ interface DelRow extends Deliverable {
   <!-- ═══ Reject dialog ═══ -->
   <div class="modal-backdrop" *ngIf="showReject" (click)="showReject = false">
     <div class="modal sm" (click)="$event.stopPropagation()">
-      <div class="m-head"><h3>Rejeter « {{ rejectTarget?.fileName }} »</h3><button class="x" (click)="showReject = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
+      <div class="m-head"><h3>{{ 'pm.deliverables.rejectTitle' | translate:{ file: rejectTarget?.fileName } }}</h3><button class="x" (click)="showReject = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
       <div class="m-body">
-        <div class="fg"><label>Motif du rejet *</label><textarea rows="5" [(ngModel)]="rejectReason" placeholder="Expliquez ce qui doit être corrigé…"></textarea></div>
+        <div class="fg"><label>{{ 'pm.deliverables.rejectReason' | translate }}</label><textarea rows="5" [(ngModel)]="rejectReason" [placeholder]="'pm.deliverables.phRejectReason' | translate"></textarea></div>
       </div>
-      <div class="m-foot"><button class="btn-ghost" (click)="showReject = false">Annuler</button><button class="btn-danger" (click)="confirmReject()" [disabled]="submitting || !rejectReason.trim()">Envoyer le retour</button></div>
+      <div class="m-foot"><button class="btn-ghost" (click)="showReject = false">{{ 'pm.deliverables.cancel' | translate }}</button><button class="btn-danger" (click)="confirmReject()" [disabled]="submitting || !rejectReason.trim()">{{ 'pm.deliverables.sendFeedback' | translate }}</button></div>
     </div>
   </div>
 
@@ -111,21 +112,21 @@ interface DelRow extends Deliverable {
         <h3>{{ preview?.fileName }}</h3>
         <button class="x" (click)="showPreview = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
-      <div class="sh-sub">{{ preview?.taskName || 'Livrable' }} • soumis le {{ preview?.createdAt ? (preview!.createdAt | date:'dd/MM/yyyy') : '—' }}</div>
+      <div class="sh-sub">{{ preview?.taskName || ('pm.deliverables.deliverableFallback' | translate) }} • {{ 'pm.deliverables.submittedOn' | translate:{ date: (preview?.createdAt ? (preview!.createdAt | date:'dd/MM/yyyy') : '—') } }}</div>
       <div class="sh-preview">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-        <span>Aperçu du fichier</span>
-        <a class="dl-link" *ngIf="preview?.fileUrl" (click)="download(preview!)">Ouvrir / télécharger</a>
+        <span>{{ 'pm.deliverables.filePreview' | translate }}</span>
+        <a class="dl-link" *ngIf="preview?.fileUrl" (click)="download(preview!)">{{ 'pm.deliverables.openDownload' | translate }}</a>
       </div>
       <div class="sh-submitter">
         <span class="avatar" [style.background]="avatarColor(preview?.submittedByName)">{{ initials(preview?.submittedByName) }}</span>
         <span>{{ preview?.submittedByName || '—' }}</span>
-        <span class="badge" [ngClass]="statusInfo(preview?.status).cls">{{ statusInfo(preview?.status).label }}</span>
+        <span class="badge" [ngClass]="statusInfo(preview?.status).cls">{{ statusInfo(preview?.status).labelKey | translate }}</span>
       </div>
-      <div class="sh-comments" *ngIf="preview?.comments"><strong>Retour :</strong> {{ preview?.comments }}</div>
+      <div class="sh-comments" *ngIf="preview?.comments"><strong>{{ 'pm.deliverables.feedbackLabel' | translate }}</strong> {{ preview?.comments }}</div>
       <div class="sh-foot">
-        <button class="btn-success" *ngIf="preview?.status !== 'APPROVED'" (click)="approve(preview!); showPreview = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Approuver</button>
-        <button class="btn-outline-danger" *ngIf="preview?.status !== 'REJECTED'" (click)="openReject(preview!); showPreview = false">Rejeter avec retour</button>
+        <button class="btn-success" *ngIf="preview?.status !== 'APPROVED'" (click)="approve(preview!); showPreview = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> {{ 'pm.deliverables.approve' | translate }}</button>
+        <button class="btn-outline-danger" *ngIf="preview?.status !== 'REJECTED'" (click)="openReject(preview!); showPreview = false">{{ 'pm.deliverables.rejectWithFeedback' | translate }}</button>
       </div>
     </div>
   </div>
@@ -229,7 +230,8 @@ export class PmDeliverablesComponent implements OnInit, OnDestroy {
     private toast: ToastService,
     private badges: BadgeCountsService,
     private fileService: FileService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -313,18 +315,18 @@ export class PmDeliverablesComponent implements OnInit, OnDestroy {
     return r;
   }
 
-  statusInfo(s?: string): { label: string; cls: string } {
+  statusInfo(s?: string): { labelKey: string; cls: string } {
     const up = (s || '').toUpperCase();
-    if (up === 'APPROVED') return { label: 'Approuvé', cls: 'st-ok' };
-    if (up === 'REJECTED') return { label: 'Rejeté', cls: 'st-ko' };
-    return { label: 'En attente', cls: 'st-warn' };
+    if (up === 'APPROVED') return { labelKey: 'pm.deliverables.stApproved', cls: 'st-ok' };
+    if (up === 'REJECTED') return { labelKey: 'pm.deliverables.stRejected', cls: 'st-ko' };
+    return { labelKey: 'pm.deliverables.stPending', cls: 'st-warn' };
   }
 
   approve(d: Deliverable): void {
     if (!d.id) return;
-    this.deliverableService.reviewDeliverable(d.id, { status: 'APPROVED', comments: 'Approuvé par le chef de projet.' }).subscribe({
-      next: () => { this.toast.show(`« ${d.fileName} » approuvé.`, 'success'); this.load(); },
-      error: () => { this.toast.show('Échec de l\'approbation du livrable.', 'error'); }
+    this.deliverableService.reviewDeliverable(d.id, { status: 'APPROVED', comments: this.translate.instant('pm.deliverables.approveComment') }).subscribe({
+      next: () => { this.toast.show(this.translate.instant('pm.deliverables.toastApproved', { file: d.fileName }), 'success'); this.load(); },
+      error: () => { this.toast.show(this.translate.instant('pm.deliverables.toastApproveFailed'), 'error'); }
     });
   }
 
@@ -334,17 +336,17 @@ export class PmDeliverablesComponent implements OnInit, OnDestroy {
     this.submitting = true;
     const id = this.rejectTarget.id;
     this.deliverableService.reviewDeliverable(id, { status: 'REJECTED', comments: this.rejectReason.trim() }).subscribe({
-      next: () => { this.submitting = false; this.showReject = false; this.toast.show('Retour envoyé, livrable rejeté.', 'success'); this.load(); },
-      error: () => { this.submitting = false; this.toast.show('Échec du rejet du livrable.', 'error'); }
+      next: () => { this.submitting = false; this.showReject = false; this.toast.show(this.translate.instant('pm.deliverables.toastRejected'), 'success'); this.load(); },
+      error: () => { this.submitting = false; this.toast.show(this.translate.instant('pm.deliverables.toastRejectFailed'), 'error'); }
     });
   }
 
   openPreview(d: DelRow): void { this.preview = d; this.showPreview = true; }
   download(d: Deliverable): void {
-    if (!d.fileUrl) { this.toast.show("Aucun fichier disponible au téléchargement.", 'error'); return; }
+    if (!d.fileUrl) { this.toast.show(this.translate.instant('pm.deliverables.toastNoFile'), 'error'); return; }
     this.fileService.downloadFile(d.fileUrl, d.fileName).subscribe({
-      next: () => this.toast.show('Téléchargement démarré.', 'success'),
-      error: () => this.toast.show('Échec du téléchargement.', 'error')
+      next: () => this.toast.show(this.translate.instant('pm.deliverables.toastDownloadStarted'), 'success'),
+      error: () => this.toast.show(this.translate.instant('pm.deliverables.toastDownloadFailed'), 'error')
     });
   }
 

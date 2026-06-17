@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { SupportTicketService, SupportTicket } from '../../../core/services/support-ticket.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -22,7 +23,7 @@ export interface AdminTicket {
 @Component({
   selector: 'app-admin-support',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './support.html',
   styleUrls: ['./support.scss']
 })
@@ -57,8 +58,14 @@ export class AdminSupportComponent implements OnInit {
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private ticketService: SupportTicketService,
-    private toast: ToastService
+    private toast: ToastService,
+    private translate: TranslateService
   ) {}
+
+  /** Translation key for a ticket status enum. */
+  statusKey(s: string): string {
+    return s === 'OPEN' ? 'admin.support.statusOpen' : s === 'IN_PROGRESS' ? 'admin.support.statusInProgress' : 'admin.support.statusResolved';
+  }
 
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
@@ -85,9 +92,9 @@ export class AdminSupportComponent implements OnInit {
 
         this.ticketsList = tickets.map((t: any) => ({
           id: t.id!,
-          subject: t.subject || t.title || 'Sans sujet',
+          subject: t.subject || t.title || this.translate.instant('admin.support.noSubject'),
           category: t.category || 'General' as any,
-          submittedBy: t.userName || `Utilisateur n°${t.userId}`,
+          submittedBy: t.userName || this.translate.instant('admin.support.userFallback', { id: t.userId }),
           submittedByEmail: t.userEmail || '',
           role: 'Employee' as any,
           priority: (t.priority || 'MEDIUM') as any,
@@ -179,21 +186,21 @@ export class AdminSupportComponent implements OnInit {
         const ticket = this.ticketsList.find(t => t.id === ticketId);
         if (ticket) {
           ticket.replies.push({
-            sender: 'Administrateur',
+            sender: this.translate.instant('admin.support.adminSender'),
             message: this.adminReplyMessage,
-            timestamp: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+            timestamp: new Date().toLocaleTimeString(this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR', { hour: '2-digit', minute: '2-digit' })
           });
           ticket.status = this.nextStatus;
         }
         this.submittingReply = false;
         this.showReplyModal = false;
-        this.triggerToast(`Réponse envoyée et ticket n°${ticketId} mis à jour !`);
+        this.triggerToast(this.translate.instant('admin.support.toastReplySent', { id: ticketId }));
         this.applyFilters();
         this.cdr.detectChanges();
       },
       error: (err: any) => {
         this.submittingReply = false;
-        this.triggerToast(err?.error?.message || `Échec de la mise à jour du ticket n°${ticketId}.`, 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.support.toastUpdateFailed', { id: ticketId }), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -204,21 +211,21 @@ export class AdminSupportComponent implements OnInit {
     this.ticketService.deleteTicket(ticket.id).subscribe({
       next: () => {
         this.ticketsList = this.ticketsList.filter(t => t.id !== ticket.id);
-        this.triggerToast(`Ticket n°${ticket.id} supprimé avec succès.`);
+        this.triggerToast(this.translate.instant('admin.support.toastDeleted', { id: ticket.id }));
         this.applyFilters();
       },
       error: (err: any) => {
-        this.triggerToast(err?.error?.message || `Échec de la suppression du ticket n°${ticket.id}.`, 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.support.toastDeleteFailed', { id: ticket.id }), 'error');
       }
     });
   }
 
   // Status tabs (prototype)
-  statusTabs: { label: string; value: string }[] = [
-    { label: 'Tous', value: '' },
-    { label: 'Ouverts', value: 'OPEN' },
-    { label: 'En cours', value: 'IN_PROGRESS' },
-    { label: 'Résolus', value: 'RESOLVED' }
+  statusTabs: { labelKey: string; value: string }[] = [
+    { labelKey: 'admin.support.tabAll', value: '' },
+    { labelKey: 'admin.support.tabOpen', value: 'OPEN' },
+    { labelKey: 'admin.support.tabInProgress', value: 'IN_PROGRESS' },
+    { labelKey: 'admin.support.tabResolved', value: 'RESOLVED' }
   ];
 
   get criticalCount(): number {
@@ -234,20 +241,20 @@ export class AdminSupportComponent implements OnInit {
     }
   }
 
-  priorityLabel(p: string): string {
+  priorityLabelKey(p: string): string {
     switch (p) {
-      case 'URGENT': return 'Critique';
-      case 'HIGH':   return 'Haute';
-      case 'MEDIUM': return 'Normale';
-      default:       return 'Basse';
+      case 'URGENT': return 'admin.support.badgeCritical';
+      case 'HIGH':   return 'admin.support.badgeHigh';
+      case 'MEDIUM': return 'admin.support.badgeNormal';
+      default:       return 'admin.support.badgeLow';
     }
   }
 
   markResolved(ticket: AdminTicket, event: MouseEvent): void {
     event.stopPropagation();
     this.ticketService.updateTicketStatus(ticket.id, 'RESOLVED').subscribe({
-      next: () => { ticket.status = 'RESOLVED'; this.triggerToast(`Ticket n°${ticket.id} résolu.`); this.applyFilters(); this.cdr.detectChanges(); },
-      error: (err: any) => { this.triggerToast(err?.error?.message || `Échec de la résolution du ticket n°${ticket.id}.`, 'error'); }
+      next: () => { ticket.status = 'RESOLVED'; this.triggerToast(this.translate.instant('admin.support.toastResolved', { id: ticket.id })); this.applyFilters(); this.cdr.detectChanges(); },
+      error: (err: any) => { this.triggerToast(err?.error?.message || this.translate.instant('admin.support.toastResolveFailed', { id: ticket.id }), 'error'); }
     });
   }
 

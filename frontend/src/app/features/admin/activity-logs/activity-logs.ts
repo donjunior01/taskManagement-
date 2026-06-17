@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivityLogService } from '../../../core/services/activity-log.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { PdfService } from '../../../core/services/pdf.service';
@@ -20,7 +21,7 @@ interface AuditRow {
 @Component({
   selector: 'app-admin-activity-logs',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
   <div class="act-wrap">
 
@@ -28,27 +29,27 @@ interface AuditRow {
     <div class="act-card toolbar">
       <div class="search">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Rechercher dans le journal..." [(ngModel)]="search" (ngModelChange)="apply()" />
+        <input type="text" [placeholder]="'admin.activityLogs.searchPlaceholder' | translate" [(ngModel)]="search" (ngModelChange)="apply()" />
       </div>
 
       <div class="filters">
         <select [(ngModel)]="userFilter" (change)="apply()">
-          <option value="">Utilisateur</option>
+          <option value="">{{ 'admin.activityLogs.user' | translate }}</option>
           <option *ngFor="let u of userOptions" [value]="u">{{ u }}</option>
         </select>
         <select [(ngModel)]="moduleFilter" (change)="apply()">
-          <option value="">Module</option>
-          <option *ngFor="let m of moduleOptions" [value]="m">{{ m }}</option>
+          <option value="">{{ 'admin.activityLogs.module' | translate }}</option>
+          <option *ngFor="let m of moduleOptions" [value]="m">{{ m | translate }}</option>
         </select>
         <select [(ngModel)]="actionFilter" (change)="apply()">
-          <option value="">Type d'action</option>
-          <option *ngFor="let a of actionOptions" [value]="a">{{ a }}</option>
+          <option value="">{{ 'admin.activityLogs.actionType' | translate }}</option>
+          <option *ngFor="let a of actionOptions" [value]="a">{{ a | translate }}</option>
         </select>
         <select [(ngModel)]="periodFilter" (change)="apply()">
-          <option value="">Période</option>
-          <option value="today">Aujourd'hui</option>
-          <option value="7">7 derniers jours</option>
-          <option value="30">30 derniers jours</option>
+          <option value="">{{ 'admin.activityLogs.period' | translate }}</option>
+          <option value="today">{{ 'admin.activityLogs.periodToday' | translate }}</option>
+          <option value="7">{{ 'admin.activityLogs.period7' | translate }}</option>
+          <option value="30">{{ 'admin.activityLogs.period30' | translate }}</option>
         </select>
       </div>
 
@@ -69,19 +70,19 @@ interface AuditRow {
       <div class="table-scroll">
         <table class="act-table">
           <thead>
-            <tr><th>Horodatage</th><th>Utilisateur</th><th>Rôle</th><th>Module</th><th>Action</th><th>Détails</th><th>IP</th></tr>
+            <tr><th>{{ 'admin.activityLogs.colTimestamp' | translate }}</th><th>{{ 'admin.activityLogs.colUser' | translate }}</th><th>{{ 'admin.activityLogs.colRole' | translate }}</th><th>{{ 'admin.activityLogs.colModule' | translate }}</th><th>{{ 'admin.activityLogs.colAction' | translate }}</th><th>{{ 'admin.activityLogs.colDetails' | translate }}</th><th>{{ 'admin.activityLogs.colIp' | translate }}</th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let l of paged()">
               <td class="mono">{{ l.time }}</td>
               <td>{{ l.user }}</td>
-              <td class="role">{{ l.role }}</td>
-              <td><span class="badge module">{{ l.module }}</span></td>
-              <td><span class="badge" [ngClass]="l.actionTone">{{ l.action }}</span></td>
+              <td class="role">{{ l.role | translate }}</td>
+              <td><span class="badge module">{{ l.module | translate }}</span></td>
+              <td><span class="badge" [ngClass]="l.actionTone">{{ l.action | translate }}</span></td>
               <td class="muted">{{ l.details }}</td>
               <td class="mono">{{ l.ip }}</td>
             </tr>
-            <tr *ngIf="filtered.length === 0"><td colspan="7"><div class="empty">Aucune entrée de journal pour ces critères.</div></td></tr>
+            <tr *ngIf="filtered.length === 0"><td colspan="7"><div class="empty">{{ 'admin.activityLogs.noEntries' | translate }}</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -89,14 +90,14 @@ interface AuditRow {
       <!-- footer : page size + pagination -->
       <div class="act-foot" *ngIf="filtered.length > 0">
         <select [(ngModel)]="pageSize" (change)="currentPage = 0">
-          <option [ngValue]="50">50 entrées par page</option>
+          <option [ngValue]="50">{{ 'admin.activityLogs.pageSize50' | translate }}</option>
           <option [ngValue]="100">100</option>
           <option [ngValue]="200">200</option>
         </select>
         <div class="pager">
-          <button class="btn btn-outline btn-sm" (click)="prev()" [disabled]="currentPage === 0">Précédent</button>
+          <button class="btn btn-outline btn-sm" (click)="prev()" [disabled]="currentPage === 0">{{ 'admin.activityLogs.prev' | translate }}</button>
           <button class="btn btn-sm" *ngFor="let p of pageList()" [class.btn-outline]="p - 1 !== currentPage" (click)="currentPage = p - 1">{{ p }}</button>
-          <button class="btn btn-outline btn-sm" (click)="next()" [disabled]="currentPage >= totalPages - 1">Suivant</button>
+          <button class="btn btn-outline btn-sm" (click)="next()" [disabled]="currentPage >= totalPages - 1">{{ 'admin.activityLogs.next' | translate }}</button>
         </div>
       </div>
     </div>
@@ -179,8 +180,11 @@ export class AdminActivityLogsComponent implements OnInit {
     private activityLogService: ActivityLogService,
     private toast: ToastService,
     private cdr: ChangeDetectorRef,
-    private pdf: PdfService
+    private pdf: PdfService,
+    private translate: TranslateService
   ) {}
+
+  private locale(): string { return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR'; }
 
   ngOnInit(): void { this.loadLogs(); }
 
@@ -214,7 +218,7 @@ export class AdminActivityLogsComponent implements OnInit {
     return {
       time: this.fmt(rawTime),
       rawTime,
-      user: l.userName || (l.user?.firstName ? `${l.user.firstName} ${l.user.lastName}` : (l.user?.username || 'Système')),
+      user: l.userName || (l.user?.firstName ? `${l.user.firstName} ${l.user.lastName}` : (l.user?.username || this.translate.instant('admin.activityLogs.userSystem'))),
       role: this.roleLabel(l.userRole || l.user?.role || 'SYSTEM'),
       module: this.moduleLabel(l.category || l.entityType || l.module || 'SYSTEM'),
       action: label,
@@ -226,34 +230,34 @@ export class AdminActivityLogsComponent implements OnInit {
 
   private actionInfo(a: string): { label: string; tone: string } {
     const up = (a || '').toUpperCase();
-    if (up.includes('CREA') || up.includes('CRÉ') || up.includes('ADD')) return { label: 'CRÉÉ', tone: 'success' };
-    if (up.includes('UPDAT') || up.includes('MODIF') || up.includes('EDIT')) return { label: 'MODIFIÉ', tone: 'brand' };
-    if (up.includes('DELET') || up.includes('SUPPR') || up.includes('REMOV')) return { label: 'SUPPRIMÉ', tone: 'danger' };
-    if (up.includes('EXPORT')) return { label: 'EXPORTÉ', tone: 'warning' };
-    if (up.includes('LOGIN') || up.includes('CONNEX') || up.includes('AUTH') || up.includes('LOGOUT')) return { label: 'CONNEXION', tone: 'purple' };
+    if (up.includes('CREA') || up.includes('CRÉ') || up.includes('ADD')) return { label: 'admin.activityLogs.actCreated', tone: 'success' };
+    if (up.includes('UPDAT') || up.includes('MODIF') || up.includes('EDIT')) return { label: 'admin.activityLogs.actUpdated', tone: 'brand' };
+    if (up.includes('DELET') || up.includes('SUPPR') || up.includes('REMOV')) return { label: 'admin.activityLogs.actDeleted', tone: 'danger' };
+    if (up.includes('EXPORT')) return { label: 'admin.activityLogs.actExported', tone: 'warning' };
+    if (up.includes('LOGIN') || up.includes('CONNEX') || up.includes('AUTH') || up.includes('LOGOUT')) return { label: 'admin.activityLogs.actLogin', tone: 'purple' };
     return { label: a || '—', tone: 'muted' };
   }
 
   private moduleLabel(c: string): string {
     const up = (c || '').toUpperCase();
     const map: Record<string, string> = {
-      SECURITY: 'Sécurité', DATA_MUTATION: 'Données', SYSTEM: 'Système',
-      USER: 'Utilisateurs', USERS: 'Utilisateurs', PROJECT: 'Projets', PROJECTS: 'Projets',
-      TASK: 'Tâches', TASKS: 'Tâches', TEAM: 'Équipes', REPORT: 'Rapports'
+      SECURITY: 'admin.activityLogs.modSecurity', DATA_MUTATION: 'admin.activityLogs.modData', SYSTEM: 'admin.activityLogs.modSystem',
+      USER: 'admin.activityLogs.modUsers', USERS: 'admin.activityLogs.modUsers', PROJECT: 'admin.activityLogs.modProjects', PROJECTS: 'admin.activityLogs.modProjects',
+      TASK: 'admin.activityLogs.modTasks', TASKS: 'admin.activityLogs.modTasks', TEAM: 'admin.activityLogs.modTeams', REPORT: 'admin.activityLogs.modReports'
     };
-    return map[up] || (c ? c.charAt(0).toUpperCase() + c.slice(1).toLowerCase() : 'Système');
+    return map[up] || (c ? c.charAt(0).toUpperCase() + c.slice(1).toLowerCase() : 'admin.activityLogs.modSystem');
   }
 
   private roleLabel(r: string): string {
     const up = (r || '').replace('ROLE_', '').toUpperCase();
-    return up === 'ADMIN' ? 'Administrateur' : up === 'PROJECT_MANAGER' ? 'Chef de Projet' : up === 'USER' ? 'Collaborateur' : (r || 'Système');
+    return up === 'ADMIN' ? 'admin.activityLogs.roleAdmin' : up === 'PROJECT_MANAGER' ? 'admin.activityLogs.roleManager' : up === 'USER' ? 'admin.activityLogs.roleCollaborator' : (r || 'admin.activityLogs.roleSystem');
   }
 
   apply(): void {
     let r = [...this.logs];
     if (this.search.trim()) {
       const t = this.search.toLowerCase().trim();
-      r = r.filter(l => l.user.toLowerCase().includes(t) || l.details.toLowerCase().includes(t) || l.module.toLowerCase().includes(t) || l.ip.includes(t) || l.action.toLowerCase().includes(t));
+      r = r.filter(l => l.user.toLowerCase().includes(t) || l.details.toLowerCase().includes(t) || this.translate.instant(l.module).toLowerCase().includes(t) || l.ip.includes(t) || this.translate.instant(l.action).toLowerCase().includes(t));
     }
     if (this.userFilter) r = r.filter(l => l.user === this.userFilter);
     if (this.moduleFilter) r = r.filter(l => l.module === this.moduleFilter);
@@ -286,8 +290,9 @@ export class AdminActivityLogsComponent implements OnInit {
 
   // ─── Exports ───
   private rowsForExport(): string[][] {
-    const head = ['Horodatage', 'Utilisateur', 'Rôle', 'Module', 'Action', 'Détails', 'IP'];
-    const body = this.filtered.map(l => [l.time, l.user, l.role, l.module, l.action, l.details, l.ip]);
+    const T = (k: string) => this.translate.instant(k);
+    const head = [T('admin.activityLogs.colTimestamp'), T('admin.activityLogs.colUser'), T('admin.activityLogs.colRole'), T('admin.activityLogs.colModule'), T('admin.activityLogs.colAction'), T('admin.activityLogs.colDetails'), T('admin.activityLogs.colIp')];
+    const body = this.filtered.map(l => [l.time, l.user, T(l.role), T(l.module), T(l.action), l.details, l.ip]);
     return [head, ...body];
   }
 
@@ -296,26 +301,27 @@ export class AdminActivityLogsComponent implements OnInit {
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'journal-activite.csv'; a.click();
+    a.href = url; a.download = this.translate.instant('admin.activityLogs.csvFilename'); a.click();
     URL.revokeObjectURL(url);
-    this.toast.show(`Export CSV de ${this.filtered.length} entrée(s) généré.`, 'success');
+    this.toast.show(this.translate.instant('admin.activityLogs.toastCsv', { count: this.filtered.length }), 'success');
   }
 
   exportPdf(): void {
     const esc = (s: any) => this.pdf.esc(s);
+    const T = (k: string, p?: any) => this.translate.instant(k, p);
     const rows = this.filtered.map(l =>
-      `<tr><td>${esc(l.time)}</td><td>${esc(l.user)}</td><td>${esc(l.role)}</td><td>${esc(l.module)}</td><td>${esc(l.action)}</td><td>${esc(l.details)}</td><td>${esc(l.ip)}</td></tr>`
+      `<tr><td>${esc(l.time)}</td><td>${esc(l.user)}</td><td>${esc(T(l.role))}</td><td>${esc(T(l.module))}</td><td>${esc(T(l.action))}</td><td>${esc(l.details)}</td><td>${esc(l.ip)}</td></tr>`
     ).join('');
-    const body = `<table><thead><tr><th>Horodatage</th><th>Utilisateur</th><th>Rôle</th><th>Module</th><th>Action</th><th>Détails</th><th>IP</th></tr></thead><tbody>${rows}</tbody></table>`;
-    const ok = this.pdf.open({ title: "Journal d'activité", subtitle: `${this.filtered.length} entrée(s)`, bodyHtml: body });
-    if (!ok) { this.toast.show("Veuillez autoriser les pop-ups pour l'export PDF.", 'error'); return; }
-    this.toast.show('Aperçu PDF ouvert — utilisez « Enregistrer au format PDF ».', 'success');
+    const body = `<table><thead><tr><th>${esc(T('admin.activityLogs.colTimestamp'))}</th><th>${esc(T('admin.activityLogs.colUser'))}</th><th>${esc(T('admin.activityLogs.colRole'))}</th><th>${esc(T('admin.activityLogs.colModule'))}</th><th>${esc(T('admin.activityLogs.colAction'))}</th><th>${esc(T('admin.activityLogs.colDetails'))}</th><th>${esc(T('admin.activityLogs.colIp'))}</th></tr></thead><tbody>${rows}</tbody></table>`;
+    const ok = this.pdf.open({ title: T('admin.activityLogs.pdfTitle'), subtitle: T('admin.activityLogs.pdfSubtitle', { count: this.filtered.length }), bodyHtml: body });
+    if (!ok) { this.toast.show(T('admin.activityLogs.toastPopup'), 'error'); return; }
+    this.toast.show(T('admin.activityLogs.toastPdf'), 'success');
   }
 
   private fmt(dateStr: string): string {
     if (!dateStr) return '—';
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleString(this.locale(), { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 }

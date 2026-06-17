@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AdminSecurityService, LoginAttempt, SecurityMetrics } from '../../../core/services/admin-security.service';
 import { UserService, User } from '../../../core/services/user.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -11,7 +12,7 @@ interface UserRef { id: number; isActive: boolean; firstName: string; lastName: 
 @Component({
   selector: 'app-admin-login-attempts',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
   <div class="conx-wrap">
 
@@ -19,37 +20,37 @@ interface UserRef { id: number; isActive: boolean; firstName: string; lastName: 
     <div class="alert-banner">
       <svg class="ab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       <div class="ab-text">
-        <p class="ab-title">{{ failed24 }} tentatives échouées détectées dans les dernières 24h</p>
-        <p class="ab-sub">{{ suspiciousIps.length }} adresse(s) IP suspecte(s) ont été identifiées et nécessitent votre attention.</p>
+        <p class="ab-title">{{ 'admin.loginAttempts.failedDetected' | translate:{ count: failed24 } }}</p>
+        <p class="ab-sub">{{ 'admin.loginAttempts.suspiciousIdentified' | translate:{ count: suspiciousIps.length } }}</p>
       </div>
-      <button class="btn btn-danger" (click)="openDetails()">Voir les détails</button>
+      <button class="btn btn-danger" (click)="openDetails()">{{ 'admin.loginAttempts.viewDetails' | translate }}</button>
     </div>
 
     <!-- ═══ Adresses IP suspectes ═══ -->
     <div class="conx-card">
-      <div class="card-head"><div><h3>Adresses IP suspectes</h3><span class="sub">Détection automatique · seuil 5 tentatives / 10 min</span></div></div>
+      <div class="card-head"><div><h3>{{ 'admin.loginAttempts.suspiciousTitle' | translate }}</h3><span class="sub">{{ 'admin.loginAttempts.suspiciousSub' | translate }}</span></div></div>
       <div class="table-scroll">
         <table class="conx-table">
           <thead>
-            <tr><th>Adresse IP</th><th>Pays</th><th>Tentatives</th><th>Dernier essai</th><th>Comptes ciblés</th><th>Statut</th><th class="ar">Actions</th></tr>
+            <tr><th>{{ 'admin.loginAttempts.colIp' | translate }}</th><th>{{ 'admin.loginAttempts.colCountry' | translate }}</th><th>{{ 'admin.loginAttempts.colAttempts' | translate }}</th><th>{{ 'admin.loginAttempts.colLastTry' | translate }}</th><th>{{ 'admin.loginAttempts.colTargets' | translate }}</th><th>{{ 'admin.loginAttempts.colStatus' | translate }}</th><th class="ar">{{ 'admin.loginAttempts.colActions' | translate }}</th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let r of suspiciousIps">
               <td class="mono">{{ r.ip }}</td>
-              <td class="muted">{{ r.pays }}</td>
+              <td class="muted">{{ r.pays | translate }}</td>
               <td class="danger-num">{{ r.tentatives }}</td>
               <td class="muted">{{ r.dernier }}</td>
               <td>{{ r.cibles }}</td>
-              <td><span class="badge" [class.badge-danger]="r.statut === 'Bloquée'" [class.badge-warning]="r.statut !== 'Bloquée'">{{ r.statut === 'Bloquée' ? '🔴 Bloquée' : '🟡 Surveillée' }}</span></td>
+              <td><span class="badge" [class.badge-danger]="r.statut === 'Bloquée'" [class.badge-warning]="r.statut !== 'Bloquée'">{{ (r.statut === 'Bloquée' ? 'admin.loginAttempts.statBlockedDot' : 'admin.loginAttempts.statMonitoredDot') | translate }}</span></td>
               <td class="ar">
                 <div class="row-actions">
-                  <button *ngIf="r.statut !== 'Bloquée'" class="ico-btn danger" title="Bloquer cette IP" (click)="blockIp(r)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>
-                  <button *ngIf="r.statut === 'Bloquée'" class="ico-btn success" title="Débloquer cette IP" (click)="unblockIp(r)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></button>
-                  <button class="ico-btn" title="Voir tentatives" (click)="viewIpAttempts(r)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></button>
+                  <button *ngIf="r.statut !== 'Bloquée'" class="ico-btn danger" [title]="'admin.loginAttempts.blockIpTitle' | translate" (click)="blockIp(r)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>
+                  <button *ngIf="r.statut === 'Bloquée'" class="ico-btn success" [title]="'admin.loginAttempts.unblockIpTitle' | translate" (click)="unblockIp(r)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></button>
+                  <button class="ico-btn" [title]="'admin.loginAttempts.viewAttemptsTitle' | translate" (click)="viewIpAttempts(r)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></button>
                 </div>
               </td>
             </tr>
-            <tr *ngIf="suspiciousIps.length === 0"><td colspan="7"><div class="empty">Aucune adresse IP suspecte détectée.</div></td></tr>
+            <tr *ngIf="suspiciousIps.length === 0"><td colspan="7"><div class="empty">{{ 'admin.loginAttempts.noSuspicious' | translate }}</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -57,13 +58,13 @@ interface UserRef { id: number; isActive: boolean; firstName: string; lastName: 
 
     <!-- ═══ Tentatives échouées par heure (line + alert threshold) ═══ -->
     <div class="conx-card">
-      <div class="card-head"><div><h3>Tentatives échouées par heure</h3><span class="sub">24 dernières heures · seuil critique à 10/h</span></div></div>
+      <div class="card-head"><div><h3>{{ 'admin.loginAttempts.hourlyTitle' | translate }}</h3><span class="sub">{{ 'admin.loginAttempts.hourlySub' | translate }}</span></div></div>
       <div class="card-body">
         <div class="xy">
           <div class="y-axis"><span *ngFor="let t of yTicks">{{ t }}</span></div>
           <div class="plot" (mousemove)="onMove($event)" (mouseleave)="hover = null">
             <div class="gridline" *ngFor="let t of yTicks" [style.top.%]="(1 - t/yMax)*100"></div>
-            <div class="threshold" [style.top.%]="(1 - 10/yMax)*100"><span>Zone d'alerte</span></div>
+            <div class="threshold" [style.top.%]="(1 - 10/yMax)*100"><span>{{ 'admin.loginAttempts.alertZone' | translate }}</span></div>
             <svg class="line-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
               <polyline [attr.points]="linePoints" fill="none" stroke="var(--danger)" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"></polyline>
             </svg>
@@ -73,7 +74,7 @@ interface UserRef { id: number; isActive: boolean; firstName: string; lastName: 
               <div class="cursor-dot" [style.left.%]="hover.leftPct" [style.top.%]="hover.top"></div>
               <div class="float-tip" [style.left.%]="hover.leftPct" [class.flip]="hover.leftPct > 70">
                 <div class="tip-title">{{ hover.label }}</div>
-                <div class="tip-row"><span class="tdot"></span>Tentatives échouées : <b>{{ hover.count }}</b></div>
+                <div class="tip-row"><span class="tdot"></span>{{ 'admin.loginAttempts.tipFailed' | translate }} <b>{{ hover.count }}</b></div>
               </div>
             </ng-container>
           </div>
@@ -84,11 +85,11 @@ interface UserRef { id: number; isActive: boolean; firstName: string; lastName: 
 
     <!-- ═══ Comptes ciblés ═══ -->
     <div class="conx-card">
-      <div class="card-head"><div><h3>Comptes ciblés</h3><span class="sub">Utilisateurs ayant reçu des tentatives</span></div></div>
+      <div class="card-head"><div><h3>{{ 'admin.loginAttempts.targetedTitle' | translate }}</h3><span class="sub">{{ 'admin.loginAttempts.targetedSub' | translate }}</span></div></div>
       <div class="table-scroll">
         <table class="conx-table">
           <thead>
-            <tr><th>Utilisateur</th><th>Email</th><th>Tentatives reçues</th><th>Dernier incident</th><th>Statut compte</th><th class="ar">Actions</th></tr>
+            <tr><th>{{ 'admin.loginAttempts.colUser' | translate }}</th><th>{{ 'admin.loginAttempts.colEmail' | translate }}</th><th>{{ 'admin.loginAttempts.colAttemptsReceived' | translate }}</th><th>{{ 'admin.loginAttempts.colLastIncident' | translate }}</th><th>{{ 'admin.loginAttempts.colAccountStatus' | translate }}</th><th class="ar">{{ 'admin.loginAttempts.colActions' | translate }}</th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let t of targeted">
@@ -96,15 +97,15 @@ interface UserRef { id: number; isActive: boolean; firstName: string; lastName: 
               <td class="muted">{{ t.email }}</td>
               <td class="danger-num">{{ t.n }}</td>
               <td class="muted">{{ t.last }}</td>
-              <td><span class="badge" [class.badge-warning]="t.statut === 'Verrouillé'" [class.badge-success]="t.statut !== 'Verrouillé'">{{ t.statut }}</span></td>
+              <td><span class="badge" [class.badge-warning]="t.statut === 'Verrouillé'" [class.badge-success]="t.statut !== 'Verrouillé'">{{ (t.statut === 'Verrouillé' ? 'admin.loginAttempts.statLocked' : 'admin.loginAttempts.statActive') | translate }}</span></td>
               <td class="ar">
                 <div class="t-actions">
-                  <button class="btn btn-sm btn-outline" (click)="resetPwd(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.6 7.6a5.5 5.5 0 1 1-7.8 7.8 5.5 5.5 0 0 1 7.8-7.8zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3"/></svg> Réinitialiser MDP</button>
-                  <button class="btn btn-sm btn-danger" (click)="lockAccount(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Verrouiller</button>
+                  <button class="btn btn-sm btn-outline" (click)="resetPwd(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.6 7.6a5.5 5.5 0 1 1-7.8 7.8 5.5 5.5 0 0 1 7.8-7.8zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3"/></svg> {{ 'admin.loginAttempts.resetPwd' | translate }}</button>
+                  <button class="btn btn-sm btn-danger" (click)="lockAccount(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> {{ 'admin.loginAttempts.lock' | translate }}</button>
                 </div>
               </td>
             </tr>
-            <tr *ngIf="targeted.length === 0"><td colspan="6"><div class="empty">Aucun compte ciblé.</div></td></tr>
+            <tr *ngIf="targeted.length === 0"><td colspan="6"><div class="empty">{{ 'admin.loginAttempts.noTargeted' | translate }}</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -114,45 +115,45 @@ interface UserRef { id: number; isActive: boolean; firstName: string; lastName: 
   <!-- ═══ Details modal (top "Voir les détails") ═══ -->
   <div class="modal-backdrop" *ngIf="showDetails" (click)="showDetails = false">
     <div class="modal" (click)="$event.stopPropagation()">
-      <div class="m-head"><h3>Détails de sécurité</h3><button class="x" (click)="showDetails = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+      <div class="m-head"><h3>{{ 'admin.loginAttempts.detailsTitle' | translate }}</h3><button class="x" (click)="showDetails = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
       <div class="m-body">
         <div class="stat-grid">
-          <div class="stat"><span class="sv">{{ failed24 }}</span><span class="sl">Tentatives échouées (24h)</span></div>
-          <div class="stat"><span class="sv">{{ suspiciousIps.length }}</span><span class="sl">IP suspectes</span></div>
-          <div class="stat"><span class="sv">{{ targeted.length }}</span><span class="sl">Comptes ciblés</span></div>
-          <div class="stat"><span class="sv">{{ metrics.totalAttempts }}</span><span class="sl">Tentatives totales</span></div>
+          <div class="stat"><span class="sv">{{ failed24 }}</span><span class="sl">{{ 'admin.loginAttempts.statFailed24' | translate }}</span></div>
+          <div class="stat"><span class="sv">{{ suspiciousIps.length }}</span><span class="sl">{{ 'admin.loginAttempts.statSuspIp' | translate }}</span></div>
+          <div class="stat"><span class="sv">{{ targeted.length }}</span><span class="sl">{{ 'admin.loginAttempts.statTargeted' | translate }}</span></div>
+          <div class="stat"><span class="sv">{{ metrics.totalAttempts }}</span><span class="sl">{{ 'admin.loginAttempts.statTotal' | translate }}</span></div>
         </div>
-        <h4 class="sub-h">Principales IP suspectes</h4>
+        <h4 class="sub-h">{{ 'admin.loginAttempts.topSuspicious' | translate }}</h4>
         <div class="mini-list">
-          <div class="mini-row" *ngFor="let r of suspiciousIps.slice(0, 5)"><span class="mono">{{ r.ip }}</span><span class="muted">{{ r.tentatives }} tentative(s) · {{ r.cibles }} compte(s)</span><span class="badge" [class.badge-danger]="r.statut === 'Bloquée'" [class.badge-warning]="r.statut !== 'Bloquée'">{{ r.statut }}</span></div>
-          <div class="empty" *ngIf="suspiciousIps.length === 0">Aucune IP suspecte.</div>
+          <div class="mini-row" *ngFor="let r of suspiciousIps.slice(0, 5)"><span class="mono">{{ r.ip }}</span><span class="muted">{{ 'admin.loginAttempts.attemptsAccounts' | translate:{ att: r.tentatives, acc: r.cibles } }}</span><span class="badge" [class.badge-danger]="r.statut === 'Bloquée'" [class.badge-warning]="r.statut !== 'Bloquée'">{{ (r.statut === 'Bloquée' ? 'admin.loginAttempts.statBlocked' : 'admin.loginAttempts.statMonitored') | translate }}</span></div>
+          <div class="empty" *ngIf="suspiciousIps.length === 0">{{ 'admin.loginAttempts.noSuspIpShort' | translate }}</div>
         </div>
-        <h4 class="sub-h">Comptes les plus ciblés</h4>
+        <h4 class="sub-h">{{ 'admin.loginAttempts.topTargeted' | translate }}</h4>
         <div class="mini-list">
-          <div class="mini-row" *ngFor="let t of targeted.slice(0, 5)"><span class="strong">{{ t.nom }}</span><span class="muted">{{ t.n }} tentative(s) · {{ t.last }}</span><span class="badge" [class.badge-warning]="t.statut === 'Verrouillé'" [class.badge-success]="t.statut !== 'Verrouillé'">{{ t.statut }}</span></div>
-          <div class="empty" *ngIf="targeted.length === 0">Aucun compte ciblé.</div>
+          <div class="mini-row" *ngFor="let t of targeted.slice(0, 5)"><span class="strong">{{ t.nom }}</span><span class="muted">{{ 'admin.loginAttempts.attemptsLast' | translate:{ att: t.n, last: t.last } }}</span><span class="badge" [class.badge-warning]="t.statut === 'Verrouillé'" [class.badge-success]="t.statut !== 'Verrouillé'">{{ (t.statut === 'Verrouillé' ? 'admin.loginAttempts.statLocked' : 'admin.loginAttempts.statActive') | translate }}</span></div>
+          <div class="empty" *ngIf="targeted.length === 0">{{ 'admin.loginAttempts.noTargeted' | translate }}</div>
         </div>
       </div>
-      <div class="m-foot"><button class="btn btn-outline" (click)="showDetails = false">Fermer</button></div>
+      <div class="m-foot"><button class="btn btn-outline" (click)="showDetails = false">{{ 'admin.loginAttempts.close' | translate }}</button></div>
     </div>
   </div>
 
   <!-- ═══ IP attempts modal ("Voir tentatives") ═══ -->
   <div class="modal-backdrop" *ngIf="ipModal" (click)="ipModal = null">
     <div class="modal" (click)="$event.stopPropagation()">
-      <div class="m-head"><h3>Tentatives depuis <span class="mono">{{ ipModal!.ip }}</span></h3><button class="x" (click)="ipModal = null"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+      <div class="m-head"><h3>{{ 'admin.loginAttempts.attemptsFrom' | translate }} <span class="mono">{{ ipModal!.ip }}</span></h3><button class="x" (click)="ipModal = null"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
       <div class="m-body">
         <div class="table-scroll">
           <table class="conx-table">
-            <thead><tr><th>Horodatage</th><th>Utilisateur</th><th>Résultat</th></tr></thead>
+            <thead><tr><th>{{ 'admin.loginAttempts.colTimestamp' | translate }}</th><th>{{ 'admin.loginAttempts.colUser' | translate }}</th><th>{{ 'admin.loginAttempts.colResult' | translate }}</th></tr></thead>
             <tbody>
-              <tr *ngFor="let row of ipModal!.rows"><td class="mono">{{ row.time }}</td><td>{{ row.user }}</td><td><span class="badge" [class.badge-danger]="row.result === 'Échec'" [class.badge-success]="row.result !== 'Échec'">{{ row.result }}</span></td></tr>
-              <tr *ngIf="ipModal!.rows.length === 0"><td colspan="3"><div class="empty">Aucune tentative enregistrée pour cette IP.</div></td></tr>
+              <tr *ngFor="let row of ipModal!.rows"><td class="mono">{{ row.time }}</td><td>{{ row.user }}</td><td><span class="badge" [class.badge-danger]="row.result === 'admin.loginAttempts.resFailure'" [class.badge-success]="row.result !== 'admin.loginAttempts.resFailure'">{{ row.result | translate }}</span></td></tr>
+              <tr *ngIf="ipModal!.rows.length === 0"><td colspan="3"><div class="empty">{{ 'admin.loginAttempts.noAttemptsIp' | translate }}</div></td></tr>
             </tbody>
           </table>
         </div>
       </div>
-      <div class="m-foot"><button class="btn btn-outline" (click)="ipModal = null">Fermer</button></div>
+      <div class="m-foot"><button class="btn btn-outline" (click)="ipModal = null">{{ 'admin.loginAttempts.close' | translate }}</button></div>
     </div>
   </div>
   `,
@@ -279,8 +280,11 @@ export class AdminLoginAttemptsComponent implements OnInit {
     private security: AdminSecurityService,
     private userService: UserService,
     public toast: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private translate: TranslateService
   ) {}
+
+  private locale(): string { return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR'; }
 
   ngOnInit(): void {
     this.loadUsers();
@@ -309,7 +313,7 @@ export class AdminLoginAttemptsComponent implements OnInit {
     // 2) Add any blocked IP that isn't already shown (so it can always be unblocked).
     this.blockedIpSet.forEach(ip => {
       if (!this.suspiciousIps.some(r => r.ip === ip)) {
-        this.suspiciousIps.unshift({ ip, pays: 'Inconnu', tentatives: 0, dernier: this.rel(this.blockedAt.get(ip) || ''), cibles: 0, statut: 'Bloquée' });
+        this.suspiciousIps.unshift({ ip, pays: 'admin.loginAttempts.unknown', tentatives: 0, dernier: this.rel(this.blockedAt.get(ip) || ''), cibles: 0, statut: 'Bloquée' });
       }
     });
   }
@@ -361,7 +365,7 @@ export class AdminLoginAttemptsComponent implements OnInit {
         if (raw.length) {
           this.suspiciousIps = raw.slice(0, 10).map(r => ({
             ip: r.ipAddress,
-            pays: r.country || 'Inconnu',
+            pays: r.country || 'admin.loginAttempts.unknown',
             tentatives: r.attempts || 0,
             dernier: this.rel(r.lastAttempt),
             cibles: r.targets || 0,
@@ -390,7 +394,7 @@ export class AdminLoginAttemptsComponent implements OnInit {
       ipMap.set(a.ipAddress, e);
     });
     this.suspiciousIps = Array.from(ipMap.entries())
-      .map(([ip, e]) => ({ ip, pays: 'Inconnu', tentatives: e.count, dernier: this.rel(e.last), cibles: e.users.size, statut: 'Surveillée' }))
+      .map(([ip, e]) => ({ ip, pays: 'admin.loginAttempts.unknown', tentatives: e.count, dernier: this.rel(e.last), cibles: e.users.size, statut: 'Surveillée' }))
       .sort((a, b) => b.tentatives - a.tentatives)
       .slice(0, 10);
     this.applyBlocked();
@@ -436,9 +440,9 @@ export class AdminLoginAttemptsComponent implements OnInit {
 
   // ── Suspicious IP actions (wired to the backend) ──
   blockIp(r: IpRow): void {
-    this.security.blockIp(r.ip, 'Bloquée depuis la console de sécurité').subscribe({
-      next: () => { this.blockedIpSet.add(r.ip); r.statut = 'Bloquée'; this.toast.show(`Adresse IP ${r.ip} bloquée. Les connexions depuis cette IP sont refusées. Cliquez sur ✓ pour la débloquer.`, 'success'); this.cdr.detectChanges(); },
-      error: (err: any) => this.toast.show(err?.error?.message || `Échec du blocage de ${r.ip}.`, 'error')
+    this.security.blockIp(r.ip, this.translate.instant('admin.loginAttempts.blockReason')).subscribe({
+      next: () => { this.blockedIpSet.add(r.ip); r.statut = 'Bloquée'; this.toast.show(this.translate.instant('admin.loginAttempts.toastIpBlocked', { ip: r.ip }), 'success'); this.cdr.detectChanges(); },
+      error: (err: any) => this.toast.show(err?.error?.message || this.translate.instant('admin.loginAttempts.toastBlockFailed', { ip: r.ip }), 'error')
     });
   }
   unblockIp(r: IpRow): void {
@@ -447,45 +451,45 @@ export class AdminLoginAttemptsComponent implements OnInit {
         this.blockedIpSet.delete(r.ip);
         // Keep the row if it still has attempts (now "Surveillée"); drop it if it only existed because it was blocked.
         if (r.tentatives > 0) { r.statut = 'Surveillée'; } else { this.suspiciousIps = this.suspiciousIps.filter(x => x.ip !== r.ip); }
-        this.toast.show(`Adresse IP ${r.ip} débloquée. Les connexions depuis cette IP sont de nouveau autorisées.`, 'success');
+        this.toast.show(this.translate.instant('admin.loginAttempts.toastIpUnblocked', { ip: r.ip }), 'success');
         this.cdr.detectChanges();
       },
-      error: (err: any) => this.toast.show(err?.error?.message || `Échec du déblocage de ${r.ip}.`, 'error')
+      error: (err: any) => this.toast.show(err?.error?.message || this.translate.instant('admin.loginAttempts.toastUnblockFailed', { ip: r.ip }), 'error')
     });
   }
   viewIpAttempts(r: IpRow): void {
     const rows = this.attempts
       .filter(a => a.ipAddress === r.ip)
       .slice(0, 50)
-      .map(a => ({ time: this.fmt(a.attemptedAt), user: a.username || '—', result: a.success ? 'Succès' : 'Échec' }));
+      .map(a => ({ time: this.fmt(a.attemptedAt), user: a.username || '—', result: a.success ? 'admin.loginAttempts.resSuccess' : 'admin.loginAttempts.resFailure' }));
     this.ipModal = { ip: r.ip, rows };
   }
 
   // ── Targeted-account actions (same implementation as the admin users page) ──
   resetPwd(t: TargetRow): void {
     const ref = this.resolveUser(t.email) || this.resolveUser(t.nom);
-    if (!ref) { this.toast.show(`Utilisateur introuvable pour ${t.email}.`, 'error'); return; }
+    if (!ref) { this.toast.show(this.translate.instant('admin.loginAttempts.toastUserNotFound', { email: t.email }), 'error'); return; }
     this.userService.resetUserPassword(ref.id).subscribe({
       next: (res: any) => {
         const data = res?.data ?? res;
         const temp = data?.temporaryPassword;
         this.toast.show(
-          temp ? `Mot de passe réinitialisé pour ${t.nom}. Mot de passe temporaire : ${temp} (envoyé à ${ref.email}).`
-               : `Mot de passe réinitialisé et envoyé à ${ref.email}.`,
+          temp ? this.translate.instant('admin.loginAttempts.toastPwdResetTemp', { name: t.nom, temp, email: ref.email })
+               : this.translate.instant('admin.loginAttempts.toastPwdResetSent', { email: ref.email }),
           'success'
         );
       },
-      error: (err: any) => this.toast.show(err?.error?.message || 'Échec de la réinitialisation du mot de passe.', 'error')
+      error: (err: any) => this.toast.show(err?.error?.message || this.translate.instant('admin.loginAttempts.toastPwdResetFailed'), 'error')
     });
   }
   lockAccount(t: TargetRow): void {
     const ref = this.resolveUser(t.email) || this.resolveUser(t.nom);
-    if (!ref) { this.toast.show(`Utilisateur introuvable pour ${t.email}.`, 'error'); return; }
-    if (!ref.isActive) { t.statut = 'Verrouillé'; this.toast.show(`Le compte de ${t.nom} est déjà désactivé.`, 'success'); return; }
+    if (!ref) { this.toast.show(this.translate.instant('admin.loginAttempts.toastUserNotFound', { email: t.email }), 'error'); return; }
+    if (!ref.isActive) { t.statut = 'Verrouillé'; this.toast.show(this.translate.instant('admin.loginAttempts.toastAlreadyDisabled', { name: t.nom }), 'success'); return; }
     // toggleUserStatus flips active↔inactive; the account is active here, so this deactivates it.
     this.userService.toggleUserStatus(ref.id).subscribe({
-      next: () => { ref.isActive = false; t.statut = 'Verrouillé'; this.toast.show(`Compte de ${t.nom} verrouillé (désactivé).`, 'success'); this.cdr.detectChanges(); },
-      error: (err: any) => this.toast.show(err?.error?.message || 'Échec du verrouillage du compte.', 'error')
+      next: () => { ref.isActive = false; t.statut = 'Verrouillé'; this.toast.show(this.translate.instant('admin.loginAttempts.toastAccountLocked', { name: t.nom }), 'success'); this.cdr.detectChanges(); },
+      error: (err: any) => this.toast.show(err?.error?.message || this.translate.instant('admin.loginAttempts.toastLockFailed'), 'error')
     });
   }
 
@@ -495,7 +499,7 @@ export class AdminLoginAttemptsComponent implements OnInit {
     if (!dateStr) return '—';
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return d.toLocaleString(this.locale(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
   private displayName(usernameOrEmail: string): string {
@@ -507,9 +511,9 @@ export class AdminLoginAttemptsComponent implements OnInit {
     if (!dateStr) return '—';
     const d = new Date(dateStr); if (isNaN(d.getTime())) return '—';
     const mins = Math.floor((Date.now() - d.getTime()) / 60000);
-    if (mins < 1) return "à l'instant";
-    if (mins < 60) return `il y a ${mins} min`;
-    const h = Math.floor(mins / 60); if (h < 24) return `il y a ${h} h`;
-    return `il y a ${Math.floor(h / 24)} j`;
+    if (mins < 1) return this.translate.instant('relTime.justNow');
+    if (mins < 60) return this.translate.instant('relTime.minAgo', { n: mins });
+    const h = Math.floor(mins / 60); if (h < 24) return this.translate.instant('relTime.hAgo', { n: h });
+    return this.translate.instant('relTime.dAgo', { n: Math.floor(h / 24) });
   }
 }

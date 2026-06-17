@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DashboardService, AdminDashboardStats } from '../../../core/services/dashboard.service';
 import { UserService, User, UserRequest } from '../../../core/services/user.service';
 import { ProjectService, Project, ProjectRequest } from '../../../core/services/project.service';
@@ -11,7 +12,7 @@ import { ActivityLogService, ActivityLog } from '../../../core/services/activity
 import { ToastService } from '../../../core/services/toast.service';
 
 interface DonutSegment {
-  label: string;
+  labelKey: string;
   value: number;
   color: string;
   percent: number;
@@ -22,7 +23,7 @@ interface DonutSegment {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
@@ -86,10 +87,10 @@ export class AdminDashboardComponent implements OnInit {
   get projectStatusDonut(): DonutSegment[] {
     const d = this.projectDistribution;
     return this.buildDonut([
-      { label: 'En cours',  value: d.active,    color: 'var(--primary)' },
-      { label: 'Terminé',   value: d.completed, color: 'var(--success)' },
-      { label: 'Planifié',  value: d.planned,   color: 'var(--warning)' },
-      { label: 'En pause',  value: d.onHold,    color: 'var(--accent)' }
+      { labelKey: 'admin.dashboard.stInProgress', value: d.active,    color: 'var(--primary)' },
+      { labelKey: 'admin.dashboard.stCompleted',  value: d.completed, color: 'var(--success)' },
+      { labelKey: 'admin.dashboard.stPlanned',    value: d.planned,   color: 'var(--warning)' },
+      { labelKey: 'admin.dashboard.stOnHold',     value: d.onHold,    color: 'var(--accent)' }
     ]);
   }
   get projectStatusTotal(): number {
@@ -99,9 +100,9 @@ export class AdminDashboardComponent implements OnInit {
   /** Donut: Role distribution */
   get roleDonut(): DonutSegment[] {
     return this.buildDonut([
-      { label: 'Administrateurs', value: this.roleCounts.admins,       color: 'var(--accent)' },
-      { label: 'Chefs de Projet', value: this.roleCounts.managers,     color: 'var(--primary)' },
-      { label: 'Collaborateurs', value: this.roleCounts.collaborators, color: 'var(--success)' }
+      { labelKey: 'admin.dashboard.roleAdmins',        value: this.roleCounts.admins,       color: 'var(--accent)' },
+      { labelKey: 'admin.dashboard.roleManagers',      value: this.roleCounts.managers,     color: 'var(--primary)' },
+      { labelKey: 'admin.dashboard.roleCollaborators', value: this.roleCounts.collaborators, color: 'var(--success)' }
     ]);
   }
   get roleTotal(): number {
@@ -111,9 +112,9 @@ export class AdminDashboardComponent implements OnInit {
   /** Donut: Support tickets by status */
   get ticketDonut(): DonutSegment[] {
     return this.buildDonut([
-      { label: 'Ouvert',    value: this.ticketStats.open,       color: 'var(--danger)' },
-      { label: 'En cours',  value: this.ticketStats.inProgress, color: 'var(--primary)' },
-      { label: 'Résolu',    value: this.ticketStats.resolved,   color: 'var(--success)' }
+      { labelKey: 'admin.dashboard.open',       value: this.ticketStats.open,       color: 'var(--danger)' },
+      { labelKey: 'admin.dashboard.inProgress', value: this.ticketStats.inProgress, color: 'var(--primary)' },
+      { labelKey: 'admin.dashboard.resolved',   value: this.ticketStats.resolved,   color: 'var(--success)' }
     ]);
   }
 
@@ -188,14 +189,14 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   // ── 6 KPI tiles (prototype j3, wired to live stats) ──
-  get kpis(): { key: string; label: string; value: string | number; delta: string; tone: string; icon: string; pulse?: boolean }[] {
+  get kpis(): { key: string; labelKey: string; value: string | number; deltaKey: string; deltaParams?: Record<string, unknown>; tone: string; icon: string; pulse?: boolean }[] {
     return [
-      { key: 'users',    label: 'Utilisateurs Totaux',      value: this.stats.totalUsers,             delta: `+${this.stats.newUsersThisMonth} ce mois`, tone: 'brand',   icon: 'users' },
-      { key: 'projects', label: 'Projets Actifs',           value: this.stats.activeProjects,         delta: 'cette semaine',          tone: 'navy',    icon: 'folder' },
-      { key: 'tasks',    label: 'Tâches En Cours',          value: this.stats.activeTasks,            delta: `${this.stats.completedTasks} terminées`, tone: 'success', icon: 'checks' },
-      { key: 'failed',   label: 'Tentatives Échouées',      value: this.securityMetrics.failedAttempts, delta: '24 dernières heures',  tone: 'danger',  icon: 'shield' },
-      { key: 'tickets',  label: 'Tickets Support Ouverts',  value: this.ticketStats.open,             delta: `${this.ticketStats.critical} critiques`, tone: 'warning', icon: 'life' },
-      { key: 'uptime',   label: 'Disponibilité Système',    value: this.systemUptime + ' %',          delta: '30 derniers jours',      tone: 'success', icon: 'activity', pulse: true }
+      { key: 'users',    labelKey: 'admin.dashboard.kpiTotalUsers',     value: this.stats.totalUsers,             deltaKey: 'admin.dashboard.deltaThisMonth', deltaParams: { count: this.stats.newUsersThisMonth }, tone: 'brand',   icon: 'users' },
+      { key: 'projects', labelKey: 'admin.dashboard.kpiActiveProjects', value: this.stats.activeProjects,         deltaKey: 'admin.dashboard.deltaThisWeek',  tone: 'navy',    icon: 'folder' },
+      { key: 'tasks',    labelKey: 'admin.dashboard.kpiActiveTasks',    value: this.stats.activeTasks,            deltaKey: 'admin.dashboard.deltaCompleted', deltaParams: { count: this.stats.completedTasks }, tone: 'success', icon: 'checks' },
+      { key: 'failed',   labelKey: 'admin.dashboard.kpiFailedAttempts', value: this.securityMetrics.failedAttempts, deltaKey: 'admin.dashboard.delta24h',     tone: 'danger',  icon: 'shield' },
+      { key: 'tickets',  labelKey: 'admin.dashboard.kpiOpenTickets',    value: this.ticketStats.open,             deltaKey: 'admin.dashboard.deltaCritical', deltaParams: { count: this.ticketStats.critical }, tone: 'warning', icon: 'life' },
+      { key: 'uptime',   labelKey: 'admin.dashboard.kpiUptime',         value: this.systemUptime + ' %',          deltaKey: 'admin.dashboard.delta30d',      tone: 'success', icon: 'activity', pulse: true }
     ];
   }
 
@@ -204,32 +205,32 @@ export class AdminDashboardComponent implements OnInit {
     const s: any = this.stats;
     // Preferred: detailed per-status breakdown (backend with inProgress/planned/cancelled).
     const breakdown = [
-      { label: 'En cours',  value: s.inProgressProjects || 0, color: 'var(--primary)' },
-      { label: 'Planifié',  value: s.plannedProjects || 0,    color: 'var(--warning)' },
-      { label: 'Terminé',   value: s.completedProjects || 0,  color: 'var(--success)' },
-      { label: 'En pause',  value: s.onHoldProjects || 0,     color: 'var(--accent)' },
-      { label: 'Annulé',    value: s.cancelledProjects || 0,  color: 'var(--danger)' }
+      { labelKey: 'admin.dashboard.stInProgress', value: s.inProgressProjects || 0, color: 'var(--primary)' },
+      { labelKey: 'admin.dashboard.stPlanned',    value: s.plannedProjects || 0,    color: 'var(--warning)' },
+      { labelKey: 'admin.dashboard.stCompleted',  value: s.completedProjects || 0,  color: 'var(--success)' },
+      { labelKey: 'admin.dashboard.stOnHold',     value: s.onHoldProjects || 0,     color: 'var(--accent)' },
+      { labelKey: 'admin.dashboard.stCancelled',  value: s.cancelledProjects || 0,  color: 'var(--danger)' }
     ].filter(p => p.value > 0);
     if (breakdown.length) return this.buildDonut(breakdown);
 
     // Fallback (older backend that returns only the bundled fields) so the chart still renders.
     const planned = Math.max(0, (s.totalProjects || 0) - (s.activeProjects || 0) - (s.completedProjects || 0) - (s.onHoldProjects || 0));
     const legacy = [
-      { label: 'En cours',  value: s.activeProjects || 0,    color: 'var(--primary)' },
-      { label: 'Terminé',   value: s.completedProjects || 0, color: 'var(--success)' },
-      { label: 'En pause',  value: s.onHoldProjects || 0,    color: 'var(--accent)' },
-      { label: 'Planifié',  value: planned,                  color: 'var(--warning)' }
+      { labelKey: 'admin.dashboard.stInProgress', value: s.activeProjects || 0,    color: 'var(--primary)' },
+      { labelKey: 'admin.dashboard.stCompleted',  value: s.completedProjects || 0, color: 'var(--success)' },
+      { labelKey: 'admin.dashboard.stOnHold',     value: s.onHoldProjects || 0,    color: 'var(--accent)' },
+      { labelKey: 'admin.dashboard.stPlanned',    value: planned,                  color: 'var(--warning)' }
     ].filter(p => p.value > 0);
     return this.buildDonut(legacy);
   }
 
   // ── Role distribution bars ──
-  get rolesBars(): { name: string; value: number; pct: number; color: string }[] {
+  get rolesBars(): { nameKey: string; value: number; pct: number; color: string }[] {
     const total = this.roleTotal || 1;
     return [
-      { name: 'Administrateurs', value: this.roleCounts.admins,        color: 'var(--sidebar-bg)' },
-      { name: 'Chefs de Projet', value: this.roleCounts.managers,      color: 'var(--primary)' },
-      { name: 'Collaborateurs',  value: this.roleCounts.collaborators, color: 'var(--accent)' }
+      { nameKey: 'admin.dashboard.roleAdmins',        value: this.roleCounts.admins,        color: 'var(--sidebar-bg)' },
+      { nameKey: 'admin.dashboard.roleManagers',      value: this.roleCounts.managers,      color: 'var(--primary)' },
+      { nameKey: 'admin.dashboard.roleCollaborators', value: this.roleCounts.collaborators, color: 'var(--accent)' }
     ].map(r => ({ ...r, pct: Math.round((r.value / total) * 100) }));
   }
 
@@ -295,18 +296,18 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   // ── Security alerts feed (from real login attempts) ──
-  get securityFeed(): { id: number; severity: string; user: string; ip: string; message: string; time: string }[] {
+  get securityFeed(): { id: number; severity: string; user: string; ip: string; messageKey: string; time: string }[] {
     return this.recentSecurityAlerts.map(a => ({
       id: a.id,
       severity: a.success ? 'warning' : 'danger',
       user: a.username,
       ip: a.ipAddress,
-      message: a.success ? 'Connexion réussie depuis un nouvel appareil' : 'Tentative de connexion échouée',
+      messageKey: a.success ? 'admin.dashboard.secLoginSuccess' : 'admin.dashboard.secLoginFailed',
       time: this.relativeAttempt(a.attemptedAt)
     }));
   }
 
-  private buildDonut(parts: { label: string; value: number; color: string }[]): DonutSegment[] {
+  private buildDonut(parts: { labelKey: string; value: number; color: string }[]): DonutSegment[] {
     const total = parts.reduce((s, p) => s + p.value, 0) || 1;
     let acc = 0;
     const gap = 1.6; // small spacing between segments (recharts paddingAngle look)
@@ -377,7 +378,8 @@ export class AdminDashboardComponent implements OnInit {
     private activityLogService: ActivityLogService,
     private cdr: ChangeDetectorRef,
     private router: Router,
-    private toast: ToastService
+    private toast: ToastService,
+    private translate: TranslateService
   ) {}
 
   navigateToProjects(): void {
@@ -562,12 +564,12 @@ export class AdminDashboardComponent implements OnInit {
     const mins = Math.floor(diff / 60000);
     const hours = Math.floor(mins / 60);
     const days = Math.floor(hours / 24);
-    if (mins < 1) return 'Just now';
-    if (mins < 60) return `${mins}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days}d ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (mins < 1) return this.translate.instant('relTime.justNow');
+    if (mins < 60) return this.translate.instant('relTime.minAgo', { n: mins });
+    if (hours < 24) return this.translate.instant('relTime.hAgo', { n: hours });
+    if (days === 1) return this.translate.instant('relTime.yesterday');
+    if (days < 7) return this.translate.instant('relTime.dAgo', { n: days });
+    return date.toLocaleDateString(this.translate.currentLang() === 'en' ? 'en-US' : 'fr-FR', { month: 'short', day: 'numeric' });
   }
 
   private buildUserActivitySeries(): void {
@@ -581,7 +583,7 @@ export class AdminDashboardComponent implements OnInit {
   // Create User DTO submission
   onSubmitUser(): void {
     if (!this.userForm.username || !this.userForm.email || !this.userForm.password || !this.userForm.firstName || !this.userForm.lastName) {
-      this.triggerToast('Veuillez renseigner tous les champs du profil.', 'error');
+      this.triggerToast(this.translate.instant('admin.dashboard.toastFillProfile'), 'error');
       return;
     }
 
@@ -590,14 +592,14 @@ export class AdminDashboardComponent implements OnInit {
       next: (createdUser) => {
         this.submittingUser = false;
         this.showAddUserModal = false;
-        this.triggerToast(`Compte créé pour ${createdUser.firstName} ${createdUser.lastName}.`, 'success');
+        this.triggerToast(this.translate.instant('admin.dashboard.toastAccountCreated', { name: `${createdUser.firstName} ${createdUser.lastName}` }), 'success');
         this.loadDashboardData(); // Update total user counts
         this.loadUsers();
         this.resetUserForm();
       },
       error: (err) => {
         this.submittingUser = false;
-        this.triggerToast(err?.error?.message || 'Échec de la création du compte.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.dashboard.toastAccountFailed'), 'error');
       }
     });
   }
@@ -616,7 +618,7 @@ export class AdminDashboardComponent implements OnInit {
   // Create Project DTO submission
   onSubmitProject(): void {
     if (!this.projectForm.name || !this.projectForm.startDate || !this.projectForm.endDate) {
-      this.triggerToast('Veuillez saisir le nom du projet et des dates valides.', 'error');
+      this.triggerToast(this.translate.instant('admin.dashboard.toastProjectFields'), 'error');
       return;
     }
 
@@ -631,14 +633,14 @@ export class AdminDashboardComponent implements OnInit {
       next: (createdProj) => {
         this.submittingProject = false;
         this.showCreateProjectModal = false;
-        this.triggerToast(`Projet « ${createdProj.name} » lancé avec succès.`, 'success');
+        this.triggerToast(this.translate.instant('admin.dashboard.toastProjectLaunched', { name: createdProj.name }), 'success');
         this.loadRecentProjects();
         this.loadDashboardData();
         this.resetProjectForm();
       },
       error: (err) => {
         this.submittingProject = false;
-        this.triggerToast(err?.error?.message || 'Échec du lancement du projet.', 'error');
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.dashboard.toastProjectFailed'), 'error');
       }
     });
   }

@@ -6,7 +6,7 @@
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"></polyline>
       </svg>
-      Retour aux projets
+      {{ 'admin.projectDetail.backToProjects' | translate }}
     </button>
     <div class="pd-topbar-actions" *ngIf="!loading && project">
       <button class="btn btn-secondary" (click)="openEditModal()">
@@ -14,14 +14,14 @@
           <polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon>
           <line x1="3" y1="21" x2="21" y2="21"></line>
         </svg>
-        Modifier le projet
+        {{ 'admin.projectDetail.editProject' | translate }}
       </button>
       <button class="btn btn-danger" (click)="openDeleteModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3 6 5 6 21 6"></polyline>
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
         </svg>
-        Supprimer le projet
+        {{ 'admin.projectDetail.deleteProject' | translate }}
       </button>
     </div>
   </div>
@@ -29,7 +29,7 @@
   <!-- ── Loading State ──────────────────────────────────────────────────── -->
   <div class="pd-loading" *ngIf="loading">
     <div class="spinner"></div>
-    <span>Chargement des détails du projet...</span>
+    <span>{{ 'admin.projectDetail.loadingDetails' | translate }}</span>
   </div>
 
   <!-- ── Not Found ──────────────────────────────────────────────────────── -->
@@ -39,9 +39,9 @@
         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
       </svg>
     </div>
-    <h3>Projet introuvable</h3>
-    <p>Le projet demandé n'a pas pu être chargé. Veuillez revenir en arrière et réessayer.</p>
-    <button class="btn btn-primary" (click)="goBack()">Retour aux projets</button>
+    <h3>{{ 'admin.projectDetail.notFoundTitle' | translate }}</h3>
+    <p>{{ 'admin.projectDetail.notFoundText' | translate }}</p>
+    <button class="btn btn-primary" (click)="goBack()">{{ 'admin.projectDetail.backToProjects' | translate }}</button>
   </div>
 
   <!-- ── Main Content ───────────────────────────────────────────────────── -->
@@ -51,10 +51,10 @@
     <div class="glass-panel pd-hero">
       <div class="hero-content">
         <span class="status-badge" [ngClass]="project.status?.toLowerCase() || 'planned'">
-          {{ getStatusLabel(project.status) }}
+          {{ getStatusKey(project.status) | translate }}
         </span>
         <h1 class="hero-title">{{ project.name }}</h1>
-        <p class="hero-desc">{{ project.description || 'Aucune description fournie pour cet espace de projet.' }}</p>
+        <p class="hero-desc">{{ project.description || ('admin.projectDetail.noDescription' | translate) }}</p>
 
         <div class="hero-meta">
           <div class="meta-chip">
@@ -62,7 +62,7 @@
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            <span>{{ project.managerName || 'Chef de projet non attribué' }}</span>
+            <span>{{ project.managerName || ('admin.projectDetail.noManager' | translate) }}</span>
           </div>
           <div class="meta-chip">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -78,7 +78,7 @@
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            <span>{{ getDaysRemaining() }} jours restants</span>
+            <span>{{ 'admin.projectDetail.daysRemaining' | translate:{ n: getDaysRemaining() } }}</span>
           </div>
         </div>
       </div>
@@ -94,7 +94,7 @@
         </svg>
         <div class="ring-center">
           <span class="ring-pct">{{ project.progress || 0 }}%</span>
-          <span class="ring-label">Progression</span>
+          <span class="ring-label">{{ 'admin.projectDetail.progress' | translate }}</span>
         </div>
       </div>
     </div>
@@ -112,7 +112,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ project.taskCount || taskStats.total || 0 }}</span>
-          <span class="stat-label">Total des tâches</span>
+          <span class="stat-label">{{ 'admin.projectDetail.totalTasks' | translate }}</span>
         </div>
       </div>
 
@@ -127,7 +127,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ members.length || project.teamCount || 0 }}</span>
-          <span class="stat-label">Membres de l'équipe</span>
+          <span class="stat-label">{{ 'admin.projectDetail.teamMembers' | translate }}</span>
         </div>
       </div>
 
@@ -139,7 +139,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ taskStats.completed }}</span>
-          <span class="stat-label">Tâches terminées</span>
+          <span class="stat-label">{{ 'admin.projectDetail.tasksCompleted' | translate }}</span>
         </div>
       </div>
 
@@ -152,7 +152,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ getDaysTotal() }}</span>
-          <span class="stat-label">Durée totale (jours)</span>
+          <span class="stat-label">{{ 'admin.projectDetail.totalDuration' | translate }}</span>
         </div>
       </div>
     </div>
@@ -163,8 +163,8 @@
       <!-- Task Status Chart -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Répartition par statut des tâches</h4>
-          <span class="chart-subtitle">{{ taskStats.total }} tâches au total</span>
+          <h4>{{ 'admin.projectDetail.taskStatusTitle' | translate }}</h4>
+          <span class="chart-subtitle">{{ 'admin.projectDetail.tasksTotalCount' | translate:{ n: taskStats.total } }}</span>
         </div>
 
         <div class="task-donut-wrap" *ngIf="taskStats.total > 0">
@@ -193,28 +193,28 @@
               stroke-linecap="butt"/>
             <!-- Center -->
             <text x="60" y="56" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text-primary)">{{ taskStats.total }}</text>
-            <text x="60" y="70" text-anchor="middle" font-size="9" fill="var(--text-muted)" font-weight="600">TASKS</text>
+            <text x="60" y="70" text-anchor="middle" font-size="9" fill="var(--text-muted)" font-weight="600">{{ 'admin.projectDetail.donutCenter' | translate }}</text>
           </svg>
 
           <div class="donut-legend">
             <div class="legend-item">
               <span class="legend-dot" style="background:#94a3b8;"></span>
-              <span class="legend-label">Planifié</span>
+              <span class="legend-label">{{ 'admin.projectDetail.statusPlanned' | translate }}</span>
               <span class="legend-count">{{ taskStats.planned }}</span>
             </div>
             <div class="legend-item">
               <span class="legend-dot" style="background:var(--primary);"></span>
-              <span class="legend-label">En cours</span>
+              <span class="legend-label">{{ 'admin.projectDetail.statusInProgress' | translate }}</span>
               <span class="legend-count">{{ taskStats.inProgress }}</span>
             </div>
             <div class="legend-item">
               <span class="legend-dot" style="background:var(--success);"></span>
-              <span class="legend-label">Terminé</span>
+              <span class="legend-label">{{ 'admin.projectDetail.statusCompleted' | translate }}</span>
               <span class="legend-count">{{ taskStats.completed }}</span>
             </div>
             <div class="legend-item">
               <span class="legend-dot" style="background:var(--warning, #f59e0b);"></span>
-              <span class="legend-label">En attente</span>
+              <span class="legend-label">{{ 'admin.projectDetail.statusOnHold' | translate }}</span>
               <span class="legend-count">{{ taskStats.onHold }}</span>
             </div>
           </div>
@@ -225,7 +225,7 @@
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
           </svg>
-          <span>Aucune tâche attribuée pour le moment</span>
+          <span>{{ 'admin.projectDetail.noTasksYet' | translate }}</span>
         </div>
         <div class="chart-loading" *ngIf="loadingTasks">
           <div class="spinner"></div>
@@ -235,17 +235,17 @@
       <!-- Timeline Progress Chart -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Chronologie du projet</h4>
-          <span class="chart-subtitle">Analyse de la durée</span>
+          <h4>{{ 'admin.projectDetail.timelineTitle' | translate }}</h4>
+          <span class="chart-subtitle">{{ 'admin.projectDetail.durationAnalysis' | translate }}</span>
         </div>
 
         <div class="timeline-chart">
           <!-- Duration gauge -->
           <div class="timeline-gauge">
             <div class="gauge-labels">
-              <span class="gauge-start">{{ project.startDate || 'Début' }}</span>
-              <span class="gauge-pct">{{ getDaysElapsedPct() | number:'1.0-0' }}% écoulés</span>
-              <span class="gauge-end">{{ project.endDate || 'Fin' }}</span>
+              <span class="gauge-start">{{ project.startDate || ('admin.projectDetail.start' | translate) }}</span>
+              <span class="gauge-pct">{{ 'admin.projectDetail.pctElapsed' | translate:{ n: (getDaysElapsedPct() | number:'1.0-0') } }}</span>
+              <span class="gauge-end">{{ project.endDate || ('admin.projectDetail.end' | translate) }}</span>
             </div>
             <div class="gauge-track">
               <div class="gauge-fill" [style.width.%]="getDaysElapsedPct()"></div>
@@ -257,23 +257,23 @@
           <div class="timeline-stats">
             <div class="tl-stat">
               <span class="tl-num">{{ getDaysTotal() }}</span>
-              <span class="tl-lbl">Jours au total</span>
+              <span class="tl-lbl">{{ 'admin.projectDetail.daysTotal' | translate }}</span>
             </div>
             <div class="tl-divider"></div>
             <div class="tl-stat">
               <span class="tl-num">{{ getDaysTotal() - getDaysRemaining() }}</span>
-              <span class="tl-lbl">Jours écoulés</span>
+              <span class="tl-lbl">{{ 'admin.projectDetail.daysElapsed' | translate }}</span>
             </div>
             <div class="tl-divider"></div>
             <div class="tl-stat">
               <span class="tl-num" [class.overdue]="getDaysRemaining() === 0">{{ getDaysRemaining() }}</span>
-              <span class="tl-lbl">Jours restants</span>
+              <span class="tl-lbl">{{ 'admin.projectDetail.daysRemainingShort' | translate }}</span>
             </div>
           </div>
 
           <!-- Task completion vs progress stacked bar -->
           <div class="completion-bar-section" *ngIf="taskStats.total > 0">
-            <span class="completion-label">Taux d'achèvement des tâches</span>
+            <span class="completion-label">{{ 'admin.projectDetail.taskCompletionRate' | translate }}</span>
             <div class="completion-track">
               <div class="completion-fill"
                 [style.width.%]="taskStats.total > 0 ? (taskStats.completed / taskStats.total * 100) : 0">
@@ -289,8 +289,8 @@
       <!-- Members Distribution Chart -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Composition de l'équipe</h4>
-          <span class="chart-subtitle">{{ members.length }} membre(s) attribué(s)</span>
+          <h4>{{ 'admin.projectDetail.teamCompositionTitle' | translate }}</h4>
+          <span class="chart-subtitle">{{ 'admin.projectDetail.membersAssigned' | translate:{ n: members.length } }}</span>
         </div>
 
         <div class="members-chart" *ngIf="members.length > 0 && !loadingMembers">
@@ -316,35 +316,35 @@
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
           </svg>
-          <span>Aucun membre d'équipe attribué</span>
+          <span>{{ 'admin.projectDetail.noMemberShort' | translate }}</span>
         </div>
       </div>
 
       <!-- Task Priority Distribution -->
       <div class="glass-panel chart-card">
         <div class="chart-header">
-          <h4>Répartition par priorité des tâches</h4>
-          <span class="chart-subtitle">Distribution des priorités</span>
+          <h4>{{ 'admin.projectDetail.taskPriorityTitle' | translate }}</h4>
+          <span class="chart-subtitle">{{ 'admin.projectDetail.priorityDistribution' | translate }}</span>
         </div>
 
         <!-- Priority bars -->
         <div class="priority-bars-direct" *ngIf="tasks.length > 0 && !loadingTasks">
           <div class="pb-row">
-            <span class="pb-label high-lbl">Élevée</span>
+            <span class="pb-label high-lbl">{{ 'admin.projectDetail.priorityHigh' | translate }}</span>
             <div class="pb-track">
               <div class="pb-fill high-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('HIGH') / tasks.length * 100) : 0"></div>
             </div>
             <span class="pb-val">{{ getCountByPriority('HIGH') }}</span>
           </div>
           <div class="pb-row">
-            <span class="pb-label med-lbl">Moyenne</span>
+            <span class="pb-label med-lbl">{{ 'admin.projectDetail.priorityMedium' | translate }}</span>
             <div class="pb-track">
               <div class="pb-fill med-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('MEDIUM') / tasks.length * 100) : 0"></div>
             </div>
             <span class="pb-val">{{ getCountByPriority('MEDIUM') }}</span>
           </div>
           <div class="pb-row">
-            <span class="pb-label low-lbl">Faible</span>
+            <span class="pb-label low-lbl">{{ 'admin.projectDetail.priorityLow' | translate }}</span>
             <div class="pb-track">
               <div class="pb-fill low-fill" [style.width.%]="tasks.length > 0 ? (getCountByPriority('LOW') / tasks.length * 100) : 0"></div>
             </div>
@@ -357,7 +357,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
           </svg>
-          <span>Aucune donnée de priorité de tâche</span>
+          <span>{{ 'admin.projectDetail.noPriorityData' | translate }}</span>
         </div>
       </div>
     </div>
@@ -370,21 +370,21 @@
             <svg class="ai-spark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2l1.9 5.8L20 9.7l-5.1 3.5L17 19l-5-3.6L7 19l2.1-5.8L4 9.7l6.1-1.9z"></path>
             </svg>
-            Assistant IA
+            {{ 'admin.projectDetail.aiTitle' | translate }}
           </h4>
-          <span class="section-count">Analyse &amp; priorisation</span>
+          <span class="section-count">{{ 'admin.projectDetail.aiSubtitle' | translate }}</span>
         </div>
         <div class="ai-actions">
           <button class="btn btn-primary btn-sm" (click)="generateAiSummary()" [disabled]="loadingAiSummary">
-            <span *ngIf="!loadingAiSummary">Résumer le projet</span>
+            <span *ngIf="!loadingAiSummary">{{ 'admin.projectDetail.aiSummarize' | translate }}</span>
             <div class="spinner" *ngIf="loadingAiSummary"></div>
           </button>
           <button class="btn btn-secondary btn-sm" (click)="generateAiPriorities()" [disabled]="loadingAiPriorities">
-            <span *ngIf="!loadingAiPriorities">Suggérer des priorités</span>
+            <span *ngIf="!loadingAiPriorities">{{ 'admin.projectDetail.aiSuggestPriorities' | translate }}</span>
             <div class="spinner" *ngIf="loadingAiPriorities"></div>
           </button>
           <button class="btn btn-secondary btn-sm" (click)="generateAiRisks()" [disabled]="loadingAiRisks">
-            <span *ngIf="!loadingAiRisks">Prédire les risques</span>
+            <span *ngIf="!loadingAiRisks">{{ 'admin.projectDetail.aiPredictRisks' | translate }}</span>
             <div class="spinner" *ngIf="loadingAiRisks"></div>
           </button>
         </div>
@@ -395,24 +395,24 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2l1.9 5.8L20 9.7l-5.1 3.5L17 19l-5-3.6L7 19l2.1-5.8L4 9.7l6.1-1.9z"></path>
         </svg>
-        <p>Générez un résumé IA ou laissez l'assistant classer les tâches ouvertes par urgence.</p>
+        <p>{{ 'admin.projectDetail.aiHint' | translate }}</p>
       </div>
 
       <!-- Summary result -->
       <div class="ai-insight" *ngIf="aiInsight">
         <div class="ai-insight-top">
           <span class="ai-health-badge" [ngClass]="getHealthClass(aiInsight.healthStatus)">{{ aiInsight.healthHeadline }}</span>
-          <span class="ai-source-chip" title="Source de l'analyse">{{ aiInsight.source }}</span>
+          <span class="ai-source-chip" [title]="'admin.projectDetail.aiSourceTitle' | translate">{{ aiInsight.source }}</span>
         </div>
         <p class="ai-summary-text">{{ aiInsight.summary }}</p>
         <div class="ai-metrics">
-          <div class="ai-metric"><span class="aim-val">{{ aiInsight.completionRate }}%</span><span class="aim-lbl">Complétion</span></div>
-          <div class="ai-metric"><span class="aim-val">{{ aiInsight.inProgressTasks }}</span><span class="aim-lbl">En cours</span></div>
-          <div class="ai-metric"><span class="aim-val" [class.danger]="aiInsight.overdueTasks > 0">{{ aiInsight.overdueTasks }}</span><span class="aim-lbl">En retard</span></div>
-          <div class="ai-metric"><span class="aim-val">{{ aiInsight.todoTasks }}</span><span class="aim-lbl">Backlog</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.completionRate }}%</span><span class="aim-lbl">{{ 'admin.projectDetail.metricCompletion' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.inProgressTasks }}</span><span class="aim-lbl">{{ 'admin.projectDetail.metricInProgress' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiInsight.overdueTasks > 0">{{ aiInsight.overdueTasks }}</span><span class="aim-lbl">{{ 'admin.projectDetail.metricOverdue' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiInsight.todoTasks }}</span><span class="aim-lbl">{{ 'admin.projectDetail.metricBacklog' | translate }}</span></div>
         </div>
         <div class="ai-recos" *ngIf="aiInsight.recommendations.length">
-          <h5>Recommandations</h5>
+          <h5>{{ 'admin.projectDetail.recommendations' | translate }}</h5>
           <ul>
             <li *ngFor="let r of aiInsight.recommendations">{{ r }}</li>
           </ul>
@@ -433,10 +433,10 @@
                   →
                   <span class="aip-to" [ngClass]="getPriorityClass(s.suggestedPriority)">{{ s.suggestedPriority }}</span>
                 </span>
-                <span class="aip-keep" *ngIf="!s.changeRecommended">Garder {{ s.currentPriority }}</span>
+                <span class="aip-keep" *ngIf="!s.changeRecommended">{{ 'admin.projectDetail.keepPriority' | translate:{ p: s.currentPriority } }}</span>
               </div>
               <span class="aip-reason">{{ s.reason }}</span>
-              <span class="aip-assignee" *ngIf="s.assignedToName">Assigné à {{ s.assignedToName }}</span>
+              <span class="aip-assignee" *ngIf="s.assignedToName">{{ 'admin.projectDetail.assignedTo' | translate:{ name: s.assignedToName } }}</span>
             </div>
           </div>
         </div>
@@ -446,14 +446,14 @@
       <div class="ai-risks" *ngIf="aiRisks">
         <div class="ai-insight-top">
           <span class="ai-health-badge" [ngClass]="getRiskClass(aiRisks.projectRiskLevel)">{{ aiRisks.headline }}</span>
-          <span class="ai-source-chip" title="Source de l'analyse">{{ aiRisks.source }}</span>
+          <span class="ai-source-chip" [title]="'admin.projectDetail.aiSourceTitle' | translate">{{ aiRisks.source }}</span>
         </div>
         <p class="ai-summary-text">{{ aiRisks.summary }}</p>
         <div class="ai-metrics">
-          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.atRiskCount > 0">{{ aiRisks.atRiskCount }}</span><span class="aim-lbl">À risque</span></div>
-          <div class="ai-metric"><span class="aim-val">{{ aiRisks.totalOpenTasks }}</span><span class="aim-lbl">Tâches ouvertes</span></div>
-          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.projectSlipDays > 0">{{ aiRisks.projectSlipDays }}</span><span class="aim-lbl">Dérive (jours)</span></div>
-          <div class="ai-metric"><span class="aim-val aim-date">{{ aiRisks.predictedProjectCompletion || '—' }}</span><span class="aim-lbl">Fin prévue</span></div>
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.atRiskCount > 0">{{ aiRisks.atRiskCount }}</span><span class="aim-lbl">{{ 'admin.projectDetail.atRisk' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val">{{ aiRisks.totalOpenTasks }}</span><span class="aim-lbl">{{ 'admin.projectDetail.openTasks' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val" [class.danger]="aiRisks.projectSlipDays > 0">{{ aiRisks.projectSlipDays }}</span><span class="aim-lbl">{{ 'admin.projectDetail.slipDays' | translate }}</span></div>
+          <div class="ai-metric"><span class="aim-val aim-date">{{ aiRisks.predictedProjectCompletion || '—' }}</span><span class="aim-lbl">{{ 'admin.projectDetail.predictedEnd' | translate }}</span></div>
         </div>
         <div class="ai-risk-list" *ngIf="aiRisks.risks.length">
           <div class="ai-risk-row" *ngFor="let r of aiRisks.risks">
@@ -461,10 +461,10 @@
             <div class="air-main">
               <div class="air-head">
                 <span class="air-name">{{ r.taskName }}</span>
-                <span class="air-slip" *ngIf="r.predictedSlipDays > 0">+{{ r.predictedSlipDays }}j de retard</span>
+                <span class="air-slip" *ngIf="r.predictedSlipDays > 0">{{ 'admin.projectDetail.slipBadge' | translate:{ n: r.predictedSlipDays } }}</span>
               </div>
               <span class="air-reason">{{ r.reason }}</span>
-              <span class="air-meta">{{ r.progress }}% fait<span *ngIf="r.deadline"> · échéance {{ r.deadline }}</span><span *ngIf="r.predictedCompletionDate"> · ETA {{ r.predictedCompletionDate }}</span></span>
+              <span class="air-meta">{{ 'admin.projectDetail.metaDone' | translate:{ p: r.progress } }}<span *ngIf="r.deadline">{{ 'admin.projectDetail.metaDeadline' | translate:{ d: r.deadline } }}</span><span *ngIf="r.predictedCompletionDate">{{ 'admin.projectDetail.metaEta' | translate:{ d: r.predictedCompletionDate } }}</span></span>
             </div>
           </div>
         </div>
@@ -475,8 +475,8 @@
     <div class="glass-panel pd-section">
       <div class="section-header">
         <div class="section-title-group">
-          <h4>Membres de l'équipe</h4>
-          <span class="section-count">{{ members.length }} membre(s)</span>
+          <h4>{{ 'admin.projectDetail.teamMembers' | translate }}</h4>
+          <span class="section-count">{{ 'admin.projectDetail.membersCount' | translate:{ n: members.length } }}</span>
         </div>
       </div>
 
@@ -494,7 +494,7 @@
       </div>
 
       <div class="section-loading" *ngIf="loadingMembers">
-        <div class="spinner"></div><span>Chargement de l'équipe...</span>
+        <div class="spinner"></div><span>{{ 'admin.projectDetail.loadingTeam' | translate }}</span>
       </div>
 
       <div class="section-empty" *ngIf="!loadingMembers && members.length === 0">
@@ -502,7 +502,7 @@
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
         </svg>
-        <p>Aucun membre d'équipe n'a été attribué à ce projet.</p>
+        <p>{{ 'admin.projectDetail.noMembersAssigned' | translate }}</p>
       </div>
     </div>
 
@@ -510,8 +510,8 @@
     <div class="glass-panel pd-section">
       <div class="section-header">
         <div class="section-title-group">
-          <h4>Tâches du projet</h4>
-          <span class="section-count">{{ tasks.length }} tâche(s)</span>
+          <h4>{{ 'admin.projectDetail.projectTasksTitle' | translate }}</h4>
+          <span class="section-count">{{ 'admin.projectDetail.tasksCount' | translate:{ n: tasks.length } }}</span>
         </div>
       </div>
 
@@ -519,12 +519,12 @@
         <table class="tasks-table">
           <thead>
             <tr>
-              <th>Nom de la tâche</th>
-              <th>Assigné à</th>
-              <th>Priorité</th>
-              <th>Statut</th>
-              <th>Progression</th>
-              <th>Échéance</th>
+              <th>{{ 'admin.projectDetail.thTaskName' | translate }}</th>
+              <th>{{ 'admin.projectDetail.thAssignee' | translate }}</th>
+              <th>{{ 'admin.projectDetail.thPriority' | translate }}</th>
+              <th>{{ 'admin.projectDetail.thStatus' | translate }}</th>
+              <th>{{ 'admin.projectDetail.thProgress' | translate }}</th>
+              <th>{{ 'admin.projectDetail.thDeadline' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -563,7 +563,7 @@
       </div>
 
       <div class="section-loading" *ngIf="loadingTasks">
-        <div class="spinner"></div><span>Chargement des tâches...</span>
+        <div class="spinner"></div><span>{{ 'admin.projectDetail.loadingTasks' | translate }}</span>
       </div>
 
       <div class="section-empty" *ngIf="!loadingTasks && tasks.length === 0">
@@ -571,7 +571,7 @@
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
         </svg>
-        <p>Aucune tâche n'a encore été créée pour ce projet.</p>
+        <p>{{ 'admin.projectDetail.noTasksCreated' | translate }}</p>
       </div>
     </div>
 
@@ -582,7 +582,7 @@
 <div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()">
   <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Modifier le projet</h3>
+      <h3>{{ 'admin.projectDetail.editProject' | translate }}</h3>
       <button class="modal-close-btn" (click)="closeEditModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
@@ -591,52 +591,52 @@
     </div>
     <form class="modal-form" (submit)="submitEditProject(); $event.preventDefault()">
       <div class="form-group">
-        <label>Nom du projet</label>
+        <label>{{ 'admin.projectDetail.fldName' | translate }}</label>
         <input type="text" [(ngModel)]="editForm.name" name="name" required />
       </div>
       <div class="form-group">
-        <label>Description métier</label>
+        <label>{{ 'admin.projectDetail.fldDescription' | translate }}</label>
         <app-ai-describe [type]="'PROJECT'" [title]="editForm.name" (generated)="editForm.description = $event"></app-ai-describe>
         <textarea rows="3" [(ngModel)]="editForm.description" name="description"></textarea>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Date de début</label>
+          <label>{{ 'admin.projectDetail.fldStartDate' | translate }}</label>
           <input type="date" [(ngModel)]="editForm.startDate" name="startDate" required />
         </div>
         <div class="form-group">
-          <label>Date de livraison cible</label>
+          <label>{{ 'admin.projectDetail.fldEndDate' | translate }}</label>
           <input type="date" [(ngModel)]="editForm.endDate" name="endDate" required />
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Chef de projet attribué</label>
+          <label>{{ 'admin.projectDetail.fldManager' | translate }}</label>
           <select [(ngModel)]="editForm.managerId" name="managerId">
-            <option [value]="undefined">-- Non attribué --</option>
+            <option [value]="undefined">{{ 'admin.projectDetail.optUnassigned' | translate }}</option>
             <option *ngFor="let m of projectManagers" [value]="m.id">
               {{ m.firstName }} {{ m.lastName }} (@{{ m.username }})
             </option>
           </select>
         </div>
         <div class="form-group">
-          <label>Statut</label>
+          <label>{{ 'admin.projectDetail.fldStatus' | translate }}</label>
           <select [(ngModel)]="editForm.status" name="status">
-            <option value="PLANNED">Planifié</option>
-            <option value="IN_PROGRESS">En cours</option>
-            <option value="ON_HOLD">En attente</option>
-            <option value="COMPLETED">Terminé</option>
+            <option value="PLANNED">{{ 'admin.projectDetail.optPlanned' | translate }}</option>
+            <option value="IN_PROGRESS">{{ 'admin.projectDetail.optInProgress' | translate }}</option>
+            <option value="ON_HOLD">{{ 'admin.projectDetail.optOnHold' | translate }}</option>
+            <option value="COMPLETED">{{ 'admin.projectDetail.optCompleted' | translate }}</option>
           </select>
         </div>
       </div>
       <div class="form-group">
-        <label>Progression (%)</label>
+        <label>{{ 'admin.projectDetail.fldProgress' | translate }}</label>
         <input type="number" min="0" max="100" [(ngModel)]="editForm.progress" name="progress" />
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeEditModal()">{{ 'admin.projectDetail.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="submitting">
-          <span *ngIf="!submitting">Enregistrer les modifications</span>
+          <span *ngIf="!submitting">{{ 'admin.projectDetail.saveChanges' | translate }}</span>
           <div class="spinner" *ngIf="submitting"></div>
         </button>
       </div>
@@ -654,11 +654,11 @@
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
         </svg>
       </div>
-      <h3>Détruire le projet</h3>
+      <h3>{{ 'admin.projectDetail.deleteModalTitle' | translate }}</h3>
     </div>
     <div class="delete-modal-body">
       <p class="delete-message">
-        Vous êtes sur le point de détruire définitivement l'espace de projet
+        {{ 'admin.projectDetail.deleteMessagePre' | translate }}
         <strong>"{{ project?.name }}"</strong>.
       </p>
       <div class="delete-warning-box">
@@ -667,13 +667,13 @@
           <line x1="12" y1="9" x2="12" y2="13"></line>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
-        <span>Cette action est irréversible. Toutes les tâches, affectations, jalons et fichiers liés à ce projet seront définitivement supprimés.</span>
+        <span>{{ 'admin.projectDetail.deleteWarning' | translate }}</span>
       </div>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">Annuler</button>
+      <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">{{ 'admin.projectDetail.cancel' | translate }}</button>
       <button type="button" class="btn btn-danger-solid" (click)="submitDeleteProject()" [disabled]="submitting">
-        <span *ngIf="!submitting">Oui, détruire le projet</span>
+        <span *ngIf="!submitting">{{ 'admin.projectDetail.confirmDelete' | translate }}</span>
         <div class="spinner" *ngIf="submitting"></div>
       </button>
     </div>

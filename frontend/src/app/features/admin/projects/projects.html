@@ -8,41 +8,41 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
       </div>
-      <input type="text" placeholder="Rechercher un projet..."
+      <input type="text" [placeholder]="'admin.projects.searchPlaceholder' | translate"
         [(ngModel)]="searchTerm" (ngModelChange)="onFilterChange()" />
     </div>
 
     <div class="filter-controls">
       <div class="select-wrapper proto-filter">
         <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
-          <option value="">Statut</option>
-          <option value="PLANNED">Planifié</option>
-          <option value="IN_PROGRESS">En cours</option>
-          <option value="ON_HOLD">En pause</option>
-          <option value="COMPLETED">Terminé</option>
+          <option value="">{{ 'admin.projects.status' | translate }}</option>
+          <option value="PLANNED">{{ 'admin.projects.stPlanned' | translate }}</option>
+          <option value="IN_PROGRESS">{{ 'admin.projects.stInProgress' | translate }}</option>
+          <option value="ON_HOLD">{{ 'admin.projects.stOnHold' | translate }}</option>
+          <option value="COMPLETED">{{ 'admin.projects.stCompleted' | translate }}</option>
         </select>
         <svg class="funnel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
       </div>
       <div class="select-wrapper proto-filter">
         <select [(ngModel)]="managerFilter" (change)="onFilterChange()">
-          <option value="">Chef de Projet</option>
+          <option value="">{{ 'admin.projects.manager' | translate }}</option>
           <option *ngFor="let m of managerOptions" [value]="m">{{ m }}</option>
         </select>
         <svg class="funnel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
       </div>
       <div class="select-wrapper proto-filter">
         <select [(ngModel)]="teamFilter" (change)="onFilterChange()">
-          <option value="">Équipe</option>
+          <option value="">{{ 'admin.projects.team' | translate }}</option>
           <option *ngFor="let t of teamOptions" [value]="t">{{ t }}</option>
         </select>
         <svg class="funnel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
       </div>
       <div class="select-wrapper proto-filter">
         <select [(ngModel)]="periodFilter" (change)="onFilterChange()">
-          <option value="">Période</option>
-          <option value="month">Ce mois-ci</option>
-          <option value="quarter">Ce trimestre</option>
-          <option value="year">Cette année</option>
+          <option value="">{{ 'admin.projects.period' | translate }}</option>
+          <option value="month">{{ 'admin.projects.periodMonth' | translate }}</option>
+          <option value="quarter">{{ 'admin.projects.periodQuarter' | translate }}</option>
+          <option value="year">{{ 'admin.projects.periodYear' | translate }}</option>
         </select>
         <svg class="funnel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
       </div>
@@ -50,13 +50,13 @@
 
     <div class="toolbar-actions">
       <div class="view-toggle-group">
-        <button type="button" class="view-toggle-btn" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" title="Vue en grille">
+        <button type="button" class="view-toggle-btn" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" [title]="'admin.projects.gridView' | translate">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect>
             <rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect>
           </svg>
         </button>
-        <button type="button" class="view-toggle-btn" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'" title="Vue en liste">
+        <button type="button" class="view-toggle-btn" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'" [title]="'admin.projects.listView' | translate">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 5h.01"></path><path d="M3 12h.01"></path><path d="M3 19h.01"></path>
             <path d="M8 5h13"></path><path d="M8 12h13"></path><path d="M8 19h13"></path>
@@ -67,7 +67,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M5 12h14"></path><path d="M12 5v14"></path>
         </svg>
-        Créer un projet
+        {{ 'admin.projects.createProject' | translate }}
       </button>
     </div>
   </div>
@@ -75,7 +75,7 @@
   <!-- Loading -->
   <div class="loading-overlay" *ngIf="loading">
     <div class="spinner"></div>
-    <span>Récupération du registre des projets...</span>
+    <span>{{ 'admin.projects.loadingProjects' | translate }}</span>
   </div>
 
   <!-- Empty State -->
@@ -85,28 +85,28 @@
         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
       </svg>
     </div>
-    <h3>Aucun projet trouvé</h3>
-    <p>Aucun projet ne correspond à votre recherche ou à vos filtres.</p>
+    <h3>{{ 'admin.projects.noProjectsTitle' | translate }}</h3>
+    <p>{{ 'admin.projects.noProjectsText' | translate }}</p>
   </div>
 
   <!-- Grid View — cards navigate to detail on click -->
   <div class="projects-grid" *ngIf="!loading && filteredProjects.length > 0 && viewMode === 'grid'">
     <div class="glass-panel project-card animate-scale-in" *ngFor="let project of filteredProjects"
-      (click)="openProjectDetail(project)" title="Voir les détails du projet">
+      (click)="openProjectDetail(project)" [title]="'admin.projects.viewDetails' | translate">
 
       <div class="card-header">
         <div class="card-title-block">
           <h3 class="project-title">{{ project.name }}</h3>
-          <p class="project-team">{{ (project.teamCount || 0) }} membre(s) · {{ (project.taskCount || 0) }} tâche(s)</p>
+          <p class="project-team">{{ 'admin.projects.membersTasks' | translate:{ members: (project.teamCount || 0), tasks: (project.taskCount || 0) } }}</p>
         </div>
         <span class="status-badge" [ngClass]="project.status?.toLowerCase() || 'planned'">
-          {{ statusLabel(project.status) }}
+          {{ statusLabelKey(project.status) | translate }}
         </span>
       </div>
 
       <div class="card-progress">
         <div class="progress-info">
-          <span class="progress-label">Progression</span>
+          <span class="progress-label">{{ 'admin.projects.progress' | translate }}</span>
           <span class="progress-value">{{ project.progress || 0 }}%</span>
         </div>
         <div class="progress-track">
@@ -117,9 +117,9 @@
       <div class="card-footer">
         <div class="card-pm">
           <div class="manager-avatar" *ngIf="project.managerName">{{ pmInitials(project.managerName) }}</div>
-          <span class="card-pm-name">{{ project.managerName || 'Non assigné' }}</span>
+          <span class="card-pm-name">{{ project.managerName || ('admin.projects.unassigned' | translate) }}</span>
         </div>
-        <span class="card-tasks">{{ project.taskCount || 0 }} tâche(s)</span>
+        <span class="card-tasks">{{ 'admin.projects.tasksCount' | translate:{ count: (project.taskCount || 0) } }}</span>
       </div>
     </div>
   </div>
@@ -130,27 +130,27 @@
       <table class="premium-table">
         <thead>
           <tr>
-            <th>Nom du projet</th>
-            <th>Chef de Projet</th>
-            <th>Créé par</th>
-            <th>Équipe</th>
-            <th class="progress-col">Progression</th>
-            <th>Statut</th>
-            <th>Début</th>
-            <th>Fin</th>
-            <th>Tâches</th>
-            <th class="actions-col">Actions</th>
+            <th>{{ 'admin.projects.colName' | translate }}</th>
+            <th>{{ 'admin.projects.colManager' | translate }}</th>
+            <th>{{ 'admin.projects.colCreatedBy' | translate }}</th>
+            <th>{{ 'admin.projects.colTeam' | translate }}</th>
+            <th class="progress-col">{{ 'admin.projects.colProgress' | translate }}</th>
+            <th>{{ 'admin.projects.colStatus' | translate }}</th>
+            <th>{{ 'admin.projects.colStart' | translate }}</th>
+            <th>{{ 'admin.projects.colEnd' | translate }}</th>
+            <th>{{ 'admin.projects.colTasks' | translate }}</th>
+            <th class="actions-col">{{ 'admin.projects.colActions' | translate }}</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let project of filteredProjects" class="list-row-clickable" (click)="openProjectDetail(project)" title="Ouvrir les détails du projet">
+          <tr *ngFor="let project of filteredProjects" class="list-row-clickable" (click)="openProjectDetail(project)" [title]="'admin.projects.openDetails' | translate">
             <td class="project-name-cell">
               <span class="project-list-title">{{ project.name }}</span>
             </td>
             <td>
               <div class="manager-cell">
                 <div class="manager-avatar-small" *ngIf="project.managerName">{{ pmInitials(project.managerName) }}</div>
-                <span class="muted-cell">{{ project.managerName || 'Non assigné' }}</span>
+                <span class="muted-cell">{{ project.managerName || ('admin.projects.unassigned' | translate) }}</span>
               </div>
             </td>
             <td class="muted-cell">{{ project.createdByName || '—' }}</td>
@@ -164,17 +164,17 @@
               </div>
             </td>
             <td>
-              <span class="status-badge" [ngClass]="project.status?.toLowerCase() || 'planned'">{{ statusLabel(project.status) }}</span>
+              <span class="status-badge" [ngClass]="project.status?.toLowerCase() || 'planned'">{{ statusLabelKey(project.status) | translate }}</span>
             </td>
             <td class="muted-cell">{{ project.startDate || '—' }}</td>
             <td class="muted-cell">{{ project.endDate || '—' }}</td>
             <td><span class="tasks-badge">{{ tasksLabel(project) }}</span></td>
             <td class="actions-col" (click)="$event.stopPropagation()">
               <div class="row-actions">
-                <button type="button" class="icon-btn act-edit" title="Modifier" (click)="openProjectDetail(project)">
+                <button type="button" class="icon-btn act-edit" [title]="'admin.projects.edit' | translate" (click)="openProjectDetail(project)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>
                 </button>
-                <button type="button" class="icon-btn act-archive" title="Archiver" (click)="archiveProject(project, $event)">
+                <button type="button" class="icon-btn act-archive" [title]="'admin.projects.archive' | translate" (click)="archiveProject(project, $event)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"></rect><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path></svg>
                 </button>
               </div>
@@ -188,7 +188,7 @@
   <!-- Pagination -->
   <div class="glass-panel table-footer" *ngIf="!loading && filteredProjects.length > 0">
     <div class="entries-info">
-      Affichage de {{ filteredProjects.length }} sur {{ totalElements }} projets
+      {{ 'admin.projects.showingRange' | translate:{ count: filteredProjects.length, total: totalElements } }}
     </div>
     <div class="pagination-controls">
       <button class="pag-btn" (click)="prevPage()" [disabled]="currentPage === 0">
@@ -213,7 +213,7 @@
 <div class="modal-backdrop" *ngIf="showAddModal" (click)="closeAddModal()">
   <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Lancer un projet</h3>
+      <h3>{{ 'admin.projects.launchTitle' | translate }}</h3>
       <button class="modal-close-btn" (click)="closeAddModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
@@ -222,48 +222,48 @@
     </div>
     <form class="modal-form" (submit)="submitAddProject(); $event.preventDefault()">
       <div class="form-group">
-        <label>Nom du projet</label>
-        <input type="text" placeholder="ex. Intégration du cœur de l'application mobile" [(ngModel)]="addForm.name" name="name" required />
+        <label>{{ 'admin.projects.fieldName' | translate }}</label>
+        <input type="text" [placeholder]="'admin.projects.phName' | translate" [(ngModel)]="addForm.name" name="name" required />
       </div>
       <div class="form-group">
-        <label>Description métier</label>
+        <label>{{ 'admin.projects.fieldDescription' | translate }}</label>
         <app-ai-describe [type]="'PROJECT'" [title]="addForm.name" (generated)="addForm.description = $event"></app-ai-describe>
-        <textarea rows="3" placeholder="Saisissez les détails de l'espace de travail et les objectifs métier..." [(ngModel)]="addForm.description" name="description"></textarea>
+        <textarea rows="3" [placeholder]="'admin.projects.phDescription' | translate" [(ngModel)]="addForm.description" name="description"></textarea>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Date de début</label>
+          <label>{{ 'admin.projects.fieldStartDate' | translate }}</label>
           <input type="date" [(ngModel)]="addForm.startDate" name="startDate" required />
         </div>
         <div class="form-group">
-          <label>Date de livraison cible</label>
+          <label>{{ 'admin.projects.fieldEndDate' | translate }}</label>
           <input type="date" [(ngModel)]="addForm.endDate" name="endDate" required />
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Chef de projet désigné</label>
+          <label>{{ 'admin.projects.fieldManager' | translate }}</label>
           <select [(ngModel)]="addForm.managerId" name="managerId">
-            <option [value]="undefined">-- Non assigné --</option>
+            <option [value]="undefined">{{ 'admin.projects.unassignedOption' | translate }}</option>
             <option *ngFor="let manager of projectManagers" [value]="manager.id">
               {{ manager.firstName }} {{ manager.lastName }} (@{{ manager.username }})
             </option>
           </select>
         </div>
         <div class="form-group">
-          <label>Statut de l'espace de travail</label>
+          <label>{{ 'admin.projects.fieldStatus' | translate }}</label>
           <select [(ngModel)]="addForm.status" name="status" required>
-            <option value="PLANNED">Planifié</option>
-            <option value="IN_PROGRESS">En cours</option>
-            <option value="ON_HOLD">En pause</option>
-            <option value="COMPLETED">Terminé</option>
+            <option value="PLANNED">{{ 'admin.projects.stPlanned' | translate }}</option>
+            <option value="IN_PROGRESS">{{ 'admin.projects.stInProgress' | translate }}</option>
+            <option value="ON_HOLD">{{ 'admin.projects.stOnHold' | translate }}</option>
+            <option value="COMPLETED">{{ 'admin.projects.stCompleted' | translate }}</option>
           </select>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Annuler</button>
+        <button type="button" class="btn btn-secondary" (click)="closeAddModal()">{{ 'admin.projects.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="submitting">
-          <span *ngIf="!submitting">Lancer l'espace de travail</span>
+          <span *ngIf="!submitting">{{ 'admin.projects.launch' | translate }}</span>
           <div class="spinner" *ngIf="submitting"></div>
         </button>
       </div>
