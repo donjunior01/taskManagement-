@@ -50,8 +50,8 @@ injected at deploy time, so the same images run on docker-compose or any PaaS.
     `allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC` params are required for
     MySQL 8's `caching_sha2_password` auth over the internal network.
   - `DDL_AUTO=update` lets Hibernate create the tables on first boot; `SQL_INIT_MODE=always`
-    then runs `schema.sql` (additive columns) and `data.sql` (seed admin/users). Both are
-    idempotent, so subsequent boots are safe.
+    then runs `schema.sql` (additive columns) and `data.sql` (seeds a single bootstrap admin).
+    Both are idempotent, so subsequent boots are safe and never wipe in-app data.
   - If you prefer SSL, set `useSSL=true&requireSSL=true` and drop `allowPublicKeyRetrieval`.
 
 ### 3. AI sidecar service
@@ -78,12 +78,22 @@ injected at deploy time, so the same images run on docker-compose or any PaaS.
 
 ### 5. Deploy order
 MySQL → backend (waits for DB) → ai-service → frontend. Railway builds each Dockerfile.
-First boot runs `schema.sql` + `data.sql` (seed admin/users) automatically.
+First boot runs `schema.sql` + `data.sql` automatically. On a **fresh** database this leaves
+every table empty except for a single bootstrap administrator:
+
+|         |                          |
+| ------- | ------------------------ |
+| Email   | `admin@taskmaster.cm`    |
+| Password| `Password123!`           |
+
+Sign in with this account to create the first users/projects, then **change the password**
+from the profile menu. The seed is idempotent (inserted only when missing), so redeploys to
+an existing database never duplicate the admin or wipe data you created in-app.
 
 ### 6. Verify
 - Frontend public URL loads the login page.
 - `https://<frontend-domain>/api/settings/branding` returns JSON (proves the nginx → backend proxy).
-- Log in; open the AI assistant → live answers (the sidecar must have a valid `GEMINI_API_KEY`).
+- Log in with the bootstrap admin above; open the AI assistant → live answers (the sidecar must have a valid `GEMINI_API_KEY`).
 
 ---
 
