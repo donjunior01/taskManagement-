@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,7 +49,11 @@ public class AiChatService {
               - answer questions about the projects and tasks in the provided context,
               - explain what a task is asking for and propose concrete, ordered guidelines to complete it,
               - help draft clear descriptions for projects, tasks, and deliverables,
-              - guide users (especially admins) on how to use their dashboard and perform actions.
+              - guide users (especially admins) on how to use their dashboard and perform actions,
+              - interpret the dashboard charts: when the context includes a PLATFORM/MANAGER OVERVIEW
+                (totals, projects by status, role mix, tasks by status/overdue, workload per member),
+                read those exact figures to explain what each chart shows, spot trends and outliers
+                (e.g. the busiest team member, the most common project status), and answer follow-ups.
 
             APPLICATION GUIDE (use this to answer "how do I..." / "what is this" / "what should I do" questions):
             Roles & areas:
@@ -147,8 +152,113 @@ public class AiChatService {
                     .map(this::describeProject)
                     .orElse("No project was found for the requested id.");
         }
-        // Default: the signed-in user's own workload.
-        return describeUserWorkload(userId);
+        // Default: a role-aware overview so the assistant can read and interpret the figures behind
+        // the dashboard charts (projects by status, role mix, team workload, tasks/overdue, …).
+        allUsers user = userId == null ? null : userRepository.findById(userId).orElse(null);
+        if (user == null) return describeUserWorkload(userId);
+        switch (user.getRole()) {
+            case ADMIN:           return describePlatformOverview();
+            case PROJECT_MANAGER: return describeManagerOverview(user);
+            default:              return describeUserWorkload(userId);
+        }
+    }
+
+    /** Org-wide figures mirroring the admin dashboard charts, so the assistant can interpret them. */
+    private String describePlatformOverview() {
+        boolean fr = isFrench();
+        List<allUsers> users = userRepository.findAll();
+        List<Project> projects = projectRepository.findAll();
+        List<Task> tasks = taskRepository.findAll();
+
+        Map<String, Integer> byRole = new LinkedHashMap<>();
+        for (allUsers u : users) inc(byRole, u.getRole() == null ? "?" : u.getRole().name());
+
+        Map<String, Integer> projByStatus = new LinkedHashMap<>();
+        for (Project p : projects) inc(projByStatus, p.getStatus() == null ? "?" : p.getStatus().name());
+
+        Map<String, Integer> taskByStatus = new LinkedHashMap<>();
+        Map<String, Integer> workload = new LinkedHashMap<>();
+        int overdue = 0;
+        for (Task t : tasks) {
+            inc(taskByStatus, t.getStatus() == null ? "?" : t.getStatus().name());
+            if (isOverdue(t)) overdue++;
+            if (t.getAssignedTo() != null && isOpen(t)) inc(workload, fullName(t.getAssignedTo()));
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(fr ? "APERÇU PLATEFORME (chiffres derrière les graphiques du tableau de bord)\n"
+                     : "PLATFORM OVERVIEW (figures behind the dashboard charts)\n");
+        sb.append(fr ? "Utilisateurs : " : "Users: ").append(users.size())
+          .append(fr ? " — par rôle : " : " — by role: ").append(countMap(byRole, fr)).append('\n');
+        sb.append(fr ? "Projets : " : "Projects: ").append(projects.size())
+          .append(fr ? " — par statut : " : " — by status: ").append(countMap(projByStatus, fr)).append('\n');
+        sb.append(fr ? "Tâches : " : "Tasks: ").append(tasks.size())
+          .append(fr ? " — par statut : " : " — by status: ").append(countMap(taskByStatus, fr))
+          .append(fr ? " — en retard : " : " — overdue: ").append(overdue).append('\n');
+        sb.append(fr ? "Charge par membre (tâches ouvertes assignées) : " : "Workload per member (open assigned tasks): ")
+          .append(topN(workload, 8, fr)).append('\n');
+        return sb.toString();
+    }
+
+    /** A project manager's own projects + team workload, mirroring their dashboard charts. */
+    private String describeManagerOverview(allUsers manager) {
+        boolean fr = isFrench();
+        List<Project> projects = projectRepository.findByManager(manager);
+        StringBuilder sb = new StringBuilder();
+        sb.append(fr ? "APERÇU CHEF DE PROJET : " : "PROJECT MANAGER OVERVIEW: ").append(fullName(manager)).append('\n');
+        sb.append(fr ? "Projets gérés (" : "Managed projects (").append(projects.size()).append("):\n");
+
+        Map<String, Integer> taskByStatus = new LinkedHashMap<>();
+        Map<String, Integer> workload = new LinkedHashMap<>();
+        int totalTasks = 0, overdue = 0;
+        for (Project p : projects) {
+            List<Task> tasks = taskRepository.findByProject(p);
+            sb.append("  - ").append(safe(p.getName())).append(" [").append(p.getStatus())
+              .append(", ").append(p.getProgress() == null ? 0 : p.getProgress()).append("%, ")
+              .append(tasks.size()).append(fr ? " tâches]\n" : " tasks]\n");
+            for (Task t : tasks) {
+                totalTasks++;
+                inc(taskByStatus, t.getStatus() == null ? "?" : t.getStatus().name());
+                if (isOverdue(t)) overdue++;
+                if (t.getAssignedTo() != null && isOpen(t)) inc(workload, fullName(t.getAssignedTo()));
+            }
+        }
+        if (projects.isEmpty()) sb.append(fr ? "  (aucun projet géré)\n" : "  (no managed projects)\n");
+        sb.append(fr ? "Tâches (tous projets) : " : "Tasks (all projects): ").append(totalTasks)
+          .append(fr ? " — par statut : " : " — by status: ").append(countMap(taskByStatus, fr))
+          .append(fr ? " — en retard : " : " — overdue: ").append(overdue).append('\n');
+        sb.append(fr ? "Charge par membre (tâches ouvertes) : " : "Workload per member (open tasks): ")
+          .append(topN(workload, 8, fr)).append('\n');
+        return sb.toString();
+    }
+
+    private void inc(Map<String, Integer> m, String key) { m.merge(key, 1, Integer::sum); }
+
+    private boolean isOpen(Task t) { return t.getStatus() != Task.TaskStatus.COMPLETED; }
+
+    private boolean isOverdue(Task t) {
+        return t.getDeadline() != null && t.getDeadline().isBefore(LocalDate.now()) && isOpen(t);
+    }
+
+    private String countMap(Map<String, Integer> m, boolean fr) {
+        if (m.isEmpty()) return fr ? "(aucun)" : "(none)";
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (Map.Entry<String, Integer> e : m.entrySet()) {
+            if (!first) sb.append(", ");
+            sb.append(e.getKey()).append(": ").append(e.getValue());
+            first = false;
+        }
+        return sb.toString();
+    }
+
+    private String topN(Map<String, Integer> m, int n, boolean fr) {
+        if (m.isEmpty()) return fr ? "(aucune)" : "(none)";
+        return m.entrySet().stream()
+                .sorted((a, b) -> b.getValue() - a.getValue())
+                .limit(n)
+                .map(e -> e.getKey() + ": " + e.getValue())
+                .collect(java.util.stream.Collectors.joining(", "));
     }
 
     private String describeTask(Task t) {

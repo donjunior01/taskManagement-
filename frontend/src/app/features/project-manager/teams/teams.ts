@@ -101,14 +101,14 @@ interface MemberVital {
           <h3>{{ 'pm.teams.overview' | translate }}</h3>
           <span class="muted-sm">{{ 'pm.teams.loadPerMember' | translate }}</span>
         </div>
-        <div class="chart reveal">
+        <div class="chart">
           <div class="ch-row" *ngFor="let m of chartData; let i = index" (mouseenter)="hoverIdx = i" (mouseleave)="hoverIdx = -1">
             <span class="ch-name" [title]="m.name">{{ firstName(m.name) }}</span>
             <div class="ch-track">
               <div class="ch-bar" [ngClass]="loadInfo(m.load).bg" [style.width.%]="animated ? barPct(m) : 0"></div>
               <span class="ch-val">{{ m.active }}</span>
             </div>
-            <div class="ch-tip" *ngIf="hoverIdx === i">
+            <div class="ch-tip" [class.below]="i < chartData.length / 2" *ngIf="hoverIdx === i">
               <div class="tt-name">{{ m.name }}</div>
               <div class="tt-row"><i class="sw" [ngClass]="loadInfo(m.load).bg"></i>{{ 'pm.teams.tipActiveTasks' | translate }}<b>{{ m.active }}</b></div>
               <div class="tt-row"><i class="sw blue"></i>{{ 'pm.teams.tipCompleted' | translate }}<b>{{ m.completed }}</b></div>
@@ -217,6 +217,7 @@ interface MemberVital {
     .ch-bar.b-green { background: #22c55e; } .ch-bar.b-orange { background: #f97316; } .ch-bar.b-red { background: #ef4444; }
     .ch-val { font-size: 11px; font-weight: 700; color: #475569; }
     .ch-tip { position: absolute; z-index: 20; right: 4px; bottom: calc(100% + 6px); min-width: 170px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 24px rgba(15,23,42,.16); padding: 9px 11px; pointer-events: none; }
+    .ch-tip.below { bottom: auto; top: calc(100% + 6px); }
     .tt-name { font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
     .tt-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #475569; line-height: 1.7; }
     .tt-row b { margin-left: auto; color: #1e293b; padding-left: 10px; }

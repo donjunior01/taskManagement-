@@ -39,6 +39,7 @@ export class PdfService {
     const footer = b.pdfFooterColor || '#2563eb';
     const footerText = this.esc(b.pdfFooterText || '');
     const now = new Date();
+    const year = now.getFullYear();
     const generated = now.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) +
       ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
@@ -92,7 +93,7 @@ export class PdfService {
     ${opts.bodyHtml}
   </div>
   <div class="pdf-footer">
-    <span class="f-left">${name}</span>
+    <span class="f-left">© ${year} ${name} — Tous droits réservés</span>
     <span class="f-mid">${footerText}</span>
     <span class="f-right">${generated}</span>
   </div>

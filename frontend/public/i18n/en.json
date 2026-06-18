@@ -1743,7 +1743,10 @@
       "toastPdfPopup": "Allow pop-ups for PDF export.",
       "toastPdf": "PDF preview opened.",
       "pdfTitle": "Global report",
-      "pdfSubtitle": "Project summary · {{n}} project(s)"
+      "pdfSubtitle": "Project summary · {{n}} project(s)",
+      "teamLoadSub": "Open tasks per team",
+      "openTasks": "Open tasks",
+      "teamLoadHint": "Hover a point for details"
     },
     "projectDetail": {
       "backToProjects": "Back to projects",

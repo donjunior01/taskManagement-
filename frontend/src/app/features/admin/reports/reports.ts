@@ -142,14 +142,33 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
       </div>
 
       <div class="rep-card anim" style="--d:.36s">
-        <div class="rc-head"><h3>{{ 'admin.reports.teamLoadTitle' | translate }}</h3></div>
+        <div class="rc-head"><h3>{{ 'admin.reports.teamLoadTitle' | translate }}</h3><span class="sub">{{ 'admin.reports.teamLoadSub' | translate }}</span></div>
         <div class="rc-body radar-body reveal">
-          <svg viewBox="0 0 200 180" class="radar">
-            <polygon *ngFor="let ring of [1,0.66,0.33]" [attr.points]="radarRing(ring)" fill="none" stroke="var(--border)" stroke-width="1"></polygon>
+          <svg *ngIf="teamLoad.length > 0" viewBox="0 0 200 180" class="radar">
+            <!-- concentric rings (grid) -->
+            <polygon *ngFor="let ring of radarScales" [attr.points]="radarRing(ring)" fill="none" stroke="var(--border)" stroke-width="1"></polygon>
+            <!-- one spoke per team -->
             <line *ngFor="let a of radarAxes" [attr.x1]="cx" [attr.y1]="cy" [attr.x2]="a.x" [attr.y2]="a.y" stroke="var(--border)" stroke-width="1"></line>
+            <!-- workload shape -->
             <polygon [attr.points]="radarShape" fill="color-mix(in oklab, var(--primary) 35%, transparent)" stroke="var(--primary)" stroke-width="1.5"></polygon>
+            <!-- numeric scale up the vertical axis so the rings are interpretable -->
+            <text *ngFor="let r of radarRingLabels" [attr.x]="cx + 2" [attr.y]="r.y - 1" class="radar-scale">{{ r.value }}</text>
+            <!-- team name on each spoke -->
             <text *ngFor="let a of radarAxes" [attr.x]="a.lx" [attr.y]="a.ly" class="radar-lbl">{{ a.label }}</text>
+            <!-- visible data points -->
+            <circle *ngFor="let a of radarAxes; let i = index" [attr.cx]="a.vx" [attr.cy]="a.vy" [attr.r]="radarHover === i ? 3.2 : 2" fill="var(--primary)"></circle>
+            <!-- larger transparent hit areas so points are easy to hover -->
+            <circle *ngFor="let a of radarAxes; let i = index" [attr.cx]="a.vx" [attr.cy]="a.vy" r="9" fill="transparent" style="cursor:pointer"
+                    (mouseenter)="radarHover = i" (mouseleave)="radarHover = -1"></circle>
           </svg>
+          <!-- Detail is rendered BELOW the chart (never clipped) instead of a tooltip above the point. -->
+          <div class="radar-detail" *ngIf="teamLoad.length > 0">
+            <ng-container *ngIf="radarHover >= 0 && teamLoad[radarHover]">
+              <span class="d"></span>{{ teamLoad[radarHover].equipe }} — <b>{{ teamLoad[radarHover].charge }}</b> {{ 'admin.reports.openTasks' | translate }}
+            </ng-container>
+            <span class="hint" *ngIf="radarHover < 0">{{ 'admin.reports.teamLoadHint' | translate }}</span>
+          </div>
+          <div class="empty-row" *ngIf="teamLoad.length === 0">{{ 'admin.reports.empty' | translate }}</div>
         </div>
       </div>
 
@@ -346,8 +365,12 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
     .perf-track { height: 6px; border-radius: var(--radius-full); background: var(--bg-subtle); overflow: hidden; }
     .perf-fill { height: 100%; border-radius: var(--radius-full); background: linear-gradient(90deg,var(--primary),var(--accent)); transition: width .9s cubic-bezier(.4,0,.2,1); }
 
-    .radar-body { display: flex; align-items: center; justify-content: center; height: 250px; }
-    .radar { width: 100%; max-width: 240px; height: 100%; } .radar-lbl { font-size: 7px; fill: var(--text-muted); text-anchor: middle; }
+    .radar-body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 250px; gap: 6px; }
+    .radar { width: 100%; max-width: 240px; flex: 1; min-height: 0; } .radar-lbl { font-size: 7px; fill: var(--text-muted); text-anchor: middle; }
+    .radar-scale { font-size: 5.5px; fill: var(--text-muted); opacity: .75; text-anchor: start; }
+    .radar-detail { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); min-height: 18px; }
+    .radar-detail b { color: var(--text-primary); } .radar-detail .hint { color: var(--text-muted); }
+    .radar-detail .d { width: 9px; height: 9px; border-radius: 50%; background: var(--primary); display: inline-block; }
 
     .donut-split { display: flex; align-items: center; gap: 14px; }
     .donut-wrap { width: 46%; max-width: 130px; } .donut { width: 100%; transform: rotate(-90deg); }
@@ -442,9 +465,14 @@ export class AdminReportsComponent implements OnInit {
   get recapEnd(): number { return Math.min((this.recapPage + 1) * this.recapPageSize, this.recap.length); }
   ticketsByCat: Donut[] = [];
 
+  // Team workload radar — auto-scaled to the busiest team, with a readable numeric ring scale.
   cx = 100; cy = 90; radarR = 70;
-  radarAxes: { x: number; y: number; lx: number; ly: number; label: string }[] = [];
+  radarMax = 5;                                   // value at the outermost ring (auto-scaled)
+  readonly radarScales = [1, 0.66, 0.33];         // concentric grid rings
+  radarAxes: { x: number; y: number; lx: number; ly: number; label: string; vx: number; vy: number; value: number }[] = [];
   radarShape = '';
+  radarRingLabels: { y: number; value: number }[] = [];
+  radarHover = -1;                                // index of the point being hovered (-1 = none)
 
   constructor(private projectService: ProjectService, public toast: ToastService, private cdr: ChangeDetectorRef, private analytics: AnalyticsService, private pdf: PdfService, private translate: TranslateService) {}
 
@@ -610,15 +638,38 @@ export class AdminReportsComponent implements OnInit {
   }
 
   private buildRadar(): void {
-    const n = this.teamLoad.length, max = 100;
+    const n = this.teamLoad.length;
+    // Auto-scale to the busiest team (rounded up to a "nice" value) instead of a fixed 100,
+    // so the shape actually fills the chart and the rings carry meaningful numbers.
+    this.radarMax = this.niceCeil(Math.max(1, ...this.teamLoad.map(t => t.charge || 0)));
     this.radarAxes = this.teamLoad.map((t, i) => {
       const ang = (Math.PI * 2 * i) / n - Math.PI / 2;
-      return { x: this.cx + Math.cos(ang) * this.radarR, y: this.cy + Math.sin(ang) * this.radarR, lx: this.cx + Math.cos(ang) * (this.radarR + 14), ly: this.cy + Math.sin(ang) * (this.radarR + 14) + 2, label: t.equipe };
+      const r = (t.charge / this.radarMax) * this.radarR;
+      return {
+        x: this.cx + Math.cos(ang) * this.radarR,
+        y: this.cy + Math.sin(ang) * this.radarR,
+        lx: this.cx + Math.cos(ang) * (this.radarR + 14),
+        ly: this.cy + Math.sin(ang) * (this.radarR + 14) + 2,
+        label: t.equipe,
+        vx: this.cx + Math.cos(ang) * r,
+        vy: this.cy + Math.sin(ang) * r,
+        value: t.charge,
+      };
     });
-    this.radarShape = this.teamLoad.map((t, i) => {
-      const ang = (Math.PI * 2 * i) / n - Math.PI / 2; const r = (t.charge / max) * this.radarR;
-      return `${(this.cx + Math.cos(ang) * r).toFixed(1)},${(this.cy + Math.sin(ang) * r).toFixed(1)}`;
-    }).join(' ');
+    this.radarShape = this.radarAxes.map(a => `${a.vx.toFixed(1)},${a.vy.toFixed(1)}`).join(' ');
+    // Numeric label for each concentric ring, placed up the vertical axis.
+    this.radarRingLabels = this.radarScales.map(s => ({
+      y: this.cy - this.radarR * s,
+      value: Math.round(this.radarMax * s),
+    }));
+  }
+
+  /** Round a max up to a clean axis value (5, 10, 15, 20, 50, …) for legible ring labels. */
+  private niceCeil(v: number): number {
+    if (v <= 5) return 5;
+    const pow = Math.pow(10, Math.floor(Math.log10(v)));
+    const half = pow / 2;
+    return Math.ceil(v / half) * half;
   }
 
   radarRing(scale: number): string {

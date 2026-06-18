@@ -1743,7 +1743,10 @@
       "toastPdfPopup": "Autorisez les pop-ups pour l'export PDF.",
       "toastPdf": "Aperçu PDF ouvert.",
       "pdfTitle": "Rapport global",
-      "pdfSubtitle": "Récapitulatif par projet · {{n}} projet(s)"
+      "pdfSubtitle": "Récapitulatif par projet · {{n}} projet(s)",
+      "teamLoadSub": "Tâches ouvertes par équipe",
+      "openTasks": "Tâches ouvertes",
+      "teamLoadHint": "Survolez un point pour le détail"
     },
     "projectDetail": {
       "backToProjects": "Retour aux projets",

@@ -16,7 +16,7 @@
     ==========================================================================
     -->
     <parameter name="COMPANY_NAME" class="java.lang.String">
-        <defaultValueExpression><![CDATA["GPI Enterprise"]]></defaultValueExpression>
+        <defaultValueExpression><![CDATA["TaskMaster Pro"]]></defaultValueExpression>
     </parameter>
     <parameter name="COMPANY_TAGLINE" class="java.lang.String">
         <defaultValueExpression><![CDATA["Project & Task Management Platform"]]></defaultValueExpression>
@@ -176,7 +176,7 @@
             <textField>
                 <reportElement x="0" y="5" width="300" height="13" forecolor="#94A3B8"/>
                 <textElement><font fontName="SansSerif" size="7"/></textElement>
-                <textFieldExpression><![CDATA["© " + $P{COMPANY_NAME} + " — Confidential"]]></textFieldExpression>
+                <textFieldExpression><![CDATA["© " + new java.text.SimpleDateFormat("yyyy").format(new java.util.Date()) + " " + $P{COMPANY_NAME} + " — Confidential"]]></textFieldExpression>
             </textField>
             <textField>
                 <reportElement x="390" y="5" width="95" height="13" forecolor="#94A3B8"/>

@@ -69,7 +69,7 @@ interface Donut { nameKey: string; value: number; color: string; dash: string; o
     <!-- Charge par membre -->
     <div class="card anim" style="--d:.32s">
       <h3>{{ 'pm.analytics.loadPerMember' | translate }}</h3>
-      <div class="work reveal">
+      <div class="work">
         <div class="work-row" *ngFor="let m of workload; let i = index" (mouseenter)="whover = i" (mouseleave)="whover = -1">
           <span class="w-name" [title]="m.name">{{ m.name }}</span>
           <div class="w-track">
@@ -77,7 +77,7 @@ interface Donut { nameKey: string; value: number; color: string; dash: string; o
             <div class="w-bar done" [style.width.%]="animated ? (m.done/workMax)*100 : 0"></div>
           </div>
           <span class="w-total">{{ m.open + m.done }}</span>
-          <div class="w-tip" *ngIf="whover === i">
+          <div class="w-tip" [class.below]="i < workload.length / 2" *ngIf="whover === i">
             <div class="rtip-t">{{ m.name }}</div>
             <div class="rtip-r"><i class="d" style="background:#f97316"></i>{{ 'pm.analytics.inProgress' | translate }}<b>{{ m.open }}</b></div>
             <div class="rtip-r"><i class="d" style="background:#2563eb"></i>{{ 'pm.analytics.completed' | translate }}<b>{{ m.done }}</b></div>
@@ -140,6 +140,7 @@ interface Donut { nameKey: string; value: number; color: string; dash: string; o
     .w-bar { height: 10px; border-radius: 0 4px 4px 0; min-width: 2px; transition: width .8s cubic-bezier(.4,0,.2,1); } .w-bar.open { background: #f97316; } .w-bar.done { background: #2563eb; }
     .w-total { font-size: 11px; font-weight: 700; color: #475569; text-align: right; }
     .w-tip { position: absolute; z-index: 20; right: 4px; bottom: calc(100% + 6px); min-width: 150px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 24px rgba(15,23,42,.16); padding: 9px 11px; pointer-events: none; }
+    .w-tip.below { bottom: auto; top: calc(100% + 6px); }
     .empty { padding: 20px; text-align: center; color: #94a3b8; font-size: 12.5px; }
   `]
 })

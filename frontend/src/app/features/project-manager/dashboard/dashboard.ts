@@ -86,8 +86,8 @@ interface PendingDeliverable { file: string; submitter: string; meta: string; in
                 <span class="tl-val">{{ m.completed }}</span>
               </div>
             </div>
-            <!-- Hover detail (like the admin dashboard charts) -->
-            <div class="tl-tip" *ngIf="hoverIdx === i">
+            <!-- Hover detail (like the admin dashboard charts); the top rows render it downward so it isn't clipped. -->
+            <div class="tl-tip" [class.below]="i < teamLoad.length / 2" *ngIf="hoverIdx === i">
               <div class="tt-name">{{ m.fullName }}</div>
               <div class="tt-row"><i class="sw" [ngClass]="m.level"></i>{{ 'pm.dashboard.assigned' | translate }}<b>{{ m.assignees }}</b></div>
               <div class="tt-row"><i class="sw blue"></i>{{ 'pm.dashboard.completed' | translate }}<b>{{ m.completed }}</b></div>
@@ -212,6 +212,7 @@ interface PendingDeliverable { file: string; submitter: string; meta: string; in
     /* Hover tooltip */
     .tl-tip { position: absolute; z-index: 20; right: 4px; bottom: calc(100% + 6px); min-width: 150px;
       background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 24px rgba(15,23,42,.16); padding: 9px 11px; pointer-events: none; }
+    .tl-tip.below { bottom: auto; top: calc(100% + 6px); }
     .tt-name { font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
     .tt-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #475569; line-height: 1.7; }
     .tt-row b { margin-left: auto; color: #1e293b; padding-left: 10px; }

@@ -31,6 +31,16 @@ public class ReportService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final SystemSettingsService systemSettingsService;
+
+    /** Live, admin-configured application name used as the PDF company/brand name. */
+    private String companyName() {
+        try {
+            String name = systemSettingsService.getSettings().getAppName();
+            if (name != null && !name.isBlank()) return name.trim();
+        } catch (Exception ignore) { /* fall back below */ }
+        return "TaskMaster Pro";
+    }
 
     // ── Existing reports ────────────────────────────────────────────────────
 
@@ -45,7 +55,7 @@ public class ReportService {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("title", projectId != null ? "Tasks Report for Project" : "All Tasks Report");
         parameters.put("generatedBy", "Task Management System");
-        parameters.put("COMPANY_NAME", "GPI Enterprise");
+        parameters.put("COMPANY_NAME", companyName());
         parameters.put("COMPANY_TAGLINE", "Project & Task Management Platform");
 
         InputStream reportStream = getClass().getResourceAsStream("/reports/tasks_report.jrxml");
@@ -65,6 +75,7 @@ public class ReportService {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("title", "Projects Report");
         parameters.put("generatedBy", "Task Management System");
+        parameters.put("COMPANY_NAME", companyName());
 
         InputStream reportStream = getClass().getResourceAsStream("/reports/projects_report.jrxml");
         JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
@@ -83,6 +94,7 @@ public class ReportService {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("title", "Users Report");
         parameters.put("generatedBy", "Task Management System");
+        parameters.put("COMPANY_NAME", companyName());
 
         InputStream reportStream = getClass().getResourceAsStream("/reports/users_report.jrxml");
         JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
@@ -124,6 +136,7 @@ public class ReportService {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("title", "Project Health Report");
         parameters.put("generatedBy", "Task Management System");
+        parameters.put("COMPANY_NAME", companyName());
 
         InputStream reportStream = getClass().getResourceAsStream("/reports/project_health_report.jrxml");
         if (reportStream == null) throw new IllegalStateException("JRXML not found: project_health_report.jrxml");
@@ -172,6 +185,7 @@ public class ReportService {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("title", "Team Allocation Report");
         parameters.put("generatedBy", "Task Management System");
+        parameters.put("COMPANY_NAME", companyName());
 
         InputStream reportStream = getClass().getResourceAsStream("/reports/team_allocation_report.jrxml");
         if (reportStream == null) throw new IllegalStateException("JRXML not found: team_allocation_report.jrxml");
@@ -209,6 +223,7 @@ public class ReportService {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("title", "Milestone Delivery Report");
         parameters.put("generatedBy", "Task Management System");
+        parameters.put("COMPANY_NAME", companyName());
 
         InputStream reportStream = getClass().getResourceAsStream("/reports/milestone_delivery_report.jrxml");
         if (reportStream == null) throw new IllegalStateException("JRXML not found: milestone_delivery_report.jrxml");
