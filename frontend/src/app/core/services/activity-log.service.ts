@@ -42,4 +42,12 @@ export class ActivityLogService {
     let params = new HttpParams().set('startDate', startDate).set('endDate', endDate);
     return this.apiService.get<ActivityLog[]>(`${this.basePath}/date-range`, params);
   }
+
+  /** Download the admin-only, SHA-256-stamped compliance audit export (CSV) as an authenticated blob. */
+  exportCompliance(from?: string, to?: string): Observable<Blob> {
+    const qs: string[] = [];
+    if (from) qs.push(`from=${encodeURIComponent(from)}`);
+    if (to) qs.push(`to=${encodeURIComponent(to)}`);
+    return this.apiService.getBlob(`${this.basePath}/export${qs.length ? '?' + qs.join('&') : ''}`);
+  }
 }

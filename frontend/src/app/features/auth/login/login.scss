@@ -561,3 +561,19 @@
   .form-title, .login-form, .error-alert, .card-footer { padding-left: 24px; padding-right: 24px; }
   .form-title { font-size: 17px; }
 }
+
+/* SSO sign-in */
+.sso-divider {
+  display: flex; align-items: center; text-align: center;
+  margin: 16px 0 12px; color: #94a3b8; font-size: 12px; font-weight: 600;
+}
+.sso-divider::before, .sso-divider::after {
+  content: ''; flex: 1; height: 1px; background: #e2e8f0;
+}
+.sso-divider span { padding: 0 12px; }
+.sso-button {
+  width: 100%; height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  border: 1.5px solid #e2e8f0; border-radius: 12px; background: #fff; color: #1e293b;
+  font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all .15s;
+}
+.sso-button:hover { border-color: #2563eb; background: #f8fafc; }

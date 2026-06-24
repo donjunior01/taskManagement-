@@ -33,23 +33,38 @@ public class JwtUtil {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userDetails.getUsername());
+        return createToken(claims, userDetails.getUsername(), null);
     }
 
-    private String createToken(Map<String, Object> claims, String subject) {
+    /** Generate a token bound to a server-side session id (jti) so it can be revoked. */
+    public String generateToken(UserDetails userDetails, String sessionId) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, userDetails.getUsername(), sessionId);
+    }
+
+    /** The session id (jti) embedded in the token, or null for legacy tokens. */
+    public String extractSessionId(String token) {
+        try {
+            return extractClaim(token, Claims::getId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String createToken(Map<String, Object> claims, String subject, String sessionId) {
         long validity;
         try {
             validity = systemSettingsService.getJwtValidityMillis();
         } catch (Exception e) {
             validity = JWT_EXPIRATION;
         }
-        return Jwts.builder()
+        io.jsonwebtoken.JwtBuilder builder = Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + validity))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
+                .setExpiration(new Date(System.currentTimeMillis() + validity));
+        if (sessionId != null) builder.setId(sessionId);
+        return builder.signWith(getSigningKey(), SignatureAlgorithm.HS256).compact();
     }
 
     private Key getSigningKey() {

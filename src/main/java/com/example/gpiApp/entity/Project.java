@@ -14,13 +14,19 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "projects")
+@EntityListeners(com.example.gpiApp.config.TenantListener.class)
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "organization_id = :orgId")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Project {
+public class Project implements TenantOwned {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Owning tenant (multi-tenancy); stamped on insert, backfilled for existing rows. */
+    @Column(name = "organization_id")
+    private Long organizationId;
 
     @Column(nullable = false)
     private String name;

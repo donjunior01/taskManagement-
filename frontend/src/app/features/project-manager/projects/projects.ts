@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { ProjectService, Project, ProjectRequest } from '../../../core/services/project.service';
 import { TeamService } from '../../../core/services/team.service';
 import { TaskService, Task } from '../../../core/services/task.service';
@@ -15,7 +16,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-pm-projects',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AiDescribeButtonComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterModule, AiDescribeButtonComponent, TranslatePipe, HasPermissionDirective],
   template: `
   <div class="proj-wrap">
 

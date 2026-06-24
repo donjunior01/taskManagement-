@@ -1111,3 +1111,16 @@
 .proto-table .action-btn.act-reset:hover  { background: var(--accent-bg); }
 .proto-table .action-btn.act-warn:hover   { background: var(--warning-bg); }
 .proto-table .action-btn.act-danger:hover { background: var(--danger-bg); }
+
+/* Permissions granted by the selected custom role (edit modal) */
+.role-perms { margin-top: 10px; }
+.role-perms-label {
+  display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .4px; color: #94a3b8; margin-bottom: 6px;
+}
+.role-perms-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.role-perm-chip {
+  font-size: 11px; font-weight: 600; font-family: monospace;
+  background: #eef2ff; color: #4338ca; padding: 3px 8px; border-radius: 6px;
+}
+.role-perms-empty { font-size: 12px; color: #94a3b8; font-style: italic; }

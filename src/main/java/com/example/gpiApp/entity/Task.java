@@ -14,13 +14,18 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "tasks")
+@EntityListeners(com.example.gpiApp.config.TenantListener.class)
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "organization_id = :orgId")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Task {
+public class Task implements TenantOwned {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "organization_id")
+    private Long organizationId;
 
     @Column(nullable = false)
     private String name;

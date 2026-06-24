@@ -28,19 +28,22 @@ public class ProjectService {
     private final TeamRepository teamRepository;
     private final ActivityLogService activityLogService;
     private final CalendarService calendarService;
-    
-    public ProjectService(ProjectRepository projectRepository, 
+    private final AuthorizationService authorizationService;
+
+    public ProjectService(ProjectRepository projectRepository,
                           UserRepository userRepository,
                           TaskRepository taskRepository,
                           TeamRepository teamRepository,
                           ActivityLogService activityLogService,
-                          CalendarService calendarService) {
+                          CalendarService calendarService,
+                          AuthorizationService authorizationService) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.taskRepository = taskRepository;
         this.teamRepository = teamRepository;
         this.activityLogService = activityLogService;
         this.calendarService = calendarService;
+        this.authorizationService = authorizationService;
     }
     
     @Transactional(readOnly = true)
@@ -125,6 +128,9 @@ public class ProjectService {
     public ApiResponse<ProjectDTO> updateProject(Long id, ProjectRequestDTO request, Long updatedById) {
         return projectRepository.findById(id)
                 .map(project -> {
+                    // Only the project's PM (manager/creator) or an admin may edit it.
+                    authorizationService.requireProjectManage(updatedById, project);
+
                     project.setName(request.getName());
                     project.setDescription(request.getDescription());
                     project.setStartDate(request.getStartDate());
@@ -172,6 +178,9 @@ public class ProjectService {
     public ApiResponse<Void> deleteProject(Long id, Long deletedById) {
         return projectRepository.findById(id)
                 .map(project -> {
+                    // Only the project's PM (manager/creator) or an admin may delete it.
+                    authorizationService.requireProjectManage(deletedById, project);
+
                     String projectName = project.getName();
                     projectRepository.delete(project);
                     
@@ -209,7 +218,8 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public PagedResponse<ProjectDTO> getProjectsByManager(Long managerId, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Project> projectPage = projectRepository.findByManagerId(managerId, pageable);
+        // A PM owns the projects they manage *or* created (a created project may have no manager set).
+        Page<Project> projectPage = projectRepository.findByManagerIdOrCreatedById(managerId, pageable);
         
         List<ProjectDTO> projectDTOs = projectPage.getContent().stream()
                 .map(this::convertToDTO)

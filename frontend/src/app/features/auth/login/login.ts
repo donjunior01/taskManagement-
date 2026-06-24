@@ -6,6 +6,7 @@ import { AuthService, LoginRequest } from '../../../core/services/auth.service';
 import { BrandingService } from '../../../core/services/branding.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LangToggleComponent } from '../../../shared/components/lang-toggle/lang-toggle';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -25,6 +26,8 @@ export class LoginComponent implements OnInit {
   showPassword: boolean = false;
   showSuspendedModal: boolean = false;
   twoFactorRequired: boolean = false;
+  ssoEnabled: boolean = false;
+  ssoLoginUrl: string = '';
 
   constructor(
     private authService: AuthService,
@@ -42,6 +45,26 @@ export class LoginComponent implements OnInit {
     } else if (params['expired'] === '1') {
       this.infoMessage = this.translate.instant('auth.infoExpired');
     }
+    if (params['ssoError']) {
+      this.errorMessage = this.translate.instant('auth.sso.failed');
+    }
+    // Show the SSO button only when the backend reports SSO is configured & enabled.
+    this.authService.ssoStatus().subscribe({
+      next: (s) => {
+        if (s?.enabled) {
+          this.ssoEnabled = true;
+          const origin = environment.apiUrl.replace(/\/api\/?$/, '');
+          this.ssoLoginUrl = origin + (s.loginUrl || '/oauth2/authorization/oidc');
+          this.cdr.detectChanges();
+        }
+      },
+      error: () => { /* SSO status is best-effort; absence just hides the button */ }
+    });
+  }
+
+  /** Kick off the OIDC redirect on the backend. */
+  startSso(): void {
+    if (this.ssoLoginUrl) window.location.href = this.ssoLoginUrl;
   }
 
   onSubmit(): void {
@@ -90,6 +113,10 @@ export class LoginComponent implements OnInit {
         const isSuspended = low.includes('suspended') || low.includes('suspendu');
         if (isSuspended) {
           this.showSuspendedModal = true;
+        } else if (error?.status === 429) {
+          // Account temporarily locked after too many failed attempts.
+          const mins = error?.error?.lockedMinutes ?? error?.error?.data?.lockedMinutes ?? 1;
+          this.errorMessage = this.translate.instant('auth.errLocked', { minutes: mins });
         } else if (error?.status === 403 && raw) {
           // Pending activation, maintenance mode, etc. — show the backend's exact reason.
           this.errorMessage = raw;

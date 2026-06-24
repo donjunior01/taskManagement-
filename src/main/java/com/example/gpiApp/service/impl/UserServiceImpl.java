@@ -31,12 +31,16 @@ public class UserServiceImpl implements UserService {
     private final com.example.gpiApp.service.EmailService emailService;
     private final com.example.gpiApp.repository.ProjectRepository projectRepository;
     private final com.example.gpiApp.service.ActivityLogService activityLogService;
+    private final com.example.gpiApp.repository.OrganizationRepository organizationRepository;
+    private final com.example.gpiApp.service.PlanService planService;
 
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, NotificationService notificationService,
                            com.example.gpiApp.service.SystemSettingsService systemSettingsService,
                            com.example.gpiApp.service.EmailService emailService,
                            com.example.gpiApp.repository.ProjectRepository projectRepository,
-                           com.example.gpiApp.service.ActivityLogService activityLogService) {
+                           com.example.gpiApp.service.ActivityLogService activityLogService,
+                           com.example.gpiApp.repository.OrganizationRepository organizationRepository,
+                           com.example.gpiApp.service.PlanService planService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.notificationService = notificationService;
@@ -44,6 +48,8 @@ public class UserServiceImpl implements UserService {
         this.emailService = emailService;
         this.projectRepository = projectRepository;
         this.activityLogService = activityLogService;
+        this.organizationRepository = organizationRepository;
+        this.planService = planService;
     }
 
     /** The admin/user performing the current request, resolved from the security context (for traceability). */
@@ -78,6 +84,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new com.example.gpiApp.exception.ResourceNotFoundException("User not found with id " + id));
         String tempPassword = systemSettingsService.generateCompliantPassword();
         user.setPassword(passwordEncoder.encode(tempPassword));
+        user.setPasswordChangedAt(java.time.LocalDateTime.now());
         userRepository.save(user);
 
         // Best-effort email (no-op/logged when mail is disabled).
@@ -151,6 +158,14 @@ public class UserServiceImpl implements UserService {
             allUsers allUsers = new allUsers();
             updateUserFromDTO(allUsers, userRequestDTO);
             allUsers.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
+            allUsers.setPasswordChangedAt(java.time.LocalDateTime.now());
+            // Phase 1: new users created by an admin join the default tenant.
+            if (allUsers.getOrganization() == null) organizationRepository.findById(1L).ifPresent(allUsers::setOrganization);
+            // Plan enforcement: refuse to exceed the tenant's seat limit (default tenant is unlimited).
+            Long targetOrgId = allUsers.getOrganization() != null ? allUsers.getOrganization().getId() : null;
+            if (!planService.canAddUser(targetOrgId)) {
+                return new UserResponseDTO(false, "Your plan's user limit has been reached. Upgrade to add more members.", null);
+            }
             System.out.println("Saving allUsers: " + allUsers);
             allUsers savedAllUsers = userRepository.save(allUsers);
             System.out.println("allUsers saved successfully with ID: " + savedAllUsers.getId());
@@ -224,13 +239,32 @@ public class UserServiceImpl implements UserService {
             
             // Handle role and status enums
             if (userRequestDTO.getRole() != null) {
-                existingAllUsers.setRole(allUsers.Role.valueOf(userRequestDTO.getRole().toString()));
+                allUsers.Role oldRole = existingAllUsers.getRole();
+                allUsers.Role newRole = allUsers.Role.valueOf(userRequestDTO.getRole().toString());
+                if (oldRole != newRole) {
+                    // Don't strip admin from the last active administrator.
+                    if (oldRole == allUsers.Role.ADMIN && newRole != allUsers.Role.ADMIN
+                            && userRepository.countActiveByRole(allUsers.Role.ADMIN) <= 1) {
+                        return new UserResponseDTO(false, "Cannot change the role of the last active administrator.", null);
+                    }
+                    // Downgrading to a non-manager role while still managing projects would strand them.
+                    if (newRole == allUsers.Role.USER) {
+                        long managed = projectRepository.countActiveByManagerId(id);
+                        if (managed > 0) {
+                            return new UserResponseDTO(false,
+                                    "This user manages " + managed + " active project(s). Reassign them to another manager before downgrading to a collaborator.",
+                                    null);
+                        }
+                    }
+                }
+                existingAllUsers.setRole(newRole);
             }
             
             // Only update password if a new one is provided
             if (userRequestDTO.getPassword() != null && !userRequestDTO.getPassword().isEmpty()) {
                 System.out.println("Updating password for user ID: " + id);
                 existingAllUsers.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
+                existingAllUsers.setPasswordChangedAt(java.time.LocalDateTime.now());
             }
 
             System.out.println("Saving updated user: " + existingAllUsers);
@@ -250,16 +284,38 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDTO deleteUser(Long id) {
+    public UserResponseDTO deleteUser(Long id, Long actorId) {
         Optional<allUsers> target = userRepository.findById(id);
         if (target.isEmpty()) {
-            return new UserResponseDTO(false, "allUsers not found", null);
+            return new UserResponseDTO(false, "User not found", null);
         }
-        String username = target.get().getUsername();
-        userRepository.deleteById(id);
+        allUsers user = target.get();
+
+        // Guard 1 — you can't remove your own account.
+        if (actorId != null && actorId.equals(id)) {
+            return new UserResponseDTO(false, "You cannot delete your own account.", null);
+        }
+        // Guard 2 — never remove the last active administrator (would lock everyone out of admin).
+        if (user.getRole() == allUsers.Role.ADMIN && userRepository.countActiveByRole(allUsers.Role.ADMIN) <= 1) {
+            return new UserResponseDTO(false, "Cannot delete the last active administrator.", null);
+        }
+        // Guard 3 — a manager must hand off their active projects first (prevents orphaning).
+        long managed = projectRepository.countActiveByManagerId(id);
+        if (managed > 0) {
+            return new UserResponseDTO(false,
+                    "This user still manages " + managed + " active project(s). Reassign them to another manager before removing the account.",
+                    null);
+        }
+
+        // Soft delete: deactivate rather than destroy, so the audit trail and the user's contributions
+        // (time logs, comments, deliverables, history) are preserved. Login is already blocked for
+        // inactive accounts, and an admin can reactivate later if needed.
+        String username = user.getUsername();
+        user.setActive(false);
+        userRepository.save(user);
         logUserAction(com.example.gpiApp.entity.ActivityLog.ActivityType.USER_DELETED,
-                "User account '" + username + "' was deleted", id);
-        return new UserResponseDTO(true, "allUsers deleted successfully", null);
+                "User account '" + username + "' was deactivated (soft delete)", id);
+        return new UserResponseDTO(true, "User account deactivated.", null);
     }
 
     @Override
@@ -329,6 +385,7 @@ public class UserServiceImpl implements UserService {
         }
         
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordChangedAt(java.time.LocalDateTime.now());
         userRepository.save(user);
     }
 
@@ -344,6 +401,12 @@ public class UserServiceImpl implements UserService {
         userDTO.setFullName(allUsers.getFirstName() + " " + allUsers.getLastName());
         userDTO.setActive(allUsers.isActive());
         userDTO.setCreatedAt(allUsers.getCreatedAt());
+        try {
+            if (allUsers.getCustomRole() != null) {
+                userDTO.setCustomRoleId(allUsers.getCustomRole().getId());
+                userDTO.setCustomRoleName(allUsers.getCustomRole().getName());
+            }
+        } catch (Exception ignore) { /* lazy custom role not loaded */ }
         // Admins → projects they personally created (per-admin traceability); everyone else → their own projects.
         try {
             userDTO.setProjectCount(allUsers.getRole() == Role.ADMIN

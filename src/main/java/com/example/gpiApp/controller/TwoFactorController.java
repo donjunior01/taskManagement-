@@ -42,14 +42,26 @@ public class TwoFactorController {
         return ResponseEntity.ok(ApiResponse.success("2FA setup started", twoFactorService.setup(userId)));
     }
 
-    @Operation(summary = "Enable 2FA by verifying the first code")
+    @Operation(summary = "Enable 2FA by verifying the first code; returns one-time recovery codes")
     @PostMapping("/enable")
-    public ResponseEntity<ApiResponse<Void>> enable(@RequestBody Map<String, String> body, Authentication authentication) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> enable(@RequestBody Map<String, String> body, Authentication authentication) {
         Long userId = currentUserId(authentication);
         if (userId == null) return ResponseEntity.badRequest().body(ApiResponse.error("Not authenticated"));
-        boolean ok = twoFactorService.enable(userId, body.get("code"));
-        return ok ? ResponseEntity.ok(ApiResponse.success("Two-factor authentication enabled", null))
-                  : ResponseEntity.badRequest().body(ApiResponse.error("Invalid code — please try again"));
+        java.util.List<String> codes = twoFactorService.enable(userId, body.get("code"));
+        return codes != null
+                ? ResponseEntity.ok(ApiResponse.success("Two-factor authentication enabled", Map.of("recoveryCodes", codes)))
+                : ResponseEntity.badRequest().body(ApiResponse.error("Invalid code — please try again"));
+    }
+
+    @Operation(summary = "Regenerate one-time recovery codes (requires a valid code)")
+    @PostMapping("/recovery-codes/regenerate")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> regenerateRecoveryCodes(@RequestBody Map<String, String> body, Authentication authentication) {
+        Long userId = currentUserId(authentication);
+        if (userId == null) return ResponseEntity.badRequest().body(ApiResponse.error("Not authenticated"));
+        java.util.List<String> codes = twoFactorService.regenerateRecoveryCodes(userId, body.get("code"));
+        return codes != null
+                ? ResponseEntity.ok(ApiResponse.success("Recovery codes regenerated", Map.of("recoveryCodes", codes)))
+                : ResponseEntity.badRequest().body(ApiResponse.error("Invalid code — please try again"));
     }
 
     @Operation(summary = "Disable 2FA (requires a valid code)")
@@ -60,6 +72,14 @@ public class TwoFactorController {
         boolean ok = twoFactorService.disable(userId, body.get("code"));
         return ok ? ResponseEntity.ok(ApiResponse.success("Two-factor authentication disabled", null))
                   : ResponseEntity.badRequest().body(ApiResponse.error("Invalid code — please try again"));
+    }
+
+    @Operation(summary = "Admin: reset (clear) a user's 2FA so they can re-enrol")
+    @PostMapping("/admin/reset/{userId}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> adminReset(@PathVariable Long userId) {
+        twoFactorService.adminReset(userId);
+        return ResponseEntity.ok(ApiResponse.success("Two-factor authentication reset for the user", null));
     }
 
     private Long currentUserId(Authentication authentication) {

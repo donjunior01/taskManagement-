@@ -4,23 +4,30 @@
 -- ===================================
 
 -- Note: Using IDs starting from 100 to avoid conflicts with DataInitializer
--- Password for all users: password123 (BCrypt encoded)
+-- Password for all users: password123 (Argon2id encoded)
 
 -- ===================================
 -- USERS (MTN Cameroon employees)
 -- ===================================
 
 INSERT IGNORE INTO allUsers (id, username, email, password, first_name, last_name, role, is_active, created_at, updated_at) VALUES
-(100, 'mtn_admin', 'admin@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Admin', 'MTN', 'ADMIN', true, NOW(), NOW()),
-(101, 'pm_nkoulou', 'nkoulou.pm@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Jean-Pierre', 'Nkoulou', 'PROJECT_MANAGER', true, NOW(), NOW()),
-(102, 'pm_tchinda', 'tchinda.pm@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Marie', 'Tchinda', 'PROJECT_MANAGER', true, NOW(), NOW()),
-(103, 'user_mbarga', 'mbarga@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Paul', 'Mbarga', 'USER', true, NOW(), NOW()),
-(104, 'user_fotso', 'fotso@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Sandrine', 'Fotso', 'USER', true, NOW(), NOW()),
-(105, 'user_ngono', 'ngono@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Emmanuel', 'Ngono', 'USER', true, NOW(), NOW()),
-(106, 'user_eyebe', 'eyebe@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Carine', 'Eyebe', 'USER', true, NOW(), NOW()),
-(107, 'user_tabi', 'tabi@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Francis', 'Francis', 'USER', true, NOW(), NOW()),
-(108, 'user_kamga', 'kamga@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Berthe', 'Kamga', 'USER', true, NOW(), NOW()),
-(109, 'user_nana', 'nana@mtncameroon.cm', '$2a$10$eCG3FQbl44powUNNpaI58uiIdlX2vIFd9bSMQW05ujQETNpKfrliO', 'Olivier', 'Nana', 'USER', true, NOW(), NOW());
+(100, 'mtn_admin', 'admin@mtncameroon.cm', '$argon2id$v=19$m=19456,t=2,p=1$9s10ahVyPzGdjdzt4Jo4rQ$gn+nsknCjuh1mWvwRUMw9vXbubjQ7R2lHGzi0lx2QHE', 'Admin', 'MTN', 'ADMIN', true, NOW(), NOW()),
+(101, 'pm_nkoulou', 'nkoulou.pm@mtncameroon.cm', '$argon2id$v=19$m=19456,t=2,p=1$9s10ahVyPzGdjdzt4Jo4rQ$gn+nsknCjuh1mWvwRUMw9vXbubjQ7R2lHGzi0lx2QHE', 'Jean-Pierre', 'Nkoulou', 'PROJECT_MANAGER', true, NOW(), NOW()),
+(102, 'pm_tchinda', 'tchinda.pm@mtncameroon.cm', '$argon2id$v=19$m=19456,t=2,p=1$9s10ahVyPzGdjdzt4Jo4rQ$gn+nsknCjuh1mWvwRUMw9vXbubjQ7R2lHGzi0lx2QHE', 'Marie', 'Tchinda', 'PROJECT_MANAGER', true, NOW(), NOW()),
+(103, 'user_mbarga', 'mbarga@mtncameroon.cm', '$argon2id$v=19$m=19456,t=2,p=1$9s10ahVyPzGdjdzt4Jo4rQ$gn+nsknCjuh1mWvwRUMw9vXbubjQ7R2lHGzi0lx2QHE', 'Paul', 'Mbarga', 'USER', true, NOW(), NOW()),
+(104, 'user_fotso', 'fotso@mtncameroon.cm', '$argon2id$v=19$m=19456,t=2,p=1$9s10ahVyPzGdjdzt4Jo4rQ$gn+nsknCjuh1mWvwRUMw9vXbubjQ7R2lHGzi0lx2QHE', 'Sandrine', 'Fotso', 'USER', true, NOW(), NOW()),
+(105, 'user_ngono', 'ngono@mtncameroon.cm', '$argon2id$v=19$m=19456,t=2,p=1$9s10ahVyPzGdjdzt4Jo4rQ$gn+nsknCjuh1mWvwRUMw9vXbubjQ7R2lHGzi0lx2QHE', 'Emmanuel', 'Ngono', 'USER', true, NOW(), NOW()),
+(106, 'user_eyebe', 'eyebe@mtncameroon.cm', '$argon2id$v=19$m=19456,t=2,p=1$9s10ahVyPzGdjdzt4Jo4rQ$gn+nsknCjuh1mWvwRUMw9vXbubjQ7R2lHGzi0lx2QHE', 'Carine', 'Eyebe', 'USER', true, NOW(), NOW()),
+(107, 'user_tabi', 'tabi@mtncameroon.cm', '$argon2id$v=19$m=19456,t=2,p=1$9s10ahVyPzGdjdzt4Jo4rQ$gn+nsknCjuh1mWvwRUMw9vXbubjQ7R2lHGzi0lx2QHE', 'Francis', 'Francis', 'USER', true, NOW(), NOW()),
+(108, 'user_kamga', 'kamga@mtncameroon.cm', '$argon2id$v=19$m=19456,t=2,p=1$9s10ahVyPzGdjdzt4Jo4rQ$gn+nsknCjuh1mWvwRUMw9vXbubjQ7R2lHGzi0lx2QHE', 'Berthe', 'Kamga', 'USER', true, NOW(), NOW()),
+(109, 'user_nana', 'nana@mtncameroon.cm', '$argon2id$v=19$m=19456,t=2,p=1$9s10ahVyPzGdjdzt4Jo4rQ$gn+nsknCjuh1mWvwRUMw9vXbubjQ7R2lHGzi0lx2QHE', 'Olivier', 'Nana', 'USER', true, NOW(), NOW());
+
+-- Migrate seed accounts to the Argon2id hash on existing databases (INSERT IGNORE above does NOT
+-- update rows that already exist, so installs created under BCrypt keep stale $2a$ hashes otherwise).
+-- Scoped to the 10 demo accounts; password remains "password123".
+UPDATE allUsers
+SET password = '$argon2id$v=19$m=19456,t=2,p=1$9s10ahVyPzGdjdzt4Jo4rQ$gn+nsknCjuh1mWvwRUMw9vXbubjQ7R2lHGzi0lx2QHE'
+WHERE id BETWEEN 100 AND 109 AND password LIKE '$2%';
 
 -- ===================================
 -- PROJECTS (10 projects for MTN Cameroon)

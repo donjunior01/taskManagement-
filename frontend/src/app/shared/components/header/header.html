@@ -138,7 +138,7 @@
           </div>
 
           <div class="dropdown-footer">
-            <a href="javascript:void(0)" class="view-all-link">{{ 'header.viewAllActivity' | translate }}</a>
+            <a href="javascript:void(0)" class="view-all-link" (click)="goToNotifications()">{{ 'header.viewAllActivity' | translate }}</a>
           </div>
         </div>
       </div>
@@ -182,6 +182,14 @@
             <div class="profile-dropdown-item" (click)="openPrefsModal()">
               <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
               <span class="item-text">{{ 'header.notifPrefs' | translate }}</span>
+            </div>
+            <div class="profile-dropdown-item" (click)="openTwoFaModal()">
+              <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+              <span class="item-text">{{ 'header.twoFactor' | translate }}</span>
+            </div>
+            <div class="profile-dropdown-item" (click)="openSessionsModal()">
+              <div class="item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+              <span class="item-text">{{ 'header.activeDevices' | translate }}</span>
             </div>
             <div class="dropdown-divider"></div>
             <div class="profile-dropdown-item signout-item" (click)="logout()">
@@ -311,6 +319,42 @@
         </div>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Two-factor authentication Modal -->
+<div class="modal-backdrop" *ngIf="showTwoFaModal" (click)="closeTwoFaModal()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">{{ 'header.security' | translate }}</span>
+        <h3>{{ 'header.twoFactor' | translate }}</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeTwoFaModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <app-twofa-manager *ngIf="showTwoFaModal"></app-twofa-manager>
+    </div>
+  </div>
+</div>
+
+<!-- Active devices / sessions Modal -->
+<div class="modal-backdrop" *ngIf="showSessionsModal" (click)="closeSessionsModal()">
+  <div class="glass-panel modal-card animate-scale-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="modal-label">{{ 'header.security' | translate }}</span>
+        <h3>{{ 'header.activeDevices' | translate }}</h3>
+      </div>
+      <button class="modal-close-btn" (click)="closeSessionsModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <app-sessions-manager *ngIf="showSessionsModal"></app-sessions-manager>
+    </div>
   </div>
 </div>
 

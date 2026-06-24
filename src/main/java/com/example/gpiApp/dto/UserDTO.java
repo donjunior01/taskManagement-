@@ -25,4 +25,8 @@ public class UserDTO {
 
     /** Number of projects this user works on (admins see the total number of projects). */
     private Long projectCount;
+
+    /** Optional custom RBAC role assigned to this user (overrides base-role permissions). */
+    private Long customRoleId;
+    private String customRoleName;
 }

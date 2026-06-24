@@ -27,6 +27,7 @@ public class SupportTicketService {
     private final SupportTicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final ActivityLogService activityLogService;
 
     @Transactional(readOnly = true)
     public PagedResponse<SupportTicketDTO> getAllTickets(int page, int size) {
@@ -90,6 +91,9 @@ public class SupportTicketService {
                 .build();
 
         SupportTicket saved = ticketRepository.save(ticket);
+        activityLogService.logCurrentUserActivity(
+                com.example.gpiApp.entity.ActivityLog.ActivityType.SUPPORT_TICKET_CREATED,
+                "Support ticket created: \"" + subject + "\"", "SUPPORT_TICKET", saved.getId());
 
         // Notify all admins about the new support ticket
         String notifTitle = "New Support Ticket";
@@ -118,6 +122,10 @@ public class SupportTicketService {
                         ticket.setResolvedAt(LocalDateTime.now());
                     }
                     SupportTicket saved = ticketRepository.save(ticket);
+                    activityLogService.logCurrentUserActivity(
+                            com.example.gpiApp.entity.ActivityLog.ActivityType.SUPPORT_TICKET_UPDATED,
+                            "Support ticket \"" + saved.getSubject() + "\" status changed to " + status,
+                            "SUPPORT_TICKET", saved.getId());
 
                     // Notify the ticket owner of the status change (one key per status so the
                     // status word itself is translated, not just the surrounding sentence).

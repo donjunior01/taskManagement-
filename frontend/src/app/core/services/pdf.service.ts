@@ -29,10 +29,20 @@ export class PdfService {
   }
 
   /**
+   * Open a blank tab synchronously (within a user click) so it isn't pop-up blocked. Pass the
+   * returned window to {@link open} after any async work to render into it.
+   */
+  blankWindow(): Window | null {
+    return window.open('', '_blank');
+  }
+
+  /**
    * Open the branded document in a new window and start printing.
+   * @param preOpened an already-opened window (from {@link blankWindow}) to render into; when omitted
+   *   a new window is opened (only safe in a direct user-gesture call stack).
    * @returns true when the window opened, false when blocked by a pop-up blocker.
    */
-  open(opts: PdfDocOptions): boolean {
+  open(opts: PdfDocOptions, preOpened?: Window | null): boolean {
     const b = this.branding.current;
     const name = this.esc(b.appName);
     const header = b.pdfHeaderColor || '#1e2540';
@@ -100,7 +110,7 @@ export class PdfService {
   <script>window.onload=function(){setTimeout(function(){window.print();},120);}<\/script>
 </body></html>`;
 
-    const w = window.open('', '_blank');
+    const w = preOpened ?? window.open('', '_blank');
     if (!w) return false;
     w.document.open();
     w.document.write(html);

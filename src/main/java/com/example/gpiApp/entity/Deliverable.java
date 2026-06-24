@@ -11,13 +11,18 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "deliverables")
+@EntityListeners(com.example.gpiApp.config.TenantListener.class)
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "organization_id = :orgId")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Deliverable {
+public class Deliverable implements TenantOwned {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "organization_id")
+    private Long organizationId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id", nullable = false)

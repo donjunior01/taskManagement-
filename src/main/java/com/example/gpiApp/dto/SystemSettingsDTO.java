@@ -32,6 +32,7 @@ public class SystemSettingsDTO {
     private Boolean passwordRequireSpecial;
     private Integer passwordExpiryDays;
     private Boolean twoFactorRequiredAdmins;
+    private Boolean twoFactorRequiredAll;
     private Boolean maintenanceMode;
 
     // Notifications

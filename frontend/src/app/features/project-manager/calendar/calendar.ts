@@ -290,7 +290,7 @@ export class PmCalendarComponent implements OnInit {
         const today = new Date(); today.setHours(0, 0, 0, 0);
         const items: CalItem[] = [];
 
-        taskList.filter(t => pids.length === 0 || pids.includes(t.projectId!)).forEach(t => {
+        taskList.filter(t => pids.includes(t.projectId!)).forEach(t => {
           if (!t.deadline) return;
           const d = new Date(t.deadline); if (isNaN(d.getTime())) return;
           const overdue = (t.status || '').toUpperCase() !== 'COMPLETED' && d < today;

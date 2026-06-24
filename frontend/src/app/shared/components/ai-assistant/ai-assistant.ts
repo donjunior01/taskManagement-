@@ -51,7 +51,9 @@ export class AiAssistantWidgetComponent implements AfterViewChecked {
     // Starter prompts follow the selected language and update live when it's toggled.
     this.language.lang$.subscribe(() => {
       this.suggestions = this.suggestionsForRole();
-      this.cdr.detectChanges();
+      // markForCheck (not detectChanges) — lang$ is a BehaviorSubject that can emit while Angular
+      // is already running change detection; detectChanges() there throws "Should be run in update mode".
+      this.cdr.markForCheck();
     });
   }
 

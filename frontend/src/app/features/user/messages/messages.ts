@@ -145,12 +145,12 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
       return {
         id: p.id || 0,
         name: p.name,
-        email: p.managerName ? `${p.managerName} (Manager)` : 'Manager',
+        email: p.managerName ? `${p.managerName} (${this.translate.instant('messages.manager')})` : this.translate.instant('messages.manager'),
         role: 'PROJECT_MANAGER' as const,
         online: true,
         avatarInitials: initials,
         unreadCount: 0,
-        lastMessageText: p.description || 'Project group discussion',
+        lastMessageText: p.description || this.translate.instant('messages.groupDiscussion'),
         lastMessageTime: ''
       };
     });
@@ -184,7 +184,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
           }
           const last = messages.length ? messages[messages.length - 1] : null;
           if (last) {
-            contact.lastMessageText = `${last.senderName || 'Team'}: ${last.content}`;
+            contact.lastMessageText = `${last.senderName || this.translate.instant('messages.teamFallback')}: ${last.content}`;
             contact.lastMessageTime = last.createdAt
               ? new Date(last.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
           }
@@ -299,7 +299,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
       const bubble: ChatMessage = {
         id,
         senderId: m.senderId || 0,
-        senderName: m.senderName || 'Team Member',
+        senderName: m.senderName || this.translate.instant('messages.teamMember'),
         // When an attachment is present, content holds the caption (or the file name).
         text: hasAttach && m.content === m.attachmentName ? '' : (m.content || ''),
         timestamp: m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
@@ -409,7 +409,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
       },
       error: () => {
         newMsg.status = 'SENT';
-        this.triggerToast('Message could not be delivered. Retrying on next refresh.', 'error');
+        this.triggerToast(this.translate.instant('messages.toastUndelivered'), 'error');
         this.cdr.detectChanges();
       }
     });
@@ -445,7 +445,9 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
   }
 
   private humanSize(bytes: number): string {
-    return bytes >= 1024 * 1024 ? (bytes / (1024 * 1024)).toFixed(1) + ' Mo' : Math.max(1, Math.round(bytes / 1024)) + ' Ko';
+    return bytes >= 1024 * 1024
+      ? (bytes / (1024 * 1024)).toFixed(1) + ' ' + this.translate.instant('messages.unitMb')
+      : Math.max(1, Math.round(bytes / 1024)) + ' ' + this.translate.instant('messages.unitKb');
   }
 
   /** Upload a file to the server, then persist it as a chat message attachment. */
@@ -454,7 +456,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
     if (!this.selectedContact) return;
     // Hard client cap; the backend enforces the admin-configured limit (default 100 MB).
     const MAX = 100 * 1024 * 1024;
-    if (file.size > MAX) { this.triggerToast('Fichier trop volumineux (max 100 Mo).', 'error'); return; }
+    if (file.size > MAX) { this.triggerToast(this.translate.instant('messages.toastFileTooLarge'), 'error'); return; }
 
     const sizeStr = this.humanSize(file.size);
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -520,7 +522,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
   previewAttachment(message: ChatMessage): void {
     const url = (message as any)._serverUrl || message.attachmentUrl;
     if (!url || url === '#') return;
-    this.fileService.previewFile(url).subscribe({ error: () => this.triggerToast('Impossible d\'ouvrir le fichier.', 'error') });
+    this.fileService.previewFile(url).subscribe({ error: () => this.triggerToast(this.translate.instant('messages.toastCannotOpenFile'), 'error') });
   }
 
   // ================= MICROPHONE VOICE RECORDING ACTIONS =================
@@ -550,7 +552,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
     }
     this.recordingVoice = false;
     this.cdr.detectChanges();
-    this.triggerToast("Voice note recording discarded.", "error");
+    this.triggerToast(this.translate.instant('messages.toastVoiceDiscarded'), "error");
   }
 
   sendVoiceRecording(): void {
@@ -563,16 +565,17 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
     const finalDuration = this.voiceTimer;
     this.recordingVoice = false;
 
+    const voiceLabel = `${this.translate.instant('messages.voiceNote')} (${finalDuration})`;
     const newMsg: ChatMessage = {
       id: this.messageThread.length + 1,
       senderId: this.developerId,
       senderName: this.developerName,
-      text: `Voice Note (${finalDuration})`,
+      text: voiceLabel,
       timestamp: timeStr,
       isSelf: true,
       status: 'SENT',
       attachmentType: 'VOICE',
-      attachmentName: `Voice Note (${finalDuration})`,
+      attachmentName: voiceLabel,
       attachmentSize: finalDuration,
       isVoicePlaying: false,
       voiceProgress: 0
@@ -582,11 +585,11 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
 
     if (this.selectedContact) {
-      this.selectedContact.lastMessageText = `🎤 Voice Note (${finalDuration})`;
+      this.selectedContact.lastMessageText = `🎤 ${voiceLabel}`;
       this.selectedContact.lastMessageTime = timeStr;
     }
 
-    this.triggerToast("Voice note sent successfully!", "success");
+    this.triggerToast(this.translate.instant('messages.toastVoiceSent'), "success");
   }
 
   // ================= DYNAMIC PLAY/PAUSE SIMULATOR =================
@@ -600,7 +603,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
         clearInterval((message as any)._voiceInterval);
         (message as any)._voiceInterval = null;
       }
-      this.triggerToast("Voice playback paused", "success");
+      this.triggerToast(this.translate.instant('messages.toastVoicePaused'), "success");
     } else {
       // Play action: stop all other voice playbacks first!
       this.messageThread.forEach(m => {
@@ -637,7 +640,7 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
           message.voiceProgress = 0;
           clearInterval((message as any)._voiceInterval);
           (message as any)._voiceInterval = null;
-          this.triggerToast("Voice note finished playing", "success");
+          this.triggerToast(this.translate.instant('messages.toastVoiceFinished'), "success");
         } else {
           message.voiceProgress! += progressPerStep;
         }
@@ -666,16 +669,16 @@ export class UserMessagesComponent implements OnInit, OnDestroy {
       this.selectedContact.lastMessageText = last.attachmentType ? `📁 ${last.attachmentName}` : last.text;
       this.selectedContact.lastMessageTime = last.timestamp;
     } else if (this.selectedContact) {
-      this.selectedContact.lastMessageText = 'No messages in this chat';
+      this.selectedContact.lastMessageText = this.translate.instant('messages.noMessagesInChat');
       this.selectedContact.lastMessageTime = '';
     }
 
     this.messageService.deleteMessage(messageId).subscribe({
       next: () => {
-        this.triggerToast("Message deleted successfully", "success");
+        this.triggerToast(this.translate.instant('messages.toastMsgDeleted'), "success");
       },
       error: () => {
-        this.triggerToast("Optimistic: Message deleted successfully", "success");
+        this.triggerToast(this.translate.instant('messages.toastMsgDeleted'), "success");
       }
     });
   }

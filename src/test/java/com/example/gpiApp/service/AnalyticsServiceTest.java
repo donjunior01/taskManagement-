@@ -81,7 +81,7 @@ class AnalyticsServiceTest {
                         LocalDateTime.now().minusDays(2), LocalDateTime.now().minusDays(2), bob)
         );
 
-        when(projectRepository.findByManagerId(eq(1L), any(Pageable.class)))
+        when(projectRepository.findByManagerIdOrCreatedById(eq(1L), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(project)));
         when(taskRepository.findByProject(project)).thenReturn(tasks);
 
@@ -116,7 +116,7 @@ class AnalyticsServiceTest {
                 task("fine", Task.TaskStatus.TODO, today.plusDays(10),
                         LocalDateTime.now().minusDays(1), LocalDateTime.now().minusDays(1), user("Cara", "Lee"))
         );
-        when(projectRepository.findByManagerId(eq(1L), any(Pageable.class)))
+        when(projectRepository.findByManagerIdOrCreatedById(eq(1L), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(project)));
         when(taskRepository.findByProject(project)).thenReturn(tasks);
 
@@ -129,7 +129,7 @@ class AnalyticsServiceTest {
     @Test
     @DisplayName("A manager with no projects yields zeroed analytics with an 8-week trend skeleton")
     void noProjects() {
-        when(projectRepository.findByManagerId(eq(1L), any(Pageable.class)))
+        when(projectRepository.findByManagerIdOrCreatedById(eq(1L), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
 
         ManagerAnalyticsDTO a = service.getManagerAnalytics(1L);

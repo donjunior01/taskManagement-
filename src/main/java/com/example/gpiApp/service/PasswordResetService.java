@@ -21,6 +21,7 @@ public class PasswordResetService {
     private final PasswordResetRequestRepository passwordResetRequestRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final ActivityLogService activityLogService;
     private final com.example.gpiApp.repository.UserService userService;
 
     @Transactional
@@ -49,6 +50,10 @@ public class PasswordResetService {
                 .build();
 
         PasswordResetRequest savedRequest = passwordResetRequestRepository.save(request);
+        activityLogService.logActivity(
+                com.example.gpiApp.entity.ActivityLog.ActivityType.PASSWORD_RESET_REQUESTED,
+                "Password reset requested for " + email, user,
+                "PASSWORD_RESET_REQUEST", savedRequest.getId(), null);
 
         // Notify all admins so they can approve the reset.
         List<allUsers> admins = userRepository.findByRole(allUsers.Role.ADMIN);
@@ -97,6 +102,10 @@ public class PasswordResetService {
         request.setProcessedAt(java.time.LocalDateTime.now());
 
         PasswordResetRequest savedRequest = passwordResetRequestRepository.save(request);
+        activityLogService.logActivity(
+                com.example.gpiApp.entity.ActivityLog.ActivityType.PASSWORD_RESET_PROCESSED,
+                "Password reset request approved for " + (request.getUser() != null ? request.getUser().getEmail() : "user"),
+                admin, "PASSWORD_RESET_REQUEST", savedRequest.getId(), null);
 
         // Actually reset the password to a policy-compliant temporary value and e-mail it to the user.
         // (resetUserPassword also posts an in-app notification and sends the e-mail.)
@@ -122,8 +131,12 @@ public class PasswordResetService {
         request.setStatus(PasswordResetRequest.RequestStatus.REJECTED);
         request.setProcessedBy(admin);
         request.setProcessedAt(java.time.LocalDateTime.now());
-        
+
         PasswordResetRequest savedRequest = passwordResetRequestRepository.save(request);
+        activityLogService.logActivity(
+                com.example.gpiApp.entity.ActivityLog.ActivityType.PASSWORD_RESET_PROCESSED,
+                "Password reset request rejected for " + (request.getUser() != null ? request.getUser().getEmail() : "user"),
+                admin, "PASSWORD_RESET_REQUEST", savedRequest.getId(), null);
         
         // Notify user
         if (request.getUser() != null) {

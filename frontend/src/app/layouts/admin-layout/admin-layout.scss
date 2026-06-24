@@ -94,12 +94,12 @@
   .layout-content {
     margin-left: var(--sidebar-w);
     margin-top: var(--header-h);
-    padding: 32px 36px;
+    padding: 32px 36px 60px;
     min-height: calc(100vh - var(--header-h));
     transition: margin-left .3s cubic-bezier(.4,0,.2,1);
 
-    @media(max-width: 1200px) { padding: 28px 28px; }
-    @media(max-width: 900px)  { padding: 22px 20px; }
-    @media(max-width: 768px)  { margin-left: 0; padding: 20px 16px; }
+    @media(max-width: 1200px) { padding: 28px 28px 96px; }
+    @media(max-width: 900px)  { padding: 22px 20px 92px; }
+    @media(max-width: 768px)  { margin-left: 0; padding: 20px 16px 88px; }
   }
 }

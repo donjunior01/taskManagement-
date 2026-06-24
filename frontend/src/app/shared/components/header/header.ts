@@ -16,6 +16,8 @@ import { DeliverableService } from '../../../core/services/deliverable.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LangToggleComponent } from '../lang-toggle/lang-toggle';
+import { TwofaManagerComponent } from '../twofa-manager/twofa-manager';
+import { SessionsManagerComponent } from '../sessions-manager/sessions-manager';
 
 interface SearchResult { type: 'project' | 'task' | 'deliverable' | 'user' | 'team'; id?: number; label: string; sub?: string; route: any[]; query?: any; }
 interface SearchGroup { title: string; items: SearchResult[]; }
@@ -40,7 +42,7 @@ export interface DisplayConversation {
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, LangToggleComponent],
+  imports: [CommonModule, FormsModule, TranslatePipe, LangToggleComponent, TwofaManagerComponent, SessionsManagerComponent],
   templateUrl: './header.html',
   styleUrl: './header.scss'
 })
@@ -79,6 +81,8 @@ export class HeaderComponent implements OnInit {
   showProfileModal: boolean = false;
   showPasswordModal: boolean = false;
   showPrefsModal: boolean = false;
+  showTwoFaModal: boolean = false;
+  showSessionsModal: boolean = false;
 
   submitting: boolean = false;
   toastMessage: string = '';
@@ -424,6 +428,13 @@ export class HeaderComponent implements OnInit {
     this.router.navigate([role === 'PROJECT_MANAGER' ? '/pm/messages' : '/user/messages']);
   }
 
+  /** "View all activity" → open the full notifications page for the current role. */
+  goToNotifications(): void {
+    this.showNotifications = false;
+    const base = this.isAdmin() ? '/admin' : this.isProjectManager() ? '/pm' : '/user';
+    this.router.navigate([base, 'notifications']);
+  }
+
   // ─── Helpers ───
   formatTime(dateStr: string): string {
     if (!dateStr) return '';
@@ -590,6 +601,20 @@ export class HeaderComponent implements OnInit {
   }
 
   closePasswordModal(): void { this.showPasswordModal = false; }
+
+  openTwoFaModal(): void {
+    this.showProfileDropdown = false;
+    this.showTwoFaModal = true;
+  }
+
+  closeTwoFaModal(): void { this.showTwoFaModal = false; }
+
+  openSessionsModal(): void {
+    this.showProfileDropdown = false;
+    this.showSessionsModal = true;
+  }
+
+  closeSessionsModal(): void { this.showSessionsModal = false; }
 
   changePassword(): void {
     if (!this.passwordForm.oldPassword || !this.passwordForm.newPassword) {

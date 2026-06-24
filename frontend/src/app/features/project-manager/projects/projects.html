@@ -6,7 +6,7 @@
       <h2>Project Workspaces</h2>
       <p>Supervise milestone deliveries, adjust timelines, and audit deliverables.</p>
     </div>
-    <button type="button" class="btn btn-primary" (click)="openAddModal()">
+    <button *appHasPermission="'project.create'" type="button" class="btn btn-primary" (click)="openAddModal()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -55,7 +55,7 @@
     </div>
     <h3>No Workspaces Found</h3>
     <p>No project workspaces match your search or filter criteria.</p>
-    <button class="btn btn-primary" (click)="openAddModal()">Create First Project</button>
+    <button *appHasPermission="'project.create'" class="btn btn-primary" (click)="openAddModal()">Create First Project</button>
   </div>
 
   <!-- ── Project Cards Grid ───────────────────────────────────────────────── -->

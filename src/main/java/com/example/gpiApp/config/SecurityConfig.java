@@ -14,7 +14,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -30,6 +29,18 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
     private final com.example.gpiApp.config.security.JwtRequestFilter jwtRequestFilter;
+    private final com.example.gpiApp.config.security.ApiKeyAuthFilter apiKeyAuthFilter;
+
+    // SSO (OIDC) — all optional/off by default. The registration repository bean only exists when a
+    // provider is configured, so when SSO is unconfigured these stay null/false and nothing changes.
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.springframework.security.oauth2.client.registration.ClientRegistrationRepository clientRegistrationRepository;
+    // @Lazy breaks a cycle: this handler needs PasswordEncoder, which is a @Bean defined in this class.
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    @org.springframework.context.annotation.Lazy
+    private com.example.gpiApp.config.security.OidcLoginSuccessHandler oidcLoginSuccessHandler;
+    @org.springframework.beans.factory.annotation.Value("${app.sso.enabled:false}")
+    private boolean ssoEnabled;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -68,7 +79,10 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/v3/api-docs/**",
                     "/swagger-resources/**",
-                    "/api-docs/**"
+                    "/api-docs/**",
+                    // SSO/OIDC login endpoints (inert unless SSO is configured)
+                    "/oauth2/**",
+                    "/login/**"
                 ).permitAll()
                 // API endpoints with role-based access
                 .requestMatchers("/api/dashboard/admin/**").hasAuthority("ROLE_ADMIN")
@@ -90,7 +104,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/time-logs/**").authenticated()
                 .requestMatchers("/api/deliverables/**").authenticated()
                 .requestMatchers("/api/messages/**").authenticated()
-                .requestMatchers("/api/activity-logs/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_PROJECT_MANAGER")
+                // These are governed by @perm.has(...) on their controllers (admins are super-users),
+                // so the matcher only needs authentication — the permission check happens per-request.
+                .requestMatchers("/api/activity-logs/**").authenticated()
+                .requestMatchers("/api/roles/**").authenticated()
+                .requestMatchers("/api/api-keys/**").authenticated()
+                .requestMatchers("/api/webhooks/**").authenticated()
+                .requestMatchers("/api/plan/**").authenticated()   // permission enforced by @perm on PlanController
                 .requestMatchers("/api/calendar/**").authenticated()
                 .requestMatchers("/api/notifications/**").authenticated()
                 .requestMatchers("/api/files/**").authenticated()
@@ -120,7 +140,15 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtRequestFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtRequestFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(apiKeyAuthFilter, com.example.gpiApp.config.security.JwtRequestFilter.class);
+
+        // Enable OIDC login only when SSO is switched on AND a provider is configured. NOTE for the
+        // enablement session: the global STATELESS policy must be relaxed (or a cookie-based
+        // authorization-request repository wired) for the OIDC state round-trip — verify at runtime.
+        if (ssoEnabled && clientRegistrationRepository != null && oidcLoginSuccessHandler != null) {
+            http.oauth2Login(oauth -> oauth.successHandler(oidcLoginSuccessHandler));
+        }
 
         return http.build();
     }
@@ -140,6 +168,8 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
+        // Argon2id (memory-hard) password hashing. Parameters: 16-byte salt, 32-byte hash,
+        // parallelism 1, 19 MiB memory, 2 iterations — Spring Security's hardened defaults.
+        return new org.springframework.security.crypto.argon2.Argon2PasswordEncoder(16, 32, 1, 19 * 1024, 2);
     }
 } 

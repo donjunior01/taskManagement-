@@ -22,6 +22,7 @@ export interface SystemSettings {
   passwordRequireSpecial: boolean;
   passwordExpiryDays: number;
   twoFactorRequiredAdmins: boolean;
+  twoFactorRequiredAll: boolean;
   maintenanceMode: boolean;
   // Notifications
   smtpHost: string;

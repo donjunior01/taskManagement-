@@ -23,6 +23,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private com.example.gpiApp.service.SessionService sessionService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
@@ -45,17 +48,32 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             try {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-                if (jwtUtil.validateToken(jwt, userDetails) && userDetails.isEnabled()) {
+                // Revocable sessions: a token carrying a jti must map to an active (non-revoked) session.
+                // Legacy tokens issued before this feature carry no jti and are still accepted until they expire.
+                String sessionId = jwtUtil.extractSessionId(jwt);
+                boolean sessionOk = sessionId == null || sessionService.isActiveAndTouch(sessionId);
+
+                if (sessionOk && jwtUtil.validateToken(jwt, userDetails) && userDetails.isEnabled()) {
                     UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
                     usernamePasswordAuthenticationToken
                             .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+
+                    // Establish the tenant for this request (used by the data layer to scope queries).
+                    if (userDetails instanceof com.example.gpiApp.entity.allUsers) {
+                        com.example.gpiApp.entity.Organization org = ((com.example.gpiApp.entity.allUsers) userDetails).getOrganization();
+                        if (org != null) TenantContext.setOrganizationId(org.getId());
+                    }
                 }
             } catch (Exception ex) {
                 logger.warn("JWT request filter failed to authenticate stale or invalid user subject: " + username, ex);
             }
         }
-        chain.doFilter(request, response);
+        try {
+            chain.doFilter(request, response);
+        } finally {
+            TenantContext.clear();
+        }
     }
 } 

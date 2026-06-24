@@ -10,7 +10,7 @@ public interface UserService {
     UserResponseDTO getUserById(Long id);
     UserResponseDTO createUser(UserRequestDTO userRequestDTO);
     UserResponseDTO updateUser(Long id, UserRequestDTO userRequestDTO);
-    UserResponseDTO deleteUser(Long id);
+    UserResponseDTO deleteUser(Long id, Long actorId);
     UserListResponseDTO filterUsers(String role, String status, int page, int size, String sortBy, String sortDir);
     void changePassword(String email, String currentPassword, String newPassword);
     UserResponseDTO toggleUserStatus(Long id);

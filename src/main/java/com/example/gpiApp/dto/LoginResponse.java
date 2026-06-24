@@ -14,6 +14,10 @@ public class LoginResponse {
     private String role;
     private List<String> roles;
     private String redirectUrl;
+    /** True when policy requires this (admin) account to enrol in 2FA before continuing. */
+    private boolean mfaSetupRequired;
+    /** True when the password has exceeded the rotation policy and must be changed before continuing. */
+    private boolean passwordChangeRequired;
 
     public LoginResponse(String token, allUsers allUsers) {
         this.token = token;

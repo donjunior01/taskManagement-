@@ -28,9 +28,40 @@ public class LoginAttemptService {
     private final UserRepository userRepository;
     private final com.example.gpiApp.repository.BlockedIpRepository blockedIpRepository;
     private final IpResolverService ipResolver;
-    
+    private final SystemSettingsService systemSettingsService;
+
+    /**
+     * How many minutes the given identifier is locked out for after too many recent failed logins
+     * (0 = not locked). Enforces the admin "max login attempts" + "lockout duration" settings with a
+     * rolling window, so the lock auto-expires as old failures age out.
+     */
+    @Transactional(readOnly = true)
+    public long lockoutRemainingMinutes(String identifier) {
+        if (identifier == null || identifier.isBlank()) return 0;
+        int maxAttempts;
+        int lockoutMinutes;
+        try {
+            maxAttempts = systemSettingsService.getSettings().getMaxLoginAttempts();
+            lockoutMinutes = systemSettingsService.getSettings().getLockoutDurationMinutes();
+        } catch (Exception e) {
+            return 0; // settings unavailable → don't lock anyone out
+        }
+        if (maxAttempts <= 0 || lockoutMinutes <= 0) return 0; // feature disabled
+
+        LocalDateTime now = LocalDateTime.now();
+        List<LoginAttempt> fails = loginAttemptRepository.findRecentByIdentifier(
+                identifier, LoginAttempt.LoginStatus.FAILURE, now.minusMinutes(lockoutMinutes));
+        if (fails.size() < maxAttempts) return 0;
+
+        // The failure whose ageing-out drops the count back below the threshold determines the unlock time.
+        LocalDateTime pivot = fails.get(fails.size() - maxAttempts).getAttemptedAt();
+        LocalDateTime unlockAt = pivot.plusMinutes(lockoutMinutes);
+        long seconds = java.time.Duration.between(now, unlockAt).getSeconds();
+        return seconds <= 0 ? 0 : (long) Math.ceil(seconds / 60.0);
+    }
+
     @Transactional
-    public void logLoginAttempt(String username, String email, LoginAttempt.LoginStatus status, 
+    public void logLoginAttempt(String username, String email, LoginAttempt.LoginStatus status,
                                String ipAddress, String userAgent, String reason, Long userId) {
         LoginAttempt attempt = LoginAttempt.builder()
                 .username(username)

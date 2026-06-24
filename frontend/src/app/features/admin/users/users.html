@@ -264,6 +264,39 @@
         </select>
       </div>
 
+      <div class="form-group">
+        <label>{{ 'admin.users.customRole' | translate }}</label>
+        <select [(ngModel)]="selectedRoleId" name="customRole" (change)="applyCustomRole()">
+          <option [ngValue]="null">{{ 'admin.users.noCustomRole' | translate }}</option>
+          <option *ngFor="let r of rolesList" [ngValue]="r.id">{{ r.name }}</option>
+        </select>
+        <small class="form-hint">{{ 'admin.users.customRoleHint' | translate }}</small>
+
+        <!-- Effective permissions granted by the selected custom role -->
+        <div class="role-perms" *ngIf="selectedRoleId">
+          <span class="role-perms-label">{{ 'admin.users.rolePermissions' | translate }}</span>
+          <div class="role-perms-chips" *ngIf="selectedRolePermissions.length; else noPerms">
+            <span class="role-perm-chip" *ngFor="let p of selectedRolePermissions">{{ p }}</span>
+          </div>
+          <ng-template #noPerms>
+            <span class="role-perms-empty">{{ 'admin.users.rolePermissionsNone' | translate }}</span>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>{{ 'admin.users.security2fa' | translate }}</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-secondary" (click)="resetTwoFa()" [disabled]="submitting">
+            {{ 'admin.users.reset2fa' | translate }}
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="forceLogout()" [disabled]="submitting">
+            {{ 'admin.users.forceLogout' | translate }}
+          </button>
+        </div>
+        <small class="form-hint">{{ 'admin.users.reset2faHint' | translate }}</small>
+      </div>
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeEditModal()">{{ 'admin.users.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="submitting">

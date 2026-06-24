@@ -10,6 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { BadgeCountsService } from '../../../core/services/badge-counts.service';
 import { FileService } from '../../../core/services/file.service';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 interface DelRow extends Deliverable {
   projectName: string;
@@ -18,7 +19,7 @@ interface DelRow extends Deliverable {
 @Component({
   selector: 'app-pm-deliverables',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, HasPermissionDirective],
   template: `
   <div class="dl-wrap">
 
@@ -79,8 +80,10 @@ interface DelRow extends Deliverable {
               <td><span class="badge" [ngClass]="statusInfo(d.status).cls">{{ statusInfo(d.status).labelKey | translate }}</span></td>
               <td class="right">
                 <div class="row-actions">
-                  <button class="btn-sm ok" *ngIf="d.status !== 'APPROVED'" (click)="approve(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> {{ 'pm.deliverables.approve' | translate }}</button>
-                  <button class="btn-sm ko" *ngIf="d.status !== 'REJECTED'" (click)="openReject(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> {{ 'pm.deliverables.reject' | translate }}</button>
+                  <ng-container *appHasPermission="'deliverable.review'">
+                    <button class="btn-sm ok" *ngIf="d.status !== 'APPROVED'" (click)="approve(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> {{ 'pm.deliverables.approve' | translate }}</button>
+                    <button class="btn-sm ko" *ngIf="d.status !== 'REJECTED'" (click)="openReject(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> {{ 'pm.deliverables.reject' | translate }}</button>
+                  </ng-container>
                   <button class="icon-btn" [title]="'pm.deliverables.preview' | translate" (click)="openPreview(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
                   <button class="icon-btn" [title]="'pm.deliverables.download' | translate" (click)="download(d)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
                 </div>
@@ -273,10 +276,11 @@ export class PmDeliverablesComponent implements OnInit, OnDestroy {
         // Scope to the manager's projects when the deliverable's task is known.
         this.allRows = list
           .map(d => ({ ...d, projectName: (d.taskId != null && this.taskMap[d.taskId]) ? this.taskMap[d.taskId].projectName : '—' } as DelRow))
+          // Strictly scope to this PM's own projects: only deliverables whose task belongs to one
+          // of their projects (never show all, never include deliverables with an unknown project).
           .filter(d => {
-            if (pids.length === 0) return true;
             const info = d.taskId != null ? this.taskMap[d.taskId] : null;
-            return !info || (info.projectId != null && pids.includes(info.projectId));
+            return !!info && info.projectId != null && pids.includes(info.projectId);
           });
         this.submitterOptions = Array.from(new Set(this.allRows.map(d => d.submittedByName).filter(Boolean) as string[])).sort();
         this.loading = false;

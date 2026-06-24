@@ -1,6 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import QRCode from 'qrcode';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AdminSecurityService, LoginAttempt, SecurityMetrics } from '../../../core/services/admin-security.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -69,6 +70,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   maxFileUploadSize: number = 50; // MB
   allowedEmailDomains: string = 'corp.net, taskmanagement.com';
   maintenanceMode: boolean = false;
+  requireTwoFaAdmins: boolean = false;   // policy: force 2FA enrolment on admin accounts
+  requireTwoFaAll: boolean = false;      // policy: force 2FA enrolment on every account
   mfaRequirement: boolean = false;
   emailNotificationOnCreate: boolean = true;
   emailNotificationOnDelete: boolean = true;
@@ -99,6 +102,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   // Two-factor authentication (real)
   twoFaEnabled: boolean = false;
   twoFaSetup: TwoFactorSetup | null = null;
+  twoFaQr: string = '';
+  twoFaRecoveryCodes: string[] = [];
   twoFaCode: string = '';
   twoFaBusy: boolean = false;
 
@@ -109,7 +114,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     private settingsService: SystemSettingsService,
     private api: ApiService,
     private branding: BrandingService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -144,6 +150,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         this.pwSpecial = s.passwordRequireSpecial ?? this.pwSpecial;
         this.passwordExpiry = s.passwordExpiryDays ?? this.passwordExpiry;
         this.maintenanceMode = s.maintenanceMode ?? this.maintenanceMode;
+        this.requireTwoFaAdmins = s.twoFactorRequiredAdmins ?? this.requireTwoFaAdmins;
+        this.requireTwoFaAll = s.twoFactorRequiredAll ?? this.requireTwoFaAll;
         // Notifications (SMTP + triggers)
         this.smtp.host = s.smtpHost ?? this.smtp.host;
         this.smtp.port = s.smtpPort ?? this.smtp.port;
@@ -294,7 +302,9 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
       passwordRequireUppercase: this.pwUpper,
       passwordRequireDigit: this.pwDigit,
       passwordRequireSpecial: this.pwSpecial,
-      passwordExpiryDays: this.passwordExpiry
+      passwordExpiryDays: this.passwordExpiry,
+      twoFactorRequiredAdmins: this.requireTwoFaAdmins,
+      twoFactorRequiredAll: this.requireTwoFaAll
     }).subscribe({
       next: () => {
         this.submitting = false;
@@ -317,11 +327,17 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
 
   startTwoFaSetup(): void {
     this.twoFaBusy = true;
+    this.twoFaQr = '';
     this.twoFactorService.setup().subscribe({
       next: (res: any) => {
         this.twoFaSetup = res?.data || res;
         this.twoFaCode = '';
         this.twoFaBusy = false;
+        if (this.twoFaSetup?.otpauthUri) {
+          QRCode.toDataURL(this.twoFaSetup.otpauthUri, { width: 200, margin: 1 })
+            .then(url => { this.twoFaQr = url; this.cdr.detectChanges(); })
+            .catch(() => {});
+        }
       },
       error: () => {
         this.twoFaBusy = false;
@@ -334,11 +350,13 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     if (!this.twoFaCode.trim()) return;
     this.twoFaBusy = true;
     this.twoFactorService.enable(this.twoFaCode.trim()).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.twoFaEnabled = true;
         this.twoFaSetup = null;
+        this.twoFaQr = '';
         this.twoFaCode = '';
         this.twoFaBusy = false;
+        this.twoFaRecoveryCodes = (res?.data?.recoveryCodes || res?.recoveryCodes || []);
         this.triggerToast(this.translate.instant('admin.settings.toastTwoFaEnabled'), 'success');
       },
       error: () => {
@@ -350,6 +368,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
 
   cancelTwoFaSetup(): void {
     this.twoFaSetup = null;
+    this.twoFaQr = '';
     this.twoFaCode = '';
   }
 

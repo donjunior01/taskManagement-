@@ -282,10 +282,12 @@
 
 /* ── Version line (prototype footer) ── */
 .sidebar-version {
-  padding: 12px 6px 4px;
-  font-size: 11px;
+  padding: 12px 6px;
+  font-size: 9.5px;
   color: rgba(255,255,255,.35);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Footer (sign-out row) ── */

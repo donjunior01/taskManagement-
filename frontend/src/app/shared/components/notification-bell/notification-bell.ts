@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NotificationService, Notification } from '../../../core/services/notification.service';
 import { resolveNotifMessage } from '../../../core/services/notification-i18n';
@@ -22,11 +23,22 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   constructor(
     private notificationService: NotificationService,
     private authService: AuthService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private router: Router
   ) {}
 
   /** Localised message text (uses the notification's i18nKey when present). */
   dispMsg(n: Notification): string { return resolveNotifMessage(n, this.translate); }
+
+  /** Close the dropdown and open the full notifications page for the signed-in user's role. */
+  viewAll(): void {
+    this.showNotifications = false;
+    const roles = this.authService.getUserRoles();
+    const base = roles.includes('ROLE_ADMIN') ? '/admin'
+      : roles.includes('ROLE_PROJECT_MANAGER') ? '/pm'
+      : '/user';
+    this.router.navigate([base, 'notifications']);
+  }
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {

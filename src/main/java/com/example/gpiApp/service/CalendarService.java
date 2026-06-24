@@ -34,6 +34,7 @@ public class CalendarService {
     private final GoogleCalendarConfig googleCalendarConfig;
     private final Calendar googleCalendar;
     private final NotificationService notificationService;
+    private final ActivityLogService activityLogService;
 
     public CalendarService(CalendarEventRepository calendarEventRepository,
                            ProjectRepository projectRepository,
@@ -42,6 +43,7 @@ public class CalendarService {
                            UserRepository userRepository,
                            GoogleCalendarConfig googleCalendarConfig,
                            NotificationService notificationService,
+                           ActivityLogService activityLogService,
                            @org.springframework.beans.factory.annotation.Autowired(required = false) Calendar googleCalendar) {
         this.calendarEventRepository = calendarEventRepository;
         this.projectRepository = projectRepository;
@@ -50,6 +52,7 @@ public class CalendarService {
         this.userRepository = userRepository;
         this.googleCalendarConfig = googleCalendarConfig;
         this.notificationService = notificationService;
+        this.activityLogService = activityLogService;
         this.googleCalendar = googleCalendar;
     }
 
@@ -173,6 +176,10 @@ public class CalendarService {
             master = calendarEventRepository.save(fallback);
         }
 
+        activityLogService.logCurrentUserActivity(
+                com.example.gpiApp.entity.ActivityLog.ActivityType.CALENDAR_EVENT_CREATED,
+                "Calendar event created: \"" + request.getTitle() + "\"",
+                "CALENDAR", master != null ? master.getId() : null);
         return ApiResponse.success("Event created successfully", convertToDTO(master));
     }
 
@@ -241,6 +248,9 @@ public class CalendarService {
                         }
                     }
 
+                    activityLogService.logCurrentUserActivity(
+                            com.example.gpiApp.entity.ActivityLog.ActivityType.CALENDAR_EVENT_UPDATED,
+                            "Calendar event updated: \"" + request.getTitle() + "\"", "CALENDAR", id);
                     return ApiResponse.success("Event updated successfully", convertToDTO(editedCopy));
                 })
                 .orElse(ApiResponse.error("Event not found"));
@@ -250,6 +260,7 @@ public class CalendarService {
     public ApiResponse<Void> deleteEvent(Long id) {
         return calendarEventRepository.findById(id)
                 .map(event -> {
+                    String title = event.getTitle();
                     List<CalendarEvent> series = (event.getSeriesId() != null && !event.getSeriesId().isBlank())
                             ? calendarEventRepository.findBySeriesId(event.getSeriesId())
                             : java.util.List.of(event);
@@ -259,6 +270,9 @@ public class CalendarService {
                         }
                         calendarEventRepository.delete(e);
                     }
+                    activityLogService.logCurrentUserActivity(
+                            com.example.gpiApp.entity.ActivityLog.ActivityType.CALENDAR_EVENT_DELETED,
+                            "Calendar event deleted: \"" + title + "\"", "CALENDAR", id);
                     return ApiResponse.<Void>success("Event deleted successfully", null);
                 })
                 .orElse(ApiResponse.error("Event not found"));

@@ -1,10 +1,24 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { PdfService } from '../../../core/services/pdf.service';
 import { AnalyticsService } from '../../../core/services/analytics.service';
+import { ReportService } from '../../../core/services/report.service';
+import { TaskService } from '../../../core/services/task.service';
+import { UserService } from '../../../core/services/user.service';
+import { ActivityLogService } from '../../../core/services/activity-log.service';
+import { SupportTicketService } from '../../../core/services/support-ticket.service';
+import { AdminSecurityService } from '../../../core/services/admin-security.service';
+
+/** A column in a generated report: i18n header key suffix + a cell extractor. */
+interface RepCol { h: string; get: (row: any) => string; }
+/** A generated dataset ready to export. */
+interface RepData { titleKey: string; columns: RepCol[]; rows: any[]; }
 
 interface Donut { name: string; value: number; color: string; pct: number; dash: string; offset: number; }
 interface RecapRow { nom: string; pm: string; taches: number; terminees: number; retard: number; heures: number; progression: number; statut: string; }
@@ -12,7 +26,7 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
 @Component({
   selector: 'app-admin-reports',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   template: `
   <div class="rep-wrap">
 
@@ -22,9 +36,9 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
         <button *ngFor="let p of periods" class="ptab" [class.active]="period === p" (click)="selectPeriod(p)" [disabled]="loadingReports">{{ p | translate }}</button>
       </div>
       <div class="rep-actions">
-        <button class="btn btn-primary" (click)="toast.show(t('admin.reports.toastGen'), 'success')">
+        <button class="btn btn-primary" (click)="generateReport()" [disabled]="generating">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path></svg>
-          {{ 'admin.reports.generate' | translate }}
+          {{ (generating ? 'admin.reports.generating' : 'admin.reports.generate') | translate }}
         </button>
         <button class="btn btn-outline" (click)="exportPdf()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> PDF</button>
         <button class="btn btn-outline" (click)="exportCsv()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> CSV</button>
@@ -283,8 +297,70 @@ interface RecapRow { nom: string; pm: string; taches: number; terminees: number;
       </div>
     </div>
   </div>
+
+  <!-- ═══ Report generator modal ═══ -->
+  <div class="rg-backdrop" *ngIf="showReportModal" (click)="closeReportModal()">
+    <div class="rg-modal" (click)="$event.stopPropagation()">
+      <div class="rg-head">
+        <h3>{{ 'admin.reports.rgTitle' | translate }}</h3>
+        <button class="rg-x" (click)="closeReportModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="rg-body">
+        <div class="rg-label">{{ 'admin.reports.rgPick' | translate }}</div>
+        <div class="rg-list">
+          <button type="button" class="rg-item" *ngFor="let r of reportCatalog" [class.on]="selectedReport === r.key" (click)="selectedReport = r.key">
+            <span class="rg-name">{{ ('admin.reports.rt.' + r.key) | translate }}</span>
+            <span class="rg-fmt" [class.pdf-only]="!r.csv">{{ r.csv ? 'PDF · CSV' : ('admin.reports.pdfOnly' | translate) }}</span>
+          </button>
+        </div>
+        <div class="rg-period">
+          <label>{{ 'admin.reports.rgPeriod' | translate }}</label>
+          <select [(ngModel)]="reportPeriod">
+            <option value="all">{{ 'admin.reports.rperiod.all' | translate }}</option>
+            <option value="week">{{ 'admin.reports.rperiod.week' | translate }}</option>
+            <option value="month">{{ 'admin.reports.rperiod.month' | translate }}</option>
+            <option value="quarter">{{ 'admin.reports.rperiod.quarter' | translate }}</option>
+            <option value="year">{{ 'admin.reports.rperiod.year' | translate }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="rg-foot">
+        <button type="button" class="btn btn-outline" (click)="closeReportModal()">{{ 'admin.reports.rgCancel' | translate }}</button>
+        <span class="rg-spacer"></span>
+        <button type="button" class="btn btn-primary" [disabled]="reportLoading" (click)="downloadReport('PDF')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          {{ 'admin.reports.downloadPdf' | translate }}
+        </button>
+        <button type="button" class="btn btn-primary" [disabled]="reportLoading || !selectedReportDef?.csv"
+                [title]="!selectedReportDef?.csv ? ('admin.reports.csvUnavailable' | translate) : ''" (click)="downloadReport('CSV')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          {{ 'admin.reports.downloadCsv' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
   `,
   styles: [`
+    /* Report generator modal */
+    .rg-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.5); backdrop-filter: blur(3px); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .rg-modal { width: 100%; max-width: 480px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: 0 24px 60px rgba(15,23,42,.3); display: flex; flex-direction: column; max-height: 88vh; }
+    .rg-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-light); }
+    .rg-head h3 { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); }
+    .rg-x { width: 30px; height: 30px; border: none; background: var(--bg-subtle); border-radius: var(--radius-md); cursor: pointer; color: var(--text-muted); display: grid; place-items: center; } .rg-x svg { width: 15px; height: 15px; }
+    .rg-body { padding: 16px 20px; overflow-y: auto; }
+    .rg-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); margin-bottom: 8px; }
+    .rg-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .rg-item { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-md); background: var(--bg-card); cursor: pointer; text-align: left; font-family: inherit; transition: border-color .12s ease, background .12s ease; }
+    .rg-item:hover { background: var(--bg-subtle); }
+    .rg-item.on { border-color: var(--primary); background: var(--primary-bg, rgba(37,99,235,.06)); }
+    .rg-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .rg-fmt { font-size: 10.5px; font-weight: 600; color: var(--text-muted); } .rg-fmt.pdf-only { color: var(--warning); }
+    .rg-period { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+    .rg-period label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .rg-period select { height: 38px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-card); color: var(--text-primary); font-family: inherit; font-size: 13px; }
+    .rg-foot { display: flex; align-items: center; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border-light); } .rg-foot .rg-spacer { flex: 1; }
+    .rg-foot .btn:disabled { opacity: .5; cursor: not-allowed; }
+
     .rep-wrap { display: flex; flex-direction: column; gap: 24px; }
     .rep-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-xs); overflow: hidden; }
     .pad-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px; }
@@ -473,11 +549,206 @@ export class AdminReportsComponent implements OnInit {
   radarShape = '';
   radarRingLabels: { y: number; value: number }[] = [];
   radarHover = -1;                                // index of the point being hovered (-1 = none)
+  generating = false;                             // true while a report is being built
 
-  constructor(private projectService: ProjectService, public toast: ToastService, private cdr: ChangeDetectorRef, private analytics: AnalyticsService, private pdf: PdfService, private translate: TranslateService) {}
+  // ── Report generator modal ────────────────────────────────────────────────
+  showReportModal = false;
+  reportLoading = false;
+  selectedReport = 'projects';
+  reportPeriod: 'all' | 'week' | 'month' | 'quarter' | 'year' = 'all';
+  /** Catalog of generatable reports. csv=false → CSV download is disabled for that report. */
+  reportCatalog: { key: string; csv: boolean }[] = [
+    { key: 'projects',      csv: true },
+    { key: 'tasks',         csv: true },
+    { key: 'users',         csv: true },
+    { key: 'activityLogs',  csv: true },
+    { key: 'tickets',       csv: true },
+    { key: 'loginAttempts', csv: true },
+    { key: 'execSummary',   csv: false },   // narrative overview — PDF only
+  ];
+  get selectedReportDef() { return this.reportCatalog.find(r => r.key === this.selectedReport); }
+
+  constructor(
+    private projectService: ProjectService,
+    public toast: ToastService,
+    private cdr: ChangeDetectorRef,
+    private analytics: AnalyticsService,
+    private pdf: PdfService,
+    private translate: TranslateService,
+    private reportService: ReportService,
+    private taskService: TaskService,
+    private userService: UserService,
+    private activityLogService: ActivityLogService,
+    private supportTicketService: SupportTicketService,
+    private adminSecurity: AdminSecurityService,
+  ) {}
 
   /** Translate helper for TS-side strings (toasts, exports, deltas). */
   t(key: string, params?: any): string { return this.translate.instant(key, params); }
+
+  /** "Generate report" → open the report picker. */
+  generateReport(): void { this.selectedReport = 'projects'; this.reportPeriod = 'all'; this.showReportModal = true; }
+  closeReportModal(): void { this.showReportModal = false; }
+
+  /** Calendar window for the chosen period, or null for "all time". */
+  private reportWindow(): { start: number; end: number } | null {
+    const now = new Date(); const y = now.getFullYear(); const m = now.getMonth();
+    switch (this.reportPeriod) {
+      case 'week': { const d = now.getDay() || 7; const s = new Date(y, m, now.getDate() - d + 1); return { start: s.getTime(), end: now.getTime() + 864e5 }; }
+      case 'month':   return { start: new Date(y, m, 1).getTime(),            end: new Date(y, m + 1, 0, 23, 59, 59).getTime() };
+      case 'quarter': { const q = Math.floor(m / 3) * 3; return { start: new Date(y, q, 1).getTime(), end: new Date(y, q + 3, 0, 23, 59, 59).getTime() }; }
+      case 'year':    return { start: new Date(y, 0, 1).getTime(),            end: new Date(y, 11, 31, 23, 59, 59).getTime() };
+      default:        return null;
+    }
+  }
+  private inWindow(dateStr?: string): boolean {
+    const w = this.reportWindow();
+    if (!w || !dateStr) return true;
+    const t = new Date(dateStr).getTime();
+    return isNaN(t) ? true : (t >= w.start && t <= w.end);
+  }
+  /** Normalise any backend list response (array | {data} | {content} | {data:{content}}) to an array. */
+  private asArray(r: any): any[] {
+    if (Array.isArray(r)) return r;
+    if (!r) return [];
+    return r.data?.content || r.content || r.data || [];
+  }
+
+  /** Build the dataset for a report key (fetches, maps to columns, filters by period). */
+  private loadReportData(key: string): Observable<RepData> {
+    switch (key) {
+      case 'projects':
+        return this.projectService.getAllProjects(0, 1000).pipe(map((r: any) => ({
+          titleKey: 'admin.reports.rt.projects',
+          columns: [
+            { h: 'name', get: (p: any) => p.name }, { h: 'manager', get: (p: any) => p.managerName || '—' },
+            { h: 'status', get: (p: any) => p.status || '—' }, { h: 'progress', get: (p: any) => (p.progress || 0) + '%' },
+            { h: 'start', get: (p: any) => p.startDate || '—' }, { h: 'end', get: (p: any) => p.endDate || '—' },
+          ],
+          rows: this.asArray(r).filter((p: any) => this.inWindow(p.createdAt || p.startDate)),
+        })));
+      case 'tasks':
+        return this.taskService.getAllTasks(0, 2000).pipe(map((r: any) => ({
+          titleKey: 'admin.reports.rt.tasks',
+          columns: [
+            { h: 'name', get: (t: any) => t.name }, { h: 'project', get: (t: any) => t.projectName || '—' },
+            { h: 'assignee', get: (t: any) => t.assignedToName || '—' }, { h: 'priority', get: (t: any) => t.priority || '—' },
+            { h: 'status', get: (t: any) => t.status || '—' }, { h: 'progress', get: (t: any) => (t.progress || 0) + '%' },
+            { h: 'deadline', get: (t: any) => t.deadline || '—' },
+          ],
+          rows: this.asArray(r).filter((t: any) => this.inWindow(t.createdAt || t.deadline)),
+        })));
+      case 'users':
+        return this.userService.getAllUsers(0, 2000).pipe(map((r: any) => ({
+          titleKey: 'admin.reports.rt.users',
+          columns: [
+            { h: 'name', get: (u: any) => `${u.firstName || ''} ${u.lastName || ''}`.trim() }, { h: 'username', get: (u: any) => u.username },
+            { h: 'email', get: (u: any) => u.email }, { h: 'role', get: (u: any) => u.role || u.userType || '—' },
+            { h: 'active', get: (u: any) => this.t(u.isActive ? 'admin.reports.yes' : 'admin.reports.no') },
+            { h: 'created', get: (u: any) => this.fmtDate(u.createdAt) },
+          ],
+          rows: this.asArray(r).filter((u: any) => this.inWindow(u.createdAt)),
+        })));
+      case 'activityLogs':
+        return this.activityLogService.getAllActivityLogs().pipe(map((list: any[]) => ({
+          titleKey: 'admin.reports.rt.activityLogs',
+          columns: [
+            { h: 'date', get: (l: any) => this.fmtDate(l.timestamp || l.createdAt) },
+            { h: 'user', get: (l: any) => l.user ? `${l.user.firstName || ''} ${l.user.lastName || ''}`.trim() || ('#' + l.userId) : ('#' + (l.userId ?? '—')) },
+            { h: 'action', get: (l: any) => l.action || l.activityType || '—' },
+            { h: 'entity', get: (l: any) => l.entityType || '—' },
+            { h: 'details', get: (l: any) => l.details || l.description || '—' },
+          ],
+          rows: this.asArray(list).filter((l: any) => this.inWindow(l.timestamp || l.createdAt)),
+        })));
+      case 'tickets':
+        return this.supportTicketService.getAllTickets().pipe(map((list: any[]) => ({
+          titleKey: 'admin.reports.rt.tickets',
+          columns: [
+            { h: 'id', get: (s: any) => 'TKT-' + (s.id ?? '') }, { h: 'subject', get: (s: any) => s.subject || s.title || '—' },
+            { h: 'status', get: (s: any) => s.status || '—' }, { h: 'priority', get: (s: any) => s.priority || '—' },
+            { h: 'user', get: (s: any) => s.userName || ('#' + (s.userId ?? '—')) }, { h: 'created', get: (s: any) => this.fmtDate(s.createdAt) },
+          ],
+          rows: this.asArray(list).filter((s: any) => this.inWindow(s.createdAt)),
+        })));
+      case 'loginAttempts':
+        return this.adminSecurity.getLoginAttempts().pipe(map((list: any[]) => ({
+          titleKey: 'admin.reports.rt.loginAttempts',
+          columns: [
+            { h: 'date', get: (a: any) => this.fmtDate(a.attemptedAt || a.createdAt) },
+            { h: 'username', get: (a: any) => a.username || '—' },
+            { h: 'result', get: (a: any) => this.t(a.success ? 'admin.reports.success' : 'admin.reports.failure') },
+            { h: 'ip', get: (a: any) => a.ipAddress || '—' },
+          ],
+          rows: this.asArray(list).filter((a: any) => this.inWindow(a.attemptedAt || a.createdAt)),
+        })));
+      default:
+        return of({ titleKey: 'admin.reports.rt.' + key, columns: [], rows: [] });
+    }
+  }
+
+  /** Run the selected report in the requested format. */
+  downloadReport(format: 'PDF' | 'CSV'): void {
+    if (this.reportLoading) return;
+    const def = this.selectedReportDef;
+    if (!def) return;
+    if (format === 'CSV' && !def.csv) return;          // guard: CSV not available for this report
+
+    // The executive overview is a narrative (PDF only) built from the on-page KPIs.
+    if (def.key === 'execSummary') { this.exportExecSummary(); this.closeReportModal(); return; }
+
+    // For PDF, open the tab NOW (within the click) so the browser doesn't block it after the async fetch.
+    let win: Window | null = null;
+    if (format === 'PDF') {
+      win = this.pdf.blankWindow();
+      if (!win) { this.toast.show(this.t('admin.reports.toastPdfPopup'), 'error'); return; }
+    }
+
+    this.reportLoading = true;
+    this.toast.show(this.t('admin.reports.toastGen'), 'success');
+    this.loadReportData(def.key).subscribe({
+      next: (d) => {
+        if (format === 'CSV') this.exportTableCsv(d); else this.exportTablePdf(d, win);
+        this.reportLoading = false;
+        this.showReportModal = false;
+        this.cdr.markForCheck();
+      },
+      error: () => { if (win) win.close(); this.toast.show(this.t('admin.reports.toastGenFail'), 'error'); this.reportLoading = false; this.cdr.markForCheck(); },
+    });
+  }
+
+  private periodLabel(): string { return this.t('admin.reports.rperiod.' + this.reportPeriod); }
+
+  private exportTablePdf(d: RepData, win?: Window | null): void {
+    const th = d.columns.map(c => `<th>${this.pdf.esc(this.t('admin.reports.rcol.' + c.h))}</th>`).join('');
+    const body = d.rows.length
+      ? d.rows.map(r => `<tr>${d.columns.map(c => `<td>${this.pdf.esc(c.get(r))}</td>`).join('')}</tr>`).join('')
+      : `<tr><td colspan="${d.columns.length}">${this.pdf.esc(this.t('admin.reports.empty'))}</td></tr>`;
+    const html = `<table><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
+    const ok = this.pdf.open({ title: `${this.t(d.titleKey)} — ${this.periodLabel()}`, subtitle: this.t('admin.reports.rgRows', { n: d.rows.length }), bodyHtml: html }, win);
+    if (!ok) { if (win) win.close(); this.toast.show(this.t('admin.reports.toastPdfPopup'), 'error'); return; }
+    this.toast.show(this.t('admin.reports.toastGenDone'), 'success');
+  }
+
+  private exportTableCsv(d: RepData): void {
+    const rows = [d.columns.map(c => this.t('admin.reports.rcol.' + c.h)), ...d.rows.map(r => d.columns.map(c => c.get(r)))];
+    const csv = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    ReportService.triggerDownload(blob, `${this.selectedReport}-${this.reportPeriod}-${new Date().toISOString().slice(0, 10)}.csv`);
+    this.toast.show(this.t('admin.reports.toastGenDone'), 'success');
+  }
+
+  /** PDF-only executive overview built from the page's KPI tiles. */
+  private exportExecSummary(): void {
+    const rows = this.execKpis.map(k => `<tr><td>${this.pdf.esc(this.t(k.labelKey))}</td><td><b>${this.pdf.esc(k.value)}</b></td><td>${this.pdf.esc(k.delta)}</td></tr>`).join('');
+    const html = `<table><thead><tr><th>${this.pdf.esc(this.t('admin.reports.rcol.indicator'))}</th><th>${this.pdf.esc(this.t('admin.reports.rcol.value'))}</th><th>${this.pdf.esc(this.t('admin.reports.rcol.trend'))}</th></tr></thead><tbody>${rows}</tbody></table>`;
+    const ok = this.pdf.open({ title: `${this.t('admin.reports.rt.execSummary')} — ${this.periodLabel()}`, subtitle: this.t('admin.reports.execTitle'), bodyHtml: html });
+    if (!ok) { this.toast.show(this.t('admin.reports.toastPdfPopup'), 'error'); return; }
+    this.toast.show(this.t('admin.reports.toastGenDone'), 'success');
+  }
+
+  private fmtDate(s?: string): string { if (!s) return '—'; const d = new Date(s); return isNaN(d.getTime()) ? '—' : d.toLocaleDateString(this.locale(), { day: '2-digit', month: 'short', year: 'numeric' }); }
+
   private locale(): string { return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR'; }
 
   ngOnInit(): void {

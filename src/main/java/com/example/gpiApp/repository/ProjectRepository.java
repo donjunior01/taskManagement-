@@ -26,9 +26,26 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     @Query("SELECT p FROM Project p WHERE p.manager.id = :managerId AND (p.archived = false OR p.archived IS NULL)")
     Page<Project> findByManagerId(@Param("managerId") Long managerId, Pageable pageable);
+
+    /**
+     * A project manager's own projects: those they manage OR those they created. A PM-created
+     * project leaves manager_id NULL unless one is explicitly assigned, so scoping by manager
+     * alone would miss it (and the UI would then fall back to showing every project's data).
+     */
+    @Query("SELECT p FROM Project p WHERE (p.manager.id = :userId OR p.createdBy.id = :userId) " +
+           "AND (p.archived = false OR p.archived IS NULL)")
+    Page<Project> findByManagerIdOrCreatedById(@Param("userId") Long userId, Pageable pageable);
     
     @Query("SELECT COUNT(p) FROM Project p WHERE p.status = :status")
     Long countByStatus(@Param("status") Project.ProjectStatus status);
+
+    /** Active projects in a tenant — drives plan project limits. */
+    @Query("SELECT COUNT(p) FROM Project p WHERE p.organizationId = :orgId AND (p.archived = false OR p.archived IS NULL)")
+    long countByOrganizationId(@Param("orgId") Long orgId);
+
+    /** Active (non-archived) projects a given user currently manages — used to block orphaning on removal/downgrade. */
+    @Query("SELECT COUNT(p) FROM Project p WHERE p.manager.id = :userId AND (p.archived = false OR p.archived IS NULL)")
+    long countActiveByManagerId(@Param("userId") Long userId);
 
     /** Total projects created by a given admin (drives the per-admin dashboard count). */
     @Query("SELECT COUNT(p) FROM Project p WHERE p.createdBy.id = :userId")

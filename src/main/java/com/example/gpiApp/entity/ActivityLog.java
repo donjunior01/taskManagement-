@@ -69,7 +69,16 @@ public class ActivityLog {
         DELIVERABLE_REVIEWED,
         TIME_LOGGED,
         MESSAGE_SENT,
-        SECURITY_ALERT
+        SECURITY_ALERT,
+        // Added to complete the audit trail (settings, calendar, support, password resets, logout).
+        SETTINGS_UPDATED,
+        CALENDAR_EVENT_CREATED,
+        CALENDAR_EVENT_UPDATED,
+        CALENDAR_EVENT_DELETED,
+        SUPPORT_TICKET_CREATED,
+        SUPPORT_TICKET_UPDATED,
+        PASSWORD_RESET_REQUESTED,
+        PASSWORD_RESET_PROCESSED
     }
 }
 

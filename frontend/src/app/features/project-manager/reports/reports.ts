@@ -305,7 +305,9 @@ export class PmReportsComponent implements OnInit {
           next: (tr: any) => {
             const pids = this.projectsList.map(p => p.id);
             const all: Task[] = tr && tr.data ? tr.data : [];
-            this.tasks = pids.length ? all.filter(t => pids.includes(t.projectId)) : all;
+            // Strictly scope to this PM's own projects so "performance by member" reflects only the
+            // work done on their projects, not a global figure (no project => no tasks).
+            this.tasks = all.filter(t => pids.includes(t.projectId));
             this.recompute();
           },
           error: () => { this.tasks = []; this.recompute(); }

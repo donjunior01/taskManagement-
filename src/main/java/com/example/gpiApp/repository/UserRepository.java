@@ -30,6 +30,14 @@ public interface UserRepository extends JpaRepository<allUsers, Long> {
     
     @Query("SELECT COUNT(u) FROM allUsers u WHERE u.role = :role")
     Long countByRole(@Param("role") allUsers.Role role);
+
+    /** Number of users in a tenant — drives plan seat limits. */
+    @Query("SELECT COUNT(u) FROM allUsers u WHERE u.organization.id = :orgId")
+    long countByOrganizationId(@Param("orgId") Long orgId);
+
+    /** Count of active accounts with a given role — used to refuse removing/downgrading the last admin. */
+    @Query("SELECT COUNT(u) FROM allUsers u WHERE u.role = :role AND u.isActive = true")
+    long countActiveByRole(@Param("role") allUsers.Role role);
     
     @Query("SELECT COUNT(u) FROM allUsers u WHERE MONTH(u.createdAt) = MONTH(CURRENT_DATE) AND YEAR(u.createdAt) = YEAR(CURRENT_DATE)")
     Long countUsersCreatedThisMonth();

@@ -63,7 +63,9 @@ public class AnalyticsService {
 
     @Transactional(readOnly = true)
     public ManagerAnalyticsDTO getManagerAnalytics(Long managerId) {
-        List<Project> projects = projectRepository.findByManagerId(managerId, Pageable.unpaged()).getContent();
+        // Scope to the PM's own projects — those they manage or created (matches getProjectsByManager),
+        // so member workload/velocity reflect their projects only, not a global figure.
+        List<Project> projects = projectRepository.findByManagerIdOrCreatedById(managerId, Pageable.unpaged()).getContent();
         List<Task> tasks = new ArrayList<>();
         for (Project p : projects) {
             tasks.addAll(taskRepository.findByProject(p));

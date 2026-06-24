@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
 import { ProjectService, Project } from '../../../core/services/project.service';
 import { UserService, User } from '../../../core/services/user.service';
@@ -14,7 +15,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-pm-tasks',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AiDescribeButtonComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterModule, AiDescribeButtonComponent, TranslatePipe, HasPermissionDirective],
   template: `
   <div class="tk-wrap">
 
@@ -55,7 +56,7 @@ import { ToastService } from '../../../core/services/toast.service';
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {{ 'pm.tasks.viewCal' | translate }}
           </button>
         </div>
-        <button class="btn-primary" (click)="openCreate()">
+        <button *appHasPermission="'task.create'" class="btn-primary" (click)="openCreate()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> {{ 'pm.tasks.newTask' | translate }}
         </button>
       </div>
@@ -70,7 +71,7 @@ import { ToastService } from '../../../core/services/toast.service';
         </button>
         <button class="btn-outline" (click)="bulkPanel = bulkPanel === 'status' ? '' : 'status'">{{ 'pm.tasks.changeStatus' | translate }}</button>
         <button class="btn-outline" (click)="bulkPanel = bulkPanel === 'priority' ? '' : 'priority'">{{ 'pm.tasks.changePriority' | translate }}</button>
-        <button class="btn-outline danger" (click)="bulkDelete()">
+        <button *appHasPermission="'task.delete'" class="btn-outline danger" (click)="bulkDelete()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> {{ 'pm.tasks.delete' | translate }}
         </button>
       </div>
@@ -115,9 +116,9 @@ import { ToastService } from '../../../core/services/toast.service';
                 <div class="prog"><div class="bar"><div class="bar-fill" [style.width.%]="animated ? (t.progress || 0) : 0"></div></div><span>{{ t.progress || 0 }}%</span></div>
               </td>
               <td class="actions">
-                <button class="icon-btn" [title]="'pm.tasks.edit' | translate" (click)="openEdit(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg></button>
+                <button *appHasPermission="'task.edit'" class="icon-btn" [title]="'pm.tasks.edit' | translate" (click)="openEdit(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg></button>
                 <button class="icon-btn" [title]="'pm.tasks.assign' | translate" (click)="openAssign(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg></button>
-                <button class="icon-btn danger" [title]="'pm.tasks.delete' | translate" (click)="deleteTask(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                <button *appHasPermission="'task.delete'" class="icon-btn danger" [title]="'pm.tasks.delete' | translate" (click)="deleteTask(t)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
               </td>
             </tr>
             <tr *ngIf="filtered.length === 0"><td colspan="9"><div class="empty">{{ 'pm.tasks.emptyTasks' | translate }}</div></td></tr>
@@ -250,39 +251,56 @@ import { ToastService } from '../../../core/services/toast.service';
 
     /* Table */
     .list-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); overflow: hidden; }
-    .table-scroll { overflow-x: auto; }
-    .tk-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    /* Fixed layout so all columns always fit the card at any width/zoom — columns shrink and
+       long text truncates/wraps instead of forcing a horizontal scrollbar. */
+    .table-scroll { overflow-x: hidden; }
+    .tk-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
     .tk-table thead { background: #f8fafc; }
-    .tk-table th { text-align: left; padding: 11px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #94a3b8; white-space: nowrap; }
-    .tk-table td { padding: 11px 12px; border-top: 1px solid #eef2f7; color: #475569; vertical-align: middle; }
+    .tk-table th { text-align: left; padding: 11px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tk-table td { padding: 11px 12px; border-top: 1px solid #eef2f7; color: #475569; vertical-align: middle; overflow: hidden; }
     .tk-table th.cb, .tk-table td.cb { width: 40px; text-align: center; }
+    /* Proportional column widths (checkbox + actions are fixed px, the rest share the remainder). */
+    .tk-table th:nth-child(2), .tk-table td:nth-child(2) { width: 22%; }   /* Title */
+    .tk-table th:nth-child(3), .tk-table td:nth-child(3) { width: 13%; }   /* Project */
+    .tk-table th:nth-child(4), .tk-table td:nth-child(4) { width: 15%; }   /* Assignee */
+    .tk-table th:nth-child(5), .tk-table td:nth-child(5) { width: 9%; }    /* Priority */
+    .tk-table th:nth-child(6), .tk-table td:nth-child(6) { width: 11%; }   /* Status */
+    .tk-table th:nth-child(7), .tk-table td:nth-child(7) { width: 11%; }   /* Deadline */
+    .tk-table th:nth-child(8), .tk-table td:nth-child(8) { width: 12%; }   /* Progress */
+    .tk-table th:nth-child(9), .tk-table td:nth-child(9) { width: 86px; }  /* Actions */
+    /* Title wraps (keeps all its text); Project/Assignee truncate with an ellipsis. */
+    .tk-table td.title { white-space: normal; overflow-wrap: anywhere; }
+    /* Hide the least-critical columns first on tight widths so the rest stay readable (no scroll). */
+    @media (max-width: 980px) { .tk-table th:nth-child(8), .tk-table td:nth-child(8) { display: none; } }
+    @media (max-width: 760px) { .tk-table th:nth-child(7), .tk-table td:nth-child(7) { display: none; } }
     .tk-table input[type=checkbox] { width: 15px; height: 15px; accent-color: #2563eb; cursor: pointer; }
     .tk-row:hover { background: #f8fafc; }
     .tk-row.overdue { background: rgba(220,38,38,.05); }
     .tk-row.overdue:hover { background: rgba(220,38,38,.09); }
     .title { font-weight: 600; color: #1e293b; }
-    .proj-badge { font-size: 11px; font-weight: 500; color: #2563eb; background: rgba(37,99,235,.1); padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
-    .assignee { display: flex; align-items: center; gap: 7px; }
+    .proj-badge { display: inline-block; max-width: 100%; font-size: 11px; font-weight: 500; color: #2563eb; background: rgba(37,99,235,.1); padding: 2px 8px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+    .assignee { display: flex; align-items: center; gap: 7px; min-width: 0; }
     .avatar { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 10px; font-weight: 700; flex-shrink: 0; }
     .avatar.sm { width: 22px; height: 22px; font-size: 9px; }
-    .aname { font-size: 12px; white-space: nowrap; }
+    .aname { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .badge { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 9999px; white-space: nowrap; }
     .badge.sm { font-size: 9.5px; padding: 2px 7px; }
     .st-muted { background: #eef2f7; color: #64748b; } .st-blue { background: rgba(37,99,235,.1); color: #2563eb; }
     .st-amber { background: rgba(217,119,6,.14); color: #d97706; } .st-green { background: rgba(22,163,74,.12); color: #16a34a; } .st-red { background: rgba(220,38,38,.1); color: #dc2626; }
     .pr-slate { background: #eef2f7; color: #64748b; } .pr-blue { background: rgba(37,99,235,.1); color: #2563eb; } .pr-amber { background: rgba(217,119,6,.14); color: #d97706; } .pr-red { background: rgba(220,38,38,.1); color: #dc2626; }
     .due { font-size: 12px; color: #64748b; white-space: nowrap; } .due.late { color: #dc2626; font-weight: 600; } .due .warn { width: 13px; height: 13px; vertical-align: -2px; margin-right: 2px; }
-    .prog { display: flex; align-items: center; gap: 8px; }
-    .bar { width: 80px; height: 6px; border-radius: 9999px; background: #eef2f7; overflow: hidden; } .bar-fill { height: 100%; background: linear-gradient(90deg,#2563eb,#1e3a8a); border-radius: 9999px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+    .prog { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .bar { flex: 1 1 auto; min-width: 32px; max-width: 80px; height: 6px; border-radius: 9999px; background: #eef2f7; overflow: hidden; } .bar-fill { height: 100%; background: linear-gradient(90deg,#2563eb,#1e3a8a); border-radius: 9999px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+    .prog span { flex-shrink: 0; }
     .actions { white-space: nowrap; opacity: 0; transition: opacity .15s ease; } .tk-row:hover .actions { opacity: 1; }
     .icon-btn { width: 28px; height: 28px; border: none; background: none; border-radius: 7px; color: #64748b; cursor: pointer; display: inline-grid; place-items: center; } .icon-btn svg { width: 14px; height: 14px; } .icon-btn:hover { background: #eef2f7; color: #1e293b; } .icon-btn.danger:hover { background: rgba(220,38,38,.1); color: #dc2626; }
     .empty { padding: 32px; text-align: center; color: #94a3b8; font-size: 13px; }
 
     /* Kanban */
-    .kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-    @media (max-width: 1024px) { .kanban { grid-template-columns: repeat(2, 1fr); } }
+    .kanban { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
     @media (max-width: 600px) { .kanban { grid-template-columns: 1fr; } }
-    .kan-col { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; }
+    .kan-col { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; min-width: 0; }
+    .kc-title { overflow-wrap: anywhere; }
     .kan-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
     .kan-count { font-size: 12px; font-weight: 700; color: #94a3b8; }
     .kan-list { display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
@@ -419,7 +437,8 @@ export class PmTasksComponent implements OnInit {
       next: (r: any) => {
         const all: Task[] = r && r.data ? r.data : [];
         const ids = this.projectsList.map(p => p.id);
-        this.allTasks = ids.length ? all.filter(t => ids.includes(t.projectId)) : all;
+        // Strictly scope to this PM's own projects — no project means no tasks (never fall back to all).
+        this.allTasks = all.filter(t => ids.includes(t.projectId));
         this.applyFilters(); this.loading = false; this.cdr.detectChanges();
       },
       error: () => { this.allTasks = []; this.applyFilters(); this.loading = false; this.cdr.detectChanges(); }

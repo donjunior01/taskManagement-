@@ -102,21 +102,53 @@
           <span>{{ (twoFaEnabled ? 'admin.settings.twoFaOn' : 'admin.settings.twoFaOff') | translate }}</span>
         </div>
       </div>
+      <div class="cfg-field">
+        <label>{{ 'admin.settings.require2faAdmins' | translate }}</label>
+        <div class="toggle-line">
+          <button type="button" class="switch" [class.on]="requireTwoFaAdmins" (click)="requireTwoFaAdmins = !requireTwoFaAdmins"><span></span></button>
+          <span>{{ (requireTwoFaAdmins ? 'admin.settings.policyRequired' : 'admin.settings.policyOptional') | translate }}</span>
+        </div>
+      </div>
+      <div class="cfg-field">
+        <label>{{ 'admin.settings.require2faAll' | translate }}</label>
+        <div class="toggle-line">
+          <button type="button" class="switch" [class.on]="requireTwoFaAll" (click)="requireTwoFaAll = !requireTwoFaAll"><span></span></button>
+          <span>{{ (requireTwoFaAll ? 'admin.settings.policyRequired' : 'admin.settings.policyOptional') | translate }}</span>
+        </div>
+      </div>
     </div>
 
     <!-- 2FA setup / disable inline -->
     <div class="twofa-setup" *ngIf="twoFaSetup">
       <p class="hint">{{ 'admin.settings.twoFaScanHint' | translate }}</p>
+      <div class="twofa-qr-block">
+        <img *ngIf="twoFaQr" [src]="twoFaQr" alt="QR" class="twofa-qr" />
+        <div class="twofa-secret-manual">
+          <span class="twofa-secret-label">{{ 'admin.settings.twoFaSecretLabel' | translate }}</span>
+          <code class="twofa-secret">{{ twoFaSetup.secret }}</code>
+        </div>
+      </div>
       <div class="twofa-row">
         <input type="text" maxlength="6" placeholder="000000" [(ngModel)]="twoFaCode" />
         <button class="btn btn-primary btn-sm" (click)="confirmEnableTwoFa()" [disabled]="twoFaBusy">{{ 'admin.settings.verifyEnable' | translate }}</button>
         <button class="btn btn-secondary btn-sm" (click)="cancelTwoFaSetup()">{{ 'admin.settings.cancel' | translate }}</button>
       </div>
     </div>
-    <div class="twofa-setup" *ngIf="twoFaEnabled">
+    <div class="twofa-setup" *ngIf="twoFaEnabled && !twoFaRecoveryCodes.length">
       <div class="twofa-row">
         <input type="text" maxlength="6" [placeholder]="'admin.settings.phCurrentCode' | translate" [(ngModel)]="twoFaCode" />
         <button class="btn btn-secondary btn-sm" (click)="disableTwoFa()" [disabled]="twoFaBusy">{{ 'admin.settings.disableTwoFa' | translate }}</button>
+      </div>
+    </div>
+
+    <!-- One-time recovery codes, shown right after enabling -->
+    <div class="twofa-setup" *ngIf="twoFaRecoveryCodes.length">
+      <p class="hint"><strong>{{ 'twofa.codesTitle' | translate }}</strong> — {{ 'twofa.codesHint' | translate }}</p>
+      <div class="twofa-codes-grid">
+        <code *ngFor="let rc of twoFaRecoveryCodes">{{ rc }}</code>
+      </div>
+      <div class="twofa-row">
+        <button class="btn btn-primary btn-sm" (click)="twoFaRecoveryCodes = []">{{ 'twofa.codesSaved' | translate }}</button>
       </div>
     </div>
 

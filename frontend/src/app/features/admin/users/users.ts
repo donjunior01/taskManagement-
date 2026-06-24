@@ -6,6 +6,9 @@ import { UserService, User, UserRequest } from '../../../core/services/user.serv
 import { AdminSecurityService } from '../../../core/services/admin-security.service';
 import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { TwoFactorService } from '../../../core/services/twofa.service';
+import { RoleService, AppRole } from '../../../core/services/role.service';
+import { SessionService } from '../../../core/services/session.service';
 
 @Component({
   selector: 'app-admin-users',
@@ -75,8 +78,64 @@ export class AdminUsersComponent implements OnInit {
     private projectService: ProjectService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private twofa: TwoFactorService,
+    private sessions: SessionService,
+    private roleService: RoleService
   ) {}
+
+  rolesList: AppRole[] = [];
+  selectedRoleId: number | null = null;
+
+  /** Permissions granted by the custom role currently selected in the edit modal. */
+  get selectedRolePermissions(): string[] {
+    const role = this.rolesList.find(r => r.id === this.selectedRoleId);
+    return role?.permissions ? [...role.permissions].sort() : [];
+  }
+
+  private loadRoles(): void {
+    this.roleService.list().subscribe({
+      next: (r: any) => {
+        const all: AppRole[] = Array.isArray(r) ? r : (r?.data || []);
+        // Only custom roles are assignable here; built-in roles follow the access-level dropdown.
+        this.rolesList = all.filter(role => !role.system);
+        this.cdr.detectChanges();
+      },
+      error: () => { this.rolesList = []; }
+    });
+  }
+
+  /** Admin force-logout: revoke every active session of the selected user. */
+  forceLogout(): void {
+    if (!this.selectedUser?.id || this.submitting) return;
+    this.submitting = true;
+    this.sessions.adminRevokeAll(this.selectedUser.id).subscribe({
+      next: () => {
+        this.submitting = false;
+        this.triggerToast(this.translate.instant('admin.users.toastForceLogout', { name: this.selectedUser?.firstName }), 'success');
+      },
+      error: (err) => {
+        this.submitting = false;
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.users.toastForceLogoutFailed'), 'error');
+      }
+    });
+  }
+
+  /** Admin account recovery: clear a user's 2FA so they can re-enrol (e.g. lost authenticator). */
+  resetTwoFa(): void {
+    if (!this.selectedUser?.id || this.submitting) return;
+    this.submitting = true;
+    this.twofa.adminReset(this.selectedUser.id).subscribe({
+      next: () => {
+        this.submitting = false;
+        this.triggerToast(this.translate.instant('admin.users.toast2faReset', { name: this.selectedUser?.firstName }), 'success');
+      },
+      error: (err) => {
+        this.submitting = false;
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.users.toast2faResetFailed'), 'error');
+      }
+    });
+  }
 
   private locale(): string {
     return this.translate.currentLang() === 'en' ? 'en-GB' : 'fr-FR';
@@ -85,6 +144,7 @@ export class AdminUsersComponent implements OnInit {
   ngOnInit(): void {
     this.loadUsers();
     this.loadAuxData();
+    this.loadRoles();
   }
 
   /** Builds the "last connection" and "projects per user" maps from real backend data. */
@@ -358,7 +418,20 @@ export class AdminUsersComponent implements OnInit {
       lastName: user.lastName,
       role: user.role || 'USER'
     };
+    this.selectedRoleId = (user as any).customRoleId ?? null;
     this.showEditModal = true;
+  }
+
+  /** Assign or clear the user's custom RBAC role. */
+  applyCustomRole(): void {
+    if (!this.selectedUser?.id) return;
+    const obs = this.selectedRoleId
+      ? this.roleService.assign(this.selectedRoleId, this.selectedUser.id)
+      : this.roleService.unassign(this.selectedUser.id);
+    obs.subscribe({
+      next: () => this.triggerToast(this.translate.instant('admin.users.toastRoleUpdated'), 'success'),
+      error: (err: any) => this.triggerToast(err?.error?.message || this.translate.instant('admin.users.toastRoleFailed'), 'error')
+    });
   }
 
   closeEditModal(): void {
@@ -420,14 +493,22 @@ export class AdminUsersComponent implements OnInit {
     this.submitting = true;
     this.userService.updateUser(this.selectedUser.id, this.editUserForm).subscribe({
       next: (updatedUser) => {
-        this.submitting = false;
-        this.showEditModal = false;
-        this.triggerToast(this.translate.instant('admin.users.toastAccountUpdated', { name: updatedUser.firstName }), 'success');
-        this.loadUsers();
+        // Defer UI/state changes to the next tick so the 'disabled'(=submitting) bindings on the
+        // modal buttons don't flip mid change-detection (avoids NG0100).
+        setTimeout(() => {
+          this.submitting = false;
+          this.showEditModal = false;
+          this.triggerToast(this.translate.instant('admin.users.toastAccountUpdated', { name: updatedUser.firstName }), 'success');
+          this.loadUsers();
+          this.cdr.detectChanges();
+        });
       },
       error: (err) => {
-        this.submitting = false;
-        this.triggerToast(err?.error?.message || this.translate.instant('admin.users.toastUpdateFailed'), 'error');
+        setTimeout(() => {
+          this.submitting = false;
+          this.triggerToast(err?.error?.message || this.translate.instant('admin.users.toastUpdateFailed'), 'error');
+          this.cdr.detectChanges();
+        });
       }
     });
   }

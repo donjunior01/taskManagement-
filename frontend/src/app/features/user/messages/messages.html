@@ -142,7 +142,7 @@
 
                 <!-- 1. IMAGE Attachment Bubble -->
                 <div class="attachment-image-container" *ngIf="message.attachmentType === 'IMAGE'">
-                  <img *ngIf="message.attachmentUrl" [src]="message.attachmentUrl" class="bubble-image-preview" alt="Image attachment" (click)="previewAttachment(message)" style="cursor:zoom-in" />
+                  <img *ngIf="message.attachmentUrl" [src]="message.attachmentUrl" class="bubble-image-preview" [alt]="'messages.altImageAttachment' | translate" (click)="previewAttachment(message)" style="cursor:zoom-in" />
                   <div class="img-uploading" *ngIf="!message.attachmentUrl">{{ 'common.loading' | translate }}</div>
                   <div class="media-overlay-meta" *ngIf="message.text">
                     <p class="message-text media-caption">{{ message.text }}</p>
@@ -381,8 +381,8 @@
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
           </div>
-          <h3>Messagerie Web {{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }}</h3>
-          <p>Envoyez et recevez des messages sans garder votre téléphone en ligne. Utilisez {{ (branding.branding$ | async)?.appName || 'TaskMaster Pro' }} sur jusqu'à 4 appareils connectés simultanément.</p>
+          <h3>{{ 'messages.landingTitle' | translate:{ app: (branding.branding$ | async)?.appName || 'TaskMaster Pro' } }}</h3>
+          <p>{{ 'messages.landingDesc' | translate:{ app: (branding.branding$ | async)?.appName || 'TaskMaster Pro' } }}</p>
           <div class="landing-footer">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>

@@ -92,6 +92,10 @@ public class SystemSettings {
     @Builder.Default
     private Boolean twoFactorRequiredAdmins = false;
 
+    @Column(name = "two_factor_required_all", nullable = false)
+    @Builder.Default
+    private Boolean twoFactorRequiredAll = false;
+
     @Column(name = "maintenance_mode", nullable = false)
     @Builder.Default
     private Boolean maintenanceMode = false;

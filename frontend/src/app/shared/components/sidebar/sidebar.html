@@ -123,6 +123,33 @@
         </svg>
         <span>{{ 'nav.settings' | translate }}</span>
       </a>
+      <a routerLink="/admin/roles" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle>
+          <path d="M22 11l-3 3-1.5-1.5"></path>
+        </svg>
+        <span>{{ 'nav.roles' | translate }}</span>
+      </a>
+      <a routerLink="/admin/api-keys" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+        </svg>
+        <span>{{ 'nav.apiKeys' | translate }}</span>
+      </a>
+      <a routerLink="/admin/webhooks" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2"></path>
+          <path d="m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06"></path>
+          <path d="m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8"></path>
+        </svg>
+        <span>{{ 'nav.webhooks' | translate }}</span>
+      </a>
+      <a routerLink="/admin/plan" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+        <span>{{ 'nav.plan' | translate }}</span>
+      </a>
       <a routerLink="/admin/support" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -151,14 +178,14 @@
         <span>{{ 'nav.dashboard' | translate }}</span>
       </a>
 
-      <a routerLink="/pm/projects" routerLinkActive="active" class="nav-link">
+      <a routerLink="/pm/projects" routerLinkActive="active" class="nav-link" *ngIf="perm.has('project.view')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
         </svg>
         <span>{{ 'nav.myProjects' | translate }}</span>
       </a>
 
-      <a routerLink="/pm/tasks" routerLinkActive="active" class="nav-link">
+      <a routerLink="/pm/tasks" routerLinkActive="active" class="nav-link" *ngIf="perm.has('task.view')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
           <line x1="8" y1="6" x2="21" y2="6"></line>
           <line x1="8" y1="12" x2="21" y2="12"></line>
@@ -170,7 +197,7 @@
         <span>{{ 'nav.tasks' | translate }}</span>
       </a>
 
-      <a routerLink="/pm/teams" routerLinkActive="active" class="nav-link">
+      <a routerLink="/pm/teams" routerLinkActive="active" class="nav-link" *ngIf="perm.has('team.view')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
@@ -180,7 +207,7 @@
         <span>{{ 'nav.teams' | translate }}</span>
       </a>
 
-      <a routerLink="/pm/deliverables" routerLinkActive="active" class="nav-link">
+      <a routerLink="/pm/deliverables" routerLinkActive="active" class="nav-link" *ngIf="perm.has('deliverable.view')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
@@ -200,7 +227,7 @@
         <span>{{ 'nav.calendar' | translate }}</span>
       </a>
 
-      <a routerLink="/pm/reports" routerLinkActive="active" class="nav-link">
+      <a routerLink="/pm/reports" routerLinkActive="active" class="nav-link" *ngIf="perm.has('report.view')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
           <line x1="18" y1="20" x2="18" y2="10"></line>
           <line x1="12" y1="20" x2="12" y2="4"></line>
@@ -209,7 +236,7 @@
         <span>{{ 'nav.pmReports' | translate }}</span>
       </a>
 
-      <a routerLink="/pm/analytics" routerLinkActive="active" class="nav-link">
+      <a routerLink="/pm/analytics" routerLinkActive="active" class="nav-link" *ngIf="perm.has('report.view')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
           <line x1="18" y1="20" x2="18" y2="4"></line>
           <line x1="12" y1="20" x2="12" y2="10"></line>
@@ -236,6 +263,40 @@
         <span class="nav-badge" *ngIf="notificationsCount > 0">{{ notificationsCount }}</span>
       </a>
 
+      <!-- Cross-area pages — shown only when the user's custom role grants the permission -->
+      <a *appHasPermission="'role.manage'" routerLink="/pm/roles" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 11l-3 3-1.5-1.5"></path>
+        </svg>
+        <span>{{ 'nav.roles' | translate }}</span>
+      </a>
+      <a *appHasPermission="'audit.view'" routerLink="/pm/activity-logs" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        <span>{{ 'nav.activityLogs' | translate }}</span>
+      </a>
+      <a *appHasPermission="'settings.manage'" routerLink="/pm/api-keys" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+        </svg>
+        <span>{{ 'nav.apiKeys' | translate }}</span>
+      </a>
+      <a *appHasPermission="'settings.manage'" routerLink="/pm/webhooks" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2"></path><path d="m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06"></path><path d="m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8"></path>
+        </svg>
+        <span>{{ 'nav.webhooks' | translate }}</span>
+      </a>
+
+      <!-- Billing — only when the user's role grants billing.manage (cross-area access) -->
+      <a *appHasPermission="'billing.manage'" routerLink="/pm/plan" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+        <span>{{ 'nav.plan' | translate }}</span>
+      </a>
+
       <!-- Support Link -->
       <a routerLink="/pm/support" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
@@ -260,7 +321,7 @@
         <span>{{ 'nav.dashboard' | translate }}</span>
       </a>
       
-      <a routerLink="/user/my-tasks" routerLinkActive="active" class="nav-link">
+      <a routerLink="/user/my-tasks" routerLinkActive="active" class="nav-link" *ngIf="perm.has('task.view')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
           <polyline points="9 11 12 14 22 4"></polyline>
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
@@ -277,7 +338,7 @@
       </a>
       
       <!-- Placeholder link mapping for My Deliverables -->
-      <a routerLink="/user/deliverables" routerLinkActive="active" class="nav-link">
+      <a routerLink="/user/deliverables" routerLinkActive="active" class="nav-link" *ngIf="perm.has('deliverable.view')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
         </svg>
@@ -309,6 +370,40 @@
         </svg>
         <span>{{ 'nav.notifications' | translate }}</span>
         <span class="nav-badge" *ngIf="notificationsCount > 0">{{ notificationsCount }}</span>
+      </a>
+
+      <!-- Cross-area pages — shown only when the user's custom role grants the permission -->
+      <a *appHasPermission="'role.manage'" routerLink="/user/roles" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 11l-3 3-1.5-1.5"></path>
+        </svg>
+        <span>{{ 'nav.roles' | translate }}</span>
+      </a>
+      <a *appHasPermission="'audit.view'" routerLink="/user/activity-logs" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        <span>{{ 'nav.activityLogs' | translate }}</span>
+      </a>
+      <a *appHasPermission="'settings.manage'" routerLink="/user/api-keys" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+        </svg>
+        <span>{{ 'nav.apiKeys' | translate }}</span>
+      </a>
+      <a *appHasPermission="'settings.manage'" routerLink="/user/webhooks" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2"></path><path d="m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06"></path><path d="m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8"></path>
+        </svg>
+        <span>{{ 'nav.webhooks' | translate }}</span>
+      </a>
+
+      <!-- Billing — only when the user's role grants billing.manage (cross-area access) -->
+      <a *appHasPermission="'billing.manage'" routerLink="/user/plan" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+        <span>{{ 'nav.plan' | translate }}</span>
       </a>
 
       <!-- Support Link -->
@@ -353,9 +448,6 @@
         <p class="streak-subtitle" style="margin: 0; font-size: 11px; font-weight: 500; color: #64748b;">On track</p>
       </div>
     </div>
-
-    <!-- Version line (prototype footer) -->
-    <div class="sidebar-version" *ngIf="isAdmin()">V 2.0.0 — Build by Don Junior</div>
 
     <!-- Sign Out button wrapper -->
     <div class="sidebar-footer">

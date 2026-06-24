@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiService } from './api.service';
+import { PermissionService } from './permission.service';
 
 export interface LoginRequest {
   email: string;
@@ -17,6 +18,8 @@ export interface LoginResponse {
   email: string;
   roles: string[];
   twoFactorRequired?: boolean;   // true when the account needs a TOTP code
+  mfaSetupRequired?: boolean;    // true when policy forces this account to enrol in 2FA
+  passwordChangeRequired?: boolean; // true when the password is past the rotation policy
 }
 
 export interface User {
@@ -34,7 +37,7 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private apiService: ApiService) {
+  constructor(private apiService: ApiService, private permission: PermissionService) {
     this.loadUserFromStorage();
   }
 
@@ -42,11 +45,18 @@ export class AuthService {
     return this.apiService.post<LoginResponse>('/auth/login', credentials).pipe(
       map(response => {
         if (response.token) {
+          this.permission.reset();   // drop any cached permissions from a previous session
           localStorage.setItem('jwt_token', response.token);
           localStorage.setItem('user_id', response.id.toString());
           localStorage.setItem('user_email', response.email);
           localStorage.setItem('user_roles', JSON.stringify(response.roles));
-          
+          // Policy may require this account to enrol in 2FA before continuing (read by the setup gate).
+          if (response.mfaSetupRequired) localStorage.setItem('mfa_setup_required', '1');
+          else localStorage.removeItem('mfa_setup_required');
+          // Password rotation policy may force a change before continuing (read by the password gate).
+          if (response.passwordChangeRequired) localStorage.setItem('password_change_required', '1');
+          else localStorage.removeItem('password_change_required');
+
           const user: User = {
             id: response.id,
             email: response.email,
@@ -66,20 +76,92 @@ export class AuthService {
     return this.apiService.post<any>('/auth/register', userData);
   }
 
+  /** Whether SSO is available (drives the login-page button). */
+  ssoStatus(): Observable<{ enabled: boolean; loginUrl: string }> {
+    return this.apiService.get<{ enabled: boolean; loginUrl: string }>('/auth/sso-status');
+  }
+
+  /**
+   * Hydrate the SPA session from an SSO-issued token: persist it, then load the current user so
+   * role-based routing works exactly like a normal login. Returns the primary role for redirect.
+   */
+  establishSsoSession(token: string): Observable<string> {
+    this.permission.reset();
+    localStorage.setItem('jwt_token', token);
+    return this.apiService.get<any>('/auth/me').pipe(
+      map(me => {
+        const roles: string[] = me?.roles || [];
+        localStorage.setItem('user_id', String(me?.id ?? ''));
+        localStorage.setItem('user_email', me?.email ?? '');
+        localStorage.setItem('user_roles', JSON.stringify(roles));
+        this.currentUserSubject.next({
+          id: me?.id, email: me?.email, firstName: '', lastName: '',
+          role: roles.length ? roles[0] : 'USER'
+        });
+        return roles.length ? roles[0] : 'USER';
+      })
+    );
+  }
+
   forgotPassword(email: string): Observable<any> {
     return this.apiService.post<any>('/auth/password-reset/request', { email });
   }
 
   logout(): void {
+    this.permission.reset();
     localStorage.removeItem('jwt_token');
     localStorage.removeItem('user_id');
     localStorage.removeItem('user_email');
     localStorage.removeItem('user_roles');
+    localStorage.removeItem('mfa_setup_required');
+    localStorage.removeItem('password_change_required');
     this.currentUserSubject.next(null);
   }
 
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('jwt_token');
+    const token = localStorage.getItem('jwt_token');
+    if (!token) return false;
+    // An expired token must NOT count as logged-in, otherwise route guards would activate the
+    // dashboard and the user would briefly see an empty shell before the first 401 kicks them out.
+    // Clearing it here makes the guard redirect straight to /login on (re)load.
+    if (this.isJwtExpired(token)) {
+      this.logout();
+      return false;
+    }
+    return true;
+  }
+
+  /** Decode the JWT payload and check its `exp` claim (seconds). Malformed → treat as expired. */
+  private isJwtExpired(token: string): boolean {
+    try {
+      const part = token.split('.')[1];
+      if (!part) return true;
+      const json = atob(part.replace(/-/g, '+').replace(/_/g, '/'));
+      const payload = JSON.parse(json);
+      if (!payload || typeof payload.exp !== 'number') return false; // no exp → don't lock out
+      return payload.exp * 1000 <= Date.now();
+    } catch {
+      return true;
+    }
+  }
+
+  /** True while a logged-in account still has a forced 2FA enrolment pending (admin policy). */
+  isMfaSetupRequired(): boolean {
+    return this.isLoggedIn() && localStorage.getItem('mfa_setup_required') === '1';
+  }
+
+  /** Called once the user has completed the forced 2FA enrolment. */
+  clearMfaSetupRequired(): void {
+    localStorage.removeItem('mfa_setup_required');
+  }
+
+  /** True while the rotation policy still requires this account to change its password. */
+  isPasswordChangeRequired(): boolean {
+    return this.isLoggedIn() && localStorage.getItem('password_change_required') === '1';
+  }
+
+  clearPasswordChangeRequired(): void {
+    localStorage.removeItem('password_change_required');
   }
 
   getToken(): string | null {

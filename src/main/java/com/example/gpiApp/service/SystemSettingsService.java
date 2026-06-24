@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SystemSettingsService {
 
     private final SystemSettingsRepository repository;
+    private final ActivityLogService activityLogService;
 
     /** Fetch the singleton, creating a default row on first access. */
     @Transactional
@@ -86,7 +87,9 @@ public class SystemSettingsService {
         if (dto.getDefaultLanguage() != null) s.setDefaultLanguage(dto.getDefaultLanguage());
         if (dto.getTimezone() != null) s.setTimezone(dto.getTimezone());
         if (dto.getMaxFileUploadMb() != null) s.setMaxFileUploadMb(Math.min(100, Math.max(1, dto.getMaxFileUploadMb())));
-        return toDTO(repository.save(s));
+        SystemSettingsDTO saved = toDTO(repository.save(s));
+        logSettingsChange("general");
+        return saved;
     }
 
     @Transactional
@@ -101,8 +104,11 @@ public class SystemSettingsService {
         if (dto.getPasswordRequireSpecial() != null) s.setPasswordRequireSpecial(dto.getPasswordRequireSpecial());
         if (dto.getPasswordExpiryDays() != null) s.setPasswordExpiryDays(Math.max(0, dto.getPasswordExpiryDays()));
         if (dto.getTwoFactorRequiredAdmins() != null) s.setTwoFactorRequiredAdmins(dto.getTwoFactorRequiredAdmins());
+        if (dto.getTwoFactorRequiredAll() != null) s.setTwoFactorRequiredAll(dto.getTwoFactorRequiredAll());
         if (dto.getMaintenanceMode() != null) s.setMaintenanceMode(dto.getMaintenanceMode());
-        return toDTO(repository.save(s));
+        SystemSettingsDTO saved = toDTO(repository.save(s));
+        logSettingsChange("security");
+        return saved;
     }
 
     @Transactional
@@ -119,7 +125,9 @@ public class SystemSettingsService {
         if (dto.getNotifyOnDeliverableSubmitted() != null) s.setNotifyOnDeliverableSubmitted(dto.getNotifyOnDeliverableSubmitted());
         if (dto.getNotifyOnSuspiciousLogin() != null) s.setNotifyOnSuspiciousLogin(dto.getNotifyOnSuspiciousLogin());
         if (dto.getNotifyOnProjectOverdue() != null) s.setNotifyOnProjectOverdue(dto.getNotifyOnProjectOverdue());
-        return toDTO(repository.save(s));
+        SystemSettingsDTO saved = toDTO(repository.save(s));
+        logSettingsChange("notifications");
+        return saved;
     }
 
     @Transactional
@@ -127,7 +135,16 @@ public class SystemSettingsService {
         SystemSettings s = getSettings();
         if (dto.getBackupRetentionDays() != null) s.setBackupRetentionDays(Math.max(1, dto.getBackupRetentionDays()));
         if (dto.getMaintenanceMode() != null) s.setMaintenanceMode(dto.getMaintenanceMode());
-        return toDTO(repository.save(s));
+        SystemSettingsDTO saved = toDTO(repository.save(s));
+        logSettingsChange("backup");
+        return saved;
+    }
+
+    /** Record a settings change in the audit trail (attributed to the current admin). */
+    private void logSettingsChange(String section) {
+        activityLogService.logCurrentUserActivity(
+                com.example.gpiApp.entity.ActivityLog.ActivityType.SETTINGS_UPDATED,
+                "System settings updated (" + section + ")", "SETTINGS", null);
     }
 
     /**
@@ -155,6 +172,24 @@ public class SystemSettingsService {
             return (mb != null ? mb : 100) * 1024L * 1024L;
         } catch (Exception e) {
             return 100L * 1024L * 1024L;
+        }
+    }
+
+    /** Whether administrators are required to have two-factor authentication enabled. */
+    public boolean isTwoFactorRequiredForAdmins() {
+        try {
+            return Boolean.TRUE.equals(getSettings().getTwoFactorRequiredAdmins());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Whether every user (all roles) is required to have two-factor authentication enabled. */
+    public boolean isTwoFactorRequiredForAll() {
+        try {
+            return Boolean.TRUE.equals(getSettings().getTwoFactorRequiredAll());
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -215,6 +250,7 @@ public class SystemSettingsService {
                 .passwordRequireSpecial(s.getPasswordRequireSpecial())
                 .passwordExpiryDays(s.getPasswordExpiryDays())
                 .twoFactorRequiredAdmins(s.getTwoFactorRequiredAdmins())
+                .twoFactorRequiredAll(s.getTwoFactorRequiredAll())
                 .maintenanceMode(s.getMaintenanceMode())
                 .smtpHost(s.getSmtpHost())
                 .smtpPort(s.getSmtpPort())

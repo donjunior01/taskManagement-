@@ -74,6 +74,7 @@ public class ProjectController {
     }
 
     @Operation(summary = "Delete project", description = "Delete a project")
+    @org.springframework.security.access.prepost.PreAuthorize("@perm.has('project.delete')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteProject(
             @Parameter(description = "Project ID") @PathVariable Long id,

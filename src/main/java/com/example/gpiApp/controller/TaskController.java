@@ -61,6 +61,7 @@ public class TaskController {
     }
     
     @Operation(summary = "Delete task", description = "Delete a task")
+    @org.springframework.security.access.prepost.PreAuthorize("@perm.has('task.delete')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteTask(
             @Parameter(description = "Task ID") @PathVariable Long id,

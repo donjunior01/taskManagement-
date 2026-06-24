@@ -52,14 +52,20 @@
 
 /* ── Kanban Board ── */
 .kanban-board {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; align-items: start;
-  @media(max-width: 1200px) { grid-template-columns: repeat(2, 1fr); }
-  @media(max-width: 700px)  { grid-template-columns: 1fr; }
+  /* Always show all four status columns side by side. minmax(0, 1fr) makes every column
+     shrink equally to fit the available width (no horizontal scroll, no dropped columns);
+     the cards wrap their text so nothing is clipped even when the columns get narrow. */
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; align-items: start;
+  /* Tighten the gap on smaller widths so the four columns keep fitting before stacking. */
+  @media(max-width: 1100px) { gap: 12px; }
+  /* On phones four columns become unusably narrow — stack them full-width instead. */
+  @media(max-width: 600px)  { grid-template-columns: 1fr; }
 }
 
 .kanban-column {
   background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-xl);
   padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  min-width: 0; /* allow the column to shrink inside its grid track instead of overflowing */
 
   .column-header {
     display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-shrink: 0;
@@ -86,7 +92,8 @@
 /* Scrollable cards area — shows ~3 cards, scroll for more */
 .column-cards-area {
   display: flex; flex-direction: column; gap: 10px;
-  max-height: 510px;
+  /* Cap to the available viewport height (adapts when zooming) but never exceed ~510px on tall screens. */
+  max-height: max(240px, min(510px, calc(100vh - 280px)));
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 2px;
@@ -127,18 +134,19 @@
     &.easy   { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
   }
 
-  .task-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); line-height: 1.4; }
-  .task-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-  .project-tag { font-size: 11px; color: var(--primary); background: var(--primary-bg); padding: 2px 8px; border-radius: var(--radius-full); width: fit-content; }
+  .task-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); line-height: 1.4; overflow-wrap: anywhere; }
+  .task-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; overflow-wrap: anywhere; }
+  .project-tag { font-size: 11px; color: var(--primary); background: var(--primary-bg); padding: 2px 8px; border-radius: var(--radius-full); width: fit-content; max-width: 100%; overflow-wrap: anywhere; }
 
   .card-footer {
     display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border-light);
-    .assignee-block { display: flex; align-items: center; gap: 6px; }
+    flex-wrap: wrap; /* let the assignee + quick-move buttons stack on narrow/zoomed cards instead of overflowing */
+    .assignee-block { display: flex; align-items: center; gap: 6px; min-width: 0; }
     .avatar-bubble-sm {
       width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent));
       display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 700; color: #fff; flex-shrink: 0;
     }
-    .deadline-lbl { font-size: 11px; color: var(--text-muted); }
+    .deadline-lbl { font-size: 11px; color: var(--text-muted); overflow-wrap: anywhere; min-width: 0; }
     .quick-move-btn {
       display: inline-flex; align-items: center; gap: 3px;
       padding: 4px 10px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm);

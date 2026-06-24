@@ -30,6 +30,10 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
     
     @Query("SELECT a FROM ActivityLog a WHERE a.entityType = :entityType AND a.entityId = :entityId ORDER BY a.createdAt DESC")
     List<ActivityLog> findByEntity(@Param("entityType") String entityType, @Param("entityId") Long entityId);
+
+    /** Full chronological list within a window — used by the compliance export. */
+    @Query("SELECT a FROM ActivityLog a WHERE a.createdAt BETWEEN :from AND :to ORDER BY a.createdAt ASC")
+    List<ActivityLog> findAllInRange(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
     
     @Query("SELECT a FROM ActivityLog a WHERE a.activityType IN :types ORDER BY a.createdAt DESC")
     Page<ActivityLog> findByActivityTypes(@Param("types") List<ActivityLog.ActivityType> types, Pageable pageable);

@@ -12,6 +12,7 @@ import { AiAssistantService, ProjectInsight, PrioritizationResult, RiskAssessmen
 import { ChecklistService, ChecklistItem } from '../../../core/services/checklist.service';
 import { MessageService, Message } from '../../../core/services/message.service';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 interface TaskStats {
   planned: number;
@@ -24,7 +25,7 @@ interface TaskStats {
 @Component({
   selector: 'app-pm-project-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiDescribeButtonComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent, TranslatePipe, HasPermissionDirective],
   templateUrl: './project-detail.html',
   styleUrls: ['./project-detail.scss']
 })

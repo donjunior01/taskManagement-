@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,8 +36,29 @@ public class allUsers implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
+    /** The tenant this user belongs to (multi-tenancy). Defaults to the seeded org for existing data.
+     *  Excluded from toString/equals: it's a LAZY proxy, so touching it on a detached entity throws. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Organization organization;
+
+    /** Optional custom RBAC role; when set it overrides the base-role default permissions.
+     *  Fully-qualified because the nested {@code Role} enum below shadows the Role entity.
+     *  Excluded from toString/equals for the same lazy-proxy reason as {@link #organization}. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "custom_role_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private com.example.gpiApp.entity.Role customRole;
+
     @Column(nullable = false)
     private String password;
+
+    /** When the password was last set — drives the password-rotation (expiry) policy. */
+    @Column(name = "password_changed_at")
+    private java.time.LocalDateTime passwordChangedAt;
 
     @Column(nullable = false, name = "first_name")
     private String firstName;
@@ -60,6 +83,10 @@ public class allUsers implements UserDetails {
 
     @Column(name = "two_factor_secret")
     private String twoFactorSecret;
+
+    /** JSON array of Argon2id-hashed one-time recovery codes (consumed as used). */
+    @Column(name = "two_factor_recovery_codes", columnDefinition = "TEXT")
+    private String twoFactorRecoveryCodes;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

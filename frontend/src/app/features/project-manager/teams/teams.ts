@@ -8,6 +8,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { TeamService, Team } from '../../../core/services/team.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 
 interface MemberVital {
@@ -26,7 +27,7 @@ interface MemberVital {
 @Component({
   selector: 'app-pm-teams',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiDescribeButtonComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, AiDescribeButtonComponent, TranslatePipe, HasPermissionDirective],
   template: `
   <div class="tm-wrap">
 
@@ -49,7 +50,7 @@ interface MemberVital {
         <option value="">{{ 'pm.teams.allAvailability' | translate }}</option>
         <option value="dispo">{{ 'pm.teams.availAvailable' | translate }}</option><option value="occupe">{{ 'pm.teams.availBusy' | translate }}</option><option value="surcharge">{{ 'pm.teams.availOverloaded' | translate }}</option>
       </select>
-      <button class="btn-primary tb-add" (click)="openCreateTeam()">
+      <button *appHasPermission="'team.manage'" class="btn-primary tb-add" (click)="openCreateTeam()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> {{ 'pm.teams.buildTeam' | translate }}
       </button>
     </div>
@@ -90,7 +91,7 @@ interface MemberVital {
             <div class="charge-bar"><div class="charge-fill" [ngClass]="loadInfo(m.load).bg" [style.width.%]="animated ? chargePct(m) : 0"></div></div>
           </div>
 
-          <button class="btn-outline full" (click)="openAllocation(m)">{{ 'pm.teams.assignToProject' | translate }}</button>
+          <button *appHasPermission="'team.manage'" class="btn-outline full" (click)="openAllocation(m)">{{ 'pm.teams.assignToProject' | translate }}</button>
         </div>
         <div class="empty-card" *ngIf="!loading && filtered.length === 0">{{ 'pm.teams.noMembers' | translate }}</div>
       </div>
@@ -422,9 +423,14 @@ export class PmTeamsComponent implements OnInit {
     });
   }
   private afterAlloc(projId: number): void {
-    this.submitting = false; this.showAlloc = false;
-    this.toast.show(this.translate.instant('pm.teams.toastMemberAssigned', { project: this.projectNameById[projId] || this.translate.instant('pm.teams.projectFallback') }), 'success');
-    this.loadData();
+    // Close the modal + reload in a fresh macrotask so the showAlloc binding is never mutated
+    // mid-change-detection (the nested assignment subscriptions can settle inside an active CD
+    // cycle, which surfaces as NG0100 ExpressionChangedAfterItHasBeenChecked on the modal *ngIf).
+    setTimeout(() => {
+      this.submitting = false; this.showAlloc = false;
+      this.toast.show(this.translate.instant('pm.teams.toastMemberAssigned', { project: this.projectNameById[projId] || this.translate.instant('pm.teams.projectFallback') }), 'success');
+      this.loadData();
+    });
   }
 
   // ─── Create team ───
@@ -435,9 +441,11 @@ export class PmTeamsComponent implements OnInit {
   submitCreateTeam(): void {
     if (!this.teamForm.name?.trim() || !this.teamForm.projectId) { this.toast.show(this.translate.instant('pm.teams.toastTeamNameRequired'), 'error'); return; }
     this.submitting = true;
-    this.teamService.createTeam({ name: this.teamForm.name, projectId: this.teamForm.projectId, description: this.teamForm.description }).subscribe({
-      next: () => { this.submitting = false; this.showCreateTeam = false; this.toast.show(this.translate.instant('pm.teams.toastTeamCreated', { name: this.teamForm.name }), 'success'); this.loadData(); },
-      error: () => { this.submitting = false; this.showCreateTeam = false; this.toast.show(this.translate.instant('pm.teams.toastTeamCreatedLocal'), 'success'); }
+    const teamName = this.teamForm.name;
+    this.teamService.createTeam({ name: teamName, projectId: this.teamForm.projectId, description: this.teamForm.description }).subscribe({
+      // Defer the modal-close to a fresh macrotask to avoid NG0100 on the showCreateTeam *ngIf.
+      next: () => setTimeout(() => { this.submitting = false; this.showCreateTeam = false; this.toast.show(this.translate.instant('pm.teams.toastTeamCreated', { name: teamName }), 'success'); this.loadData(); }),
+      error: () => setTimeout(() => { this.submitting = false; this.showCreateTeam = false; this.toast.show(this.translate.instant('pm.teams.toastTeamCreatedLocal'), 'success'); })
     });
   }
 }

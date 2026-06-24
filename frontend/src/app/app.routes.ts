@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 import { ROLES } from './core/constants/role.constants';
 import { LoginComponent } from './features/auth/login/login';
 import { RegisterComponent } from './features/auth/register/register';
@@ -38,15 +39,21 @@ import { AdminLoginAttemptsComponent } from './features/admin/login-attempts/log
 import { AdminSecurityLogComponent } from './features/admin/security-log/security-log';
 import { AdminPerformanceComponent } from './features/admin/performance/performance';
 import { AdminApiDocsComponent } from './features/admin/api-docs/api-docs';
+import { AdminRolesComponent } from './features/admin/roles/roles';
+import { AdminApiKeysComponent } from './features/admin/api-keys/api-keys';
+import { AdminWebhooksComponent } from './features/admin/webhooks/webhooks';
+import { AdminPlanComponent } from './features/admin/plan/plan';
 import { UserDeliverablesComponent } from './features/user/deliverables/deliverables';
+import { SsoCallbackComponent } from './features/auth/sso-callback/sso-callback';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  
+
   // Auth routes
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'auth/sso-callback', component: SsoCallbackComponent },
   
   // Admin routes
   {
@@ -68,6 +75,10 @@ export const routes: Routes = [
       { path: 'performance', component: AdminPerformanceComponent },
       { path: 'notifications', component: PmNotificationsComponent },
       { path: 'settings', component: AdminSettingsComponent },
+      { path: 'roles', component: AdminRolesComponent },
+      { path: 'api-keys', component: AdminApiKeysComponent },
+      { path: 'webhooks', component: AdminWebhooksComponent },
+      { path: 'plan', component: AdminPlanComponent },
       { path: 'support', component: AdminSupportComponent },
       { path: 'api-docs', component: AdminApiDocsComponent }
     ]
@@ -81,14 +92,19 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: '/pm/dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: PmDashboardComponent },
-      { path: 'analytics', component: PmAnalyticsComponent },
-      { path: 'projects', component: PmProjectsComponent },
-      { path: 'projects/:id', component: PmProjectDetailComponent },
-      { path: 'tasks', component: PmTasksComponent },
-      { path: 'teams', component: PmTeamsComponent },
-      { path: 'deliverables', component: PmDeliverablesComponent },
+      { path: 'analytics', component: PmAnalyticsComponent, canActivate: [permissionGuard('report.view')] },
+      { path: 'projects', component: PmProjectsComponent, canActivate: [permissionGuard('project.view')] },
+      { path: 'projects/:id', component: PmProjectDetailComponent, canActivate: [permissionGuard('project.view')] },
+      { path: 'tasks', component: PmTasksComponent, canActivate: [permissionGuard('task.view')] },
+      { path: 'teams', component: PmTeamsComponent, canActivate: [permissionGuard('team.view')] },
+      { path: 'deliverables', component: PmDeliverablesComponent, canActivate: [permissionGuard('deliverable.view')] },
       { path: 'calendar', component: PmCalendarComponent },
-      { path: 'reports', component: PmReportsComponent },
+      { path: 'reports', component: PmReportsComponent, canActivate: [permissionGuard('report.view')] },
+      { path: 'plan', component: AdminPlanComponent, canActivate: [permissionGuard('billing.manage')] },
+      { path: 'roles', component: AdminRolesComponent, canActivate: [permissionGuard('role.manage')] },
+      { path: 'activity-logs', component: AdminActivityLogsComponent, canActivate: [permissionGuard('audit.view')] },
+      { path: 'api-keys', component: AdminApiKeysComponent, canActivate: [permissionGuard('settings.manage')] },
+      { path: 'webhooks', component: AdminWebhooksComponent, canActivate: [permissionGuard('settings.manage')] },
       { path: 'notifications', component: PmNotificationsComponent },
       { path: 'support', component: SupportComponent },
       { path: 'messages', component: UserMessagesComponent }
@@ -103,8 +119,13 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: '/user/dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: UserDashboardComponent },
-      { path: 'my-tasks', component: UserMyTasksComponent },
-      { path: 'deliverables', component: UserDeliverablesComponent },
+      { path: 'my-tasks', component: UserMyTasksComponent, canActivate: [permissionGuard('task.view')] },
+      { path: 'deliverables', component: UserDeliverablesComponent, canActivate: [permissionGuard('deliverable.view')] },
+      { path: 'plan', component: AdminPlanComponent, canActivate: [permissionGuard('billing.manage')] },
+      { path: 'roles', component: AdminRolesComponent, canActivate: [permissionGuard('role.manage')] },
+      { path: 'activity-logs', component: AdminActivityLogsComponent, canActivate: [permissionGuard('audit.view')] },
+      { path: 'api-keys', component: AdminApiKeysComponent, canActivate: [permissionGuard('settings.manage')] },
+      { path: 'webhooks', component: AdminWebhooksComponent, canActivate: [permissionGuard('settings.manage')] },
       { path: 'time-logs', component: UserTimeLogsComponent },
       { path: 'messages', component: UserMessagesComponent },
       { path: 'calendar', component: UserCalendarComponent },

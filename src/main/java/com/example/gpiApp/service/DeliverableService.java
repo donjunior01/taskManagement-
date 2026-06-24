@@ -28,6 +28,7 @@ public class DeliverableService {
     private final UserRepository userRepository;
     private final ActivityLogService activityLogService;
     private final NotificationService notificationService;
+    private final AuthorizationService authorizationService;
     
     @Transactional(readOnly = true)
     public PagedResponse<DeliverableDTO> getAllDeliverables(int page, int size) {
@@ -99,15 +100,22 @@ public class DeliverableService {
             java.util.Map<String, Object> submitParams = java.util.Map.of(
                     "user", submitter, "file", savedDeliverable.getFileName(), "task", task.getName());
 
-            // Notify the project manager
-            if (task.getProject() != null && task.getProject().getManager() != null) {
-                notificationService.createNotification(
-                        task.getProject().getManager().getId(),
-                        notifTitle, notifMsg,
-                        Notification.NotificationType.TASK_UPDATED,
-                        savedDeliverable.getId(), "DELIVERABLE",
-                        "deliverableSubmitted", submitParams
-                );
+            // Notify the project's responsible PM only — the assigned manager, or the creator when
+            // no manager was set (a PM-created project leaves manager_id null). This keeps the
+            // deliverable from being broadcast to every project manager.
+            if (task.getProject() != null) {
+                allUsers responsiblePm = task.getProject().getManager() != null
+                        ? task.getProject().getManager()
+                        : task.getProject().getCreatedBy();
+                if (responsiblePm != null) {
+                    notificationService.createNotification(
+                            responsiblePm.getId(),
+                            notifTitle, notifMsg,
+                            Notification.NotificationType.TASK_UPDATED,
+                            savedDeliverable.getId(), "DELIVERABLE",
+                            "deliverableSubmitted", submitParams
+                    );
+                }
             }
 
             // Notify all admins
@@ -132,6 +140,10 @@ public class DeliverableService {
     public ApiResponse<DeliverableDTO> reviewDeliverable(Long id, DeliverableReviewDTO request, Long reviewerId) {
         return deliverableRepository.findById(id)
                 .map(deliverable -> {
+                    // Only the PM responsible for the deliverable's project (or an admin) may review it.
+                    authorizationService.requireProjectManage(reviewerId,
+                            deliverable.getTask() != null ? deliverable.getTask().getProject() : null);
+
                     deliverable.setStatus(request.getStatus());
                     deliverable.setComments(request.getComments());
                     deliverable.setReviewedAt(LocalDateTime.now());

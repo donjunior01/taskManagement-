@@ -30,6 +30,13 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long
     @Query("SELECT l FROM LoginAttempt l WHERE l.user.id = :userId ORDER BY l.attemptedAt DESC")
     List<LoginAttempt> findByUserId(@Param("userId") Long userId);
 
+    /** Attempts of a given status for an identifier (username or email) within a window, oldest first — drives lockout. */
+    @Query("SELECT l FROM LoginAttempt l WHERE l.status = :status AND l.attemptedAt >= :since " +
+           "AND (l.username = :id OR l.email = :id) ORDER BY l.attemptedAt ASC")
+    List<LoginAttempt> findRecentByIdentifier(@Param("id") String identifier,
+                                              @Param("status") LoginAttempt.LoginStatus status,
+                                              @Param("since") LocalDateTime since);
+
     @Query("SELECT COUNT(DISTINCT l.user.id) FROM LoginAttempt l WHERE l.status = :status AND l.attemptedAt >= :since AND l.user IS NOT NULL")
     Long countActiveSessionsSince(@Param("since") LocalDateTime since, @Param("status") LoginAttempt.LoginStatus status);
 

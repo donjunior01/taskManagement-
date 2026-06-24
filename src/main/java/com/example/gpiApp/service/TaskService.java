@@ -32,6 +32,8 @@ public class TaskService {
     private final ActivityLogService activityLogService;
     private final CalendarService calendarService;
     private final NotificationService notificationService;
+    private final AuthorizationService authorizationService;
+    private final WebhookService webhookService;
 
     public TaskService(TaskRepository taskRepository,
                        ProjectRepository projectRepository,
@@ -40,7 +42,9 @@ public class TaskService {
                        TimeLogRepository timeLogRepository,
                        ActivityLogService activityLogService,
                        CalendarService calendarService,
-                       NotificationService notificationService) {
+                       NotificationService notificationService,
+                       AuthorizationService authorizationService,
+                       WebhookService webhookService) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
@@ -49,6 +53,8 @@ public class TaskService {
         this.activityLogService = activityLogService;
         this.calendarService = calendarService;
         this.notificationService = notificationService;
+        this.authorizationService = authorizationService;
+        this.webhookService = webhookService;
     }
 
     /** Notify an assignee that a task has landed on their plate (and calendar). */
@@ -147,6 +153,13 @@ public class TaskService {
         // Notify the assignee.
         notifyAssignee(savedTask);
 
+        // Emit an outbound event for any subscribed webhooks (best-effort, async).
+        webhookService.emit("task.created", java.util.Map.of(
+                "id", savedTask.getId(),
+                "name", savedTask.getName() != null ? savedTask.getName() : "",
+                "projectId", savedTask.getProject() != null ? savedTask.getProject().getId() : 0,
+                "status", savedTask.getStatus() != null ? savedTask.getStatus().name() : ""));
+
         return ApiResponse.success("Task created successfully", convertToDTO(savedTask));
     }
     
@@ -154,6 +167,9 @@ public class TaskService {
     public ApiResponse<TaskDTO> updateTask(Long id, TaskRequestDTO request, Long updatedById) {
         return taskRepository.findById(id)
                 .map(task -> {
+                    // Only the project's PM (manager/creator), the assignee, or an admin may edit it.
+                    authorizationService.requireTaskWrite(updatedById, task);
+
                     Project oldProject = task.getProject();
                     Long oldAssigneeId = task.getAssignedTo() != null ? task.getAssignedTo().getId() : null;
 
@@ -220,6 +236,9 @@ public class TaskService {
     public ApiResponse<Void> deleteTask(Long id, Long deletedById) {
         return taskRepository.findById(id)
                 .map(task -> {
+                    // Deleting a task is reserved for the project's PM (manager/creator) or an admin.
+                    authorizationService.requireTaskManage(deletedById, task);
+
                     Project project = task.getProject();
                     String taskName = task.getName();
                     taskRepository.delete(task);
@@ -300,6 +319,9 @@ public class TaskService {
     public ApiResponse<TaskDTO> updateTaskProgress(Long id, Integer progress, String status, Long updatedById) {
         return taskRepository.findById(id)
                 .map(task -> {
+                    // Progress/status updates are allowed for the assignee, the project's PM, or an admin.
+                    authorizationService.requireTaskWrite(updatedById, task);
+
                     if (progress != null) {
                         task.setProgress(progress);
                     }

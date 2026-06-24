@@ -62,6 +62,10 @@ interface AuditRow {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           PDF
         </button>
+        <button class="btn btn-primary" (click)="exportCompliance()" [disabled]="exporting" [title]="'admin.activityLogs.complianceHint' | translate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          {{ 'admin.activityLogs.complianceExport' | translate }}
+        </button>
       </div>
     </div>
 
@@ -163,6 +167,7 @@ export class AdminActivityLogsComponent implements OnInit {
   moduleFilter = '';
   actionFilter = '';
   periodFilter = '';
+  exporting = false;
 
   userOptions: string[] = [];
   moduleOptions: string[] = [];
@@ -235,6 +240,7 @@ export class AdminActivityLogsComponent implements OnInit {
     if (up.includes('DELET') || up.includes('SUPPR') || up.includes('REMOV')) return { label: 'admin.activityLogs.actDeleted', tone: 'danger' };
     if (up.includes('EXPORT')) return { label: 'admin.activityLogs.actExported', tone: 'warning' };
     if (up.includes('LOGIN') || up.includes('CONNEX') || up.includes('AUTH') || up.includes('LOGOUT')) return { label: 'admin.activityLogs.actLogin', tone: 'purple' };
+    if (up.includes('RESET') || up.includes('REQUEST') || up.includes('PROCESS')) return { label: 'admin.activityLogs.actUpdated', tone: 'brand' };
     return { label: a || '—', tone: 'muted' };
   }
 
@@ -243,7 +249,10 @@ export class AdminActivityLogsComponent implements OnInit {
     const map: Record<string, string> = {
       SECURITY: 'admin.activityLogs.modSecurity', DATA_MUTATION: 'admin.activityLogs.modData', SYSTEM: 'admin.activityLogs.modSystem',
       USER: 'admin.activityLogs.modUsers', USERS: 'admin.activityLogs.modUsers', PROJECT: 'admin.activityLogs.modProjects', PROJECTS: 'admin.activityLogs.modProjects',
-      TASK: 'admin.activityLogs.modTasks', TASKS: 'admin.activityLogs.modTasks', TEAM: 'admin.activityLogs.modTeams', REPORT: 'admin.activityLogs.modReports'
+      TASK: 'admin.activityLogs.modTasks', TASKS: 'admin.activityLogs.modTasks', TEAM: 'admin.activityLogs.modTeams', REPORT: 'admin.activityLogs.modReports',
+      SETTINGS: 'admin.activityLogs.modSettings', CALENDAR: 'admin.activityLogs.modCalendar',
+      SUPPORT_TICKET: 'admin.activityLogs.modSupport', SUPPORT: 'admin.activityLogs.modSupport',
+      AUTH: 'admin.activityLogs.modSecurity', PASSWORD_RESET_REQUEST: 'admin.activityLogs.modSecurity'
     };
     return map[up] || (c ? c.charAt(0).toUpperCase() + c.slice(1).toLowerCase() : 'admin.activityLogs.modSystem');
   }
@@ -294,6 +303,24 @@ export class AdminActivityLogsComponent implements OnInit {
     const head = [T('admin.activityLogs.colTimestamp'), T('admin.activityLogs.colUser'), T('admin.activityLogs.colRole'), T('admin.activityLogs.colModule'), T('admin.activityLogs.colAction'), T('admin.activityLogs.colDetails'), T('admin.activityLogs.colIp')];
     const body = this.filtered.map(l => [l.time, l.user, T(l.role), T(l.module), T(l.action), l.details, l.ip]);
     return [head, ...body];
+  }
+
+  /** Server-side, full-range, SHA-256-stamped compliance export (authenticated download). */
+  exportCompliance(): void {
+    if (this.exporting) return;
+    this.exporting = true;
+    this.activityLogService.exportCompliance().subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `audit-report-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+        this.toast.show(this.translate.instant('admin.activityLogs.toastComplianceExported'), 'success');
+        this.cdr.detectChanges();
+      },
+      error: () => { this.exporting = false; this.toast.show(this.translate.instant('admin.activityLogs.toastExportFailed'), 'error'); this.cdr.detectChanges(); }
+    });
   }
 
   exportCsv(): void {

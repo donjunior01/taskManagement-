@@ -22,10 +22,26 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final com.example.gpiApp.repository.UserRepository userRepository;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, com.example.gpiApp.repository.UserRepository userRepository) {
         this.userService = userService;
+        this.userRepository = userRepository;
+    }
+
+    /** Resolve the authenticated caller's id (token subject is the email/username, or the id itself). */
+    private Long getCurrentUserId(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) return null;
+        String name = authentication.getName();
+        try {
+            return Long.parseLong(name);
+        } catch (NumberFormatException e) {
+            return userRepository.findByEmail(name)
+                    .or(() -> userRepository.findByUsername(name))
+                    .map(com.example.gpiApp.entity.allUsers::getId)
+                    .orElse(null);
+        }
     }
 
     @Operation(summary = "Get user list for messaging", description = "Retrieve a simplified list of users for messaging purposes")
@@ -134,7 +150,9 @@ public class UserController {
     public ResponseEntity<UserResponseDTO> updateUser(
             @Parameter(description = "User ID") @PathVariable Long id,
             @RequestBody UserRequestDTO userRequestDTO) {
-        return ResponseEntity.ok(userService.updateUser(id, userRequestDTO));
+        UserResponseDTO result = userService.updateUser(id, userRequestDTO);
+        // Surface rejections (name/email taken, role-change guards) as 400 instead of a false "200 OK".
+        return result.isSuccess() ? ResponseEntity.ok(result) : ResponseEntity.badRequest().body(result);
     }
 
     @Operation(summary = "Delete user", description = "Delete a user account")
@@ -145,8 +163,11 @@ public class UserController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<UserResponseDTO> deleteUser(
-            @Parameter(description = "User ID") @PathVariable Long id) {
-        return ResponseEntity.ok(userService.deleteUser(id));
+            @Parameter(description = "User ID") @PathVariable Long id,
+            Authentication authentication) {
+        UserResponseDTO result = userService.deleteUser(id, getCurrentUserId(authentication));
+        // Guard failures (self-delete, last admin, still managing projects) → 400 so the UI surfaces the reason.
+        return result.isSuccess() ? ResponseEntity.ok(result) : ResponseEntity.badRequest().body(result);
     }
 
     @Operation(summary = "Toggle user status", description = "Activate or suspend a user account")

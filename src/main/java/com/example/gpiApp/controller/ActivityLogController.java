@@ -15,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/activity-logs")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("@perm.has('audit.view')")
 public class ActivityLogController {
     
     private final ActivityLogService activityLogService;
@@ -24,6 +25,20 @@ public class ActivityLogController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(activityLogService.getAllActivityLogs(page, size));
+    }
+
+    /** Admin-only tamper-evident audit export (SHA-256 stamped). Guarded by the /api/activity-logs/** ADMIN rule. */
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportComplianceReport(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        String csv = activityLogService.exportComplianceCsv(from, to);
+        byte[] body = csv.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        String filename = "audit-report-" + java.time.LocalDate.now() + ".csv";
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+                .header("Content-Type", "text/csv; charset=utf-8")
+                .body(body);
     }
     
     @GetMapping("/user/{userId}")
