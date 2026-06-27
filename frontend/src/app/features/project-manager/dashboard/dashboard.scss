@@ -197,8 +197,8 @@
     }
 
     &.icon-blue-team {
-      background: #ede9fe;
-      color: #7c3aed;
+      background: rgba(139,92,246,.16);
+      color: var(--tint-violet-text);
     }
 
     &.icon-red {
@@ -493,7 +493,7 @@
   }
 
   &.soon {
-    background: #fff7ed;
+    background: var(--warning-bg);
     color: var(--accent);
     border: 1px solid #fed7aa;
   }
@@ -573,8 +573,8 @@
   }
 
   &.comment {
-    background: #ede9fe;
-    color: #7c3aed;
+    background: rgba(139,92,246,.16);
+    color: var(--tint-violet-text);
     border: 2px solid #ddd6fe;
   }
 
@@ -704,8 +704,8 @@
   }
 
   &.icon-blue-team {
-    background: #ede9fe;
-    color: #7c3aed;
+    background: rgba(139,92,246,.16);
+    color: var(--tint-violet-text);
   }
 
   &.icon-green {

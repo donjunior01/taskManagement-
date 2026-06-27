@@ -10,7 +10,7 @@
 // Component styles are scoped, so the global-looking .glass-panel must be defined
 // here too — otherwise the cards render with no background and blend into the page.
 .glass-panel {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
   border-radius: var(--radius-lg, 14px);
   box-shadow: var(--shadow-xs, 0 2px 6px rgba(0, 0, 0, 0.05));
@@ -52,7 +52,7 @@
 }
 .btn-sm { padding: 8px 14px; font-size: 12.5px; }
 .btn-secondary {
-  background: var(--bg-subtle, #eef2f7);
+  background: var(--bg-subtle, var(--bg-subtle));
   color: var(--text-primary, #0f172a);
   &:hover:not(:disabled) { filter: brightness(.97); }
 }
@@ -68,7 +68,7 @@
 }
 .spinner {
   width: 26px; height: 26px;
-  border: 3px solid var(--bg-subtle, #e2e8f0);
+  border: 3px solid var(--bg-subtle);
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: an-spin .7s linear infinite;
@@ -220,7 +220,7 @@
   height: 8px;
   border-radius: var(--radius-full, 99px);
   overflow: hidden;
-  background: var(--bg-subtle, #eef2f7);
+  background: var(--bg-subtle, var(--bg-subtle));
 }
 .wl-fill { height: 100%; border-radius: var(--radius-full, 99px); transition: width .4s ease; }
 .wl-open { background: var(--primary); }

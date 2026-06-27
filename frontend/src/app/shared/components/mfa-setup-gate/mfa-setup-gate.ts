@@ -74,39 +74,39 @@ import { ToastService } from '../../../core/services/toast.service';
   styles: [`
     .mfa-gate { position: fixed; inset: 0; z-index: 5000; display: flex; align-items: center; justify-content: center;
       background: rgba(15, 23, 42, .72); backdrop-filter: blur(6px); padding: 24px; }
-    .mfa-card { width: 100%; max-width: 440px; background: #fff; border-radius: 18px; padding: 30px 28px;
+    .mfa-card { width: 100%; max-width: 440px; background: var(--bg-card); border-radius: 18px; padding: 30px 28px;
       box-shadow: 0 26px 64px rgba(15, 23, 42, .4); text-align: center; font-family: inherit; }
     .mfa-icon { width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 14px; display: grid; place-items: center;
       background: rgba(37, 99, 235, .1); color: #2563eb; }
     .mfa-icon svg { width: 26px; height: 26px; }
-    .mfa-card h2 { font-size: 19px; font-weight: 800; color: #1e293b; margin: 0 0 8px; }
-    .mfa-intro { font-size: 13px; line-height: 1.55; color: #64748b; margin: 0 0 18px; }
+    .mfa-card h2 { font-size: 19px; font-weight: 800; color: var(--text-primary); margin: 0 0 8px; }
+    .mfa-intro { font-size: 13px; line-height: 1.55; color: var(--text-muted); margin: 0 0 18px; }
     .mfa-qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 16px; }
-    .mfa-qr { width: 188px; height: 188px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px; background: #fff; }
-    .mfa-or { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: #94a3b8; }
+    .mfa-qr { width: 188px; height: 188px; border: 1px solid var(--border); border-radius: 12px; padding: 8px; background: var(--bg-card); }
+    .mfa-or { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); }
     .mfa-codes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 6px 0 4px; }
-    .mfa-codes-grid code { font-family: monospace; font-size: 13.5px; letter-spacing: 1px; color: #1e293b; background: #fffbeb; border: 1px solid #fde68a; border-radius: 7px; padding: 7px 8px; text-align: center; }
+    .mfa-codes-grid code { font-family: monospace; font-size: 13.5px; letter-spacing: 1px; color: var(--text-primary); background: var(--warning-bg); border: 1px solid #fde68a; border-radius: 7px; padding: 7px 8px; text-align: center; }
     .mfa-field-label { display: block; text-align: left; font-size: 11.5px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .4px; color: #94a3b8; margin: 0 0 6px; }
+      letter-spacing: .4px; color: var(--text-muted); margin: 0 0 6px; }
     .mfa-secret-block { margin-bottom: 16px; }
     .mfa-secret-row { display: flex; gap: 8px; align-items: stretch; }
-    .mfa-secret { flex: 1; padding: 10px 12px; background: #f1f5f9; border-radius: 10px; font-family: monospace;
-      font-size: 13.5px; letter-spacing: 1.5px; color: #1e293b; word-break: break-all; text-align: left; }
-    .mfa-copy { padding: 0 14px; border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; font-size: 12.5px;
-      font-weight: 600; color: #475569; cursor: pointer; font-family: inherit; }
-    .mfa-copy:hover { background: #f8fafc; }
-    .mfa-code { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 11px; font-size: 20px;
-      font-weight: 700; letter-spacing: 6px; text-align: center; color: #1e293b; outline: none; box-sizing: border-box; }
+    .mfa-secret { flex: 1; padding: 10px 12px; background: var(--bg-subtle); border-radius: 10px; font-family: monospace;
+      font-size: 13.5px; letter-spacing: 1.5px; color: var(--text-primary); word-break: break-all; text-align: left; }
+    .mfa-copy { padding: 0 14px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 10px; font-size: 12.5px;
+      font-weight: 600; color: var(--text-secondary); cursor: pointer; font-family: inherit; }
+    .mfa-copy:hover { background: var(--bg-muted); }
+    .mfa-code { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 11px; font-size: 20px;
+      font-weight: 700; letter-spacing: 6px; text-align: center; color: var(--text-primary); outline: none; box-sizing: border-box; }
     .mfa-code:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, .12); }
-    .mfa-error { color: #dc2626; font-size: 12.5px; font-weight: 600; margin: 10px 0 0; }
+    .mfa-error { color: var(--danger-text); font-size: 12.5px; font-weight: 600; margin: 10px 0 0; }
     .mfa-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
     .mfa-btn-primary { height: 44px; border: none; border-radius: 11px; background: #2563eb; color: #fff; font-size: 14px;
       font-weight: 700; cursor: pointer; font-family: inherit; }
     .mfa-btn-primary:hover:not(:disabled) { background: #1d4ed8; }
     .mfa-btn-primary:disabled { opacity: .55; cursor: not-allowed; }
-    .mfa-btn-ghost { height: 40px; border: none; background: none; border-radius: 11px; color: #64748b; font-size: 13px;
+    .mfa-btn-ghost { height: 40px; border: none; background: none; border-radius: 11px; color: var(--text-muted); font-size: 13px;
       font-weight: 600; cursor: pointer; font-family: inherit; }
-    .mfa-btn-ghost:hover { background: #f1f5f9; }
+    .mfa-btn-ghost:hover { background: var(--bg-subtle); }
   `]
 })
 export class MfaSetupGateComponent implements OnInit, OnDestroy {

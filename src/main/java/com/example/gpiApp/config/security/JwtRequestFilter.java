@@ -26,6 +26,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Autowired
     private com.example.gpiApp.service.SessionService sessionService;
 
+    @Autowired
+    private com.example.gpiApp.repository.UserRepository userRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
@@ -61,10 +64,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
 
                     // Establish the tenant for this request (used by the data layer to scope queries).
-                    if (userDetails instanceof com.example.gpiApp.entity.allUsers) {
-                        com.example.gpiApp.entity.Organization org = ((com.example.gpiApp.entity.allUsers) userDetails).getOrganization();
-                        if (org != null) TenantContext.setOrganizationId(org.getId());
-                    }
+                    // The principal is a userdetails.User (username = email), not the entity, so resolve
+                    // the user's organization by email rather than casting the principal.
+                    userRepository.findByEmail(username).ifPresent(u -> {
+                        if (u.getOrganization() != null) {
+                            TenantContext.setOrganizationId(u.getOrganization().getId());
+                        }
+                    });
                 }
             } catch (Exception ex) {
                 logger.warn("JWT request filter failed to authenticate stale or invalid user subject: " + username, ex);

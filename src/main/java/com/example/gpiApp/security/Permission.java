@@ -29,7 +29,13 @@ public enum Permission {
     SETTINGS_MANAGE("settings.manage"),
     AUDIT_VIEW("audit.view"),
     ROLE_MANAGE("role.manage"),
-    BILLING_MANAGE("billing.manage");
+    BILLING_MANAGE("billing.manage"),
+    AUTOMATION_MANAGE("automation.manage"),
+    CUSTOM_FIELD_MANAGE("customfield.manage"),
+    TEMPLATE_MANAGE("template.manage"),
+    WORKFLOW_MANAGE("workflow.manage"),
+    WIKI_MANAGE("wiki.manage"),
+    OKR_MANAGE("okr.manage");
 
     private final String key;
 
@@ -55,7 +61,7 @@ public enum Permission {
                         TASK_VIEW, TASK_CREATE, TASK_EDIT, TASK_DELETE,
                         TEAM_VIEW, TEAM_MANAGE,
                         DELIVERABLE_VIEW, DELIVERABLE_REVIEW,
-                        USER_VIEW, REPORT_VIEW);
+                        USER_VIEW, REPORT_VIEW, AUTOMATION_MANAGE, CUSTOM_FIELD_MANAGE, TEMPLATE_MANAGE, WORKFLOW_MANAGE, WIKI_MANAGE, OKR_MANAGE);
             case USER:
             default:
                 return EnumSet.of(

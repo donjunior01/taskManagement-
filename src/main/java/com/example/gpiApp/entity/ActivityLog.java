@@ -11,13 +11,18 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "activity_logs")
+@EntityListeners(com.example.gpiApp.config.TenantListener.class)
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "organization_id = :orgId")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ActivityLog {
+public class ActivityLog implements com.example.gpiApp.entity.TenantOwned {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "organization_id")
+    private Long organizationId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "activity_type", nullable = false)

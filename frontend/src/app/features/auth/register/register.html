@@ -30,7 +30,33 @@
       </div>
     }
 
+    @if (policyLoaded && !registrationEnabled) {
+      <div class="reg-disabled">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <h3>{{ 'auth.regDisabledTitle' | translate }}</h3>
+        <p>{{ 'auth.regDisabledText' | translate }}</p>
+        <a routerLink="/login" class="login-link">{{ 'auth.backToLogin' | translate }}</a>
+      </div>
+    } @else {
     <form (ngSubmit)="onSubmit()" #registerForm="ngForm" class="register-form">
+      <div class="form-group" [class.has-error]="orgInput.invalid && (orgInput.dirty || orgInput.touched)">
+        <label for="organizationName">{{ 'auth.organizationName' | translate }}</label>
+        <div class="input-wrapper">
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"></path></svg>
+          </span>
+          <input
+            type="text"
+            id="organizationName"
+            [(ngModel)]="registerRequest.organizationName"
+            name="organizationName"
+            #orgInput="ngModel"
+            required
+            [placeholder]="'auth.phOrganizationName' | translate" />
+        </div>
+        <small class="form-hint">{{ 'auth.organizationHint' | translate }}</small>
+      </div>
+
       <div class="form-row">
         <div class="form-group" [class.has-error]="firstNameInput.invalid && (firstNameInput.dirty || firstNameInput.touched)">
           <label for="firstName">{{ 'auth.firstName' | translate }}</label>
@@ -116,8 +142,13 @@
             placeholder="name@company.com"
           />
         </div>
+        @if (allowedDomains.length && !registerRequest.organizationName) {
+          <small class="domain-hint" [class.bad]="registerRequest.email && !emailDomainAllowed">
+            {{ 'auth.domainHint' | translate:{ domains: allowedDomainsHint } }}
+          </small>
+        }
       </div>
-      
+
       <div class="form-group" [class.has-error]="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)">
         <label for="password">{{ 'auth.securityPassword' | translate }}</label>
         <div class="input-wrapper">
@@ -171,7 +202,8 @@
         }
       </button>
     </form>
-    
+    }
+
     <div class="card-footer">
       <p>{{ 'auth.alreadyHaveAccount' | translate }} <a routerLink="/login" class="login-link">{{ 'auth.signIn' | translate }}</a></p>
     </div>

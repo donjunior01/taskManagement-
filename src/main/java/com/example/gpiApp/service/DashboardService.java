@@ -20,6 +20,7 @@ public class DashboardService {
     private final TaskRepository taskRepository;
     private final TeamRepository teamRepository;
     
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public DashboardStatsDTO getAdminDashboardStats(Long adminId) {
         long totalUsers = userRepository.count();
         // The admin dashboard is a portfolio-oversight view, so the project charts/KPIs reflect ALL
@@ -71,6 +72,7 @@ public class DashboardService {
                 .build();
     }
     
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public DashboardStatsDTO getManagerDashboardStats(Long managerId) {
         // Get projects managed by this PM
         List<Project> managedProjects = projectRepository.findByManagerId(managerId, Pageable.unpaged()).getContent();
@@ -101,6 +103,7 @@ public class DashboardService {
                 .build();
     }
     
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public DashboardStatsDTO getUserDashboardStats(Long userId) {
         long totalTasks = taskRepository.countByAssignedToId(userId);
         long activeTasks = taskRepository.countByAssignedToIdAndStatus(userId, Task.TaskStatus.IN_PROGRESS);

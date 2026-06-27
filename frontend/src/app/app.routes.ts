@@ -43,8 +43,15 @@ import { AdminRolesComponent } from './features/admin/roles/roles';
 import { AdminApiKeysComponent } from './features/admin/api-keys/api-keys';
 import { AdminWebhooksComponent } from './features/admin/webhooks/webhooks';
 import { AdminPlanComponent } from './features/admin/plan/plan';
+import { AutomationsComponent } from './features/admin/automations/automations';
+import { CustomFieldsComponent } from './features/admin/custom-fields/custom-fields';
+import { TaskTemplatesComponent } from './features/admin/task-templates/task-templates';
+import { WorkflowsComponent } from './features/admin/workflows/workflows';
+import { WikiComponent } from './features/wiki/wiki';
+import { OkrComponent } from './features/okr/okr';
 import { UserDeliverablesComponent } from './features/user/deliverables/deliverables';
 import { SsoCallbackComponent } from './features/auth/sso-callback/sso-callback';
+import { AcceptInviteComponent } from './features/auth/accept-invite/accept-invite';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -54,6 +61,7 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'auth/sso-callback', component: SsoCallbackComponent },
+  { path: 'accept-invite', component: AcceptInviteComponent },
   
   // Admin routes
   {
@@ -76,6 +84,12 @@ export const routes: Routes = [
       { path: 'notifications', component: PmNotificationsComponent },
       { path: 'settings', component: AdminSettingsComponent },
       { path: 'roles', component: AdminRolesComponent },
+      { path: 'automations', component: AutomationsComponent, canActivate: [permissionGuard('automation.manage')] },
+      { path: 'custom-fields', component: CustomFieldsComponent, canActivate: [permissionGuard('customfield.manage')] },
+      { path: 'task-templates', component: TaskTemplatesComponent, canActivate: [permissionGuard('template.manage')] },
+      { path: 'workflows', component: WorkflowsComponent, canActivate: [permissionGuard('workflow.manage')] },
+      { path: 'wiki', component: WikiComponent },
+      { path: 'okrs', component: OkrComponent },
       { path: 'api-keys', component: AdminApiKeysComponent },
       { path: 'webhooks', component: AdminWebhooksComponent },
       { path: 'plan', component: AdminPlanComponent },
@@ -100,6 +114,12 @@ export const routes: Routes = [
       { path: 'deliverables', component: PmDeliverablesComponent, canActivate: [permissionGuard('deliverable.view')] },
       { path: 'calendar', component: PmCalendarComponent },
       { path: 'reports', component: PmReportsComponent, canActivate: [permissionGuard('report.view')] },
+      { path: 'automations', component: AutomationsComponent, canActivate: [permissionGuard('automation.manage')] },
+      { path: 'custom-fields', component: CustomFieldsComponent, canActivate: [permissionGuard('customfield.manage')] },
+      { path: 'task-templates', component: TaskTemplatesComponent, canActivate: [permissionGuard('template.manage')] },
+      { path: 'workflows', component: WorkflowsComponent, canActivate: [permissionGuard('workflow.manage')] },
+      { path: 'wiki', component: WikiComponent },
+      { path: 'okrs', component: OkrComponent },
       { path: 'plan', component: AdminPlanComponent, canActivate: [permissionGuard('billing.manage')] },
       { path: 'roles', component: AdminRolesComponent, canActivate: [permissionGuard('role.manage')] },
       { path: 'activity-logs', component: AdminActivityLogsComponent, canActivate: [permissionGuard('audit.view')] },
@@ -127,6 +147,8 @@ export const routes: Routes = [
       { path: 'api-keys', component: AdminApiKeysComponent, canActivate: [permissionGuard('settings.manage')] },
       { path: 'webhooks', component: AdminWebhooksComponent, canActivate: [permissionGuard('settings.manage')] },
       { path: 'time-logs', component: UserTimeLogsComponent },
+      { path: 'wiki', component: WikiComponent },
+      { path: 'okrs', component: OkrComponent },
       { path: 'messages', component: UserMessagesComponent },
       { path: 'calendar', component: UserCalendarComponent },
       { path: 'notifications', component: PmNotificationsComponent },

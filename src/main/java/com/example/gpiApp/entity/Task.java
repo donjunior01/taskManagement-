@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,6 +28,17 @@ public class Task implements TenantOwned {
 
     @Column(name = "organization_id")
     private Long organizationId;
+
+    /** Tasks that must finish before this one can proceed ("blocked by"). */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "task_dependencies",
+            joinColumns = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "blocked_by_task_id"))
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Builder.Default
+    private java.util.Set<Task> blockedBy = new java.util.HashSet<>();
 
     @Column(nullable = false)
     private String name;
@@ -88,6 +101,17 @@ public class Task implements TenantOwned {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    /** Tenant-defined custom field values, keyed by CustomFieldDefinition id. Stored as JSON. */
+    @Column(name = "custom_fields", columnDefinition = "TEXT")
+    @Convert(converter = CustomFieldsConverter.class)
+    @Builder.Default
+    private java.util.Map<String, String> customFields = new java.util.LinkedHashMap<>();
+
+    /** Custom board column (WorkflowStatus id) when the org uses a custom workflow; null = default board.
+     *  The canonical {@link #status} enum is always kept in sync with this column's category. */
+    @Column(name = "workflow_status_id")
+    private Long workflowStatusId;
 
     @PrePersist
     protected void onCreate() {

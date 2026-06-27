@@ -22,6 +22,8 @@ export interface Task {
   totalHoursLogged?: number;
   createdAt?: string;
   updatedAt?: string;
+  customFields?: { [key: string]: string };
+  workflowStatusId?: number | null;
 }
 
 export interface TaskRequest {
@@ -35,6 +37,7 @@ export interface TaskRequest {
   progress?: number;
   deadline?: string;
   reminderType?: string;
+  customFields?: { [key: string]: string };
 }
 
 export interface PagedResponse<T> {
@@ -73,6 +76,11 @@ export class TaskService {
     return this.apiService.delete<void>(`/tasks/${id}`);
   }
 
+  // ── Dependencies (blockers) ──
+  getDependencies(id: number): Observable<any[]> { return this.apiService.get<any[]>(`/tasks/${id}/dependencies`); }
+  addDependency(id: number, blockerId: number): Observable<any> { return this.apiService.post<any>(`/tasks/${id}/dependencies/${blockerId}`, {}); }
+  removeDependency(id: number, blockerId: number): Observable<any> { return this.apiService.delete<any>(`/tasks/${id}/dependencies/${blockerId}`); }
+
   getTasksByUser(userId: number, page: number = 0, size: number = 10): Observable<PagedResponse<Task>> {
     return this.apiService.get<PagedResponse<Task>>(`/tasks/user/${userId}?page=${page}&size=${size}`);
   }
@@ -89,7 +97,7 @@ export class TaskService {
     return this.apiService.get<Task[]>('/tasks/overdue');
   }
 
-  updateTaskProgress(id: number, progress: number, status?: string): Observable<Task> {
-    return this.apiService.patch<Task>(`/tasks/${id}/progress`, { progress, status });
+  updateTaskProgress(id: number, progress: number, status?: string, workflowStatusId?: number): Observable<Task> {
+    return this.apiService.patch<Task>(`/tasks/${id}/progress`, { progress, status, workflowStatusId });
   }
 }

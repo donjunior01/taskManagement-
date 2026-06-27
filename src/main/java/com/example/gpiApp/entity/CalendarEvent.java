@@ -11,13 +11,18 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "calendar_events")
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "organization_id = :orgId")
+@EntityListeners(com.example.gpiApp.config.TenantListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CalendarEvent {
+public class CalendarEvent implements TenantOwned {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @jakarta.persistence.Column(name = "organization_id")
+    private Long organizationId;
 
     @Column(name = "google_event_id")
     private String googleEventId;

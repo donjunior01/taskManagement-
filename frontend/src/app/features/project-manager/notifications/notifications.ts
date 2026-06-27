@@ -76,37 +76,37 @@ interface NotifRow extends Notification { cat: Cat; }
   styles: [`
     .nt-wrap { display: flex; flex-direction: column; gap: 16px; }
     .nt-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .tabs { display: inline-flex; gap: 3px; background: #f1f5f9; border-radius: 10px; padding: 3px; flex-wrap: wrap; }
-    .tab { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: none; background: none; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #64748b; cursor: pointer; font-family: inherit; }
-    .tab.on { background: #fff; color: #1e293b; box-shadow: 0 1px 2px rgba(15,23,42,.1); }
+    .tabs { display: inline-flex; gap: 3px; background: var(--bg-subtle); border-radius: 10px; padding: 3px; flex-wrap: wrap; }
+    .tab { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: none; background: none; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--text-muted); cursor: pointer; font-family: inherit; }
+    .tab.on { background: var(--bg-card); color: var(--text-primary); box-shadow: 0 1px 2px rgba(15,23,42,.1); }
     .cnt { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; background: #2563eb; color: #fff; }
-    .mark-all { height: 34px; padding: 0 14px; border: 1px solid #e2e8f0; background: #fff; border-radius: 9px; font-size: 12.5px; font-weight: 600; color: #475569; cursor: pointer; font-family: inherit; } .mark-all:hover:not(:disabled) { background: #f8fafc; } .mark-all:disabled { opacity: .5; cursor: not-allowed; }
+    .mark-all { height: 34px; padding: 0 14px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 9px; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); cursor: pointer; font-family: inherit; } .mark-all:hover:not(:disabled) { background: var(--bg-muted); } .mark-all:disabled { opacity: .5; cursor: not-allowed; }
 
-    .nt-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); overflow: hidden; }
+    .nt-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); overflow: hidden; }
     .nt-item { display: flex; align-items: flex-start; gap: 12px; padding: 15px 18px; border-top: 1px solid #f1f5f9; border-left: 4px solid transparent; transition: background .12s ease; }
     .nt-item:first-child { border-top: none; }
     .nt-item.unread { background: rgba(37,99,235,.04); }
     .nt-item.b-task { border-left-color: #2563eb; } .nt-item.b-deliverable { border-left-color: #d97706; } .nt-item.b-approved { border-left-color: #16a34a; }
-    .nt-item.b-overdue { border-left-color: #dc2626; } .nt-item.b-team { border-left-color: #a855f7; } .nt-item.b-message { border-left-color: #0891b2; } .nt-item.b-system { border-left-color: #94a3b8; }
-    .nt-icon { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: #fff; box-shadow: inset 0 0 0 1px #e2e8f0; margin-top: 1px; }
+    .nt-item.b-overdue { border-left-color: var(--danger-text); } .nt-item.b-team { border-left-color: #a855f7; } .nt-item.b-message { border-left-color: #0891b2; } .nt-item.b-system { border-left-color: var(--text-muted); }
+    .nt-icon { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: var(--bg-card); box-shadow: inset 0 0 0 1px var(--border); margin-top: 1px; }
     .nt-icon svg { width: 17px; height: 17px; }
-    .nt-icon.c-task { color: #2563eb; } .nt-icon.c-deliverable { color: #d97706; } .nt-icon.c-approved { color: #16a34a; } .nt-icon.c-overdue { color: #dc2626; } .nt-icon.c-team { color: #a855f7; } .nt-icon.c-message { color: #0891b2; } .nt-icon.c-system { color: #64748b; }
+    .nt-icon.c-task { color: #2563eb; } .nt-icon.c-deliverable { color: #d97706; } .nt-icon.c-approved { color: #16a34a; } .nt-icon.c-overdue { color: var(--danger-text); } .nt-icon.c-team { color: #a855f7; } .nt-icon.c-message { color: #0891b2; } .nt-icon.c-system { color: var(--text-muted); }
     .nt-body { flex: 1; min-width: 0; }
-    .nt-msg { margin: 0; font-size: 13.5px; color: #1e293b; line-height: 1.4; }
-    .nt-time { margin: 3px 0 0; font-size: 11.5px; color: #94a3b8; }
+    .nt-msg { margin: 0; font-size: 13.5px; color: var(--text-primary); line-height: 1.4; }
+    .nt-time { margin: 3px 0 0; font-size: 11.5px; color: var(--text-muted); }
     .nt-dot { width: 8px; height: 8px; border-radius: 50%; background: #2563eb; margin-top: 7px; flex-shrink: 0; }
     .nt-see { height: 28px; padding: 0 11px; border: none; background: none; border-radius: 7px; color: #2563eb; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; flex-shrink: 0; } .nt-see:hover { background: rgba(37,99,235,.08); }
-    .empty { padding: 40px; text-align: center; color: #94a3b8; font-size: 13px; }
+    .empty { padding: 40px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
     .nt-modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.5); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .nt-modal { width: 100%; max-width: 440px; background: #fff; border-radius: 18px; box-shadow: 0 24px 60px rgba(15,23,42,.3); }
+    .nt-modal { width: 100%; max-width: 440px; background: var(--bg-card); border-radius: 18px; box-shadow: 0 24px 60px rgba(15,23,42,.3); }
     .ntm-head { display: flex; align-items: center; gap: 12px; padding: 18px 20px 12px; }
-    .ntm-icon { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; box-shadow: inset 0 0 0 1px #e2e8f0; }
+    .ntm-icon { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; box-shadow: inset 0 0 0 1px var(--border); }
     .ntm-icon svg { width: 18px; height: 18px; }
-    .ntm-icon.c-task { color: #2563eb; } .ntm-icon.c-deliverable { color: #d97706; } .ntm-icon.c-approved { color: #16a34a; } .ntm-icon.c-overdue { color: #dc2626; } .ntm-icon.c-team { color: #a855f7; } .ntm-icon.c-message { color: #0891b2; } .ntm-icon.c-system { color: #64748b; }
-    .ntm-titles { flex: 1; min-width: 0; } .ntm-cat { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; } .ntm-titles h3 { font-size: 15.5px; font-weight: 700; color: #1e293b; margin: 2px 0 0; }
-    .ntm-x { width: 30px; height: 30px; border: none; background: #f1f5f9; border-radius: 8px; cursor: pointer; color: #64748b; display: grid; place-items: center; flex-shrink: 0; } .ntm-x svg { width: 15px; height: 15px; }
-    .ntm-body { padding: 4px 20px 12px; } .ntm-msg { margin: 0; font-size: 13.5px; color: #475569; line-height: 1.55; } .ntm-time { margin: 10px 0 0; font-size: 11.5px; color: #94a3b8; }
+    .ntm-icon.c-task { color: #2563eb; } .ntm-icon.c-deliverable { color: #d97706; } .ntm-icon.c-approved { color: #16a34a; } .ntm-icon.c-overdue { color: var(--danger-text); } .ntm-icon.c-team { color: #a855f7; } .ntm-icon.c-message { color: #0891b2; } .ntm-icon.c-system { color: var(--text-muted); }
+    .ntm-titles { flex: 1; min-width: 0; } .ntm-cat { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); } .ntm-titles h3 { font-size: 15.5px; font-weight: 700; color: var(--text-primary); margin: 2px 0 0; }
+    .ntm-x { width: 30px; height: 30px; border: none; background: var(--bg-subtle); border-radius: 8px; cursor: pointer; color: var(--text-muted); display: grid; place-items: center; flex-shrink: 0; } .ntm-x svg { width: 15px; height: 15px; }
+    .ntm-body { padding: 4px 20px 12px; } .ntm-msg { margin: 0; font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; } .ntm-time { margin: 10px 0 0; font-size: 11.5px; color: var(--text-muted); }
     .ntm-foot { display: flex; justify-content: flex-end; padding: 8px 20px 18px; } .ntm-close-btn { height: 36px; padding: 0 16px; border: none; border-radius: 9px; background: #2563eb; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; } .ntm-close-btn:hover { background: #1d4ed8; }
   `]
 })

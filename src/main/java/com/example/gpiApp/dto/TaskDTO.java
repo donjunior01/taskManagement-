@@ -33,5 +33,7 @@ public class TaskDTO {
     private Double totalHoursLogged;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private java.util.Map<String, String> customFields;
+    private Long workflowStatusId;
 }
 

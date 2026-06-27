@@ -82,28 +82,28 @@ import { ToastService } from '../../../core/services/toast.service';
   `,
   styles: [`
     .tfm { display: flex; flex-direction: column; gap: 14px; }
-    .tfm-status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #64748b; }
-    .tfm-status .tfm-dot { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; }
+    .tfm-status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text-muted); }
+    .tfm-status .tfm-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border-strong); }
     .tfm-status.on { color: #16a34a; } .tfm-status.on .tfm-dot { background: #16a34a; }
-    .tfm-hint { font-size: 12.5px; line-height: 1.5; color: #64748b; margin: 0; }
-    .tfm-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #94a3b8; margin: 0 0 5px; }
-    .tfm-setup { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+    .tfm-hint { font-size: 12.5px; line-height: 1.5; color: var(--text-muted); margin: 0; }
+    .tfm-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); margin: 0 0 5px; }
+    .tfm-setup { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: var(--bg-muted); border: 1px solid var(--border); border-radius: 12px; }
     .tfm-qr-wrap { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-    .tfm-qr { width: 152px; height: 152px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 6px; background: #fff; }
+    .tfm-qr { width: 152px; height: 152px; border: 1px solid var(--border); border-radius: 10px; padding: 6px; background: var(--bg-card); }
     .tfm-secret-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-    .tfm-secret { font-family: monospace; font-size: 13px; letter-spacing: 1.4px; color: #1e293b; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; word-break: break-all; }
+    .tfm-secret { font-family: monospace; font-size: 13px; letter-spacing: 1.4px; color: var(--text-primary); background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; word-break: break-all; }
     .tfm-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .tfm-row input { height: 40px; width: 130px; padding: 0 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; font-weight: 700; letter-spacing: 4px; text-align: center; color: #1e293b; outline: none; }
+    .tfm-row input { height: 40px; width: 130px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 16px; font-weight: 700; letter-spacing: 4px; text-align: center; color: var(--text-primary); outline: none; }
     .tfm-row input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
     .tfm-btn-primary, .tfm-btn-danger, .tfm-btn-ghost { height: 40px; padding: 0 16px; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
     .tfm-btn-primary { background: #2563eb; color: #fff; } .tfm-btn-primary:hover:not(:disabled) { background: #1d4ed8; }
     .tfm-btn-danger { background: #dc2626; color: #fff; } .tfm-btn-danger:hover:not(:disabled) { background: #b91c1c; }
-    .tfm-btn-ghost { background: none; color: #64748b; } .tfm-btn-ghost:hover { background: #f1f5f9; }
+    .tfm-btn-ghost { background: none; color: var(--text-muted); } .tfm-btn-ghost:hover { background: var(--bg-subtle); }
     .tfm-btn-primary:disabled, .tfm-btn-danger:disabled { opacity: .55; cursor: not-allowed; }
-    .tfm-error { color: #dc2626; font-size: 12.5px; font-weight: 600; margin: 2px 0 0; }
-    .tfm-codes { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; }
+    .tfm-error { color: var(--danger-text); font-size: 12.5px; font-weight: 600; margin: 2px 0 0; }
+    .tfm-codes { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: var(--warning-bg); border: 1px solid #fde68a; border-radius: 12px; }
     .tfm-codes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-    .tfm-codes-grid code { font-family: monospace; font-size: 13.5px; letter-spacing: 1px; color: #1e293b; background: #fff; border: 1px solid #fde68a; border-radius: 7px; padding: 6px 8px; text-align: center; }
+    .tfm-codes-grid code { font-family: monospace; font-size: 13.5px; letter-spacing: 1px; color: var(--text-primary); background: var(--bg-card); border: 1px solid #fde68a; border-radius: 7px; padding: 6px 8px; text-align: center; }
   `]
 })
 export class TwofaManagerComponent implements OnInit {

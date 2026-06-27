@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -24,6 +24,20 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
         <p>{{ 'timelogs.subtitle' | translate }}</p>
       </div>
       <div class="head-actions">
+        <!-- Live timer -->
+        <div class="timer-bar">
+          <select [(ngModel)]="timerTaskId" [disabled]="timerRunning" class="timer-select">
+            <option [ngValue]="undefined">{{ 'timelogs.timerPickTask' | translate }}</option>
+            <option *ngFor="let t of tasks" [ngValue]="t.id">{{ t.name }}</option>
+          </select>
+          <span class="timer-clock" *ngIf="timerRunning">{{ timerElapsed }}</span>
+          <button *ngIf="!timerRunning" class="btn-timer start" (click)="startTimer()" [disabled]="!timerTaskId" [title]="'timelogs.start' | translate">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"></polygon></svg>{{ 'timelogs.start' | translate }}
+          </button>
+          <button *ngIf="timerRunning" class="btn-timer stop" (click)="stopTimer()" [title]="'timelogs.stop' | translate">
+            <svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>{{ 'timelogs.stop' | translate }}
+          </button>
+        </div>
         <button class="btn-export" (click)="exportCsv()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>{{ 'timelogs.exportCsv' | translate }}</button>
         <button class="btn-log" (click)="openLog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>{{ 'timelogs.logTime' | translate }}</button>
       </div>
@@ -93,7 +107,7 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
         <div class="donut-split">
           <div class="donut-wrap reveal">
             <svg viewBox="0 0 36 36" class="donut">
-              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#eef2f7" stroke-width="4"></circle>
+              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--bg-subtle)" stroke-width="4"></circle>
               <circle *ngFor="let s of donut" cx="18" cy="18" r="15.9155" fill="none" [attr.stroke]="s.color" stroke-width="4" [attr.stroke-dasharray]="s.dash" [attr.stroke-dashoffset]="s.offset"></circle>
             </svg>
             <div class="donut-center">{{ weekTotal }}h</div>
@@ -132,17 +146,24 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
     .tl-wrap { display: flex; flex-direction: column; gap: 18px; }
     .head-actions { display: inline-flex; gap: 8px; flex-wrap: wrap; }
     .btn-log { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 16px; border: none; border-radius: 10px; background: #2563eb; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; } .btn-log svg { width: 15px; height: 15px; } .btn-log:hover { background: #1d4ed8; }
+    /* live timer */
+    .timer-bar { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 6px 0 12px; background: var(--bg-muted); border: 1px solid var(--border); border-radius: 10px; }
+    .timer-select { height: 30px; max-width: 180px; border: none; background: none; font-size: 13px; color: var(--text-primary); font-family: inherit; outline: none; cursor: pointer; }
+    .timer-clock { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; color: var(--text-primary); letter-spacing: .5px; min-width: 70px; text-align: center; }
+    .btn-timer { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border: none; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; color: #fff; } .btn-timer svg { width: 12px; height: 12px; }
+    .btn-timer.start { background: #16a34a; } .btn-timer.start:hover:not(:disabled) { background: #15803d; } .btn-timer.start:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-timer.stop { background: #dc2626; } .btn-timer.stop:hover { background: #b91c1c; }
     .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.5); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .modal { width: 100%; max-width: 480px; background: #fff; border-radius: 18px; box-shadow: 0 24px 60px rgba(15,23,42,.3); }
-    .m-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 10px; } .m-head h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin: 0; }
-    .x { width: 32px; height: 32px; border: none; background: #f1f5f9; border-radius: 8px; cursor: pointer; color: #64748b; display: grid; place-items: center; } .x svg { width: 15px; height: 15px; }
+    .modal { width: 100%; max-width: 480px; background: var(--bg-card); border-radius: 18px; box-shadow: 0 24px 60px rgba(15,23,42,.3); }
+    .m-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 10px; } .m-head h3 { font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .x { width: 32px; height: 32px; border: none; background: var(--bg-subtle); border-radius: 8px; cursor: pointer; color: var(--text-muted); display: grid; place-items: center; } .x svg { width: 15px; height: 15px; }
     .m-body { padding: 8px 22px; display: flex; flex-direction: column; gap: 14px; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .fg { display: flex; flex-direction: column; gap: 6px; } .fg label { font-size: 12.5px; font-weight: 700; color: #475569; }
-    .fg input, .fg select, .fg textarea { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13.5px; font-family: inherit; color: #1e293b; outline: none; background: #fff; }
+    .fg { display: flex; flex-direction: column; gap: 6px; } .fg label { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); }
+    .fg input, .fg select, .fg textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13.5px; font-family: inherit; color: var(--text-primary); outline: none; background: var(--bg-card); }
     .fg input:focus, .fg select:focus, .fg textarea:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
     .m-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px 20px; }
-    .btn-ghost { height: 40px; padding: 0 16px; border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; color: #475569; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; } .btn-ghost:hover { background: #f8fafc; }
+    .btn-ghost { height: 40px; padding: 0 16px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 10px; color: var(--text-secondary); font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; } .btn-ghost:hover { background: var(--bg-muted); }
     .btn-primary { height: 40px; padding: 0 18px; border: none; border-radius: 10px; background: #2563eb; color: #fff; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; } .btn-primary:hover { background: #1d4ed8; } .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
     @keyframes tFade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes tWipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
@@ -150,54 +171,54 @@ interface Donut { name: string; value: number; color: string; dash: string; offs
     .reveal { animation: tWipe .9s cubic-bezier(.4,0,.2,1) both; }
 
     .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .page-head h1 { font-size: 21px; font-weight: 800; color: #1e293b; margin: 0; }
-    .page-head p { font-size: 13px; color: #64748b; margin: 4px 0 0; }
-    .btn-export { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; font-family: inherit; } .btn-export svg { width: 15px; height: 15px; } .btn-export:hover { background: #f8fafc; }
+    .page-head h1 { font-size: 21px; font-weight: 800; color: var(--text-primary); margin: 0; }
+    .page-head p { font-size: 13px; color: var(--text-muted); margin: 4px 0 0; }
+    .btn-export { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--text-secondary); cursor: pointer; font-family: inherit; } .btn-export svg { width: 15px; height: 15px; } .btn-export:hover { background: var(--bg-muted); }
 
     .week-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .nav { width: 34px; height: 34px; border: 1px solid #e2e8f0; background: #fff; border-radius: 9px; font-size: 18px; line-height: 1; color: #475569; cursor: pointer; } .nav:hover { background: #f1f5f9; }
-    .week-label { font-size: 16px; font-weight: 700; color: #1e293b; }
-    .this-week { height: 32px; padding: 0 13px; border: none; background: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; } .this-week:hover { background: #f1f5f9; }
-    .cap-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 9999px; background: rgba(37,99,235,.1); color: #2563eb; font-size: 13px; font-weight: 700; } .cap-badge svg { width: 15px; height: 15px; } .cap-badge.over { background: rgba(220,38,38,.1); color: #dc2626; }
+    .nav { width: 34px; height: 34px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 9px; font-size: 18px; line-height: 1; color: var(--text-secondary); cursor: pointer; } .nav:hover { background: var(--bg-subtle); }
+    .week-label { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .this-week { height: 32px; padding: 0 13px; border: none; background: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; } .this-week:hover { background: var(--bg-subtle); }
+    .cap-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 9999px; background: rgba(37,99,235,.1); color: #2563eb; font-size: 13px; font-weight: 700; } .cap-badge svg { width: 15px; height: 15px; } .cap-badge.over { background: rgba(220,38,38,.1); color: var(--danger-text); }
 
-    .sheet-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); overflow-x: auto; }
+    .sheet-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); overflow-x: auto; }
     .sheet { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 720px; }
-    .sheet thead th { background: #f8fafc; padding: 13px 14px; font-size: 12px; font-weight: 600; color: #64748b; text-align: center; }
+    .sheet thead th { background: var(--bg-muted); padding: 13px 14px; font-size: 12px; font-weight: 600; color: var(--text-muted); text-align: center; }
     .sheet thead th.task-col { text-align: left; }
     .task-col { text-align: left; width: 280px; padding-left: 20px !important; }
     .total-col { text-align: center; width: 80px; }
-    .sheet tbody td { padding: 12px 8px; border-top: 1px solid #eef2f7; vertical-align: middle; }
+    .sheet tbody td { padding: 12px 8px; border-top: 1px solid var(--bg-subtle); vertical-align: middle; }
     .sheet tbody td.task-col { padding: 12px 14px 12px 20px; }
-    .t-name { font-size: 14px; font-weight: 600; color: #1e293b; }
+    .t-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
     .t-proj { display: inline-block; margin-top: 5px; font-size: 11px; font-weight: 500; color: #2563eb; background: rgba(37,99,235,.1); padding: 2px 8px; border-radius: 6px; }
     .cell { text-align: center; }
     .cell input { width: 64px; height: 40px; border: none; border-radius: 9px; text-align: center; font-size: 14px; font-weight: 700; outline: none; cursor: text; -moz-appearance: textfield; transition: background .2s ease; }
     .cell input::-webkit-outer-spin-button, .cell input::-webkit-inner-spin-button { opacity: 0; height: 40px; }
     .cell input:hover::-webkit-inner-spin-button { opacity: 1; }
     .cell input:focus { box-shadow: 0 0 0 2px #2563eb; }
-    .total-col strong { font-size: 14px; font-weight: 800; color: #1e293b; }
-    .sheet tfoot td { padding: 14px 8px; border-top: 2px solid #e2e8f0; font-weight: 700; color: #1e293b; text-align: center; }
+    .total-col strong { font-size: 14px; font-weight: 800; color: var(--text-primary); }
+    .sheet tfoot td { padding: 14px 8px; border-top: 2px solid var(--border); font-weight: 700; color: var(--text-primary); text-align: center; }
     .sheet tfoot td.task-col { text-align: left; font-size: 14px; }
-    .day-total { color: #475569; } .total-col.grand { font-size: 15px; font-weight: 800; }
-    .empty { padding: 30px; text-align: center; color: #94a3b8; }
+    .day-total { color: var(--text-secondary); } .total-col.grand { font-size: 15px; font-weight: 800; }
+    .empty { padding: 30px; text-align: center; color: var(--text-muted); }
 
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
     @media (max-width: 1000px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
-    .kpi { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 20px; min-height: 150px; }
-    .kpi-l { font-size: 13px; color: #64748b; }
-    .kpi-v { font-size: 30px; font-weight: 800; color: #1e293b; margin-top: 8px; line-height: 1; }
-    .kpi-trend { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; font-size: 12px; font-weight: 600; } .kpi-trend svg { width: 14px; height: 14px; } .kpi-trend.up { color: #16a34a; } .kpi-trend.down { color: #dc2626; }
-    .kpi-sub { font-size: 12px; color: #94a3b8; margin-top: 10px; }
-    .kpi-task { font-size: 17px; font-weight: 700; color: #1e293b; margin-top: 10px; }
-    .kpi-chip { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; font-size: 12.5px; font-weight: 600; color: #b45309; background: rgba(245,158,11,.14); padding: 4px 10px; border-radius: 8px; } .kpi-chip svg { width: 13px; height: 13px; }
+    .kpi { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 20px; min-height: 150px; }
+    .kpi-l { font-size: 13px; color: var(--text-muted); }
+    .kpi-v { font-size: 30px; font-weight: 800; color: var(--text-primary); margin-top: 8px; line-height: 1; }
+    .kpi-trend { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; font-size: 12px; font-weight: 600; } .kpi-trend svg { width: 14px; height: 14px; } .kpi-trend.up { color: #16a34a; } .kpi-trend.down { color: var(--danger-text); }
+    .kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 10px; }
+    .kpi-task { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-top: 10px; }
+    .kpi-chip { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; font-size: 12.5px; font-weight: 600; color: var(--warning-text); background: rgba(245,158,11,.14); padding: 4px 10px; border-radius: 8px; } .kpi-chip svg { width: 13px; height: 13px; }
     .donut-split { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
     .donut-wrap { position: relative; width: 84px; height: 84px; flex-shrink: 0; } .donut { width: 100%; transform: rotate(-90deg); }
-    .donut-center { position: absolute; inset: 0; display: grid; place-items: center; font-size: 16px; font-weight: 800; color: #1e293b; }
+    .donut-center { position: absolute; inset: 0; display: grid; place-items: center; font-size: 16px; font-weight: 800; color: var(--text-primary); }
     .donut-legend { flex: 1; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
-    .donut-legend li { display: flex; align-items: center; gap: 7px; font-size: 12px; } .donut-legend .d { width: 9px; height: 9px; border-radius: 3px; } .donut-legend .nm { color: #475569; } .donut-legend .vl { margin-left: auto; font-weight: 700; color: #1e293b; } .empty-li { color: #94a3b8; }
+    .donut-legend li { display: flex; align-items: center; gap: 7px; font-size: 12px; } .donut-legend .d { width: 9px; height: 9px; border-radius: 3px; } .donut-legend .nm { color: var(--text-secondary); } .donut-legend .vl { margin-left: auto; font-weight: 700; color: var(--text-primary); } .empty-li { color: var(--text-muted); }
   `]
 })
-export class UserTimeLogsComponent implements OnInit {
+export class UserTimeLogsComponent implements OnInit, OnDestroy {
   developerId = 0;
   loading = true;
   capacity = 40;
@@ -234,7 +255,65 @@ export class UserTimeLogsComponent implements OnInit {
 
   ngOnInit(): void {
     this.developerId = this.authService.getCurrentUser()?.id || 0;
+    this.resumeTimer();
     this.load();
+  }
+
+  ngOnDestroy(): void { if (this.tick) clearInterval(this.tick); }
+
+  // ── Live timer (start/stop → logs time on the selected task) ──
+  timerTaskId?: number;
+  timerRunning = false;
+  timerStart: number | null = null;
+  timerElapsed = '00:00:00';
+  private tick: any;
+
+  private timerKey(): string { return `timer_${this.developerId}`; }
+
+  private resumeTimer(): void {
+    const raw = localStorage.getItem(this.timerKey());
+    if (!raw) return;
+    try {
+      const o = JSON.parse(raw);
+      this.timerTaskId = o.taskId; this.timerStart = o.start; this.timerRunning = true;
+      this.startTick();
+    } catch { localStorage.removeItem(this.timerKey()); }
+  }
+
+  startTimer(): void {
+    if (!this.timerTaskId || this.timerRunning) return;
+    this.timerStart = Date.now();
+    this.timerRunning = true;
+    localStorage.setItem(this.timerKey(), JSON.stringify({ taskId: this.timerTaskId, start: this.timerStart }));
+    this.startTick();
+  }
+
+  private startTick(): void {
+    this.updateElapsed();
+    this.tick = setInterval(() => { this.updateElapsed(); this.cdr.detectChanges(); }, 1000);
+  }
+
+  private updateElapsed(): void {
+    if (!this.timerStart) return;
+    const s = Math.floor((Date.now() - this.timerStart) / 1000);
+    const p = (n: number) => String(n).padStart(2, '0');
+    this.timerElapsed = `${p(Math.floor(s / 3600))}:${p(Math.floor((s % 3600) / 60))}:${p(s % 60)}`;
+  }
+
+  stopTimer(): void {
+    if (!this.timerStart || !this.timerTaskId) return;
+    const seconds = Math.floor((Date.now() - this.timerStart) / 1000);
+    const hours = Math.round((seconds / 3600) * 100) / 100;   // 2 decimals
+    const taskId = this.timerTaskId;
+    if (this.tick) clearInterval(this.tick);
+    this.timerRunning = false; this.timerStart = null; this.timerElapsed = '00:00:00';
+    localStorage.removeItem(this.timerKey());
+    if (hours <= 0) { this.toast.show(this.translate.instant('timelogs.timerTooShort'), 'error'); return; }
+    const today = this.iso(new Date());
+    this.timeLogService.createTimeLog({ taskId, hours, date: today, description: 'Timer', hoursSpent: hours, logDate: today } as any).subscribe({
+      next: () => { this.toast.show(this.translate.instant('timelogs.timerLogged', { hours }), 'success'); this.fetchLogs(); },
+      error: () => this.toast.show(this.translate.instant('timelogs.timerFailed'), 'error')
+    });
   }
 
   private load(): void {

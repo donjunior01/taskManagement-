@@ -12,7 +12,7 @@
   animation: fadeIn 0.15s ease;
 
   .modal-content {
-    background: #fff;
+    background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     width: 100%;
@@ -63,8 +63,8 @@
       gap: 10px;
 
       .cancel-btn {
-        display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; background: #fff; color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); font-family: inherit;
-        &:hover { background: var(--bg-subtle); border-color: #cbd5e1; }
+        display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); font-family: inherit;
+        &:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
       }
 
       .confirm-btn {

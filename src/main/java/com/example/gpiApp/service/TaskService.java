@@ -34,6 +34,8 @@ public class TaskService {
     private final NotificationService notificationService;
     private final AuthorizationService authorizationService;
     private final WebhookService webhookService;
+    private final AutomationService automationService;
+    private final WorkflowStatusService workflowStatusService;
 
     public TaskService(TaskRepository taskRepository,
                        ProjectRepository projectRepository,
@@ -44,7 +46,9 @@ public class TaskService {
                        CalendarService calendarService,
                        NotificationService notificationService,
                        AuthorizationService authorizationService,
-                       WebhookService webhookService) {
+                       WebhookService webhookService,
+                       AutomationService automationService,
+                       WorkflowStatusService workflowStatusService) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
@@ -55,6 +59,8 @@ public class TaskService {
         this.notificationService = notificationService;
         this.authorizationService = authorizationService;
         this.webhookService = webhookService;
+        this.automationService = automationService;
+        this.workflowStatusService = workflowStatusService;
     }
 
     /** Notify an assignee that a task has landed on their plate (and calendar). */
@@ -109,7 +115,9 @@ public class TaskService {
         task.setProgress(request.getProgress() != null ? request.getProgress() : 0);
         task.setDeadline(request.getDeadline());
         task.setReminderType(request.getReminderType());
-        
+        if (request.getCustomFields() != null) task.setCustomFields(request.getCustomFields());
+        task.setWorkflowStatusId(request.getWorkflowStatusId());
+
         if (request.getProjectId() != null) {
             projectRepository.findById(request.getProjectId())
                     .ifPresent(task::setProject);
@@ -160,7 +168,23 @@ public class TaskService {
                 "projectId", savedTask.getProject() != null ? savedTask.getProject().getId() : 0,
                 "status", savedTask.getStatus() != null ? savedTask.getStatus().name() : ""));
 
+        // Run any matching automation rules for this tenant (best-effort).
+        automationService.fire("task.created", taskContext(savedTask));
+        if (savedTask.getAssignedTo() != null) automationService.fire("task.assigned", taskContext(savedTask));
+
         return ApiResponse.success("Task created successfully", convertToDTO(savedTask));
+    }
+
+    /** Context map passed to the automation engine for task triggers. */
+    private java.util.Map<String, Object> taskContext(Task t) {
+        java.util.Map<String, Object> m = new java.util.HashMap<>();
+        m.put("taskId", t.getId());
+        m.put("name", t.getName());
+        m.put("projectId", t.getProject() != null ? t.getProject().getId() : null);
+        m.put("status", t.getStatus() != null ? t.getStatus().name() : null);
+        m.put("priority", t.getPriority() != null ? t.getPriority().name() : null);
+        m.put("assignedToId", t.getAssignedTo() != null ? t.getAssignedTo().getId() : null);
+        return m;
     }
     
     @Transactional
@@ -181,19 +205,26 @@ public class TaskService {
                     if (request.getProgress() != null) task.setProgress(request.getProgress());
                     task.setDeadline(request.getDeadline());
                     task.setReminderType(request.getReminderType());
-                    
+                    if (request.getCustomFields() != null) task.setCustomFields(request.getCustomFields());
+                    task.setWorkflowStatusId(request.getWorkflowStatusId());
+
                     if (request.getProjectId() != null) {
                         projectRepository.findById(request.getProjectId())
                                 .ifPresent(task::setProject);
                     }
                     
+                    Long prevAssignee = task.getAssignedTo() != null ? task.getAssignedTo().getId() : null;
                     if (request.getAssignedToId() != null) {
                         userRepository.findById(request.getAssignedToId())
                                 .ifPresent(task::setAssignedTo);
                     }
-                    
+                    boolean assigneeChanged = request.getAssignedToId() != null
+                            && !request.getAssignedToId().equals(prevAssignee);
+
                     Task updatedTask = taskRepository.save(task);
-                    
+
+                    if (assigneeChanged) automationService.fire("task.assigned", taskContext(updatedTask));
+
                     // Auto-update project progress
                     if (oldProject != null && (updatedTask.getProject() == null || !oldProject.getId().equals(updatedTask.getProject().getId()))) {
                         updateProjectProgressAutomatically(oldProject);
@@ -231,7 +262,44 @@ public class TaskService {
                 })
                 .orElse(ApiResponse.error("Task not found"));
     }
-    
+
+    // ─── Task dependencies (blockers) ───
+    @Transactional(readOnly = true)
+    public java.util.List<java.util.Map<String, Object>> getDependencies(Long taskId) {
+        Task t = taskRepository.findById(taskId).orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        return t.getBlockedBy().stream().map(this::depInfo).collect(java.util.stream.Collectors.toList());
+    }
+
+    @Transactional
+    public java.util.List<java.util.Map<String, Object>> addDependency(Long taskId, Long blockerId) {
+        if (taskId.equals(blockerId)) throw new IllegalArgumentException("A task can't block itself.");
+        Task t = taskRepository.findById(taskId).orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        Task blocker = taskRepository.findById(blockerId).orElseThrow(() -> new IllegalArgumentException("Blocking task not found"));
+        // Reject a direct cycle (the blocker is already blocked by this task).
+        if (blocker.getBlockedBy().stream().anyMatch(b -> b.getId().equals(taskId))) {
+            throw new IllegalArgumentException("That would create a circular dependency.");
+        }
+        t.getBlockedBy().add(blocker);
+        taskRepository.save(t);
+        return getDependencies(taskId);
+    }
+
+    @Transactional
+    public void removeDependency(Long taskId, Long blockerId) {
+        Task t = taskRepository.findById(taskId).orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        t.getBlockedBy().removeIf(b -> b.getId().equals(blockerId));
+        taskRepository.save(t);
+    }
+
+    private java.util.Map<String, Object> depInfo(Task b) {
+        java.util.Map<String, Object> m = new java.util.HashMap<>();
+        m.put("id", b.getId());
+        m.put("name", b.getName());
+        m.put("status", b.getStatus() != null ? b.getStatus().name() : "TODO");
+        m.put("done", b.getStatus() == Task.TaskStatus.COMPLETED);
+        return m;
+    }
+
     @Transactional
     public ApiResponse<Void> deleteTask(Long id, Long deletedById) {
         return taskRepository.findById(id)
@@ -317,6 +385,11 @@ public class TaskService {
     
     @Transactional
     public ApiResponse<TaskDTO> updateTaskProgress(Long id, Integer progress, String status, Long updatedById) {
+        return updateTaskProgress(id, progress, status, null, updatedById);
+    }
+
+    @Transactional
+    public ApiResponse<TaskDTO> updateTaskProgress(Long id, Integer progress, String status, Long workflowStatusId, Long updatedById) {
         return taskRepository.findById(id)
                 .map(task -> {
                     // Progress/status updates are allowed for the assignee, the project's PM, or an admin.
@@ -325,8 +398,14 @@ public class TaskService {
                     if (progress != null) {
                         task.setProgress(progress);
                     }
-                    
-                    if (status != null) {
+
+                    // Moved to a custom board column: store it and sync the canonical enum status to its
+                    // category, so dashboards/analytics/automation keep working off the enum.
+                    if (workflowStatusId != null) {
+                        var ws = workflowStatusService.getForTenant(workflowStatusId);
+                        task.setWorkflowStatusId(ws.getId());
+                        task.setStatus(ws.toTaskStatus());
+                    } else if (status != null) {
                         try {
                             task.setStatus(Task.TaskStatus.valueOf(status));
                         } catch (IllegalArgumentException e) {
@@ -351,12 +430,18 @@ public class TaskService {
                         );
                     }
                     Task updatedTask = taskRepository.save(task);
-                    
+
                     // Auto-update project progress
                     if (updatedTask.getProject() != null) {
                         updateProjectProgressAutomatically(updatedTask.getProject());
                     }
-                    
+
+                    // Fire automation: status changed (and completed, if applicable).
+                    automationService.fire("task.status_changed", taskContext(updatedTask));
+                    if (updatedTask.getStatus() == Task.TaskStatus.COMPLETED) {
+                        automationService.fire("task.completed", taskContext(updatedTask));
+                    }
+
                     return ApiResponse.success("Task progress updated successfully", convertToDTO(updatedTask));
                 })
                 .orElse(ApiResponse.error("Task not found"));
@@ -403,6 +488,8 @@ public class TaskService {
                 .totalHoursLogged(totalHours != null ? totalHours : 0.0)
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
+                .customFields(task.getCustomFields())
+                .workflowStatusId(task.getWorkflowStatusId())
                 .build();
     }
 }

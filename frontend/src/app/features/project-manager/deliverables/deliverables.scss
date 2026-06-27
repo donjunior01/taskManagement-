@@ -158,7 +158,7 @@
     }
 
     &.total       .stat-icon { background: var(--primary-bg);  color: var(--primary); }
-    &.in-progress .stat-icon { background: #dbeafe;             color: #3b82f6; }
+    &.in-progress .stat-icon { background: var(--primary-bg);             color: #3b82f6; }
     &.completed   .stat-icon { background: var(--success-bg);  color: var(--success); }
     &.overdue     .stat-icon { background: var(--danger-bg);   color: var(--danger); }
   }
@@ -256,7 +256,7 @@
   .registry-tr {
     transition: background var(--transition-fast);
 
-    &:hover { background: #f8fafc; }
+    &:hover { background: var(--bg-muted); }
     &:last-child td { border-bottom: none; }
   }
 }
@@ -329,7 +329,7 @@
 
   &.critical { background: var(--danger-bg);  color: var(--danger-text); }
   &.high     { background: var(--warning-bg); color: var(--warning-text); }
-  &.medium   { background: #dbeafe;           color: #1d4ed8; }
+  &.medium   { background: var(--primary-bg);           color: var(--text-brand); }
   &.low      { background: var(--bg-subtle);  color: var(--text-muted); }
 }
 
@@ -344,7 +344,7 @@
   letter-spacing: 0.4px;
 
   &.hard   { background: var(--danger-bg);  color: var(--danger-text); }
-  &.medium { background: #dbeafe;           color: #1d4ed8; }
+  &.medium { background: var(--primary-bg);           color: var(--text-brand); }
   &.easy   { background: var(--success-bg); color: var(--success-text); }
 }
 
@@ -741,7 +741,7 @@
     font-size: 13px;
     font-weight: 700;
     color: var(--primary);
-    background: #dbeafe;
+    background: var(--primary-bg);
     padding: 2px 9px;
     border-radius: 20px;
   }

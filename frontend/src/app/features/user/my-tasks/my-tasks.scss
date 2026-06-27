@@ -81,7 +81,7 @@
       &:focus {
         outline: none;
         border-color: var(--primary);
-        background: #fff;
+        background: var(--bg-card);
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
       }
     }
@@ -113,7 +113,7 @@
         &:focus {
           outline: none;
           border-color: var(--primary);
-          background-color: #fff;
+          background-color: var(--bg-card);
           box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
         }
       }
@@ -259,12 +259,12 @@
       font-family: inherit;
 
       &.btn-log {
-        background: #fff7ed;
+        background: var(--warning-bg);
         color: #ea580c;
         border: 1px solid #fed7aa;
 
         &:hover {
-          background: #ffedd5;
+          background: var(--warning-bg);
         }
       }
 
@@ -577,7 +577,7 @@
       font-size: 13px;
       font-family: inherit;
       color: var(--text-primary);
-      background: #fff;
+      background: var(--bg-card);
       transition: all var(--transition-fast);
 
       &:focus {
@@ -652,8 +652,8 @@
   }
 
   &.medium {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: var(--primary-bg);
+    color: var(--text-brand);
   }
 
   &.low {
@@ -680,8 +680,8 @@
   }
 
   &.planned {
-    background: #ede9fe;
-    color: #6d28d9;
+    background: rgba(139,92,246,.16);
+    color: var(--tint-violet-text);
   }
 
   &.on_hold {
@@ -727,13 +727,13 @@
   }
 
   &.btn-secondary {
-    background: #fff;
+    background: var(--bg-card);
     border-color: var(--border);
     color: var(--text-secondary);
 
     &:hover {
       background: var(--bg-subtle);
-      border-color: #cbd5e1;
+      border-color: var(--border-strong);
     }
   }
 
@@ -862,7 +862,7 @@
     font-size: 13.5px;
     color: var(--text-primary);
     font-family: inherit;
-    background: #fff;
+    background: var(--bg-card);
     transition: all var(--transition-fast);
 
     &:focus {

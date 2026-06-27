@@ -14,6 +14,7 @@ import { TaskService } from '../../../core/services/task.service';
 import { TeamService } from '../../../core/services/team.service';
 import { DeliverableService } from '../../../core/services/deliverable.service';
 import { LanguageService } from '../../../core/services/language.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LangToggleComponent } from '../lang-toggle/lang-toggle';
 import { TwofaManagerComponent } from '../twofa-manager/twofa-manager';
@@ -113,6 +114,7 @@ export class HeaderComponent implements OnInit {
     private teamService: TeamService,
     private deliverableService: DeliverableService,
     public language: LanguageService,
+    public theme: ThemeService,
     private cdr: ChangeDetectorRef
   ) {
     this.currentUser = this.authService.getCurrentUser();

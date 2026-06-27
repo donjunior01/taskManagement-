@@ -283,7 +283,7 @@
   tbody tr {
     transition: background var(--transition-fast);
 
-    &:hover { background: #f8f9ff; }
+    &:hover { background: var(--bg-subtle); }
     &:last-child td { border-bottom: none; }
   }
 
@@ -367,8 +367,8 @@
   text-transform: uppercase;
   letter-spacing: 0.3px;
 
-  &.urgent  { background: #fff0f0; color: #dc2626; border: 1px solid #fecaca; }
-  &.high    { background: #fff7ed; color: var(--accent); border: 1px solid #fed7aa; }
+  &.urgent  { background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+  &.high    { background: var(--warning-bg); color: var(--accent); border: 1px solid var(--warning-border); }
   &.medium  { background: var(--warning-bg); color: var(--warning-text); }
   &.low     { background: var(--success-bg); color: var(--success-text); }
 }

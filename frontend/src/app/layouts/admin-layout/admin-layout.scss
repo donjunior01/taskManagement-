@@ -35,11 +35,9 @@
   --border-light:     oklch(95.5% .008 255);
   --border-strong:    oklch(86% .015 255);
 
-  /* ── Sidebar navy (prototype --navy) — flat, blue/purple accents (no orange) ── */
+  /* Navy brand colour reused by admin avatars/badges (the sidebar surface itself is
+     theme-aware via the global --sidebar-* tokens, so it goes light/cyber with the theme). */
   --sidebar-bg:           oklch(27% .07 260);
-  --sidebar-glow-top:     color-mix(in oklab, oklch(55% .22 260) 22%, transparent);
-  --sidebar-glow-accent:  color-mix(in oklab, oklch(63% .21 295) 16%, transparent);
-  --sidebar-active-bar:   linear-gradient(to bottom, oklch(70% .15 260), oklch(55% .22 260));
 
   /* ── Header avatar (blue → purple, matches prototype) ── */
   --avatar-gradient:  linear-gradient(135deg, oklch(55% .22 260), oklch(63% .21 295));

@@ -9,6 +9,7 @@ import { AnalyticsService } from '../../../core/services/analytics.service';
 import { DeliverableService } from '../../../core/services/deliverable.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { BadgeCountsService } from '../../../core/services/badge-counts.service';
+import { OkrService, Objective } from '../../../core/services/okr.service';
 
 interface HealthProject { id?: number; name: string; statusKey: string; due: string; progress: number; health: { labelKey: string; cls: string }; }
 interface TeamLoad { name: string; fullName: string; assignees: number; completed: number; assignPct: number; donePct: number; level: string; }
@@ -145,6 +146,23 @@ interface PendingDeliverable { file: string; submitter: string; meta: string; in
       </div>
     </div>
 
+    <!-- ═══ OKR snapshot ═══ -->
+    <div class="card anim" style="--d:.34s">
+      <div class="card-head">
+        <h2>{{ 'pm.dashboard.okrTitle' | translate }}</h2>
+        <a routerLink="/pm/okrs" class="link">{{ 'pm.dashboard.viewAll' | translate }}</a>
+      </div>
+      <div class="okr-snap">
+        <div class="okr-snap-row" *ngFor="let o of topObjectives" routerLink="/pm/okrs">
+          <span class="okr-snap-dot" [ngClass]="'st-' + o.status"></span>
+          <span class="okr-snap-title">{{ o.title }}</span>
+          <div class="okr-snap-bar"><div class="okr-snap-fill" [style.width.%]="animated ? okr.objectiveProgress(o) : 0"></div></div>
+          <span class="okr-snap-pct">{{ okr.objectiveProgress(o) }}%</span>
+        </div>
+        <div class="empty" *ngIf="topObjectives.length === 0">{{ 'pm.dashboard.okrEmpty' | translate }}</div>
+      </div>
+    </div>
+
   </div>
   `,
   styles: [`
@@ -154,92 +172,104 @@ interface PendingDeliverable { file: string; submitter: string; meta: string; in
     .anim { animation: dFade .5s ease both; animation-delay: var(--d, 0s); }
     .reveal { animation: dWipe .9s cubic-bezier(.4,0,.2,1) both; }
 
-    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 20px; }
     .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
-    .card-head h2 { font-size: 15.5px; font-weight: 600; color: #1e293b; margin: 0; }
+    .card-head h2 { font-size: 15.5px; font-weight: 600; color: var(--text-primary); margin: 0; }
     .link { font-size: 12px; font-weight: 500; color: #2563eb; text-decoration: none; white-space: nowrap; }
     .link:hover { text-decoration: underline; }
     .link.sm { font-size: 11.5px; }
-    .muted-sm { font-size: 12px; color: #64748b; }
-    .empty { padding: 22px 4px; text-align: center; color: #94a3b8; font-size: 13px; }
+    .muted-sm { font-size: 12px; color: var(--text-muted); }
+    .empty { padding: 22px 4px; text-align: center; color: var(--text-muted); font-size: 13px; }
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .okr-snap { display: flex; flex-direction: column; gap: 12px; }
+    .okr-snap-row { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 4px 2px; border-radius: 8px; }
+    .okr-snap-row:hover { background: var(--bg-subtle); }
+    .okr-snap-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .okr-snap-dot.st-ON_TRACK { background: var(--success); }
+    .okr-snap-dot.st-AT_RISK { background: var(--warning); }
+    .okr-snap-dot.st-OFF_TRACK { background: var(--danger); }
+    .okr-snap-dot.st-ACHIEVED { background: var(--primary); }
+    .okr-snap-title { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .okr-snap-bar { width: 130px; height: 7px; background: var(--bg-subtle); border-radius: 20px; overflow: hidden; flex-shrink: 0; }
+    .okr-snap-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-light, #3b82f6)); border-radius: 20px; transition: width .6s ease; }
+    .okr-snap-pct { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); min-width: 36px; text-align: right; }
     @media (max-width: 1024px) { .row-2 { grid-template-columns: 1fr; } }
 
     /* KPI */
     .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
     @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 640px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
-    .kpi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-    .kpi-label { font-size: 12px; font-weight: 500; color: #64748b; }
-    .kpi-value { margin-top: 8px; font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1; }
+    .kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .kpi-label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .kpi-value { margin-top: 8px; font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
     .kpi-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; }
     .kpi-icon svg { width: 18px; height: 18px; }
     .kpi-icon.primary { background: rgba(37,99,235,.1); color: #2563eb; }
     .kpi-icon.info { background: rgba(2,132,199,.1); color: #0284c7; }
-    .kpi-icon.destructive { background: rgba(220,38,38,.1); color: #dc2626; }
+    .kpi-icon.destructive { background: rgba(220,38,38,.1); color: var(--danger-text); }
     .kpi-icon.success { background: rgba(22,163,74,.1); color: #16a34a; }
     .kpi-icon.warning { background: rgba(217,119,6,.14); color: #d97706; }
 
     /* Santé des projets */
     .health-list { display: flex; flex-direction: column; gap: 12px; }
-    .health-item { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; transition: background .15s ease; }
-    .health-item:hover { background: #f8fafc; }
+    .health-item { border: 1px solid var(--border); border-radius: 12px; padding: 12px; transition: background .15s ease; }
+    .health-item:hover { background: var(--bg-muted); }
     .hi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
     .hi-id { min-width: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .hi-name { font-size: 13.5px; font-weight: 600; color: #1e293b; }
+    .hi-name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
     .hi-client { font-size: 10px; font-weight: 500; color: #2563eb; background: rgba(37,99,235,.1); padding: 2px 6px; border-radius: 5px; }
-    .hi-meta { font-size: 11.5px; color: #64748b; margin-top: 4px; }
+    .hi-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
     .health-badge { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 9999px; white-space: nowrap; flex-shrink: 0; }
     .health-badge.ok { background: rgba(22,163,74,.12); color: #16a34a; }
     .health-badge.warn { background: rgba(217,119,6,.14); color: #d97706; }
-    .health-badge.danger { background: rgba(220,38,38,.1); color: #dc2626; }
+    .health-badge.danger { background: rgba(220,38,38,.1); color: var(--danger-text); }
     .hi-progress { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
-    .bar { flex: 1; height: 8px; border-radius: 9999px; background: #eef2f7; overflow: hidden; }
+    .bar { flex: 1; height: 8px; border-radius: 9999px; background: var(--bg-subtle); overflow: hidden; }
     .bar-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #2563eb, #1e3a8a); transition: width .9s cubic-bezier(.4,0,.2,1); }
-    .pct { font-size: 12px; font-weight: 700; color: #1e293b; }
+    .pct { font-size: 12px; font-weight: 700; color: var(--text-primary); }
 
     /* Charge de l'équipe */
     .team-load { display: flex; flex-direction: column; gap: 14px; min-height: 220px; }
     .tl-row { position: relative; display: grid; grid-template-columns: 72px 1fr; align-items: center; gap: 10px; cursor: default; border-radius: 8px; padding: 2px 4px; transition: background .15s ease; }
-    .tl-row:hover { background: #f8fafc; }
-    .tl-name { font-size: 12px; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tl-row:hover { background: var(--bg-muted); }
+    .tl-name { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .tl-bars { display: flex; flex-direction: column; gap: 4px; }
     .tl-track { display: flex; align-items: center; gap: 6px; }
     .tl-bar { height: 11px; border-radius: 0 4px 4px 0; min-width: 2px; transition: width .8s cubic-bezier(.4,0,.2,1); }
     .tl-bar.load-green { background: #22c55e; } .tl-bar.load-orange { background: #f97316; } .tl-bar.load-red { background: #ef4444; }
     .tl-bar.done { background: #2d6be4; }
-    .tl-val { font-size: 10.5px; color: #64748b; font-weight: 600; }
+    .tl-val { font-size: 10.5px; color: var(--text-muted); font-weight: 600; }
     /* Hover tooltip */
     .tl-tip { position: absolute; z-index: 20; right: 4px; bottom: calc(100% + 6px); min-width: 150px;
-      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 24px rgba(15,23,42,.16); padding: 9px 11px; pointer-events: none; }
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(15,23,42,.16); padding: 9px 11px; pointer-events: none; }
     .tl-tip.below { bottom: auto; top: calc(100% + 6px); }
-    .tt-name { font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
-    .tt-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #475569; line-height: 1.7; }
-    .tt-row b { margin-left: auto; color: #1e293b; padding-left: 10px; }
+    .tt-name { font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
+    .tt-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); line-height: 1.7; }
+    .tt-row b { margin-left: auto; color: var(--text-primary); padding-left: 10px; }
     .tt-row .sw { width: 8px; height: 8px; border-radius: 50%; }
     .tl-legend { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 14px; }
-    .tl-legend .lg { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #64748b; }
+    .tl-legend .lg { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-muted); }
     .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
     .sw.green { background: #22c55e; } .sw.orange { background: #f97316; } .sw.red { background: #ef4444; } .sw.blue { background: #2d6be4; }
 
     /* Jalons (timeline) */
-    .timeline { position: relative; list-style: none; margin: 0; padding: 0 0 0 20px; border-left: 2px solid #e2e8f0; display: flex; flex-direction: column; gap: 16px; }
+    .timeline { position: relative; list-style: none; margin: 0; padding: 0 0 0 20px; border-left: 2px solid var(--border); display: flex; flex-direction: column; gap: 16px; }
     .tl-item { position: relative; }
     .tl-dot { position: absolute; left: -26px; top: 4px; width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 0 2px #fff; }
     .tl-dot.atteint { background: #16a34a; } .tl-dot.manque { background: #dc2626; } .tl-dot.avenir { background: #2563eb; } .tl-dot.urgent { background: #d97706; }
     .tl-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .tl-title { font-size: 13px; font-weight: 600; color: #1e293b; }
-    .tl-sub { font-size: 11.5px; color: #64748b; margin-top: 2px; }
-    .tl-cal { width: 16px; height: 16px; color: #94a3b8; flex-shrink: 0; }
+    .tl-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .tl-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+    .tl-cal { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
 
     /* Livrables en attente */
     .deliv-list { display: flex; flex-direction: column; gap: 8px; }
-    .deliv-item { display: flex; align-items: center; gap: 12px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 11px; transition: background .15s ease; }
-    .deliv-item:hover { background: #f8fafc; }
+    .deliv-item { display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: 12px; padding: 11px; transition: background .15s ease; }
+    .deliv-item:hover { background: var(--bg-muted); }
     .deliv-avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 700; }
     .deliv-body { flex: 1; min-width: 0; }
-    .deliv-file { font-size: 13px; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .deliv-meta { font-size: 11.5px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .deliv-file { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .deliv-meta { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .btn-review { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 12px; border-radius: 8px; background: #2563eb; color: #fff; font-size: 12px; font-weight: 600; text-decoration: none; }
     .btn-review:hover { background: #1d4ed8; }
   `]
@@ -265,8 +295,17 @@ export class PmDashboardComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private badges: BadgeCountsService,
     private cdr: ChangeDetectorRef,
-    private translate: TranslateService
+    private translate: TranslateService,
+    public okr: OkrService
   ) {}
+
+  topObjectives: Objective[] = [];
+  private loadObjectives(): void {
+    this.okr.list().subscribe({
+      next: o => { this.topObjectives = (o || []).slice(0, 4); this.cdr.detectChanges(); },
+      error: () => {}
+    });
+  }
 
   trackKpi(_i: number, k: { labelKey: string }): string { return k.labelKey; }
 
@@ -287,6 +326,7 @@ export class PmDashboardComponent implements OnInit, OnDestroy {
     this.loadProjects();
     this.loadTeamLoad();
     this.loadDeliverables();
+    this.loadObjectives();
 
     // Listen for deliverables count updates to keep dashboard list synchronized
     this.subs.push(this.badges.deliverables$.subscribe(() => {

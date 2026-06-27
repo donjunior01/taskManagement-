@@ -7,7 +7,9 @@ import { UserService, User } from '../../../core/services/user.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 interface SecEvent { id: number; time: string; rawTime: string; user: string; ip: string; type: string; result: string; details: string; }
-interface HeatCell { day: number; count: number; level: number; }
+interface HeatBand { count: number; level: number; }
+/** One day = 3 time-of-day bands (morning/afternoon/evening), rendered as a 3-row grid column. */
+interface HeatColumn { day: number; date: Date; morning: HeatBand; afternoon: HeatBand; evening: HeatBand; }
 interface ProfileView { found: boolean; name: string; email: string; role: string; active: boolean; username: string; total: number; failed: number; lastSeen: string; }
 
 @Component({
@@ -112,7 +114,11 @@ interface ProfileView { found: boolean; name: string; email: string; role: strin
       <div class="card-head"><div><h3>{{ 'admin.securityLog.heatmapTitle' | translate }}</h3><span class="sub">{{ 'admin.securityLog.heatmapSub' | translate }}</span></div></div>
       <div class="heat-body">
         <div class="heat-grid">
-          <div class="heat-cell" *ngFor="let c of heatmap" [ngClass]="'h' + c.level" [title]="'admin.securityLog.attemptsTooltip' | translate:{ count: c.count }"></div>
+          <ng-container *ngFor="let c of heatColumns">
+            <div class="heat-cell" [ngClass]="'h' + c.evening.level" [title]="bandTip('evening', c.evening.count, c.date)"></div>
+            <div class="heat-cell" [ngClass]="'h' + c.afternoon.level" [title]="bandTip('afternoon', c.afternoon.count, c.date)"></div>
+            <div class="heat-cell" [ngClass]="'h' + c.morning.level" [title]="bandTip('morning', c.morning.count, c.date)"></div>
+          </ng-container>
         </div>
         <div class="heat-legend">
           <span>{{ 'admin.securityLog.less' | translate }}</span>
@@ -178,7 +184,7 @@ interface ProfileView { found: boolean; name: string; email: string; role: strin
     .auto-toggle .refresh.spin { color: var(--success); animation: secspin 1.2s linear infinite; }
     @keyframes secspin { to { transform: rotate(360deg); } }
     .switch { width: 34px; height: 19px; padding: 0; border: none; border-radius: 999px; background: var(--border-strong); position: relative; cursor: pointer; flex-shrink: 0;
-      .knob { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: transform .2s ease; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+      .knob { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--bg-card); transition: transform .2s ease; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
       &.on { background: var(--success); } &.on .knob { transform: translateX(15px); } }
     .btn { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 14px; border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
       svg { width: 15px; height: 15px; }
@@ -232,11 +238,10 @@ interface ProfileView { found: boolean; name: string; email: string; role: strin
     .pg-btn:hover:not(:disabled) { background: var(--bg-subtle); color: var(--text-primary); }
     .pg-btn:disabled { opacity: .4; cursor: default; }
 
-    /* heatmap */
+    /* heatmap — 90 days, each a 3-row column (evening top → morning bottom), no row labels */
     .heat-body { padding: 20px; }
-    .heat-grid { display: grid; grid-template-columns: repeat(15, 1fr); gap: 4px; }
-    @media (min-width: 640px) { .heat-grid { grid-template-columns: repeat(30, 1fr); } }
-    .heat-cell { aspect-ratio: 1; border-radius: 3px; }
+    .heat-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(3, 30px); grid-auto-columns: 30px; gap: 3px; overflow-x: auto; padding-bottom: 6px; }
+    .heat-cell { border-radius: 3px; }
     .heat-cell.h0 { background: var(--bg-subtle); }
     .heat-cell.h1 { background: color-mix(in oklab, var(--danger) 15%, transparent); }
     .heat-cell.h2 { background: color-mix(in oklab, var(--danger) 35%, transparent); }
@@ -275,7 +280,7 @@ export class AdminSecurityLogComponent implements OnInit, OnDestroy {
   metrics: SecurityMetrics = { totalAttempts: 0, failedAttempts: 0, blockedIps: 0 };
   events: SecEvent[] = [];
   filteredEvents: SecEvent[] = [];
-  heatmap: HeatCell[] = [];
+  heatColumns: HeatColumn[] = [];
   kpi = { success: 0, failed: 0, locked: 0, suspicious: 0 };
 
   userOptions: string[] = [];
@@ -396,18 +401,42 @@ export class AdminSecurityLogComponent implements OnInit, OnDestroy {
     };
   }
 
+  /**
+   * Last 90 days, each split into 3 time-of-day bands — morning (00:00–11:59),
+   * afternoon (12:00–17:59), evening (18:00–23:59) — rendered in the grid as a 3-row column per day
+   * (evening top → morning bottom), so the chart shows WHEN failed attempts cluster.
+   */
   private buildHeatmap(sorted: LoginAttempt[]): void {
-    const counts = new Array(90).fill(0);
+    const DAYS = 90;
+    const grid: number[][] = Array.from({ length: DAYS }, () => [0, 0, 0]); // [day][0=morning,1=afternoon,2=evening]
     const today = new Date(); today.setHours(0, 0, 0, 0);
     sorted.filter(a => !a.success).forEach(a => {
-      const d = new Date(a.attemptedAt); d.setHours(0, 0, 0, 0);
-      const idx = 89 - Math.round((today.getTime() - d.getTime()) / 86400000);
-      if (idx >= 0 && idx < 90) counts[idx]++;
+      const dt = new Date(a.attemptedAt);
+      const day = new Date(dt); day.setHours(0, 0, 0, 0);
+      const idx = (DAYS - 1) - Math.round((today.getTime() - day.getTime()) / 86400000);
+      if (idx < 0 || idx >= DAYS) return;
+      const h = dt.getHours();
+      const band = h < 12 ? 0 : h < 18 ? 1 : 2;
+      grid[idx][band]++;
     });
-    this.heatmap = counts.map((count, day) => ({
-      day, count,
-      level: count === 0 ? 0 : count < 3 ? 1 : count < 6 ? 2 : count < 12 ? 3 : 4
-    }));
+    const level = (c: number) => c === 0 ? 0 : c < 3 ? 1 : c < 6 ? 2 : c < 12 ? 3 : 4;
+    this.heatColumns = grid.map((b, day) => {
+      const date = new Date(today); date.setDate(date.getDate() - (DAYS - 1 - day));
+      return {
+        day, date,
+        morning: { count: b[0], level: level(b[0]) },
+        afternoon: { count: b[1], level: level(b[1]) },
+        evening: { count: b[2], level: level(b[2]) }
+      };
+    });
+  }
+
+  /** Tooltip for a band cell, e.g. "25/06 · Morning — 3 failed attempts". */
+  bandTip(bandKey: string, count: number, date: Date): string {
+    const band = this.translate.instant('admin.securityLog.' + bandKey);
+    const attempts = this.translate.instant('admin.securityLog.attemptsTooltip', { count });
+    const d = date.toLocaleDateString(this.locale(), { day: '2-digit', month: '2-digit' });
+    return `${d} · ${band} — ${attempts}`;
   }
 
   applyFilters(): void {

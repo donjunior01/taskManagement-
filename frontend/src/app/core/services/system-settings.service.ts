@@ -24,6 +24,8 @@ export interface SystemSettings {
   twoFactorRequiredAdmins: boolean;
   twoFactorRequiredAll: boolean;
   maintenanceMode: boolean;
+  registrationEnabled: boolean;
+  allowedEmailDomains: string;
   // Notifications
   smtpHost: string;
   smtpPort: number;
@@ -69,6 +71,16 @@ export class SystemSettingsService {
   /** Public password policy (no auth) — for the registration page's live guidance/validation. */
   getPasswordPolicy(): Observable<PasswordPolicy> {
     return this.api.get<PasswordPolicy>('/settings/password-policy');
+  }
+
+  /** Public registration policy (no auth) — whether sign-up is open and which email domains are allowed. */
+  getRegistrationPolicy(): Observable<{ registrationEnabled: boolean; allowedDomains: string[] }> {
+    return this.api.get<{ registrationEnabled: boolean; allowedDomains: string[] }>('/settings/registration');
+  }
+
+  /** Admin: send a test email to verify the configured provider (Brevo/SMTP). */
+  sendTestEmail(to?: string): Observable<any> {
+    return this.api.post<any>('/settings/test-email', to ? { to } : {});
   }
 
   updateGeneral(patch: Partial<SystemSettings>): Observable<SystemSettings> {

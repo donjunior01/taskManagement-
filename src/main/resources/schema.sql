@@ -92,6 +92,141 @@ CREATE TABLE IF NOT EXISTS `webhook_events` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 CREATE INDEX IF NOT EXISTS idx_webhooks_org ON webhook_subscriptions(organization_id);
 
+-- Email invitations to join a specific organization (the token carries the target tenant).
+CREATE TABLE IF NOT EXISTS `invitations` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `organization_id` BIGINT DEFAULT 1,
+    `email` VARCHAR(255) NOT NULL,
+    `token` VARCHAR(80) NOT NULL,
+    `role` VARCHAR(40) NOT NULL,
+    `invited_by_name` VARCHAR(255),
+    `created_at` DATETIME,
+    `expires_at` DATETIME,
+    `accepted` BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_invitation_token` (`token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE INDEX IF NOT EXISTS idx_invitations_org ON invitations(organization_id);
+
+-- Automation rules (per tenant): When trigger ▸ If condition ▸ Then action.
+CREATE TABLE IF NOT EXISTS `automation_rules` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `organization_id` BIGINT DEFAULT 1,
+    `name` VARCHAR(255) NOT NULL,
+    `enabled` BOOLEAN NOT NULL DEFAULT TRUE,
+    `trigger` VARCHAR(60) NOT NULL,
+    `condition_field` VARCHAR(60),
+    `condition_value` VARCHAR(255),
+    `action_type` VARCHAR(60) NOT NULL,
+    `action_value` VARCHAR(255),
+    `created_at` DATETIME,
+    `last_run_at` DATETIME,
+    `run_count` BIGINT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE INDEX IF NOT EXISTS idx_automation_org ON automation_rules(organization_id);
+
+-- Tenant-defined custom fields attached to tasks (values stored on tasks.custom_fields as JSON).
+CREATE TABLE IF NOT EXISTS `custom_field_definitions` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `organization_id` BIGINT DEFAULT 1,
+    `name` VARCHAR(255) NOT NULL,
+    `field_type` VARCHAR(20) NOT NULL DEFAULT 'TEXT',
+    `options` VARCHAR(1000),
+    `required` BOOLEAN NOT NULL DEFAULT FALSE,
+    `display_order` INT NOT NULL DEFAULT 0,
+    `active` BOOLEAN NOT NULL DEFAULT TRUE,
+    `created_at` DATETIME,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE INDEX IF NOT EXISTS idx_customfield_org ON custom_field_definitions(organization_id);
+
+-- OKRs: objectives and their measurable key results.
+CREATE TABLE IF NOT EXISTS `objectives` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `organization_id` BIGINT DEFAULT 1,
+    `title` VARCHAR(255) NOT NULL,
+    `description` TEXT,
+    `period` VARCHAR(40),
+    `owner_id` BIGINT,
+    `owner_name` VARCHAR(255),
+    `status` VARCHAR(20) NOT NULL DEFAULT 'ON_TRACK',
+    `created_at` DATETIME,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE INDEX IF NOT EXISTS idx_objective_org ON objectives(organization_id);
+
+CREATE TABLE IF NOT EXISTS `key_results` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `organization_id` BIGINT DEFAULT 1,
+    `objective_id` BIGINT NOT NULL,
+    `title` VARCHAR(255) NOT NULL,
+    `start_value` DOUBLE DEFAULT 0,
+    `target_value` DOUBLE DEFAULT 100,
+    `current_value` DOUBLE DEFAULT 0,
+    `unit` VARCHAR(20),
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE INDEX IF NOT EXISTS idx_keyresult_obj ON key_results(objective_id);
+
+-- Knowledge base / wiki pages (nestable via parent_id).
+CREATE TABLE IF NOT EXISTS `wiki_pages` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `organization_id` BIGINT DEFAULT 1,
+    `title` VARCHAR(255) NOT NULL,
+    `content` LONGTEXT,
+    `parent_id` BIGINT,
+    `icon` VARCHAR(16),
+    `created_by_id` BIGINT,
+    `created_by_name` VARCHAR(255),
+    `updated_by_id` BIGINT,
+    `updated_by_name` VARCHAR(255),
+    `created_at` DATETIME,
+    `updated_at` DATETIME,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE INDEX IF NOT EXISTS idx_wiki_org ON wiki_pages(organization_id);
+
+-- Tenant-defined custom workflow statuses (board columns); each rolls up to a canonical category.
+CREATE TABLE IF NOT EXISTS `workflow_statuses` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `organization_id` BIGINT DEFAULT 1,
+    `name` VARCHAR(255) NOT NULL,
+    `category` VARCHAR(20) NOT NULL DEFAULT 'TODO',
+    `color` VARCHAR(20),
+    `display_order` INT NOT NULL DEFAULT 0,
+    `active` BOOLEAN NOT NULL DEFAULT TRUE,
+    `created_at` DATETIME,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE INDEX IF NOT EXISTS idx_workflowstatus_org ON workflow_statuses(organization_id);
+
+-- Tenant-defined reusable task templates.
+CREATE TABLE IF NOT EXISTS `task_templates` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `organization_id` BIGINT DEFAULT 1,
+    `name` VARCHAR(255) NOT NULL,
+    `task_name` VARCHAR(255),
+    `description` TEXT,
+    `priority` VARCHAR(20) DEFAULT 'MEDIUM',
+    `difficulty` VARCHAR(20) DEFAULT 'MEDIUM',
+    `default_deadline_days` INT,
+    `custom_fields` TEXT,
+    `active` BOOLEAN NOT NULL DEFAULT TRUE,
+    `created_at` DATETIME,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE INDEX IF NOT EXISTS idx_tasktemplate_org ON task_templates(organization_id);
+
+-- Task dependencies: task_id is "blocked by" blocked_by_task_id.
+CREATE TABLE IF NOT EXISTS `task_dependencies` (
+    `task_id` BIGINT NOT NULL,
+    `blocked_by_task_id` BIGINT NOT NULL,
+    PRIMARY KEY (`task_id`, `blocked_by_task_id`),
+    FOREIGN KEY (`task_id`) REFERENCES `tasks`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`blocked_by_task_id`) REFERENCES `tasks`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Create projects table
 CREATE TABLE IF NOT EXISTS `projects` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -420,12 +555,29 @@ ALTER TABLE `projects` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
 UPDATE `projects` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
 ALTER TABLE `tasks` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
 UPDATE `tasks` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
+ALTER TABLE `tasks` ADD COLUMN `custom_fields` TEXT;
+ALTER TABLE `tasks` ADD COLUMN `workflow_status_id` BIGINT;
 ALTER TABLE `teams` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
 UPDATE `teams` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
 ALTER TABLE `deliverables` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
 UPDATE `deliverables` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
 ALTER TABLE `support_tickets` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
 UPDATE `support_tickets` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
+ALTER TABLE `activity_logs` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
+UPDATE `activity_logs` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
+ALTER TABLE `login_attempts` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
+UPDATE `login_attempts` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
+-- Tenant-scope the collaboration entities (org isolation on every list, incl. unscoped calendar queries).
+ALTER TABLE `calendar_events` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
+UPDATE `calendar_events` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
+ALTER TABLE `comments` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
+UPDATE `comments` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
+ALTER TABLE `time_logs` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
+UPDATE `time_logs` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
+ALTER TABLE `messages` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
+UPDATE `messages` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
+ALTER TABLE `task_checklist_items` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
+UPDATE `task_checklist_items` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
 CREATE INDEX IF NOT EXISTS idx_projects_org ON projects(organization_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_org ON tasks(organization_id);
 CREATE INDEX IF NOT EXISTS idx_teams_org ON teams(organization_id);
@@ -446,7 +598,8 @@ CREATE TABLE IF NOT EXISTS `task_checklist_items` (
 
 -- System settings (admin configuration: General + Security). Single-row table (id = 1).
 CREATE TABLE IF NOT EXISTS `system_settings` (
-    `id` BIGINT NOT NULL,
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `organization_id` BIGINT DEFAULT 1,
     `app_name` VARCHAR(120) NOT NULL DEFAULT 'TaskMaster Pro',
     `default_language` VARCHAR(40) NOT NULL DEFAULT 'Français',
     `timezone` VARCHAR(60) NOT NULL DEFAULT 'Europe/Paris (UTC+1)',
@@ -461,6 +614,8 @@ CREATE TABLE IF NOT EXISTS `system_settings` (
     `two_factor_required_admins` BOOLEAN NOT NULL DEFAULT FALSE,
     `two_factor_required_all` BOOLEAN NOT NULL DEFAULT FALSE,
     `maintenance_mode` BOOLEAN NOT NULL DEFAULT FALSE,
+    `registration_enabled` BOOLEAN NOT NULL DEFAULT TRUE,
+    `allowed_email_domains` VARCHAR(1000) DEFAULT '',
     `smtp_host` VARCHAR(120) DEFAULT 'smtp.gpi.app',
     `smtp_port` INT DEFAULT 587,
     `smtp_username` VARCHAR(120) DEFAULT 'noreply@gpi.app',
@@ -492,6 +647,14 @@ ALTER TABLE `system_settings` ADD COLUMN `notify_on_suspicious_login` BOOLEAN NO
 ALTER TABLE `system_settings` ADD COLUMN `notify_on_project_overdue` BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE `system_settings` ADD COLUMN `backup_retention_days` INT NOT NULL DEFAULT 30;
 ALTER TABLE `system_settings` ADD COLUMN `two_factor_required_all` BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE `system_settings` ADD COLUMN `registration_enabled` BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE `system_settings` ADD COLUMN `allowed_email_domains` VARCHAR(1000) DEFAULT '';
+-- Per-organization settings (config isolation). The existing singleton row becomes the default org's.
+ALTER TABLE `system_settings` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
+UPDATE `system_settings` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
+CREATE INDEX IF NOT EXISTS idx_settings_org ON system_settings(organization_id);
+-- New orgs lazily get their own settings row, so the id must auto-increment (it was a fixed singleton).
+ALTER TABLE `system_settings` MODIFY COLUMN `id` BIGINT NOT NULL AUTO_INCREMENT;
 
 -- Project creator (per-admin project ownership & traceability). Harmless duplicate-column error on re-run.
 ALTER TABLE `projects` ADD COLUMN `created_by` BIGINT;

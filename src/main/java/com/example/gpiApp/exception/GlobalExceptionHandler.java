@@ -19,4 +19,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error(ex.getMessage() != null ? ex.getMessage() : "Access denied"));
     }
+
+    /** Validation/business-rule failures (e.g. invitation expired, email taken) → 400 with the message. */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadRequest(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error(ex.getMessage() != null ? ex.getMessage() : "Invalid request"));
+    }
 }

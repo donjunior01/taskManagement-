@@ -69,7 +69,25 @@ public class TaskController {
         Long userId = getCurrentUserId(authentication);
         return ResponseEntity.ok(taskService.deleteTask(id, userId));
     }
-    
+
+    // ─── Task dependencies (blockers) ───
+    @GetMapping("/{id}/dependencies")
+    public ResponseEntity<java.util.List<java.util.Map<String, Object>>> getDependencies(@PathVariable Long id) {
+        return ResponseEntity.ok(taskService.getDependencies(id));
+    }
+
+    @PostMapping("/{id}/dependencies/{blockerId}")
+    public ResponseEntity<ApiResponse<java.util.List<java.util.Map<String, Object>>>> addDependency(
+            @PathVariable Long id, @PathVariable Long blockerId) {
+        return ResponseEntity.ok(ApiResponse.success("Dependency added", taskService.addDependency(id, blockerId)));
+    }
+
+    @DeleteMapping("/{id}/dependencies/{blockerId}")
+    public ResponseEntity<ApiResponse<Void>> removeDependency(@PathVariable Long id, @PathVariable Long blockerId) {
+        taskService.removeDependency(id, blockerId);
+        return ResponseEntity.ok(ApiResponse.success("Dependency removed", null));
+    }
+
     @Operation(summary = "Get tasks by user", description = "Retrieve all tasks assigned to a specific user")
     @GetMapping("/user/{userId}")
     public ResponseEntity<PagedResponse<TaskDTO>> getTasksByUser(
@@ -120,11 +138,13 @@ public class TaskController {
             @RequestBody java.util.Map<String, Object> request,
             Authentication authentication) {
         Long userId = getCurrentUserId(authentication);
-        Integer progress = request.get("progress") != null ? 
+        Integer progress = request.get("progress") != null ?
             Integer.parseInt(request.get("progress").toString()) : null;
-        String status = request.get("status") != null ? 
+        String status = request.get("status") != null ?
             request.get("status").toString() : null;
-        return ResponseEntity.ok(taskService.updateTaskProgress(id, progress, status, userId));
+        Long workflowStatusId = request.get("workflowStatusId") != null ?
+            Long.parseLong(request.get("workflowStatusId").toString()) : null;
+        return ResponseEntity.ok(taskService.updateTaskProgress(id, progress, status, workflowStatusId, userId));
     }
     
     private Long getCurrentUserId(Authentication authentication) {

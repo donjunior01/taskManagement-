@@ -43,9 +43,33 @@
   --border-brand:     rgba(37,99,235,.25);
 
   /* Sidebar */
-  --sidebar-bg:       #0a0f1e;
+  --sidebar-bg:       #0a0f1e;   /* navy brand colour reused by avatars/pills — NOT the sidebar surface */
   --sidebar-w:        260px;
   --header-h:         64px;
+
+  /* Sidebar surface + nav (theme-aware; light here, cyber in html.dark) */
+  --sidebar-surface:     #ffffff;
+  --sidebar-fg:          #5b6677;
+  --sidebar-fg-strong:   #0f172a;
+  --sidebar-fg-faint:    #9aa6b6;
+  --sidebar-hover-bg:    #f1f5f9;
+  --sidebar-active-bg:   #eef4ff;
+  --sidebar-active-fg:   #1d4ed8;
+  --sidebar-accent:      #2563eb;
+  --sidebar-border:      #e9eef5;
+  --sidebar-edge:        rgba(15,23,42,.06);
+  --sidebar-glow-top:    transparent;
+  --sidebar-glow-accent: transparent;
+  --sidebar-brand-txt:   #0f172a;
+  --sidebar-widget-bg:   #f6f8fc;
+  --sidebar-widget-border: #e9eef5;
+  --sidebar-widget-title:  #0f172a;
+  --sidebar-shimmer:     rgba(15,23,42,.045);
+  --sidebar-scroll:      rgba(15,23,42,.16);
+  --sidebar-badge:       #2563eb;
+
+  /* Violet tint badge text (dark in light mode, light in dark mode) */
+  --tint-violet-text:    #7c3aed;
 
   /* Status — Success */
   --success:          #10b981;
@@ -110,6 +134,90 @@
   /* Legacy aliases */
   --transition-fast:   .15s cubic-bezier(.4,0,.2,1);
   --transition-normal: .25s cubic-bezier(.4,0,.2,1);
+}
+
+/* ════════════════════════════════════════════════
+   DARK THEME — token overrides (toggled via <html class="dark">)
+   Only neutral surfaces/text/borders flip; brand + status hues stay,
+   with softened translucent backgrounds so they read on dark.
+   ════════════════════════════════════════════════ */
+html.dark {
+  --primary-bg:       rgba(59,130,246,.16);
+  --accent-bg:        rgba(249,115,22,.16);
+
+  --bg-page:          #0b1120;
+  --bg-card:          #131a2b;
+  --bg-subtle:        #1b2336;
+  --bg-muted:         #161d2e;
+  --bg-overlay:       rgba(2,6,18,.66);
+
+  --text-primary:     #e7ecf5;
+  --text-secondary:   #aeb9cc;
+  --text-muted:       #7d8aa3;
+  --text-inverse:     #0b1120;
+  --text-brand:       #60a5fa;
+
+  --border:           #283249;
+  --border-light:     #1d2740;
+  --border-strong:    #3a465f;
+  --border-brand:     rgba(96,165,250,.35);
+
+  --success-bg:       rgba(16,185,129,.18);  --success-text: #6ee7b7;  --success-border: rgba(16,185,129,.4);
+  --warning-bg:       rgba(245,158,11,.18);  --warning-text: #fcd34d;  --warning-border: rgba(245,158,11,.4);
+  --danger-bg:        rgba(239,68,68,.18);   --danger-text:  #fca5a5;  --danger-border:  rgba(239,68,68,.4);
+  --info-bg:          rgba(6,182,212,.18);   --info-text:    #67e8f9;
+
+  --glass-bg:         rgba(19,26,43,.72);
+  --glass-border:     rgba(255,255,255,.08);
+  --glass-shadow:     0 8px 32px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+
+  --shadow-xs:  0 1px 2px rgba(0,0,0,.4);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.4);
+  --shadow-md:  0 4px 8px rgba(0,0,0,.5), 0 2px 4px rgba(0,0,0,.4);
+  --shadow-lg:  0 10px 15px rgba(0,0,0,.5), 0 4px 6px rgba(0,0,0,.4);
+  --shadow-xl:  0 20px 25px rgba(0,0,0,.55), 0 8px 10px rgba(0,0,0,.4);
+  --shadow-2xl: 0 25px 50px rgba(0,0,0,.6);
+
+  /* Sidebar — "cyber" deep surface with cyan/blue neon accents */
+  --sidebar-surface:     #060a14;
+  --sidebar-fg:          rgba(226,232,240,.55);
+  --sidebar-fg-strong:   #f8fafc;
+  --sidebar-fg-faint:    rgba(148,163,184,.50);
+  --sidebar-hover-bg:    rgba(56,189,248,.09);
+  --sidebar-active-bg:   rgba(56,189,248,.14);
+  --sidebar-active-fg:   #ffffff;
+  --sidebar-accent:      #38bdf8;
+  --sidebar-border:      rgba(148,163,184,.14);
+  --sidebar-edge:        rgba(56,189,248,.30);
+  --sidebar-glow-top:    rgba(34,211,238,.20);
+  --sidebar-glow-accent: rgba(37,99,235,.18);
+  --sidebar-brand-txt:   #ffffff;
+  --sidebar-widget-bg:   rgba(56,189,248,.06);
+  --sidebar-widget-border: rgba(148,163,184,.16);
+  --sidebar-widget-title:  #f1f5f9;
+  --sidebar-shimmer:     rgba(255,255,255,.06);
+  --sidebar-scroll:      rgba(148,163,184,.28);
+  --sidebar-badge:       #0ea5e9;
+  --tint-violet-text:    #c4b5fd;
+
+  /* Header glass — dark translucent to match the cyber sidebar */
+  --header-bg:     rgba(15,21,34,.82);
+  --header-border: rgba(148,163,184,.14);
+
+  color-scheme: dark;
+}
+
+/* Admin layout redefines tokens in OKLCH — flip its neutrals too. */
+html.dark .admin-layout {
+  --bg-page:    oklch(16% .02 260);
+  --bg-card:    oklch(21% .025 260);
+  --bg-subtle:  oklch(25% .03 260);
+  --bg-muted:   oklch(19% .025 260);
+  --text-primary:   oklch(95% .01 260);
+  --text-secondary: oklch(80% .02 260);
+  --text-muted:     oklch(64% .02 260);
+  --border:         oklch(33% .03 260);
+  --border-light:   oklch(27% .03 260);
 }
 
 /* ── Reset ─────────────────────────────────────── */

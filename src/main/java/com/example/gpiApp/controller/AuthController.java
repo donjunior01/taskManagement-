@@ -43,6 +43,7 @@ public class AuthController {
     private final com.example.gpiApp.repository.OrganizationRepository organizationRepository;
     private final com.example.gpiApp.service.SystemSettingsService systemSettingsService;
     private final com.example.gpiApp.service.IpResolverService ipResolver;
+    private final com.example.gpiApp.service.InvitationService invitationService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest httpRequest) {
@@ -104,6 +105,18 @@ public class AuthController {
                         "Mode maintenance actif", user.getId());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(ApiResponse.error("La plateforme est en maintenance. Seuls les administrateurs peuvent se connecter."));
+            }
+
+            // Email-domain access policy — employees must sign in with a company email.
+            // Admins are always exempt so the policy can never lock the organization out.
+            if (user.getRole() != allUsers.Role.ADMIN) {
+                String domainError = systemSettingsService.validateEmailDomain(user.getEmail());
+                if (domainError != null) {
+                    loginAttemptService.logLoginAttempt(user.getUsername(), user.getEmail(),
+                            com.example.gpiApp.entity.LoginAttempt.LoginStatus.FAILURE, ip, userAgent,
+                            "Domaine email non autorisé", user.getId());
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(domainError));
+                }
             }
 
             // Two-factor challenge: password is correct, now require a valid TOTP code.
@@ -186,18 +199,51 @@ public class AuthController {
             return ResponseEntity.badRequest().body(ApiResponse.error(policyError));
         }
 
+        boolean createOrg = registerRequest.getOrganizationName() != null
+                && !registerRequest.getOrganizationName().isBlank();
+
+        // Employee self-registration into the company is gated by the admin's access policy
+        // (a brand-new organization sign-up brings its own domain, so it's exempt).
+        if (!createOrg) {
+            if (!systemSettingsService.isRegistrationEnabled()) {
+                return ResponseEntity.status(403).body(ApiResponse.error(
+                        "Self-registration is currently disabled. Please contact your administrator for an invitation."));
+            }
+            String domainError = systemSettingsService.validateEmailDomain(registerRequest.getEmail());
+            if (domainError != null) {
+                return ResponseEntity.badRequest().body(ApiResponse.error(domainError));
+            }
+        }
+
         try {
+
             allUsers user = new allUsers();
             user.setUsername(registerRequest.getUsername());
             user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
             user.setPasswordChangedAt(java.time.LocalDateTime.now());
-            // Phase 1: place new sign-ups in the default tenant (org-on-signup comes in a later phase).
-            organizationRepository.findById(1L).ifPresent(user::setOrganization);
             user.setEmail(registerRequest.getEmail());
             user.setFirstName(registerRequest.getFirstName());
             user.setLastName(registerRequest.getLastName());
-            user.setRole(allUsers.Role.USER); // Default role
-            // New self-registrations start INACTIVE and must be approved by an admin.
+
+            if (createOrg) {
+                // SaaS sign-up: spin up a brand-new organization; this user is its admin/owner and is
+                // active immediately (it's their own workspace, so no approval is needed).
+                com.example.gpiApp.entity.Organization org = com.example.gpiApp.entity.Organization.builder()
+                        .name(registerRequest.getOrganizationName().trim())
+                        .slug(uniqueSlug(registerRequest.getOrganizationName()))
+                        .plan("FREE").active(true).build();
+                org = organizationRepository.save(org);
+                user.setOrganization(org);
+                user.setRole(allUsers.Role.ADMIN);
+                user.setActive(true);
+                userRepository.save(user);
+                return ResponseEntity.ok(ApiResponse.success(
+                        "Organization created — you can now sign in as its administrator.", null));
+            }
+
+            // Legacy/no-org path: join the default tenant as a pending user awaiting admin approval.
+            organizationRepository.findById(1L).ifPresent(user::setOrganization);
+            user.setRole(allUsers.Role.USER);
             user.setActive(false);
 
             allUsers savedUser = userRepository.save(user);
@@ -241,6 +287,32 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Registration failed. Please try again."));
         }
+    }
+
+    /** Public: details for an invitation accept page (org name, target email, validity). */
+    @GetMapping("/invite/{token}")
+    public ResponseEntity<?> lookupInvite(@PathVariable String token) {
+        return ResponseEntity.ok(ApiResponse.success("OK", invitationService.lookup(token)));
+    }
+
+    /** Public: accept an invitation and create the account in the invitation's organization. */
+    @PostMapping("/invite/accept")
+    public ResponseEntity<?> acceptInvite(@RequestBody java.util.Map<String, String> body) {
+        invitationService.accept(body.get("token"), body.get("username"),
+                body.get("firstName"), body.get("lastName"), body.get("password"));
+        return ResponseEntity.ok(ApiResponse.success("Account created — you can now sign in.", null));
+    }
+
+    /** Build a URL-safe, unique slug from an organization name. */
+    private String uniqueSlug(String name) {
+        String base = name.toLowerCase().trim().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
+        if (base.isBlank()) base = "org";
+        String slug = base;
+        int i = 1;
+        while (organizationRepository.existsBySlug(slug)) {
+            slug = base + "-" + (i++);
+        }
+        return slug;
     }
 
     @PostMapping("/logout")

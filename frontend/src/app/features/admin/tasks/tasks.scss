@@ -526,8 +526,8 @@
   }
 
   &.medium {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: var(--primary-bg);
+    color: var(--text-brand);
   }
 
   &.high {
@@ -588,7 +588,7 @@
   }
 
   &.in_progress {
-    color: #1d4ed8;
+    color: var(--text-brand);
   }
 
   &.on_hold {
@@ -618,8 +618,8 @@
   }
 
   &.in_progress {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: var(--primary-bg);
+    color: var(--text-brand);
   }
 
   &.on_hold {

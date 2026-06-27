@@ -87,7 +87,7 @@
   }
 
   &.btn-secondary {
-    background: #fff;
+    background: var(--bg-card);
     color: var(--text-secondary);
     border-color: var(--border);
     &:hover:not(:disabled) { background: var(--bg-subtle); }
@@ -321,7 +321,7 @@
 
   tbody tr {
     transition: background var(--transition-fast);
-    &:hover { background: #f8fafc; }
+    &:hover { background: var(--bg-muted); }
     &:last-child td { border-bottom: none; }
   }
 
@@ -483,7 +483,7 @@
   height: 30px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--bg-card);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -569,7 +569,7 @@
   height: 32px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--bg-card);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1085,7 +1085,7 @@
   .knob {
     position: absolute; top: 2px; left: 2px;
     width: 16px; height: 16px; border-radius: 50%;
-    background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25);
+    background: var(--bg-card); box-shadow: 0 1px 2px rgba(0,0,0,.25);
     transition: transform .2s ease;
   }
   &.on { background: var(--success); }
@@ -1116,11 +1116,18 @@
 .role-perms { margin-top: 10px; }
 .role-perms-label {
   display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: .4px; color: #94a3b8; margin-bottom: 6px;
+  letter-spacing: .4px; color: var(--text-muted); margin-bottom: 6px;
 }
 .role-perms-chips { display: flex; flex-wrap: wrap; gap: 5px; }
 .role-perm-chip {
   font-size: 11px; font-weight: 600; font-family: monospace;
-  background: #eef2ff; color: #4338ca; padding: 3px 8px; border-radius: 6px;
+  background: var(--primary-bg); color: #4338ca; padding: 3px 8px; border-radius: 6px;
 }
-.role-perms-empty { font-size: 12px; color: #94a3b8; font-style: italic; }
+.role-perms-empty { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+/* Invite link box */
+.invite-link-box {
+  margin-top: 8px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px; word-break: break-all;
+}
+.invite-link-box code { font-family: monospace; font-size: 12.5px; color: var(--text-primary); }

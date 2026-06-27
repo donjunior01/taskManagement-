@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class SystemSettingsController {
 
     private final SystemSettingsService settingsService;
+    private final com.example.gpiApp.service.EmailService emailService;
 
     @Operation(summary = "Get system settings")
     @GetMapping
@@ -39,6 +40,15 @@ public class SystemSettingsController {
     @GetMapping("/password-policy")
     public ResponseEntity<com.example.gpiApp.dto.PasswordPolicyDTO> getPasswordPolicy() {
         return ResponseEntity.ok(settingsService.getPasswordPolicy());
+    }
+
+    @Operation(summary = "Get public registration access policy",
+            description = "Unauthenticated — lets the registration page know if sign-up is open and which email domains are allowed.")
+    @GetMapping("/registration")
+    public ResponseEntity<java.util.Map<String, Object>> getRegistrationPolicy() {
+        return ResponseEntity.ok(java.util.Map.of(
+                "registrationEnabled", settingsService.isRegistrationEnabled(),
+                "allowedDomains", settingsService.getAllowedEmailDomains()));
     }
 
     @Operation(summary = "Update general settings (admin only)")
@@ -67,5 +77,31 @@ public class SystemSettingsController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<SystemSettingsDTO> updateBackup(@RequestBody SystemSettingsDTO dto) {
         return ResponseEntity.ok(settingsService.updateBackup(dto));
+    }
+
+    @Operation(summary = "Send a test email (admin only)",
+            description = "Verifies the configured email provider (Brevo or SMTP) by sending a test message.")
+    @PostMapping("/test-email")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<com.example.gpiApp.dto.ApiResponse<String>> sendTestEmail(
+            @RequestBody(required = false) java.util.Map<String, String> body,
+            org.springframework.security.core.Authentication auth) {
+        if (!emailService.isConfigured()) {
+            return ResponseEntity.badRequest().body(com.example.gpiApp.dto.ApiResponse.error(
+                    "Email is not configured. Set BREVO_API_KEY (Brevo) — or EMAIL_ENABLED=true with SMTP_* — and restart the backend."));
+        }
+        String to = (body != null && body.get("to") != null && !body.get("to").isBlank())
+                ? body.get("to").trim() : (auth != null ? auth.getName() : null);
+        if (to == null) {
+            return ResponseEntity.badRequest().body(com.example.gpiApp.dto.ApiResponse.error("No recipient address."));
+        }
+        try {
+            emailService.sendTest(to);
+            return ResponseEntity.ok(com.example.gpiApp.dto.ApiResponse.success(
+                    "Test email sent to " + to + " via " + emailService.activeProvider() + ".", to));
+        } catch (Exception e) {
+            return ResponseEntity.status(502).body(com.example.gpiApp.dto.ApiResponse.error(
+                    "Provider (" + emailService.activeProvider() + ") rejected the email: " + e.getMessage()));
+        }
     }
 }

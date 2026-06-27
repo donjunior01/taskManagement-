@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -11,6 +11,9 @@ import { ProjectService, Project } from '../../../core/services/project.service'
 import { UserService, User } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { CustomFieldService, CustomFieldDefinition } from '../../../core/services/custom-field.service';
+import { TaskTemplateService, TaskTemplate } from '../../../core/services/task-template.service';
+import { WorkflowService, WorkflowStatus } from '../../../core/services/workflow.service';
 
 @Component({
   selector: 'app-pm-tasks',
@@ -56,10 +59,39 @@ import { ToastService } from '../../../core/services/toast.service';
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {{ 'pm.tasks.viewCal' | translate }}
           </button>
         </div>
+        <div class="tmpl-wrap" *appHasPermission="'task.create'">
+          <ng-container *ngIf="taskTemplates.length">
+            <button class="btn-outline" (click)="showTemplates = !showTemplates; $event.stopPropagation()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>
+              {{ 'pm.tasks.fromTemplate' | translate }}
+            </button>
+            <div class="tmpl-menu" *ngIf="showTemplates">
+              <button *ngFor="let t of taskTemplates" (click)="createFromTemplate(t)">
+                <span class="tm-name">{{ t.name }}</span>
+                <span class="tm-prio" [attr.data-p]="t.priority">{{ ('pm.tasks.prio' + cap(t.priority)) | translate }}</span>
+              </button>
+            </div>
+          </ng-container>
+        </div>
         <button *appHasPermission="'task.create'" class="btn-primary" (click)="openCreate()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> {{ 'pm.tasks.newTask' | translate }}
         </button>
       </div>
+    </div>
+
+    <!-- ═══ Saved views (filter presets, stored locally) ═══ -->
+    <div class="saved-views">
+      <span class="sv-label">{{ 'pm.tasks.views' | translate }}</span>
+      <button class="sv-chip" [class.on]="!activeView" (click)="clearView()">{{ 'pm.tasks.allView' | translate }}</button>
+      <button class="sv-chip" *ngFor="let v of savedViews" [class.on]="activeView === v.name" (click)="applyView(v)">
+        {{ v.name }}<span class="sv-x" (click)="deleteView(v.name); $event.stopPropagation()">×</span>
+      </button>
+      <button *ngIf="!savingView" class="sv-add" (click)="savingView = true; newViewName = ''">+ {{ 'pm.tasks.saveView' | translate }}</button>
+      <ng-container *ngIf="savingView">
+        <input class="sv-input" [(ngModel)]="newViewName" [placeholder]="'pm.tasks.viewName' | translate" (keyup.enter)="saveView()" autofocus />
+        <button class="sv-go" (click)="saveView()" [disabled]="!newViewName.trim()">✓</button>
+        <button class="sv-go ghost" (click)="savingView = false; newViewName = ''">×</button>
+      </ng-container>
     </div>
 
     <!-- ═══ Bulk action bar ═══ -->
@@ -129,15 +161,20 @@ import { ToastService } from '../../../core/services/toast.service';
 
     <!-- ═══ Kanban view ═══ -->
     <div class="kanban anim" *ngIf="view === 'kanban'">
-      <div class="kan-col" *ngFor="let col of kanbanColumns">
-        <div class="kan-head"><span class="badge" [ngClass]="col.cls">{{ col.labelKey | translate }}</span><span class="kan-count">{{ col.tasks.length }}</span></div>
+      <div class="kan-col" *ngFor="let col of kanbanColumns; trackBy: trackCol"
+           [class.drag-over]="dragOverCol === col.key"
+           (dragover)="onDragOver($event, col.key)" (dragleave)="onDragLeave($event)" (drop)="onDrop(col.key, $event)">
+        <div class="kan-head"><span class="badge" [ngClass]="col.cls" [style.background]="col.color || null" [style.color]="col.color ? '#fff' : null" [style.border-color]="col.color || null">{{ col.label || (col.labelKey | translate) }}</span><span class="kan-count">{{ col.tasks.length }}</span></div>
         <div class="kan-list">
-          <div class="kan-card" *ngFor="let t of col.tasks" (click)="openEdit(t)">
+          <div class="kan-card" *ngFor="let t of col.tasks; trackBy: trackTask"
+               draggable="true" [class.dragging]="draggedTask?.id === t.id"
+               (dragstart)="onDragStart(t, $event)" (dragend)="onDragEnd()"
+               (click)="openEdit(t)">
             <div class="kc-title">{{ t.name }}</div>
             <div class="kc-meta"><span class="proj-badge">{{ t.projectName || projectName(t.projectId) }}</span><span class="badge sm" [ngClass]="priorityInfo(t.priority).cls">{{ priorityInfo(t.priority).labelKey | translate }}</span></div>
             <div class="kc-foot"><span class="avatar sm" [style.background]="avatarColor(t.assignedToName)">{{ initials(t.assignedToName) }}</span><span class="due" [class.late]="isOverdue(t)">{{ t.deadline ? (t.deadline | date:'dd/MM') : '—' }}</span></div>
           </div>
-          <div class="kan-empty" *ngIf="col.tasks.length === 0">—</div>
+          <div class="kan-empty" *ngIf="col.tasks.length === 0">{{ 'pm.tasks.dropHere' | translate }}</div>
         </div>
       </div>
     </div>
@@ -185,6 +222,37 @@ import { ToastService } from '../../../core/services/toast.service';
           <div class="fg"><label>{{ 'pm.tasks.fieldDeadline' | translate }}</label><input type="date" [(ngModel)]="form.deadline"></div>
         </div>
         <div class="fg"><label>{{ 'pm.tasks.fieldProgress' | translate:{ value: (form.progress || 0) } }}</label><input type="range" min="0" max="100" step="5" [(ngModel)]="form.progress"></div>
+        <div class="fg" *ngIf="modalMode === 'edit'">
+          <label>{{ 'pm.tasks.blockedBy' | translate }}</label>
+          <div class="dep-list">
+            <span class="dep-chip" *ngFor="let d of editDeps" [class.done]="d.done" [title]="d.status">
+              {{ d.name }}<span class="dep-x" (click)="removeBlocker(d.id)">×</span>
+            </span>
+            <span class="dep-empty" *ngIf="!editDeps.length">{{ 'pm.tasks.noBlockers' | translate }}</span>
+          </div>
+          <select [(ngModel)]="addBlockerId" (change)="addBlocker()">
+            <option [ngValue]="undefined">+ {{ 'pm.tasks.addBlocker' | translate }}</option>
+            <option *ngFor="let t of blockerCandidates" [ngValue]="t.id">{{ t.name }}</option>
+          </select>
+        </div>
+        <div class="cf-section" *ngIf="customFields.length">
+          <div class="cf-title">{{ 'pm.tasks.customFields' | translate }}</div>
+          <div class="grid2">
+            <div class="fg" *ngFor="let cf of customFields" [class.full]="cf.fieldType === 'CHECKBOX'">
+              <label *ngIf="cf.fieldType !== 'CHECKBOX'">{{ cf.name }}<span class="cf-req" *ngIf="cf.required">*</span></label>
+              <ng-container [ngSwitch]="cf.fieldType">
+                <input *ngSwitchCase="'TEXT'" type="text" [ngModel]="cfVal(cf)" (ngModelChange)="cfSet(cf, $event)">
+                <input *ngSwitchCase="'NUMBER'" type="number" [ngModel]="cfVal(cf)" (ngModelChange)="cfSet(cf, $event)">
+                <input *ngSwitchCase="'DATE'" type="date" [ngModel]="cfVal(cf)" (ngModelChange)="cfSet(cf, $event)">
+                <select *ngSwitchCase="'SELECT'" [ngModel]="cfVal(cf)" (ngModelChange)="cfSet(cf, $event)">
+                  <option value="">—</option>
+                  <option *ngFor="let o of cfOptions(cf)" [value]="o">{{ o }}</option>
+                </select>
+                <label *ngSwitchCase="'CHECKBOX'" class="cf-cb"><input type="checkbox" [checked]="cfVal(cf) === 'true'" (change)="cfSet(cf, $any($event.target).checked ? 'true' : 'false')"> {{ cf.name }}<span class="cf-req" *ngIf="cf.required">*</span></label>
+              </ng-container>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="m-foot">
         <button class="btn-ghost" (click)="closeModal()">{{ 'pm.tasks.cancel' | translate }}</button>
@@ -225,39 +293,39 @@ import { ToastService } from '../../../core/services/toast.service';
 
     .toolbar { display: flex; flex-direction: row; align-items: center; gap: 12px; flex-wrap: wrap; }
     .search { position: relative; flex: 0 1 240px; min-width: 150px; }
-    .search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94a3b8; }
-    .search input { width: 100%; height: 38px; padding: 0 12px 0 34px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13px; color: #1e293b; outline: none; background: #fff; }
+    .search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-muted); }
+    .search input { width: 100%; height: 38px; padding: 0 12px 0 34px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; color: var(--text-primary); outline: none; background: var(--bg-card); }
     .search input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
     /* All filters (search + 4 selects) on a single row */
     .filters { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; overflow-x: auto; padding-bottom: 2px; }
-    .sel { height: 38px; padding: 0 30px 0 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 12.5px; font-weight: 500; color: #475569; background: #fff; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; max-width: 170px;
+    .sel { height: 38px; padding: 0 30px 0 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); background: var(--bg-card); cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; max-width: 170px;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 12px; }
     .toolbar-right { display: flex; align-items: center; gap: 10px; }
     @media (min-width: 1024px) { .toolbar-right { margin-left: auto; } }
-    .view-toggle { display: inline-flex; padding: 2px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; }
-    .view-toggle button { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 11px; border: none; background: none; border-radius: 8px; font-size: 12px; font-weight: 600; color: #64748b; cursor: pointer; font-family: inherit; }
+    .view-toggle { display: inline-flex; padding: 2px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-card); }
+    .view-toggle button { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 11px; border: none; background: none; border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; font-family: inherit; }
     .view-toggle button svg { width: 13px; height: 13px; } .view-toggle button.on { background: #2563eb; color: #fff; }
 
     .btn-primary { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 15px; border: none; border-radius: 10px; background: #2563eb; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
     .btn-primary.sm { height: 32px; padding: 0 12px; font-size: 12px; } .btn-primary svg { width: 15px; height: 15px; } .btn-primary:hover { background: #1d4ed8; } .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
-    .btn-ghost { height: 38px; padding: 0 14px; border: none; background: none; border-radius: 10px; color: #475569; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; } .btn-ghost:hover { background: #f1f5f9; }
-    .btn-outline { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 11px; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; color: #475569; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; } .btn-outline svg { width: 13px; height: 13px; } .btn-outline:hover { background: #f8fafc; } .btn-outline.danger { color: #dc2626; border-color: rgba(220,38,38,.3); }
+    .btn-ghost { height: 38px; padding: 0 14px; border: none; background: none; border-radius: 10px; color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; } .btn-ghost:hover { background: var(--bg-subtle); }
+    .btn-outline { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 11px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 8px; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; } .btn-outline svg { width: 13px; height: 13px; } .btn-outline:hover { background: var(--bg-muted); } .btn-outline.danger { color: var(--danger-text); border-color: rgba(220,38,38,.3); }
 
     /* Bulk bar */
     .bulk-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(37,99,235,.07); border: 1px solid rgba(37,99,235,.25); border-radius: 12px; padding: 10px 14px; }
-    .bulk-count { font-size: 13px; font-weight: 700; color: #1e293b; }
+    .bulk-count { font-size: 13px; font-weight: 700; color: var(--text-primary); }
     .bulk-actions { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
     .bulk-panel { width: 100%; display: flex; gap: 8px; align-items: center; }
 
     /* Table */
-    .list-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); overflow: hidden; }
+    .list-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); overflow: hidden; }
     /* Fixed layout so all columns always fit the card at any width/zoom — columns shrink and
        long text truncates/wraps instead of forcing a horizontal scrollbar. */
     .table-scroll { overflow-x: hidden; }
     .tk-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
-    .tk-table thead { background: #f8fafc; }
-    .tk-table th { text-align: left; padding: 11px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tk-table td { padding: 11px 12px; border-top: 1px solid #eef2f7; color: #475569; vertical-align: middle; overflow: hidden; }
+    .tk-table thead { background: var(--bg-muted); }
+    .tk-table th { text-align: left; padding: 11px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tk-table td { padding: 11px 12px; border-top: 1px solid var(--bg-subtle); color: var(--text-secondary); vertical-align: middle; overflow: hidden; }
     .tk-table th.cb, .tk-table td.cb { width: 40px; text-align: center; }
     /* Proportional column widths (checkbox + actions are fixed px, the rest share the remainder). */
     .tk-table th:nth-child(2), .tk-table td:nth-child(2) { width: 22%; }   /* Title */
@@ -274,10 +342,10 @@ import { ToastService } from '../../../core/services/toast.service';
     @media (max-width: 980px) { .tk-table th:nth-child(8), .tk-table td:nth-child(8) { display: none; } }
     @media (max-width: 760px) { .tk-table th:nth-child(7), .tk-table td:nth-child(7) { display: none; } }
     .tk-table input[type=checkbox] { width: 15px; height: 15px; accent-color: #2563eb; cursor: pointer; }
-    .tk-row:hover { background: #f8fafc; }
+    .tk-row:hover { background: var(--bg-muted); }
     .tk-row.overdue { background: rgba(220,38,38,.05); }
     .tk-row.overdue:hover { background: rgba(220,38,38,.09); }
-    .title { font-weight: 600; color: #1e293b; }
+    .title { font-weight: 600; color: var(--text-primary); }
     .proj-badge { display: inline-block; max-width: 100%; font-size: 11px; font-weight: 500; color: #2563eb; background: rgba(37,99,235,.1); padding: 2px 8px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
     .assignee { display: flex; align-items: center; gap: 7px; min-width: 0; }
     .avatar { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 10px; font-weight: 700; flex-shrink: 0; }
@@ -285,74 +353,108 @@ import { ToastService } from '../../../core/services/toast.service';
     .aname { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .badge { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 9999px; white-space: nowrap; }
     .badge.sm { font-size: 9.5px; padding: 2px 7px; }
-    .st-muted { background: #eef2f7; color: #64748b; } .st-blue { background: rgba(37,99,235,.1); color: #2563eb; }
-    .st-amber { background: rgba(217,119,6,.14); color: #d97706; } .st-green { background: rgba(22,163,74,.12); color: #16a34a; } .st-red { background: rgba(220,38,38,.1); color: #dc2626; }
-    .pr-slate { background: #eef2f7; color: #64748b; } .pr-blue { background: rgba(37,99,235,.1); color: #2563eb; } .pr-amber { background: rgba(217,119,6,.14); color: #d97706; } .pr-red { background: rgba(220,38,38,.1); color: #dc2626; }
-    .due { font-size: 12px; color: #64748b; white-space: nowrap; } .due.late { color: #dc2626; font-weight: 600; } .due .warn { width: 13px; height: 13px; vertical-align: -2px; margin-right: 2px; }
+    .st-muted { background: var(--bg-subtle); color: var(--text-muted); } .st-blue { background: rgba(37,99,235,.1); color: #2563eb; }
+    .st-amber { background: rgba(217,119,6,.14); color: #d97706; } .st-green { background: rgba(22,163,74,.12); color: #16a34a; } .st-red { background: rgba(220,38,38,.1); color: var(--danger-text); }
+    .pr-slate { background: var(--bg-subtle); color: var(--text-muted); } .pr-blue { background: rgba(37,99,235,.1); color: #2563eb; } .pr-amber { background: rgba(217,119,6,.14); color: #d97706; } .pr-red { background: rgba(220,38,38,.1); color: var(--danger-text); }
+    .due { font-size: 12px; color: var(--text-muted); white-space: nowrap; } .due.late { color: var(--danger-text); font-weight: 600; } .due .warn { width: 13px; height: 13px; vertical-align: -2px; margin-right: 2px; }
     .prog { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .bar { flex: 1 1 auto; min-width: 32px; max-width: 80px; height: 6px; border-radius: 9999px; background: #eef2f7; overflow: hidden; } .bar-fill { height: 100%; background: linear-gradient(90deg,#2563eb,#1e3a8a); border-radius: 9999px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+    .bar { flex: 1 1 auto; min-width: 32px; max-width: 80px; height: 6px; border-radius: 9999px; background: var(--bg-subtle); overflow: hidden; } .bar-fill { height: 100%; background: linear-gradient(90deg,#2563eb,#1e3a8a); border-radius: 9999px; transition: width .8s cubic-bezier(.4,0,.2,1); }
     .prog span { flex-shrink: 0; }
     .actions { white-space: nowrap; opacity: 0; transition: opacity .15s ease; } .tk-row:hover .actions { opacity: 1; }
-    .icon-btn { width: 28px; height: 28px; border: none; background: none; border-radius: 7px; color: #64748b; cursor: pointer; display: inline-grid; place-items: center; } .icon-btn svg { width: 14px; height: 14px; } .icon-btn:hover { background: #eef2f7; color: #1e293b; } .icon-btn.danger:hover { background: rgba(220,38,38,.1); color: #dc2626; }
-    .empty { padding: 32px; text-align: center; color: #94a3b8; font-size: 13px; }
+    .icon-btn { width: 28px; height: 28px; border: none; background: none; border-radius: 7px; color: var(--text-muted); cursor: pointer; display: inline-grid; place-items: center; } .icon-btn svg { width: 14px; height: 14px; } .icon-btn:hover { background: var(--bg-subtle); color: var(--text-primary); } .icon-btn.danger:hover { background: rgba(220,38,38,.1); color: var(--danger-text); }
+    .empty { padding: 32px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
     /* Kanban */
     .kanban { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
     @media (max-width: 600px) { .kanban { grid-template-columns: 1fr; } }
-    .kan-col { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; min-width: 0; }
+    /* task dependencies */
+    .dep-list { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 7px; min-height: 4px; }
+    .dep-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 5px 3px 9px; background: var(--danger-bg); color: var(--danger-text); border: 1px solid #fecaca; border-radius: 7px; font-size: 12px; font-weight: 600; }
+    .dep-chip.done { background: var(--success-bg); color: var(--success-text); border-color: #bbf7d0; text-decoration: line-through; }
+    .dep-x { cursor: pointer; font-size: 14px; line-height: 1; opacity: .65; } .dep-x:hover { opacity: 1; }
+    .dep-empty { font-size: 12px; color: var(--text-muted); font-style: italic; }
+    /* saved views */
+    .saved-views { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: -4px 0 4px; }
+    .sv-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); margin-right: 2px; }
+    .sv-chip { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 6px 0 11px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 9999px; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); cursor: pointer; font-family: inherit; }
+    .sv-chip.on { background: #2563eb; border-color: #2563eb; color: #fff; }
+    .sv-x { display: inline-flex; width: 16px; height: 16px; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; line-height: 1; opacity: .6; }
+    .sv-x:hover { opacity: 1; background: rgba(0,0,0,.08); }
+    .sv-add { height: 28px; padding: 0 11px; border: 1px dashed var(--border-strong); background: none; border-radius: 9999px; font-size: 12.5px; font-weight: 600; color: var(--text-muted); cursor: pointer; font-family: inherit; }
+    .sv-add:hover { border-color: #2563eb; color: #2563eb; }
+    .sv-input { height: 28px; width: 130px; padding: 0 10px; border: 1.5px solid #2563eb; border-radius: 9999px; font-size: 12.5px; outline: none; font-family: inherit; }
+    .sv-go { height: 28px; width: 28px; border: none; border-radius: 50%; background: #16a34a; color: #fff; cursor: pointer; font-size: 13px; } .sv-go.ghost { background: var(--border); color: var(--text-secondary); } .sv-go:disabled { opacity: .5; cursor: not-allowed; }
+    .kan-col { background: var(--bg-muted); border: 1px solid var(--border); border-radius: 14px; padding: 12px; min-width: 0; transition: background .15s, border-color .15s, box-shadow .15s; }
+    .kan-col.drag-over { background: var(--primary-bg); border-color: #2563eb; box-shadow: inset 0 0 0 2px rgba(37,99,235,.25); }
     .kc-title { overflow-wrap: anywhere; }
     .kan-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .kan-count { font-size: 12px; font-weight: 700; color: #94a3b8; }
+    .kan-count { font-size: 12px; font-weight: 700; color: var(--text-muted); }
     .kan-list { display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
-    .kan-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 11px; cursor: pointer; transition: box-shadow .15s ease; }
+    .kan-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 11px; cursor: grab; transition: box-shadow .15s ease, opacity .15s; }
+    .kan-card:active { cursor: grabbing; }
+    .kan-card.dragging { opacity: .45; box-shadow: 0 8px 20px rgba(15,23,42,.18); }
     .kan-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,.1); }
-    .kc-title { font-size: 13px; font-weight: 600; color: #1e293b; }
+    .kc-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
     .kc-meta { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
     .kc-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
-    .kan-empty { text-align: center; color: #cbd5e1; font-size: 12px; padding: 8px; }
-    .cal-empty { padding: 40px; text-align: center; color: #64748b; font-size: 13.5px; } .cal-empty a { color: #2563eb; font-weight: 600; }
+    .kan-empty { text-align: center; color: var(--border-strong); font-size: 12px; padding: 8px; }
+    .cal-empty { padding: 40px; text-align: center; color: var(--text-muted); font-size: 13.5px; } .cal-empty a { color: #2563eb; font-weight: 600; }
 
     /* Modal */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.5); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .modal { width: 100%; max-width: 560px; background: #fff; border-radius: 18px; box-shadow: 0 24px 60px rgba(15,23,42,.3); max-height: calc(100vh - 48px); overflow-y: auto; }
+    .modal { width: 100%; max-width: 560px; background: var(--bg-card); border-radius: 18px; box-shadow: 0 24px 60px rgba(15,23,42,.3); max-height: calc(100vh - 48px); overflow-y: auto; }
     .m-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 10px; }
-    .m-head h3 { font-size: 16.5px; font-weight: 700; color: #1e293b; margin: 0; }
-    .x { width: 32px; height: 32px; border: none; background: #f1f5f9; border-radius: 8px; cursor: pointer; color: #64748b; display: grid; place-items: center; } .x svg { width: 15px; height: 15px; }
+    .m-head h3 { font-size: 16.5px; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .x { width: 32px; height: 32px; border: none; background: var(--bg-subtle); border-radius: 8px; cursor: pointer; color: var(--text-muted); display: grid; place-items: center; } .x svg { width: 15px; height: 15px; }
     .m-body { padding: 8px 22px; display: flex; flex-direction: column; gap: 13px; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .fg { display: flex; flex-direction: column; gap: 6px; }
-    .fg label { font-size: 12px; font-weight: 700; color: #475569; }
-    .fg input, .fg textarea, .fg select { width: 100%; padding: 9px 11px; border: 1px solid #e2e8f0; border-radius: 9px; font-size: 13px; font-family: inherit; color: #1e293b; outline: none; background: #fff; }
+    .fg label { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+    .fg input, .fg textarea, .fg select { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 9px; font-size: 13px; font-family: inherit; color: var(--text-primary); outline: none; background: var(--bg-card); }
     .fg input[type=range] { padding: 0; }
     .fg input:focus, .fg textarea:focus, .fg select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
     .m-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 22px 20px; }
     .modal.sm { max-width: 440px; }
+    .cf-section { margin-top: 14px; border-top: 1px dashed var(--border); padding-top: 12px; }
+    .cf-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 10px; }
+    .cf-req { color: var(--danger-text); margin-left: 2px; }
+    .fg.full { grid-column: 1 / -1; }
+    .cf-cb { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
+    .cf-cb input { width: auto; }
+    .tmpl-wrap { position: relative; }
+    .tmpl-menu { position: absolute; top: calc(100% + 6px); right: 0; min-width: 230px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-lg); z-index: 50; padding: 6px; max-height: 320px; overflow-y: auto; }
+    .tmpl-menu button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: none; border: none; padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; color: var(--text-primary); text-align: left; }
+    .tmpl-menu button:hover { background: var(--bg-subtle); }
+    .tmpl-menu .tm-name { font-weight: 600; }
+    .tmpl-menu .tm-prio { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; padding: 2px 7px; border-radius: 20px; background: var(--bg-subtle); color: var(--text-muted); flex-shrink: 0; }
+    .tmpl-menu .tm-prio[data-p="HIGH"], .tmpl-menu .tm-prio[data-p="CRITICAL"] { background: var(--danger-bg); color: var(--danger-text); }
+    .tmpl-menu .tm-prio[data-p="LOW"] { background: var(--success-bg); color: var(--success-text); }
 
     /* Keep selects compact so the filters fit one row */
     .filters .sel { flex: 0 0 auto; width: 140px; }
 
     /* Assign modal */
-    .assign-task { font-size: 13px; color: #475569; margin: 0 0 4px; }
+    .assign-task { font-size: 13px; color: var(--text-secondary); margin: 0 0 4px; }
     .member-list { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; }
-    .member { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 11px; border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; cursor: pointer; font-family: inherit; text-align: left; transition: all .15s ease; }
-    .member:hover { background: #f8fafc; }
+    .member { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 11px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 10px; cursor: pointer; font-family: inherit; text-align: left; transition: all .15s ease; }
+    .member:hover { background: var(--bg-muted); }
     .member.on { border-color: #2563eb; background: rgba(37,99,235,.06); }
-    .member .m-name { font-size: 13px; font-weight: 600; color: #1e293b; flex: 1; }
+    .member .m-name { font-size: 13px; font-weight: 600; color: var(--text-primary); flex: 1; }
     .member .check { width: 16px; height: 16px; color: #2563eb; }
 
     /* Calendar */
-    .cal-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 16px; }
+    .cal-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04); padding: 16px; }
     .cal-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .cal-head h3 { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0; text-transform: capitalize; min-width: 150px; text-align: center; }
-    .cal-head .nav { width: 32px; height: 32px; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; cursor: pointer; font-size: 17px; line-height: 1; color: #475569; }
-    .cal-head .nav:hover { background: #f1f5f9; }
-    .cal-legend { margin-left: auto; font-size: 12px; color: #94a3b8; }
+    .cal-head h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; text-transform: capitalize; min-width: 150px; text-align: center; }
+    .cal-head .nav { width: 32px; height: 32px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 8px; cursor: pointer; font-size: 17px; line-height: 1; color: var(--text-secondary); }
+    .cal-head .nav:hover { background: var(--bg-subtle); }
+    .cal-legend { margin-left: auto; font-size: 12px; color: var(--text-muted); }
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-    .cal-dow { text-align: center; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; padding-bottom: 4px; }
-    .cal-cell { min-height: 86px; border: 1px solid #eef2f7; border-radius: 8px; padding: 5px; background: #fff; display: flex; flex-direction: column; gap: 3px; }
-    .cal-cell.out { background: #f8fafc; opacity: .55; }
+    .cal-dow { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; padding-bottom: 4px; }
+    .cal-cell { min-height: 86px; border: 1px solid var(--bg-subtle); border-radius: 8px; padding: 5px; background: var(--bg-card); display: flex; flex-direction: column; gap: 3px; }
+    .cal-cell.out { background: var(--bg-muted); opacity: .55; }
     .cal-cell.today { border-color: #2563eb; box-shadow: inset 0 0 0 1px rgba(37,99,235,.35); }
-    .cal-num { font-size: 11px; font-weight: 600; color: #64748b; }
+    .cal-num { font-size: 11px; font-weight: 600; color: var(--text-muted); }
     .cal-items { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
     .cal-pill { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 5px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   `]
@@ -372,6 +474,46 @@ export class PmTasksComponent implements OnInit {
   assigneeFilter = '';
   priorityFilter = '';
   statusFilter = '';
+
+  // ── Saved views (filter presets, persisted in localStorage per user) ──
+  savedViews: { name: string; f: any }[] = [];
+  savingView = false;
+  newViewName = '';
+  activeView = '';
+
+  private viewsKey(): string { return `tviews_${localStorage.getItem('user_id') || '0'}`; }
+  private loadViews(): void {
+    try { this.savedViews = JSON.parse(localStorage.getItem(this.viewsKey()) || '[]'); } catch { this.savedViews = []; }
+  }
+  private persistViews(): void { localStorage.setItem(this.viewsKey(), JSON.stringify(this.savedViews)); }
+
+  saveView(): void {
+    const name = this.newViewName.trim();
+    if (!name) return;
+    const f = { searchTerm: this.searchTerm, projectFilter: this.projectFilter, assigneeFilter: this.assigneeFilter, priorityFilter: this.priorityFilter, statusFilter: this.statusFilter, view: this.view };
+    const existing = this.savedViews.find(v => v.name === name);
+    if (existing) existing.f = f; else this.savedViews.push({ name, f });
+    this.persistViews();
+    this.savingView = false; this.newViewName = ''; this.activeView = name;
+    this.toast.show(this.translate.instant('pm.tasks.viewSaved'), 'success');
+  }
+  applyView(v: { name: string; f: any }): void {
+    this.searchTerm = v.f.searchTerm || ''; this.projectFilter = v.f.projectFilter || '';
+    this.assigneeFilter = v.f.assigneeFilter || ''; this.priorityFilter = v.f.priorityFilter || '';
+    this.statusFilter = v.f.statusFilter || ''; if (v.f.view) this.view = v.f.view;
+    this.activeView = v.name;
+    this.applyFilters();
+  }
+  deleteView(name: string): void {
+    this.savedViews = this.savedViews.filter(v => v.name !== name);
+    this.persistViews();
+    if (this.activeView === name) { this.activeView = ''; }
+  }
+  clearView(): void {
+    this.searchTerm = ''; this.projectFilter = ''; this.assigneeFilter = ''; this.priorityFilter = ''; this.statusFilter = '';
+    this.activeView = '';
+    this.applyFilters();
+  }
 
   selected: number[] = [];
   bulkPanel: '' | 'assignee' | 'status' | 'priority' = '';
@@ -401,7 +543,10 @@ export class PmTasksComponent implements OnInit {
     private toast: ToastService,
     private cdr: ChangeDetectorRef,
     private router: Router,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private customFieldService: CustomFieldService,
+    private taskTemplateService: TaskTemplateService,
+    private workflowService: WorkflowService
   ) {}
 
   /** Date-format locale follows the active UI language. */
@@ -411,12 +556,58 @@ export class PmTasksComponent implements OnInit {
 
   ngOnInit(): void {
     this.managerId = this.authService.getCurrentUser()?.id || 0;
+    this.loadViews();
     this.loadInitial();
+    this.customFieldService.listActive().subscribe({ next: f => { this.customFields = f || []; this.cdr.detectChanges(); }, error: () => {} });
+    this.taskTemplateService.listActive().subscribe({ next: t => { this.taskTemplates = t || []; this.cdr.detectChanges(); }, error: () => {} });
+    this.workflowService.listActive().subscribe({ next: s => { this.workflowStatuses = s || []; this.cdr.detectChanges(); }, error: () => {} });
     setTimeout(() => { this.animated = true; this.cdr.detectChanges(); }, 90);
   }
 
+  // ── Custom workflow statuses (opt-in board columns) ──
+  workflowStatuses: WorkflowStatus[] = [];
+  private categoryToStatus(cat: string): string {
+    return cat === 'DONE' ? 'COMPLETED' : cat === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'TODO';
+  }
+  private statusToCategory(s?: string): string {
+    const up = this.normStatus(s);
+    return up === 'COMPLETED' ? 'DONE' : up === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'TODO';
+  }
+
+  // ── Task templates ("create from template") ──
+  taskTemplates: TaskTemplate[] = [];
+  showTemplates = false;
+  cap(s: string): string { return s ? s.charAt(0) + s.slice(1).toLowerCase() : ''; }
+
+  createFromTemplate(t: TaskTemplate): void {
+    this.showTemplates = false;
+    this.openCreate();
+    this.form.name = t.taskName || t.name;
+    this.form.description = t.description || '';
+    this.form.priority = t.priority || 'MEDIUM';
+    this.form.difficulty = t.difficulty || 'MEDIUM';
+    if (t.defaultDeadlineDays != null) {
+      const d = new Date(); d.setDate(d.getDate() + t.defaultDeadlineDays);
+      this.form.deadline = d.toISOString().slice(0, 10);
+    }
+    this.form.customFields = { ...(t.customFields || {}) };
+  }
+
+  @HostListener('document:click')
+  onDocClick(): void { if (this.showTemplates) { this.showTemplates = false; } }
+
+  // ── Custom fields (tenant-defined, rendered in the task modal) ──
+  customFields: CustomFieldDefinition[] = [];
+  cfVal(cf: CustomFieldDefinition): string { return (this.form.customFields && cf.id != null) ? (this.form.customFields[cf.id] || '') : ''; }
+  cfSet(cf: CustomFieldDefinition, value: string): void {
+    if (cf.id == null) return;
+    if (!this.form.customFields) this.form.customFields = {};
+    this.form.customFields[cf.id] = value;
+  }
+  cfOptions(cf: CustomFieldDefinition): string[] { return this.customFieldService.optionList(cf); }
+
   private blankForm(): TaskRequest {
-    return { name: '', description: '', projectId: undefined, assignedToId: undefined, priority: 'MEDIUM', difficulty: 'MEDIUM', status: 'TODO', progress: 0, deadline: '', reminderType: 'NONE' };
+    return { name: '', description: '', projectId: undefined, assignedToId: undefined, priority: 'MEDIUM', difficulty: 'MEDIUM', status: 'TODO', progress: 0, deadline: '', reminderType: 'NONE', customFields: {} };
   }
 
   private loadInitial(): void {
@@ -464,14 +655,90 @@ export class PmTasksComponent implements OnInit {
     return up === 'PLANNED' ? 'TODO' : up;
   }
 
-  get kanbanColumns() {
+  get kanbanColumns(): any[] {
+    // Custom workflow defined → render the org's columns; otherwise the default enum board (unchanged).
+    if (this.workflowStatuses.length) {
+      const cols = this.workflowStatuses.map(s => ({
+        key: 'wf-' + s.id, label: s.name, labelKey: null as string | null,
+        cls: 'st-muted', color: s.color || null, wfId: s.id!, category: s.category, tasks: [] as Task[]
+      }));
+      const byId = new Map<number, any>();
+      cols.forEach(c => byId.set(c.wfId, c));
+      const firstOfCat = (cat: string) => cols.find(c => c.category === cat) || cols[0];
+      for (const t of this.filtered) {
+        const col = (t.workflowStatusId != null && byId.get(t.workflowStatusId))
+          || firstOfCat(this.statusToCategory(t.status));
+        if (col) col.tasks.push(t);
+      }
+      return cols;
+    }
     const cols = [
-      { key: 'TODO', labelKey: 'pm.tasks.stTodo', cls: 'st-muted' },
-      { key: 'IN_PROGRESS', labelKey: 'pm.tasks.stInProgress', cls: 'st-blue' },
-      { key: 'ON_HOLD', labelKey: 'pm.tasks.stOnHold', cls: 'st-amber' },
-      { key: 'COMPLETED', labelKey: 'pm.tasks.stCompleted', cls: 'st-green' }
+      { key: 'TODO', label: null, labelKey: 'pm.tasks.stTodo', cls: 'st-muted', color: null },
+      { key: 'IN_PROGRESS', label: null, labelKey: 'pm.tasks.stInProgress', cls: 'st-blue', color: null },
+      { key: 'ON_HOLD', label: null, labelKey: 'pm.tasks.stOnHold', cls: 'st-amber', color: null },
+      { key: 'COMPLETED', label: null, labelKey: 'pm.tasks.stCompleted', cls: 'st-green', color: null }
     ];
     return cols.map(c => ({ ...c, tasks: this.filtered.filter(t => this.normStatus(t.status) === c.key) }));
+  }
+
+  // ─── Kanban drag & drop (native HTML5) ───
+  draggedTask: Task | null = null;
+  dragOverCol: string | null = null;
+  trackCol = (_: number, c: any) => c.key;
+  trackTask = (_: number, t: Task) => t.id;
+
+  onDragStart(t: Task, e: DragEvent): void {
+    this.draggedTask = t;
+    if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(t.id)); } catch {} }
+  }
+  onDragEnd(): void { this.draggedTask = null; this.dragOverCol = null; }
+  onDragOver(e: DragEvent, colKey: string): void { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'; this.dragOverCol = colKey; }
+  onDragLeave(e: DragEvent): void {
+    // Only clear when leaving the column itself, not when moving between its children.
+    if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) this.dragOverCol = null;
+  }
+  onDrop(targetKey: string, e: DragEvent): void {
+    e.preventDefault();
+    this.dragOverCol = null;
+    // Resolve the dragged task from the component field, falling back to the dataTransfer id
+    // (more robust across browsers / event ordering).
+    let t = this.draggedTask;
+    if (!t && e.dataTransfer) {
+      const id = e.dataTransfer.getData('text/plain');
+      t = this.allTasks.find(x => String(x.id) === id) || null;
+    }
+    this.draggedTask = null;
+    if (!t || !t.id) { this.cdr.detectChanges(); return; }
+
+    // Custom workflow column: move to that column and sync the canonical status to its category.
+    if (targetKey.startsWith('wf-')) {
+      const wfId = Number(targetKey.slice(3));
+      const ws = this.workflowStatuses.find(s => s.id === wfId);
+      if (!ws || t.workflowStatusId === wfId) { this.cdr.detectChanges(); return; }
+      const prevWf = t.workflowStatusId, prevStatus = t.status, prevProg = t.progress;
+      const newStatus = this.categoryToStatus(ws.category);
+      t.workflowStatusId = wfId; t.status = newStatus;
+      if (newStatus === 'COMPLETED') t.progress = 100;
+      this.cdr.detectChanges();
+      const prog = newStatus === 'COMPLETED' ? 100 : (t.progress || 0);
+      this.taskService.updateTaskProgress(t.id, prog, undefined, wfId).subscribe({
+        next: () => this.toast.show(this.translate.instant('pm.tasks.toastMoved'), 'success'),
+        error: () => { t!.workflowStatusId = prevWf; t!.status = prevStatus; t!.progress = prevProg; this.toast.show(this.translate.instant('pm.tasks.toastBulkUpdateFailed'), 'error'); this.loadTasks(); }
+      });
+      return;
+    }
+
+    // Default enum column.
+    if (this.normStatus(t.status) === targetKey) { this.cdr.detectChanges(); return; }
+    const prev = t.status;
+    t.status = targetKey;
+    if (targetKey === 'COMPLETED') t.progress = 100;
+    this.cdr.detectChanges();
+    const prog = targetKey === 'COMPLETED' ? 100 : (t.progress || 0);
+    this.taskService.updateTaskProgress(t.id, prog, targetKey).subscribe({
+      next: () => this.toast.show(this.translate.instant('pm.tasks.toastMoved'), 'success'),
+      error: () => { t!.status = prev; this.toast.show(this.translate.instant('pm.tasks.toastBulkUpdateFailed'), 'error'); this.loadTasks(); }
+    });
   }
 
   // ─── Selection ───
@@ -585,15 +852,45 @@ export class PmTasksComponent implements OnInit {
     this.modalMode = 'edit';
     this.selectedTaskId = t.id || null;
     this.form = this.toReq(t);
+    this.editDeps = [];
+    this.addBlockerId = undefined;
+    if (t.id) this.taskService.getDependencies(t.id).subscribe({
+      next: (r: any) => { this.editDeps = Array.isArray(r) ? r : (r?.data || []); this.cdr.detectChanges(); }, error: () => {}
+    });
     this.showModal = true;
   }
   closeModal(): void { this.showModal = false; }
+
+  // ── Task dependencies (in the edit modal) ──
+  editDeps: any[] = [];
+  addBlockerId?: number;
+
+  get blockerCandidates(): Task[] {
+    const cur = this.selectedTaskId;
+    const proj = this.form.projectId;
+    return this.allTasks.filter(t => t.id !== cur && !this.editDeps.some(d => d.id === t.id) && (!proj || t.projectId === proj));
+  }
+  addBlocker(): void {
+    if (!this.addBlockerId || !this.selectedTaskId) return;
+    const blockerId = this.addBlockerId; this.addBlockerId = undefined;
+    this.taskService.addDependency(this.selectedTaskId, blockerId).subscribe({
+      next: (r: any) => { this.editDeps = (r?.data || r) || this.editDeps; this.cdr.detectChanges(); },
+      error: (err: any) => this.toast.show(err?.error?.message || this.translate.instant('pm.tasks.depFailed'), 'error')
+    });
+  }
+  removeBlocker(id: number): void {
+    if (!this.selectedTaskId) return;
+    this.taskService.removeDependency(this.selectedTaskId, id).subscribe({
+      next: () => { this.editDeps = this.editDeps.filter(d => d.id !== id); this.cdr.detectChanges(); }, error: () => {}
+    });
+  }
 
   private toReq(t: Task): TaskRequest {
     return {
       name: t.name, description: t.description || '', projectId: t.projectId, assignedToId: t.assignedToId,
       priority: t.priority || 'MEDIUM', difficulty: t.difficulty || 'MEDIUM', status: t.status || 'TODO',
-      progress: t.progress || 0, deadline: t.deadline || '', reminderType: t.reminderType || 'NONE'
+      progress: t.progress || 0, deadline: t.deadline || '', reminderType: t.reminderType || 'NONE',
+      customFields: { ...(t.customFields || {}) }
     };
   }
 

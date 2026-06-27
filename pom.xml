@@ -190,6 +190,14 @@
 			<artifactId>jasperreports-fonts</artifactId>
 			<version>6.20.6</version>
 		</dependency>
+		<!-- Auto-loads a project-root .env into the Spring Environment so secrets (e.g. BREVO_API_KEY)
+		     work in local dev (./mvnw spring-boot:run / IDE) without exporting env vars or using Docker.
+		     Real OS env vars still take precedence. -->
+		<dependency>
+			<groupId>me.paulschwarz</groupId>
+			<artifactId>spring-dotenv</artifactId>
+			<version>4.0.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

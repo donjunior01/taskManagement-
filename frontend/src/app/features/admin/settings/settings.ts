@@ -70,6 +70,10 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   maxFileUploadSize: number = 50; // MB
   allowedEmailDomains: string = 'corp.net, taskmanagement.com';
   maintenanceMode: boolean = false;
+  // Registration access control
+  registrationEnabled: boolean = true;
+  allowedDomains: string[] = [];
+  newDomain: string = '';
   requireTwoFaAdmins: boolean = false;   // policy: force 2FA enrolment on admin accounts
   requireTwoFaAll: boolean = false;      // policy: force 2FA enrolment on every account
   mfaRequirement: boolean = false;
@@ -152,6 +156,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         this.maintenanceMode = s.maintenanceMode ?? this.maintenanceMode;
         this.requireTwoFaAdmins = s.twoFactorRequiredAdmins ?? this.requireTwoFaAdmins;
         this.requireTwoFaAll = s.twoFactorRequiredAll ?? this.requireTwoFaAll;
+        this.registrationEnabled = s.registrationEnabled ?? this.registrationEnabled;
+        this.allowedDomains = (s.allowedEmailDomains || '').split(',').map(d => d.trim().replace(/^@/, '').toLowerCase()).filter(Boolean);
         // Notifications (SMTP + triggers)
         this.smtp.host = s.smtpHost ?? this.smtp.host;
         this.smtp.port = s.smtpPort ?? this.smtp.port;
@@ -304,7 +310,9 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
       passwordRequireSpecial: this.pwSpecial,
       passwordExpiryDays: this.passwordExpiry,
       twoFactorRequiredAdmins: this.requireTwoFaAdmins,
-      twoFactorRequiredAll: this.requireTwoFaAll
+      twoFactorRequiredAll: this.requireTwoFaAll,
+      registrationEnabled: this.registrationEnabled,
+      allowedEmailDomains: this.allowedDomains.join(',')
     }).subscribe({
       next: () => {
         this.submitting = false;
@@ -315,6 +323,21 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         this.triggerToast(this.translate.instant('admin.settings.toastSecurityFailed'), 'error');
       }
     });
+  }
+
+  /** Add an allowed email domain (normalised, de-duplicated). Save the Security tab to persist. */
+  addDomain(): void {
+    const d = (this.newDomain || '').trim().toLowerCase().replace(/^@/, '').replace(/\s/g, '');
+    if (!d) return;
+    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(d)) {
+      this.triggerToast(this.translate.instant('admin.settings.toastDomainInvalid'), 'error');
+      return;
+    }
+    if (!this.allowedDomains.includes(d)) this.allowedDomains.push(d);
+    this.newDomain = '';
+  }
+  removeDomain(d: string): void {
+    this.allowedDomains = this.allowedDomains.filter(x => x !== d);
   }
 
   // ── Two-factor authentication ────────────────────────────────────────────
@@ -534,8 +557,20 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     });
   }
 
+  testEmailBusy = false;
+  /** Send a real test email through the configured provider (Brevo/SMTP) and report the outcome. */
   testSmtp(): void {
-    this.triggerToast(this.translate.instant('admin.settings.toastSmtpTested'), 'success');
+    this.testEmailBusy = true;
+    this.settingsService.sendTestEmail().subscribe({
+      next: (r: any) => {
+        this.testEmailBusy = false;
+        this.triggerToast(r?.message || this.translate.instant('admin.settings.toastTestEmailSent'), 'success');
+      },
+      error: (e: any) => {
+        this.testEmailBusy = false;
+        this.triggerToast(e?.error?.message || this.translate.instant('admin.settings.toastTestEmailFailed'), 'error');
+      }
+    });
   }
 
   reconnectGoogle(): void {

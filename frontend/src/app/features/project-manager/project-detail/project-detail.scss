@@ -1696,7 +1696,7 @@ $gantt-row-h: 26px;
   position: relative;
   height: $gantt-row-h;
   margin-bottom: 6px;
-  background: var(--bg-subtle, #eef2f7);
+  background: var(--bg-subtle, var(--bg-subtle));
   border-radius: 6px;
 }
 .gantt-bar {
@@ -1709,7 +1709,7 @@ $gantt-row-h: 26px;
   display: flex;
   align-items: center;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
-  &.status-planned    { background: #cbd5e1; }
+  &.status-planned    { background: var(--border-strong); }
   &.status-inprogress { background: var(--primary); }
   &.status-completed  { background: var(--success); }
   &.status-onhold     { background: var(--warning, #f59e0b); }
@@ -1736,7 +1736,7 @@ $gantt-row-h: 26px;
 }
 .gl-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-muted); }
 .gl-dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
-.gl-dot.status-planned    { background: #cbd5e1; }
+.gl-dot.status-planned    { background: var(--border-strong); }
 .gl-dot.status-inprogress { background: var(--primary); }
 .gl-dot.status-completed  { background: var(--success); }
 .gl-dot.status-onhold     { background: var(--warning, #f59e0b); }
@@ -1767,7 +1767,7 @@ $gantt-row-h: 26px;
 .cl-prog-track {
   flex: 1;
   height: 8px;
-  background: var(--bg-subtle, #eef2f7);
+  background: var(--bg-subtle, var(--bg-subtle));
   border-radius: var(--radius-full, 99px);
   overflow: hidden;
 }
@@ -1793,7 +1793,7 @@ $gantt-row-h: 26px;
 .cl-check input { position: absolute; opacity: 0; width: 0; height: 0; }
 .cl-box {
   width: 18px; height: 18px;
-  border: 2px solid var(--border-color, #cbd5e1);
+  border: 2px solid var(--border-color);
   border-radius: 5px;
   display: inline-block;
   position: relative;
@@ -1885,7 +1885,7 @@ $gantt-row-h: 26px;
   max-width: 78%;
   padding: 8px 12px;
   border-radius: 12px;
-  background: var(--bg-subtle, #eef2f7);
+  background: var(--bg-subtle, var(--bg-subtle));
   border-top-left-radius: 4px;
 }
 .chat-msg.own .chat-bubble {

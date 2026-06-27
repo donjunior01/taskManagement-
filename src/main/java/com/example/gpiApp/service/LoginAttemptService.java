@@ -63,6 +63,14 @@ public class LoginAttemptService {
     @Transactional
     public void logLoginAttempt(String username, String email, LoginAttempt.LoginStatus status,
                                String ipAddress, String userAgent, String reason, Long userId) {
+        // Tenant isn't known during login (no TenantContext yet) — derive the org from the attempted
+        // user so an admin only sees attempts for their own organization. Unknown emails get org 0
+        // (visible to no tenant), which is fine for the security log.
+        Long orgId = 0L;
+        com.example.gpiApp.entity.allUsers attempted = email != null ? userRepository.findByEmail(email).orElse(null) : null;
+        if (attempted == null && userId != null) attempted = userRepository.findById(userId).orElse(null);
+        if (attempted != null && attempted.getOrganization() != null) orgId = attempted.getOrganization().getId();
+
         LoginAttempt attempt = LoginAttempt.builder()
                 .username(username)
                 .email(email)
@@ -70,9 +78,10 @@ public class LoginAttemptService {
                 .ipAddress(ipAddress)
                 .userAgent(userAgent)
                 .reason(reason)
+                .organizationId(orgId)
                 .user(userId != null ? userRepository.findById(userId).orElse(null) : null)
                 .build();
-        
+
         loginAttemptRepository.save(attempt);
     }
     

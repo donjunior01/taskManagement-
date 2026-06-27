@@ -66,6 +66,8 @@ public class SecurityConfig {
                     "/api/settings/branding",
                     // Public password policy so the registration page can guide & validate input
                     "/api/settings/password-policy",
+                    // Public registration policy (enabled flag + allowed email domains)
+                    "/api/settings/registration",
                     "/actuator/health",
                     "/actuator/info",
                     "/error",
@@ -147,7 +149,11 @@ public class SecurityConfig {
         // enablement session: the global STATELESS policy must be relaxed (or a cookie-based
         // authorization-request repository wired) for the OIDC state round-trip — verify at runtime.
         if (ssoEnabled && clientRegistrationRepository != null && oidcLoginSuccessHandler != null) {
-            http.oauth2Login(oauth -> oauth.successHandler(oidcLoginSuccessHandler));
+            http.oauth2Login(oauth -> oauth
+                    .successHandler(oidcLoginSuccessHandler)
+                    // Cookie-based store so the OIDC state survives the redirect under STATELESS sessions.
+                    .authorizationEndpoint(a -> a.authorizationRequestRepository(
+                            new com.example.gpiApp.config.security.HttpCookieOAuth2AuthorizationRequestRepository())));
         }
 
         return http.build();

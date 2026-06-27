@@ -306,7 +306,7 @@
   }
 
   &.system {
-    background: #ecfeff;
+    background: var(--info-bg);
     color: #0891b2;
     border: 2px solid #a5f3fc;
   }
@@ -364,7 +364,7 @@
   }
 
   &.high {
-    background: #fff7ed;
+    background: var(--warning-bg);
     color: var(--accent);
     border: 1px solid #fed7aa;
   }
@@ -699,7 +699,7 @@
   }
 
   &.system {
-    background: #ecfeff;
+    background: var(--info-bg);
     color: #0891b2;
   }
 }
@@ -718,7 +718,7 @@
   }
 
   &.high {
-    background: #fff7ed;
+    background: var(--warning-bg);
     color: var(--accent);
     border: 1px solid #fed7aa;
   }
@@ -767,7 +767,7 @@
   code {
     font-family: 'Courier New', Courier, monospace;
     font-size: 12px;
-    color: #e2e8f0;
+    color: var(--border);
     white-space: pre-wrap;
     word-break: break-all;
   }

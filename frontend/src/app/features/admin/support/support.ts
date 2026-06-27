@@ -118,8 +118,10 @@ export class AdminSupportComponent implements OnInit {
 
     // Also load open ticket count
     this.ticketService.getOpenTicketsCount().subscribe({
-      next: (count: number) => {
-        this.openTickets = count;
+      next: (count: any) => {
+        // Backend wraps the count in ApiResponse {success,message,data}; unwrap if present.
+        this.openTickets = (count && typeof count === 'object' && 'data' in count) ? count.data : count;
+        this.cdr.detectChanges();
       },
       error: () => {}
     });

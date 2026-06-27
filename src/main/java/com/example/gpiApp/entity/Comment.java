@@ -11,13 +11,18 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "comments")
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "organization_id = :orgId")
+@EntityListeners(com.example.gpiApp.config.TenantListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Comment {
+public class Comment implements TenantOwned {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @jakarta.persistence.Column(name = "organization_id")
+    private Long organizationId;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;

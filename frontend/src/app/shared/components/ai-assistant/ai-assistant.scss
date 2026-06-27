@@ -100,7 +100,7 @@
     color: var(--primary, #2563eb);
     font-weight: 600;
     cursor: pointer;
-    &:hover { background: var(--bg-subtle, #eef2f7); }
+    &:hover { background: var(--bg-subtle, var(--bg-subtle)); }
   }
 }
 

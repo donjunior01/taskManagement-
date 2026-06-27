@@ -24,11 +24,17 @@ export class RegisterComponent implements OnInit {
     email: '',
     password: '',
     firstName: '',
-    lastName: ''
+    lastName: '',
+    organizationName: ''
   };
   errorMessage: string = '';
   loading: boolean = false;
   passwordTouched: boolean = false;
+
+  // Registration access policy (loaded from the public endpoint).
+  registrationEnabled: boolean = true;
+  allowedDomains: string[] = [];
+  policyLoaded: boolean = false;
 
   // Active password policy (defaults mirror the backend until the live policy loads).
   policy: PasswordPolicy = { minLength: 12, requireUppercase: true, requireDigit: true, requireSpecial: true };
@@ -49,6 +55,30 @@ export class RegisterComponent implements OnInit {
       next: (p) => { if (p) { this.policy = { ...this.policy, ...p }; this.cdr.detectChanges(); } },
       error: () => { /* keep sensible defaults if offline */ }
     });
+    // Load the registration access policy (is sign-up open, allowed domains).
+    this.settings.getRegistrationPolicy().subscribe({
+      next: (r) => {
+        this.registrationEnabled = r?.registrationEnabled !== false;
+        this.allowedDomains = r?.allowedDomains || [];
+        this.policyLoaded = true;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.policyLoaded = true; }
+    });
+  }
+
+  /** Human-readable list of allowed domains, e.g. "@taskmaster.com or @acme.com". */
+  get allowedDomainsHint(): string {
+    return this.allowedDomains.map(d => '@' + d).join(', ');
+  }
+
+  /** True when the typed email's domain satisfies the policy (or no restriction is set). */
+  get emailDomainAllowed(): boolean {
+    if (!this.allowedDomains.length) return true;
+    const email = (this.registerRequest.email || '').toLowerCase();
+    const at = email.indexOf('@');
+    if (at < 0) return false;
+    return this.allowedDomains.includes(email.substring(at + 1).trim());
   }
 
   /** Live checklist of the password requirements, each flagged met/unmet as the user types. */
@@ -71,6 +101,14 @@ export class RegisterComponent implements OnInit {
   onSubmit(): void {
     this.errorMessage = '';
 
+    // Company email-domain policy (applies to joining the company, i.e. no new-org name).
+    if (!this.registerRequest.organizationName && !this.emailDomainAllowed) {
+      this.errorMessage = this.translate.instant('auth.errDomain', { domains: this.allowedDomainsHint });
+      this.toast.show(this.errorMessage, 'error');
+      this.cdr.detectChanges();
+      return;
+    }
+
     // Client-side guard so the user is guided before the request is even sent.
     if (!this.passwordValid) {
       this.passwordTouched = true;
@@ -84,8 +122,9 @@ export class RegisterComponent implements OnInit {
     this.authService.register(this.registerRequest).subscribe({
       next: () => {
         this.loading = false;
-        // New accounts are inactive until an admin approves them — tell the user on the login page.
-        this.router.navigate(['/login'], { queryParams: { registered: 'pending' } });
+        // Creating an organization makes this user its active admin — they can sign in right away.
+        const created = this.registerRequest.organizationName?.trim() ? 'org' : 'pending';
+        this.router.navigate(['/login'], { queryParams: { registered: created } });
       },
       error: (error) => {
         this.loading = false;

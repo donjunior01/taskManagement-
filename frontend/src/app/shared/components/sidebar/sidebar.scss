@@ -4,35 +4,29 @@
   left: 0; top: 0;
   width: var(--sidebar-w);
   height: 100vh;
-  background: var(--sidebar-bg, #080d1a);
+  background: var(--sidebar-surface);
+  border-right: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
   z-index: 100;
   overflow: hidden;
-  transition: width .3s cubic-bezier(.4,0,.2,1);
+  transition: width .3s cubic-bezier(.4,0,.2,1), background .3s ease, border-color .3s ease;
 
-  /* Layered ambient glows */
+  /* Layered ambient glows (transparent in light mode, cyan/blue neon in dark) */
   &::before {
     content: '';
     position: absolute; inset: 0;
     background:
-      radial-gradient(ellipse 90% 45% at 50% 0%,   var(--sidebar-glow-top, rgba(37,99,235,.26)) 0%, transparent 62%),
-      radial-gradient(ellipse 70% 35% at 100% 100%, var(--sidebar-glow-accent, rgba(234,88,12,.13)) 0%, transparent 52%),
-      radial-gradient(ellipse 50% 25% at 0%   60%,  rgba(37,99,235,.06) 0%, transparent 50%);
+      radial-gradient(ellipse 90% 45% at 50% 0%,   var(--sidebar-glow-top) 0%, transparent 62%),
+      radial-gradient(ellipse 70% 35% at 100% 100%, var(--sidebar-glow-accent) 0%, transparent 52%);
     pointer-events: none;
   }
 
   /* Thin luminous right edge */
   &::after {
     content: '';
-    position: absolute; top: 30%; right: 0; width: 1px; height: 100%;
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      rgba(255,255,255,.10) 25%,
-      rgba(255,255,255,.10) 75%,
-      transparent 100%
-    );
+    position: absolute; top: 18%; right: 0; width: 1px; height: 64%;
+    background: linear-gradient(to bottom, transparent 0%, var(--sidebar-edge) 25%, var(--sidebar-edge) 75%, transparent 100%);
     pointer-events: none;
   }
 }
@@ -42,10 +36,10 @@
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 24px 20px 20px;
+  padding: 24px 20px 18px;
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(255,255,255,.07);
-  margin-bottom: 8px;
+  border-bottom: 1px solid var(--sidebar-border);
+  margin-bottom: 6px;
 
   .logo-stack-svg {
     width: 40px; height: 40px;
@@ -64,7 +58,7 @@
   .logo-brand-txt {
     font-size: 15px;
     font-weight: 700;
-    color: #fff;
+    color: var(--sidebar-brand-txt);
     letter-spacing: -.2px;
     white-space: nowrap;
   }
@@ -74,7 +68,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: .18em;
-    color: rgba(255,255,255,.42);
+    color: var(--sidebar-fg-faint);
     margin-top: 2px;
   }
 }
@@ -86,17 +80,31 @@
   padding: 0 10px 14px;
 
   &::-webkit-scrollbar { width: 3px; }
-  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 99px; }
+  &::-webkit-scrollbar-thumb { background: var(--sidebar-scroll); border-radius: 99px; }
 }
 
-/* Admin "Governance" section label */
+/* Section label — divides the nav into groups */
 .nav-section-title {
   font-size: 10px;
-  font-weight: 700;
-  color: rgba(255,255,255,.28);
+  font-weight: 800;
+  color: var(--sidebar-fg-faint);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 12px 14px 6px;
+  letter-spacing: .12em;
+  padding: 8px 14px 6px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--sidebar-border), transparent);
+  }
+
+  /* First section in a block: no extra top gap */
+  &:first-child { margin-top: 2px; }
 }
 
 /* ── Nav Link (covers both <a> and <button>) ── */
@@ -104,10 +112,10 @@
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 10.5px 14px;
-  border-radius: 11px;
-  margin-bottom: 4px;
-  color: rgba(255,255,255,.50);
+  padding: 10px 13px;
+  border-radius: 10px;
+  margin-bottom: 3px;
+  color: var(--sidebar-fg);
   font-size: 13.5px;
   font-weight: 500;
   text-decoration: none;
@@ -127,7 +135,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.05) 50%, transparent 60%);
+    background: linear-gradient(105deg, transparent 40%, var(--sidebar-shimmer) 50%, transparent 60%);
     opacity: 0;
     transform: translateX(-100%);
     transition: opacity .3s ease, transform .5s ease;
@@ -138,6 +146,7 @@
     width: 17px; height: 17px;
     flex-shrink: 0;
     color: inherit;
+    opacity: .9;
     transition: color .18s ease, transform .2s cubic-bezier(.34,1.56,.64,1);
   }
 
@@ -162,18 +171,18 @@
     font-weight: 700;
     line-height: 1;
     border-radius: 9999px;
-    background: #2563eb;
+    background: var(--sidebar-badge);
     color: #fff;
-    box-shadow: 0 1px 4px rgba(37, 99, 235, .45);
+    box-shadow: 0 1px 4px color-mix(in oklab, var(--sidebar-badge) 45%, transparent);
   }
 
   /* ── Hover ── */
   &:hover {
-    color: rgba(255,255,255,.88);
-    background: rgba(255,255,255,.07);
+    color: var(--sidebar-fg-strong);
+    background: var(--sidebar-hover-bg);
     transform: translateX(2px);
 
-    .nav-icon { transform: scale(1.12); }
+    .nav-icon { transform: scale(1.12); opacity: 1; }
 
     &::before {
       opacity: 1;
@@ -181,48 +190,42 @@
     }
   }
 
-  /* ── Active (prototype: subtle bg, brand icon, right brand dot) ── */
+  /* ── Active — tinted pill + neon left accent bar ── */
   &.active {
-    color: #fff;
-    background: rgba(255,255,255,.08);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+    color: var(--sidebar-active-fg);
+    background: var(--sidebar-active-bg);
     transform: none;
 
-    .nav-icon {
-      color: #60a5fa;
-      transform: none;
-    }
-
+    .nav-icon { color: var(--sidebar-accent); opacity: 1; transform: none; }
     span { font-weight: 600; }
 
     /* Kill shimmer on active */
-    &::before {
-      display: none;
-    }
+    &::before { display: none; }
 
-    /* Right-side brand dot */
+    /* Left neon accent bar */
     &::after {
       content: '';
       position: absolute;
-      right: 14px; top: 50%; transform: translateY(-50%);
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: #60a5fa;
+      left: 0; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 56%;
+      border-radius: 0 3px 3px 0;
+      background: var(--sidebar-accent);
+      box-shadow: 0 0 10px -1px var(--sidebar-accent);
       pointer-events: none;
     }
   }
 
   /* ── Sign Out variant ── */
   &.logout-btn {
-    color: rgba(255,255,255,.42);
+    color: var(--sidebar-fg-faint);
     margin-bottom: 0;
 
     &:hover {
-      color: #fca5a5;
-      background: rgba(239,68,68,.10);
+      color: var(--danger, #ef4444);
+      background: color-mix(in oklab, var(--danger, #ef4444) 12%, transparent);
       transform: translateX(2px);
 
-      .nav-icon { color: #fca5a5; transform: scale(1.12); }
+      .nav-icon { color: var(--danger, #ef4444); transform: scale(1.12); }
     }
   }
 }
@@ -231,7 +234,7 @@
 .sidebar-bottom-wrapper {
   flex-shrink: 0;
   padding: 10px 10px 0;
-  border-top: 1px solid rgba(255,255,255,.07);
+  border-top: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -243,15 +246,15 @@
   align-items: center;
   gap: 11px;
   padding: 12px 13px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.08);
+  background: var(--sidebar-widget-bg);
+  border: 1px solid var(--sidebar-widget-border);
   border-radius: 13px;
   cursor: default;
   transition: background .2s ease, border-color .2s ease;
 
   &:hover {
-    background: rgba(255,255,255,.06);
-    border-color: rgba(255,255,255,.12);
+    background: var(--sidebar-hover-bg);
+    border-color: var(--sidebar-border);
   }
 
   /* .streak-icon-ribbon — base style (User streak = orange tint)
@@ -270,12 +273,12 @@
   .streak-details { flex: 1; min-width: 0; }
 
   .streak-title {
-    font-size: 13px; font-weight: 700; color: #f1f5f9;
+    font-size: 13px; font-weight: 700; color: var(--sidebar-widget-title);
     margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
   .streak-subtitle {
-    font-size: 11px; font-weight: 500; color: rgba(255,255,255,.38);
+    font-size: 11px; font-weight: 500; color: var(--sidebar-fg-faint);
     margin: 0; white-space: nowrap;
   }
 }
@@ -284,7 +287,7 @@
 .sidebar-version {
   padding: 12px 6px;
   font-size: 9.5px;
-  color: rgba(255,255,255,.35);
+  color: var(--sidebar-fg-faint);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -315,17 +318,12 @@
   animation: navSlideIn .3s ease both;
 }
 
-/*
- * Stagger by nth-of-type (a elements only) so it works correctly
- * for both Admin (where child 1 is .nav-section-title div) and
- * PM / User (where child 1 is already the first <a>).
- */
-.sidebar-nav div > a.nav-link:nth-of-type(1) { animation-delay: .05s; }
-.sidebar-nav div > a.nav-link:nth-of-type(2) { animation-delay: .10s; }
-.sidebar-nav div > a.nav-link:nth-of-type(3) { animation-delay: .15s; }
-.sidebar-nav div > a.nav-link:nth-of-type(4) { animation-delay: .20s; }
-.sidebar-nav div > a.nav-link:nth-of-type(5) { animation-delay: .25s; }
-.sidebar-nav div > a.nav-link:nth-of-type(6) { animation-delay: .30s; }
-.sidebar-nav div > a.nav-link:nth-of-type(7) { animation-delay: .35s; }
-.sidebar-nav div > a.nav-link:nth-of-type(8) { animation-delay: .40s; }
-.sidebar-nav div > a.nav-link:nth-of-type(9) { animation-delay: .45s; }
+.sidebar-nav div > a.nav-link:nth-of-type(1) { animation-delay: .04s; }
+.sidebar-nav div > a.nav-link:nth-of-type(2) { animation-delay: .08s; }
+.sidebar-nav div > a.nav-link:nth-of-type(3) { animation-delay: .12s; }
+.sidebar-nav div > a.nav-link:nth-of-type(4) { animation-delay: .16s; }
+.sidebar-nav div > a.nav-link:nth-of-type(5) { animation-delay: .20s; }
+.sidebar-nav div > a.nav-link:nth-of-type(6) { animation-delay: .24s; }
+.sidebar-nav div > a.nav-link:nth-of-type(7) { animation-delay: .28s; }
+.sidebar-nav div > a.nav-link:nth-of-type(8) { animation-delay: .32s; }
+.sidebar-nav div > a.nav-link:nth-of-type(9) { animation-delay: .36s; }

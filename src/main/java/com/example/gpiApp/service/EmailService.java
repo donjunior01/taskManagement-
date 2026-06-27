@@ -47,6 +47,27 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    /** Whether any email provider (Brevo or SMTP) is configured. */
+    public boolean isConfigured() {
+        return canSend();
+    }
+
+    /** Name of the active provider, for diagnostics: "Brevo", "SMTP" or "none". */
+    public String activeProvider() {
+        return brevoClient.isEnabled() ? "Brevo" : (emailEnabled ? "SMTP" : "none");
+    }
+
+    /**
+     * Send a test email SYNCHRONOUSLY and propagate any failure (unlike the @Async notifications,
+     * which swallow errors), so the admin "Send test email" action can report the real result.
+     */
+    public void sendTest(String to) {
+        dispatch(to, "TaskMaster Pro — test email",
+                "This is a test email from TaskMaster Pro.\n\n"
+                        + "If you received this, your email provider (" + activeProvider()
+                        + ") is configured correctly and notifications (invitations, password resets, etc.) will be delivered.");
+    }
+
     @Async
     public void sendDeadlineReminder(Task task, String recipientEmail) {
         if (!canSend()) {
@@ -130,6 +151,25 @@ public class EmailService {
             log.info("Password-reset email sent to {}.", recipientEmail);
         } catch (Exception e) {
             log.error("Failed to send password-reset email to {}: {}", recipientEmail, e.getMessage());
+        }
+    }
+
+    public void sendInvitationEmail(String recipientEmail, String organizationName, String inviterName, String acceptUrl) {
+        if (!canSend()) {
+            log.info("Email service is disabled. Skipping invitation email to {}.", recipientEmail);
+            return;
+        }
+        try {
+            String body =
+                    "Bonjour,\n\n" +
+                    (inviterName != null ? inviterName + " vous invite" : "Vous êtes invité(e)") +
+                    " à rejoindre l'organisation « " + organizationName + " » sur TaskMaster Pro.\n\n" +
+                    "Cliquez sur ce lien pour créer votre compte :\n" + acceptUrl + "\n\n" +
+                    "Ce lien expire dans 7 jours.\n\nCordialement,\nL'équipe TaskMaster Pro";
+            dispatch(recipientEmail, "Invitation à rejoindre " + organizationName + " — TaskMaster Pro", body);
+            log.info("Invitation email sent to {}.", recipientEmail);
+        } catch (Exception e) {
+            log.error("Failed to send invitation email to {}: {}", recipientEmail, e.getMessage());
         }
     }
 

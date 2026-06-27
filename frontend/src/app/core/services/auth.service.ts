@@ -109,12 +109,19 @@ export class AuthService {
 
   logout(): void {
     this.permission.reset();
-    localStorage.removeItem('jwt_token');
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('user_roles');
-    localStorage.removeItem('mfa_setup_required');
-    localStorage.removeItem('password_change_required');
+    // Purge ALL per-user / per-tenant cached data so nothing leaks to the next account on the same
+    // browser (saved views tviews_*, live timer timer_*, msg_lastread_*, profile, etc.). Only the
+    // global UI preferences (theme, language) are kept.
+    const keep = new Set<string>(['theme', 'app_lang']);
+    try {
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && !keep.has(k)) keys.push(k);
+      }
+      keys.forEach(k => localStorage.removeItem(k));
+      sessionStorage.clear();
+    } catch { /* storage unavailable — ignore */ }
     this.currentUserSubject.next(null);
   }
 

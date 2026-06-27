@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "login_attempts")
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "organization_id = :orgId")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -18,6 +19,10 @@ public class LoginAttempt {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Stamped from the attempted email's organization (TenantContext isn't set during login). */
+    @Column(name = "organization_id")
+    private Long organizationId;
 
     @Column(name = "username")
     private String username; // Can be null if attempt is before authentication

@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "api_keys", indexes = { @Index(name = "idx_api_keys_hash", columnList = "key_hash", unique = true) })
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "organization_id = :orgId")
 @EntityListeners(com.example.gpiApp.config.TenantListener.class)
 @NoArgsConstructor
 @AllArgsConstructor

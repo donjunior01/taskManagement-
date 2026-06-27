@@ -23,7 +23,12 @@ public class SystemSettings {
     public static final Long SINGLETON_ID = 1L;
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** One settings row per organization (config isolation). */
+    @Column(name = "organization_id")
+    private Long organizationId;
 
     // ── Général ──────────────────────────────────────────────────────────────
     @Column(name = "app_name", nullable = false)
@@ -99,6 +104,17 @@ public class SystemSettings {
     @Column(name = "maintenance_mode", nullable = false)
     @Builder.Default
     private Boolean maintenanceMode = false;
+
+    // ── Registration access control ──────────────────────────────────────────
+    /** When false the self-registration page is disabled (invite-only mode). */
+    @Column(name = "registration_enabled", nullable = false)
+    @Builder.Default
+    private Boolean registrationEnabled = true;
+
+    /** Comma-separated allowed email domains (e.g. "taskmaster.com,acme.com"); empty = any domain. */
+    @Column(name = "allowed_email_domains", length = 1000)
+    @Builder.Default
+    private String allowedEmailDomains = "";
 
     // ── Notifications (SMTP) ─────────────────────────────────────────────────
     @Column(name = "smtp_host")

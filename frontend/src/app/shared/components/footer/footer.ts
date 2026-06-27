@@ -29,7 +29,7 @@ import { BrandingService } from '../../../core/services/branding.service';
       left: calc(var(--sidebar-w, 260px) + 36px); right: 90px; bottom: 16px;
       padding: 9px 18px; text-align: right;
       font-size: 11px; color: var(--text-muted);
-      background: var(--bg-card); border: 1px solid var(--border-light, var(--border));
+      background: var(--bg-card); border: 1px solid var(--border-light);
       border-radius: var(--radius-lg, 12px); box-shadow: 0 2px 10px rgba(15, 23, 42, .14);
       transition: transform .25s ease, opacity .25s ease; will-change: transform;
     }

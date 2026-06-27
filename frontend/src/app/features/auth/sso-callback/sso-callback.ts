@@ -22,10 +22,10 @@ import { AuthService } from '../../../core/services/auth.service';
     </div>
   `,
   styles: [`
-    .sso-cb { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f1f5f9; }
-    .sso-card { display: flex; flex-direction: column; align-items: center; gap: 14px; color: #475569; font-size: 14px; font-weight: 600; }
-    .sso-spinner { width: 38px; height: 38px; border: 4px solid #cbd5e1; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    .sso-error { color: #dc2626; }
+    .sso-cb { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-subtle); }
+    .sso-card { display: flex; flex-direction: column; align-items: center; gap: 14px; color: var(--text-secondary); font-size: 14px; font-weight: 600; }
+    .sso-spinner { width: 38px; height: 38px; border: 4px solid var(--border-strong); border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .sso-error { color: var(--danger-text); }
     @keyframes spin { to { transform: rotate(360deg); } }
   `]
 })

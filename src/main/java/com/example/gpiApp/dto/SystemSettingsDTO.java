@@ -34,6 +34,8 @@ public class SystemSettingsDTO {
     private Boolean twoFactorRequiredAdmins;
     private Boolean twoFactorRequiredAll;
     private Boolean maintenanceMode;
+    private Boolean registrationEnabled;
+    private String allowedEmailDomains;
 
     // Notifications
     private String smtpHost;

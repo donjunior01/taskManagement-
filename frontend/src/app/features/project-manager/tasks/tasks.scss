@@ -124,12 +124,12 @@
   }
   .priority-pill {
     &.critical { background: var(--danger-bg);  color: var(--danger-text);  border-color: var(--danger-border); }
-    &.high     { background: #fff7ed;            color: var(--accent);       border-color: #fed7aa; }
+    &.high     { background: var(--warning-bg);            color: var(--accent);       border-color: #fed7aa; }
     &.medium   { background: var(--warning-bg);  color: var(--warning-text); border-color: var(--warning-border); }
     &.low      { background: var(--success-bg);  color: var(--success-text); border-color: var(--success-border); }
   }
   .difficulty-pill {
-    &.hard   { background: #ede9fe; color: #7c3aed; border-color: #c4b5fd; }
+    &.hard   { background: rgba(139,92,246,.16); color: var(--tint-violet-text); border-color: #c4b5fd; }
     &.medium { background: var(--bg-muted); color: var(--text-secondary); border-color: var(--border); }
     &.easy   { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
   }

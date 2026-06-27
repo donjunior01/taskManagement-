@@ -330,7 +330,7 @@
 
       .progress-bar-track {
         height: 6px;
-        background: var(--border-light, #e2e8f0);
+        background: var(--border-light);
         border-radius: var(--radius-full);
         overflow: hidden;
 
@@ -392,7 +392,7 @@
   &.pending     { background: var(--warning-bg);  color: var(--warning-text); }
   &.approved    { background: var(--success-bg);  color: var(--success-text); }
   &.rejected    { background: var(--danger-bg);   color: var(--danger-text);  }
-  &.revision    { background: #ede9fe;            color: #7c3aed;             }
+  &.revision    { background: rgba(139,92,246,.16);            color: var(--tint-violet-text);             }
   &.unsubmitted { background: var(--bg-subtle);   color: var(--text-muted);   }
 }
 

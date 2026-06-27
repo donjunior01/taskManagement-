@@ -13,4 +13,6 @@ public class RegisterRequest {
     private String username;
     private String email;
     private String password;
+    /** When provided, signup creates a NEW organization and makes this user its admin/owner. */
+    private String organizationName;
 }

@@ -153,6 +153,30 @@
     </div>
 
     <div class="cfg-section">
+      <h3>{{ 'admin.settings.registrationAccess' | translate }}</h3>
+      <div class="cfg-field">
+        <label>{{ 'admin.settings.allowRegistration' | translate }}</label>
+        <div class="toggle-line">
+          <button type="button" class="switch" [class.on]="registrationEnabled" (click)="registrationEnabled = !registrationEnabled"><span></span></button>
+          <span>{{ (registrationEnabled ? 'admin.settings.regOpen' : 'admin.settings.regClosed') | translate }}</span>
+        </div>
+        <span class="hint">{{ 'admin.settings.allowRegistrationHint' | translate }}</span>
+      </div>
+      <div class="cfg-field">
+        <label>{{ 'admin.settings.allowedDomains' | translate }}</label>
+        <div class="domain-chips">
+          <span class="domain-chip" *ngFor="let d of allowedDomains">@{{ d }}<button type="button" (click)="removeDomain(d)" aria-label="remove">×</button></span>
+          <span class="domain-empty" *ngIf="!allowedDomains.length">{{ 'admin.settings.allowedDomainsAny' | translate }}</span>
+        </div>
+        <div class="domain-add">
+          <input type="text" [(ngModel)]="newDomain" placeholder="taskmaster.com" (keyup.enter)="addDomain(); $event.preventDefault()" />
+          <button type="button" class="btn btn-secondary btn-sm" (click)="addDomain()">{{ 'admin.settings.addDomain' | translate }}</button>
+        </div>
+        <span class="hint">{{ 'admin.settings.allowedDomainsHint' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="cfg-section">
       <h3>{{ 'admin.settings.passwordPolicy' | translate }}</h3>
       <div class="cfg-field">
         <label>{{ 'admin.settings.minLength' | translate:{ n: passwordMinLength } }}</label>
@@ -182,12 +206,12 @@
       <div class="cfg-field">
         <label>{{ 'admin.settings.connStatus' | translate }}</label>
         <div class="toggle-line">
-          <span class="badge badge-success">{{ 'admin.settings.connected' | translate }}</span>
-          <button class="btn btn-secondary btn-sm" (click)="testSmtp()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
-            {{ 'admin.settings.test' | translate }}
+          <button class="btn btn-secondary btn-sm" (click)="testSmtp()" [disabled]="testEmailBusy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13"></path><path d="M22 2 15 22l-4-9-9-4 20-7z"></path></svg>
+            {{ 'admin.settings.sendTestEmail' | translate }}
           </button>
         </div>
+        <span class="hint">{{ 'admin.settings.testEmailHint' | translate }}</span>
       </div>
     </div>
     <div class="cfg-section">

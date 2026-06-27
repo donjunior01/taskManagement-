@@ -106,6 +106,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public UserListResponseDTO getAllUsers(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) 
             ? Sort.by(sortBy).ascending() 

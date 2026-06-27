@@ -18,6 +18,7 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name = "webhook_subscriptions")
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "organization_id = :orgId")
 @EntityListeners(com.example.gpiApp.config.TenantListener.class)
 @NoArgsConstructor
 @AllArgsConstructor

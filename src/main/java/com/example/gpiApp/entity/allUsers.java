@@ -19,6 +19,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "allUsers")
+@org.hibernate.annotations.Filter(name = "tenantFilter", condition = "organization_id = :orgId")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "user_type", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "NULL")

@@ -34,5 +34,8 @@ public class TaskRequestDTO {
     private LocalDate deadline;
     
     private Task.ReminderType reminderType;
-}
 
+    private java.util.Map<String, String> customFields;
+
+    private Long workflowStatusId;
+}

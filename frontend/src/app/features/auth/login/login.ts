@@ -42,6 +42,10 @@ export class LoginComponent implements OnInit {
     const params = this.route.snapshot.queryParams;
     if (params['registered'] === 'pending') {
       this.infoMessage = this.translate.instant('auth.infoPending');
+    } else if (params['registered'] === 'org') {
+      this.infoMessage = this.translate.instant('auth.infoOrgCreated');
+    } else if (params['registered'] === 'invited') {
+      this.infoMessage = this.translate.instant('auth.infoInviteAccepted');
     } else if (params['expired'] === '1') {
       this.infoMessage = this.translate.instant('auth.infoExpired');
     }

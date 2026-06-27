@@ -55,10 +55,10 @@ import { ToastService } from '../../../core/services/toast.service';
 
         <label class="rl-label">{{ 'admin.roles.permissions' | translate }}</label>
         <div class="rl-perm-group" *ngFor="let g of groups">
-          <div class="rl-perm-group-name">{{ g }}</div>
-          <label class="rl-perm" *ngFor="let p of permsByGroup[g]" [class.rl-perm-off]="readonly && !form.permissions.includes(p.key)">
+          <div class="rl-perm-group-name">{{ groupLabel(g) }}</div>
+          <label class="rl-perm" *ngFor="let p of permsByGroup[g]" [class.rl-perm-off]="readonly && !form.permissions.includes(p.key)" [title]="p.key">
             <input type="checkbox" [checked]="form.permissions.includes(p.key)" [disabled]="readonly" (change)="toggle(p.key)" />
-            <span>{{ p.key }}</span>
+            <span>{{ permLabel(p.key) }}</span>
           </label>
         </div>
       </div>
@@ -157,6 +157,19 @@ export class AdminRolesComponent implements OnInit {
   toggle(key: string): void {
     const i = this.form.permissions.indexOf(key);
     if (i >= 0) this.form.permissions.splice(i, 1); else this.form.permissions.push(key);
+  }
+
+  private pretty(s: string): string { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+  /** Friendly, translated label for a permission group; falls back to a prettified key. */
+  groupLabel(g: string): string {
+    const k = 'admin.roles.grp.' + g; const v = this.translate.instant(k);
+    return v === k ? this.pretty(g) : v;
+  }
+  /** Friendly, translated label for a permission (the verb after the dot). */
+  permLabel(key: string): string {
+    const verb = key.includes('.') ? key.substring(key.indexOf('.') + 1) : key;
+    const k = 'admin.roles.verb.' + verb; const v = this.translate.instant(k);
+    return v === k ? this.pretty(verb) : v;
   }
 
   save(): void {

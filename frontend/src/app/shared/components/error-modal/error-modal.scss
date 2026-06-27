@@ -12,7 +12,7 @@
   animation: fadeIn 0.15s ease;
 
   .modal-content {
-    background: #fff;
+    background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     width: 100%;

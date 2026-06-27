@@ -8,6 +8,7 @@ import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { TwoFactorService } from '../../../core/services/twofa.service';
 import { RoleService, AppRole } from '../../../core/services/role.service';
+import { InvitationService } from '../../../core/services/invitation.service';
 import { SessionService } from '../../../core/services/session.service';
 
 @Component({
@@ -81,8 +82,44 @@ export class AdminUsersComponent implements OnInit {
     private translate: TranslateService,
     private twofa: TwoFactorService,
     private sessions: SessionService,
-    private roleService: RoleService
+    private roleService: RoleService,
+    private invitations: InvitationService
   ) {}
+
+  // --- Invite a teammate ---
+  showInviteModal = false;
+  inviteEmail = '';
+  inviteRole = 'USER';
+  inviteBusy = false;
+  inviteLink = '';
+
+  openInvite(): void { this.showInviteModal = true; this.inviteEmail = ''; this.inviteRole = 'USER'; this.inviteLink = ''; }
+  closeInvite(): void { this.showInviteModal = false; }
+
+  sendInvite(): void {
+    if (!this.inviteEmail.trim() || this.inviteBusy) return;
+    this.inviteBusy = true;
+    this.invitations.create(this.inviteEmail.trim(), this.inviteRole).subscribe({
+      next: (r: any) => {
+        this.inviteBusy = false;
+        this.inviteLink = (r?.data || r)?.acceptUrl || '';
+        this.triggerToast(this.translate.instant('admin.users.inviteSent'), 'success');
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        this.inviteBusy = false;
+        this.triggerToast(err?.error?.message || this.translate.instant('admin.users.inviteFailed'), 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  copyInviteLink(): void {
+    if (this.inviteLink) {
+      navigator.clipboard?.writeText(this.inviteLink);
+      this.triggerToast(this.translate.instant('admin.users.inviteLinkCopied'), 'success');
+    }
+  }
 
   rolesList: AppRole[] = [];
   selectedRoleId: number | null = null;

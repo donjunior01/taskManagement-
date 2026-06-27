@@ -131,7 +131,7 @@
 
   &.in_progress { background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
   &.planned     { background: var(--bg-muted);   color: var(--text-secondary); border: 1px solid var(--border); }
-  &.on_hold     { background: #fdf4ff; color: #a21caf; border: 1px solid #e9d5ff; }
+  &.on_hold     { background: rgba(217,70,239,.14); color: #a21caf; border: 1px solid #e9d5ff; }
   &.completed   { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
 }
 

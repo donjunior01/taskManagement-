@@ -47,15 +47,15 @@ import { LanguageService } from '../../../core/services/language.service';
     .lang-toggle {
       display: inline-flex; align-items: center; gap: 7px;
       height: 34px; padding: 3px 11px;
-      border: 1px solid var(--border, #e2e8f0); border-radius: 9999px;
-      background: linear-gradient(180deg, #ffffff, #eef2f7);
+      border: 1px solid var(--border); border-radius: 9999px;
+      background: linear-gradient(180deg, #ffffff, var(--bg-subtle));
       box-shadow: inset 0 1px 1px rgba(255,255,255,.9), 0 1px 2px rgba(15,23,42,.10);
       cursor: pointer; font-family: inherit;
       transition: box-shadow .15s ease, transform .12s ease;
     }
     .lang-toggle:hover { box-shadow: inset 0 1px 1px rgba(255,255,255,.9), 0 3px 8px rgba(15,23,42,.14); }
     .lang-toggle:active { transform: scale(.97); }
-    .lang-code { font-size: 13px; font-weight: 800; letter-spacing: .6px; color: #475569; }
+    .lang-code { font-size: 13px; font-weight: 800; letter-spacing: .6px; color: var(--text-secondary); }
     .flag-svg { width: 22px; height: 22px; flex-shrink: 0; }
     .flag-svg svg { width: 100%; height: 100%; display: block; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
   `]

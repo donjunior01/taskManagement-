@@ -18,16 +18,18 @@ public class SystemSettingsService {
     private final SystemSettingsRepository repository;
     private final ActivityLogService activityLogService;
 
-    /** Fetch the singleton, creating a default row on first access. */
+    /**
+     * Fetch the settings for the current organization (config isolation), creating a default row on
+     * first access. Pre-auth callers (branding / registration / password-policy on the login &
+     * registration pages, and the login domain/maintenance checks) have no TenantContext, so they fall
+     * back to the default organization (id 1) — the landing tenant new users register into.
+     */
     @Transactional
     public SystemSettings getSettings() {
-        return repository.findById(SystemSettings.SINGLETON_ID)
-                .orElseGet(() -> {
-                    SystemSettings created = SystemSettings.builder()
-                            .id(SystemSettings.SINGLETON_ID)
-                            .build();
-                    return repository.save(created);
-                });
+        Long org = com.example.gpiApp.config.security.TenantContext.getOrganizationId();
+        final Long orgId = (org != null) ? org : SystemSettings.SINGLETON_ID;
+        return repository.findByOrganizationId(orgId)
+                .orElseGet(() -> repository.save(SystemSettings.builder().organizationId(orgId).build()));
     }
 
     public SystemSettingsDTO getSettingsDTO() {
@@ -106,6 +108,8 @@ public class SystemSettingsService {
         if (dto.getTwoFactorRequiredAdmins() != null) s.setTwoFactorRequiredAdmins(dto.getTwoFactorRequiredAdmins());
         if (dto.getTwoFactorRequiredAll() != null) s.setTwoFactorRequiredAll(dto.getTwoFactorRequiredAll());
         if (dto.getMaintenanceMode() != null) s.setMaintenanceMode(dto.getMaintenanceMode());
+        if (dto.getRegistrationEnabled() != null) s.setRegistrationEnabled(dto.getRegistrationEnabled());
+        if (dto.getAllowedEmailDomains() != null) s.setAllowedEmailDomains(normalizeDomains(dto.getAllowedEmailDomains()));
         SystemSettingsDTO saved = toDTO(repository.save(s));
         logSettingsChange("security");
         return saved;
@@ -232,6 +236,48 @@ public class SystemSettingsService {
         return null;
     }
 
+    // ── Registration access control ──────────────────────────────────────────
+
+    /** Whether the self-registration page is currently open. */
+    public boolean isRegistrationEnabled() {
+        return Boolean.TRUE.equals(getSettings().getRegistrationEnabled());
+    }
+
+    /** Allowed email domains as a clean list (lower-cased, no leading @), empty = no restriction. */
+    public java.util.List<String> getAllowedEmailDomains() {
+        String raw = getSettings().getAllowedEmailDomains();
+        if (raw == null || raw.isBlank()) return java.util.List.of();
+        return java.util.Arrays.stream(raw.split(","))
+                .map(d -> d.trim().toLowerCase().replaceFirst("^@", ""))
+                .filter(d -> !d.isEmpty())
+                .distinct()
+                .toList();
+    }
+
+    /** Normalise a comma-separated domain string for storage. */
+    private String normalizeDomains(String raw) {
+        if (raw == null || raw.isBlank()) return "";
+        return java.util.Arrays.stream(raw.split(","))
+                .map(d -> d.trim().toLowerCase().replaceFirst("^@", ""))
+                .filter(d -> !d.isEmpty())
+                .distinct()
+                .collect(java.util.stream.Collectors.joining(","));
+    }
+
+    /**
+     * Check an email against the allowed-domain policy.
+     * @return an error message, or {@code null} when the domain is allowed (or no policy is set).
+     */
+    public String validateEmailDomain(String email) {
+        java.util.List<String> allowed = getAllowedEmailDomains();
+        if (allowed.isEmpty()) return null;
+        if (email == null || !email.contains("@")) return "A valid email address is required.";
+        String domain = email.substring(email.indexOf('@') + 1).trim().toLowerCase();
+        if (allowed.contains(domain)) return null;
+        return "Only company email addresses are allowed (" +
+                allowed.stream().map(d -> "@" + d).collect(java.util.stream.Collectors.joining(", ")) + ").";
+    }
+
     private SystemSettingsDTO toDTO(SystemSettings s) {
         return SystemSettingsDTO.builder()
                 .appName(s.getAppName())
@@ -252,6 +298,8 @@ public class SystemSettingsService {
                 .twoFactorRequiredAdmins(s.getTwoFactorRequiredAdmins())
                 .twoFactorRequiredAll(s.getTwoFactorRequiredAll())
                 .maintenanceMode(s.getMaintenanceMode())
+                .registrationEnabled(s.getRegistrationEnabled())
+                .allowedEmailDomains(s.getAllowedEmailDomains())
                 .smtpHost(s.getSmtpHost())
                 .smtpPort(s.getSmtpPort())
                 .smtpUsername(s.getSmtpUsername())

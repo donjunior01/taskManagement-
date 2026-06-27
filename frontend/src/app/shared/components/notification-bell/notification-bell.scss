@@ -22,7 +22,7 @@
 
   .notification-dropdown {
     position: absolute; top: calc(100% + 8px); right: 0;
-    background: #fff; border: 1px solid var(--border);
+    background: var(--bg-card); border: 1px solid var(--border);
     border-radius: var(--radius-lg); box-shadow: var(--shadow-xl);
     width: 300px; z-index: 1200; overflow: hidden;
     animation: fadeInDown .15s ease;
@@ -47,7 +47,7 @@
         cursor: pointer; transition: background var(--transition-fast);
         &:last-child { border-bottom: none; }
         &:hover { background: var(--bg-muted); }
-        &.unread { background: #eff6ff; &:hover { background: #dbeafe; } }
+        &.unread { background: var(--primary-bg); &:hover { background: var(--primary-bg); } }
 
         .notif-content {
           flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 3px;
