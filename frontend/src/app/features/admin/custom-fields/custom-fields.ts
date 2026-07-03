@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -128,15 +128,15 @@ export class CustomFieldsComponent implements OnInit {
   form: CustomFieldDefinition = this.blank();
   types: CustomFieldType[] = ['TEXT', 'NUMBER', 'DATE', 'SELECT', 'CHECKBOX'];
 
-  constructor(private svc: CustomFieldService, private toast: ToastService, private t: TranslateService) {}
+  constructor(private svc: CustomFieldService, private toast: ToastService, private t: TranslateService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void { this.load(); }
 
   load(): void {
     this.loading = true;
     this.svc.listAll().subscribe({
-      next: f => { this.fields = f || []; this.loading = false; },
-      error: () => { this.loading = false; }
+      next: f => { this.fields = f || []; this.loading = false; this.cdr.detectChanges(); },
+      error: () => { this.loading = false; this.cdr.detectChanges(); }
     });
   }
 

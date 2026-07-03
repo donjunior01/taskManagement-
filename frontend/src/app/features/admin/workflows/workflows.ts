@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -116,15 +116,15 @@ export class WorkflowsComponent implements OnInit {
   categories: StatusCategory[] = ['TODO', 'IN_PROGRESS', 'DONE'];
   palette = ['#64748b', '#2563eb', '#0891b2', '#7c3aed', '#db2777', '#ea580c', '#16a34a', '#ca8a04'];
 
-  constructor(private svc: WorkflowService, private toast: ToastService, private t: TranslateService) {}
+  constructor(private svc: WorkflowService, private toast: ToastService, private t: TranslateService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void { this.load(); }
 
   load(): void {
     this.loading = true;
     this.svc.listAll().subscribe({
-      next: s => { this.statuses = s || []; this.loading = false; },
-      error: () => { this.loading = false; }
+      next: s => { this.statuses = s || []; this.loading = false; this.cdr.detectChanges(); },
+      error: () => { this.loading = false; this.cdr.detectChanges(); }
     });
   }
 

@@ -40,17 +40,18 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParams;
-    if (params['registered'] === 'pending') {
-      this.infoMessage = this.translate.instant('auth.infoPending');
-    } else if (params['registered'] === 'org') {
-      this.infoMessage = this.translate.instant('auth.infoOrgCreated');
-    } else if (params['registered'] === 'invited') {
-      this.infoMessage = this.translate.instant('auth.infoInviteAccepted');
-    } else if (params['expired'] === '1') {
-      this.infoMessage = this.translate.instant('auth.infoExpired');
+    // Use async get() (not instant): on a fresh load/redirect the i18n files may not be loaded yet,
+    // which is why the raw key "auth.infoExpired" showed instead of the translated message.
+    let infoKey: string | null = null;
+    if (params['registered'] === 'pending') infoKey = 'auth.infoPending';
+    else if (params['registered'] === 'org') infoKey = 'auth.infoOrgCreated';
+    else if (params['registered'] === 'invited') infoKey = 'auth.infoInviteAccepted';
+    else if (params['expired'] === '1') infoKey = 'auth.infoExpired';
+    if (infoKey) {
+      this.translate.get(infoKey).subscribe(v => { this.infoMessage = v; this.cdr.detectChanges(); });
     }
     if (params['ssoError']) {
-      this.errorMessage = this.translate.instant('auth.sso.failed');
+      this.translate.get('auth.sso.failed').subscribe(v => { this.errorMessage = v; this.cdr.detectChanges(); });
     }
     // Show the SSO button only when the backend reports SSO is configured & enabled.
     this.authService.ssoStatus().subscribe({

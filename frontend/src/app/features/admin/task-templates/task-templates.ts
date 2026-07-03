@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -134,15 +134,15 @@ export class TaskTemplatesComponent implements OnInit {
   editing: TaskTemplate | null = null;
   form: TaskTemplate = this.blank();
 
-  constructor(private svc: TaskTemplateService, private toast: ToastService, private t: TranslateService) {}
+  constructor(private svc: TaskTemplateService, private toast: ToastService, private t: TranslateService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void { this.load(); }
 
   load(): void {
     this.loading = true;
     this.svc.listAll().subscribe({
-      next: t => { this.templates = t || []; this.loading = false; },
-      error: () => { this.loading = false; }
+      next: t => { this.templates = t || []; this.loading = false; this.cdr.detectChanges(); },
+      error: () => { this.loading = false; this.cdr.detectChanges(); }
     });
   }
 

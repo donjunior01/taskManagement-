@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -158,7 +158,7 @@ export class WikiComponent implements OnInit {
     private toast: ToastService,
     private t: TranslateService,
     private sanitizer: DomSanitizer
-  ) {}
+  , private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.canManage = this.perm.has('wiki.manage');
@@ -170,12 +170,12 @@ export class WikiComponent implements OnInit {
     this.svc.list().subscribe({
       next: p => {
         this.pages = p || [];
-        this.loading = false;
+        this.loading = false; this.cdr.detectChanges();
         const target = selectId != null ? this.pages.find(x => x.id === selectId) : (this.selected ? this.pages.find(x => x.id === this.selected!.id) : null);
         if (target) this.select(target);
         else if (!this.selected && this.pages.length) this.select(this.pages[0]);
       },
-      error: () => { this.loading = false; }
+      error: () => { this.loading = false; this.cdr.detectChanges(); }
     });
   }
 

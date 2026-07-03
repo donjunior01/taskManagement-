@@ -197,3 +197,136 @@ INSERT IGNORE INTO activity_logs (id, activity_type, description, user_id, entit
 
 -- Print success message
 SELECT 'MTN Cameroon sample data loaded successfully!' AS status;
+
+-- =====================================================================
+-- DEMO SEED for org 1 (MTN Cameroon) — fills the empty tenant tables so
+-- every feature page shows realistic data. INSERT IGNORE + explicit ids
+-- make this idempotent (re-runs on every boot are no-ops). Added 2026-06.
+-- =====================================================================
+
+-- Custom roles (Admin > Roles)
+INSERT IGNORE INTO `roles` (id, organization_id, name, description, is_system, created_at) VALUES
+(1,1,'Network Engineer','Field and core network engineering access',false,NOW()),
+(2,1,'Finance Lead','Billing, plan and reporting access',false,NOW()),
+(3,1,'QA Reviewer','Reviews and approves deliverables',false,NOW()),
+(4,1,'Support Agent','Handles support tickets and user queries',false,NOW()),
+(5,1,'Read-only Auditor','Read access to projects, tasks and logs',false,NOW());
+-- role_permissions has no single PK, so clear the seed roles' perms first to stay idempotent across boots.
+DELETE FROM `role_permissions` WHERE role_id IN (1,2,3,4,5);
+INSERT IGNORE INTO `role_permissions` (role_id, permission) VALUES
+(1,'project.view'),(1,'task.view'),(1,'task.edit'),(1,'team.view'),(1,'deliverable.view'),
+(2,'project.view'),(2,'report.view'),(2,'billing.manage'),
+(3,'task.view'),(3,'deliverable.view'),(3,'deliverable.review'),
+(4,'project.view'),(4,'task.view'),(4,'user.view'),
+(5,'project.view'),(5,'task.view'),(5,'report.view'),(5,'audit.view');
+
+-- Custom fields (Admin > Custom Fields)
+INSERT IGNORE INTO `custom_field_definitions` (id, organization_id, name, field_type, options, required, display_order, active, created_at) VALUES
+(1,1,'Sprint','TEXT',NULL,false,0,true,NOW()),
+(2,1,'Story Points','NUMBER',NULL,false,1,true,NOW()),
+(3,1,'Customer','TEXT',NULL,false,2,true,NOW()),
+(4,1,'Go-Live Date','DATE',NULL,false,3,true,NOW()),
+(5,1,'Severity','SELECT','Low,Medium,High,Critical',true,4,true,NOW()),
+(6,1,'Billable','CHECKBOX',NULL,false,5,true,NOW());
+
+-- Task templates (Admin > Task Templates)
+INSERT IGNORE INTO `task_templates` (id, organization_id, name, task_name, description, priority, difficulty, default_deadline_days, custom_fields, active, created_at) VALUES
+(1,1,'Bug Report','Bug: ','Steps to reproduce, expected vs actual result, environment.','HIGH','MEDIUM',3,NULL,true,NOW()),
+(2,1,'Network Incident','Incident: ','Impact, affected sites, root cause, mitigation steps.','CRITICAL','HARD',1,NULL,true,NOW()),
+(3,1,'New Feature','Feature: ','User story, acceptance criteria, definition of done.','MEDIUM','MEDIUM',14,NULL,true,NOW()),
+(4,1,'Employee Onboarding','Onboard new hire','Accounts, equipment, training plan, buddy assignment.','MEDIUM','EASY',7,NULL,true,NOW()),
+(5,1,'Site Survey','Site survey: ','Location, access, power, line of sight, photos.','LOW','EASY',5,NULL,true,NOW());
+
+-- Custom workflow columns (Admin > Workflows)
+INSERT IGNORE INTO `workflow_statuses` (id, organization_id, name, category, color, display_order, active, created_at) VALUES
+(1,1,'Backlog','TODO','#64748b',0,true,NOW()),
+(2,1,'Ready','TODO','#2563eb',1,true,NOW()),
+(3,1,'In Progress','IN_PROGRESS','#0891b2',2,true,NOW()),
+(4,1,'In Review','IN_PROGRESS','#7c3aed',3,true,NOW()),
+(5,1,'Blocked','IN_PROGRESS','#ef4444',4,true,NOW()),
+(6,1,'Done','DONE','#16a34a',5,true,NOW());
+
+-- Knowledge base (Wiki)
+INSERT IGNORE INTO `wiki_pages` (id, organization_id, title, content, parent_id, icon, created_by_id, created_by_name, updated_by_id, updated_by_name, created_at, updated_at) VALUES
+(1,1,'Engineering Handbook','# Engineering Handbook. Welcome to the MTN engineering knowledge base — standards, runbooks and how-to guides live here.',NULL,'📘',100,'Admin MTN',100,'Admin MTN',NOW(),NOW()),
+(2,1,'Onboarding Guide','# Onboarding. New here? Get your accounts, set up your laptop, and meet your team. Ask your buddy for anything missing.',1,'🚀',100,'Admin MTN',100,'Admin MTN',NOW(),NOW()),
+(3,1,'Network Operations Runbook','# NOC Runbook. Procedures for monitoring the 5G core, raising incidents and coordinating field engineers.',1,'🛠️',101,'Jean-Pierre Nkoulou',101,'Jean-Pierre Nkoulou',NOW(),NOW()),
+(4,1,'Incident Response Process','# Incident Response. Detect, triage, mitigate, then run a blameless post-mortem within 48 hours.',NULL,'🚨',101,'Jean-Pierre Nkoulou',101,'Jean-Pierre Nkoulou',NOW(),NOW()),
+(5,1,'Release Checklist','# Release Checklist. Tests green, changelog updated, stakeholders notified, rollback plan ready.',NULL,'✅',102,'Marie Tchinda',102,'Marie Tchinda',NOW(),NOW()),
+(6,1,'Glossary','# Glossary. 5G fifth-generation mobile network. NOC Network Operations Center. QoS Quality of Service.',NULL,'📖',100,'Admin MTN',100,'Admin MTN',NOW(),NOW());
+
+-- OKRs (Objectives + Key Results)
+INSERT IGNORE INTO `objectives` (id, organization_id, title, description, period, owner_id, owner_name, status, created_at) VALUES
+(1,1,'Expand 5G coverage across Douala','Bring fast, reliable 5G to the metro area','Q1 2026',101,'Jean-Pierre Nkoulou','ON_TRACK',NOW()),
+(2,1,'Cut network incident resolution time','Recover from incidents faster','Q1 2026',101,'Jean-Pierre Nkoulou','AT_RISK',NOW()),
+(3,1,'Reach 95% customer satisfaction','Improve support quality and NPS','Q1 2026',102,'Marie Tchinda','ON_TRACK',NOW()),
+(4,1,'Migrate billing to the cloud','Decommission the legacy billing platform','Q2 2026',102,'Marie Tchinda','OFF_TRACK',NOW()),
+(5,1,'Grow enterprise revenue','Win and retain enterprise accounts','2026',100,'Admin MTN','ON_TRACK',NOW());
+INSERT IGNORE INTO `key_results` (id, organization_id, objective_id, title, start_value, target_value, current_value, unit) VALUES
+(1,1,1,'5G towers live',0,120,78,'towers'),
+(2,1,1,'Population coverage',35,60,47,'%'),
+(3,1,2,'Average resolution time',48,12,30,'hours'),
+(4,1,2,'Incidents auto-detected',40,90,65,'%'),
+(5,1,3,'Customer satisfaction',82,95,90,'%'),
+(6,1,3,'First-response time',8,2,4,'hours'),
+(7,1,4,'Customers migrated',0,100,55,'%'),
+(8,1,4,'Legacy systems retired',0,3,1,'systems'),
+(9,1,5,'New enterprise accounts',0,25,11,'accounts'),
+(10,1,5,'Net revenue retention',100,120,108,'%');
+
+-- Automation rules (Admin > Automations)
+INSERT IGNORE INTO `automation_rules` (id, organization_id, name, enabled, `trigger`, condition_field, condition_value, action_type, action_value, created_at, last_run_at, run_count) VALUES
+(1,1,'Escalate critical tasks',true,'task.created','priority','CRITICAL','notify','101',NOW(),NULL,0),
+(2,1,'Notify PM on completion',true,'task.completed',NULL,NULL,'notify','101',NOW(),NULL,0),
+(3,1,'Raise priority on overdue',true,'task.status_changed','status','OVERDUE','set_priority','HIGH',NOW(),NULL,0),
+(4,1,'Assign 5G project tasks to lead',true,'task.created','projectId','100','assign','103',NOW(),NULL,0),
+(5,1,'Alert admin on assignment',true,'task.assigned',NULL,NULL,'notify','100',NOW(),NULL,0);
+
+-- Deliverables (PM/User > Deliverables)
+INSERT IGNORE INTO `deliverables` (id, organization_id, task_id, submitted_by_id, file_name, file_path, status, submitted_at, created_at, updated_at) VALUES
+(1,1,100,103,'akwa-5g-site-plan.pdf','/uploads/deliverables/akwa-5g-site-plan.pdf','PENDING',NOW(),NOW(),NOW()),
+(2,1,101,104,'tower-config-report.xlsx','/uploads/deliverables/tower-config-report.xlsx','APPROVED',NOW(),NOW(),NOW()),
+(3,1,102,105,'coverage-heatmap.png','/uploads/deliverables/coverage-heatmap.png','PENDING',NOW(),NOW(),NOW()),
+(4,1,103,106,'migration-runbook.docx','/uploads/deliverables/migration-runbook.docx','REJECTED',NOW(),NOW(),NOW()),
+(5,1,104,107,'qos-test-results.csv','/uploads/deliverables/qos-test-results.csv','PENDING',NOW(),NOW(),NOW());
+
+-- Support tickets (Admin/User > Support)
+INSERT IGNORE INTO `support_tickets` (id, organization_id, user_id, subject, description, priority, status, assigned_to_id, created_at, updated_at) VALUES
+(1,1,103,'Cannot access deliverables page','I get a 403 error when opening the deliverables page','HIGH','OPEN',100,NOW(),NOW()),
+(2,1,104,'Calendar not syncing','My Google calendar events do not show up','MEDIUM','IN_PROGRESS',100,NOW(),NOW()),
+(3,1,105,'Request new project access','I need access to the 5G Douala project','LOW','RESOLVED',101,NOW(),NOW()),
+(4,1,106,'Password reset email not received','No email arrives after I request a reset','URGENT','OPEN',100,NOW(),NOW()),
+(5,1,107,'PDF export fails','Exporting a report to PDF throws an error','MEDIUM','CLOSED',101,NOW(),NOW());
+
+-- API keys (Admin > API Keys)
+INSERT IGNORE INTO `api_keys` (id, organization_id, name, key_hash, key_prefix, created_by, created_at, revoked) VALUES
+(1,1,'CI Pipeline','seed_hash_ci_0001','tm_live_ci',100,NOW(),false),
+(2,1,'Billing Integration','seed_hash_bill_0002','tm_live_bl',100,NOW(),false),
+(3,1,'Mobile App Backend','seed_hash_mob_0003','tm_live_mb',100,NOW(),false),
+(4,1,'Reporting Export','seed_hash_rep_0004','tm_live_rp',100,NOW(),false),
+(5,1,'Legacy Sync','seed_hash_leg_0005','tm_live_lg',100,NOW(),true);
+
+-- Webhook subscriptions (Admin > Webhooks)
+INSERT IGNORE INTO `webhook_subscriptions` (id, organization_id, url, secret, active, created_at) VALUES
+(1,1,'https://hooks.mtncameroon.cm/tasks','whsec_seed_0001',true,NOW()),
+(2,1,'https://hooks.mtncameroon.cm/deliverables','whsec_seed_0002',true,NOW()),
+(3,1,'https://ops.mtncameroon.cm/webhooks/incidents','whsec_seed_0003',true,NOW()),
+(4,1,'https://chat.example.com/services/seed','whsec_seed_0004',true,NOW()),
+(5,1,'https://legacy.example.com/hook','whsec_seed_0005',false,NOW());
+
+-- Pending invitations (Admin > Users > Invite)
+INSERT IGNORE INTO `invitations` (id, organization_id, email, token, role, invited_by_name, created_at, expires_at, accepted) VALUES
+(1,1,'awono@mtncameroon.cm','seed-invite-token-0001','USER','Admin MTN',NOW(),DATE_ADD(NOW(), INTERVAL 7 DAY),false),
+(2,1,'biya@mtncameroon.cm','seed-invite-token-0002','USER','Admin MTN',NOW(),DATE_ADD(NOW(), INTERVAL 7 DAY),false),
+(3,1,'essomba.pm@mtncameroon.cm','seed-invite-token-0003','PROJECT_MANAGER','Admin MTN',NOW(),DATE_ADD(NOW(), INTERVAL 7 DAY),false),
+(4,1,'manga@mtncameroon.cm','seed-invite-token-0004','USER','Marie Tchinda',NOW(),DATE_ADD(NOW(), INTERVAL 7 DAY),false),
+(5,1,'owona@mtncameroon.cm','seed-invite-token-0005','USER','Jean-Pierre Nkoulou',NOW(),DATE_ADD(NOW(), INTERVAL 7 DAY),false);
+
+-- Task checklist items / sub-tasks (PM task detail)
+INSERT IGNORE INTO `task_checklist_items` (id, organization_id, task_id, title, completed, position, created_at) VALUES
+(1,1,100,'Survey the site',true,0,NOW()),
+(2,1,100,'Order equipment',true,1,NOW()),
+(3,1,100,'Mount the antenna',false,2,NOW()),
+(4,1,100,'Run QoS tests',false,3,NOW()),
+(5,1,101,'Configure base station',true,0,NOW()),
+(6,1,101,'Update asset inventory',false,1,NOW());

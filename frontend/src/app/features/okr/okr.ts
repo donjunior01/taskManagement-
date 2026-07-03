@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -189,7 +189,7 @@ export class OkrComponent implements OnInit {
     private auth: AuthService,
     private toast: ToastService,
     private t: TranslateService
-  ) {}
+  , private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.canManage = this.perm.has('okr.manage');
@@ -199,8 +199,8 @@ export class OkrComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.svc.list().subscribe({
-      next: o => { this.objectives = o || []; this.loading = false; },
-      error: () => { this.loading = false; }
+      next: o => { this.objectives = o || []; this.loading = false; this.cdr.detectChanges(); },
+      error: () => { this.loading = false; this.cdr.detectChanges(); }
     });
   }
 
