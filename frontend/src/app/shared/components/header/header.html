@@ -57,7 +57,7 @@
 
       <!-- Messages (hidden for Admin) -->
       <div class="message-wrapper" *ngIf="!isAdmin()">
-        <button class="message-btn" (click)="toggleMessages(); $event.stopPropagation()" [class.active]="showMessages">
+        <button class="message-btn" [attr.aria-label]="'header.ariaMessages' | translate" (click)="toggleMessages(); $event.stopPropagation()" [class.active]="showMessages">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
@@ -103,7 +103,7 @@
       </div>
 
       <!-- Critical Alerts (Admin only) -->
-      <button class="alert-btn" *ngIf="isAdmin()" (click)="goToSecurity()" title="Alertes critiques">
+      <button class="alert-btn" *ngIf="isAdmin()" (click)="goToSecurity()" [title]="'header.ariaAlerts' | translate" [attr.aria-label]="'header.ariaAlerts' | translate">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
           <line x1="12" y1="9" x2="12" y2="13"></line>
@@ -114,7 +114,7 @@
 
       <!-- Notifications Bell -->
       <div class="notification-wrapper">
-        <button class="notification-btn" (click)="toggleNotifications(); $event.stopPropagation()" [class.active]="showNotifications">
+        <button class="notification-btn" [attr.aria-label]="'header.ariaNotifications' | translate" (click)="toggleNotifications(); $event.stopPropagation()" [class.active]="showNotifications">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -228,7 +228,7 @@
         <span class="modal-label">Compte utilisateur</span>
         <h3>Modifier le profil</h3>
       </div>
-      <button class="modal-close-btn" (click)="closeProfileModal()">
+      <button class="modal-close-btn" [attr.aria-label]="'header.ariaClose' | translate" (click)="closeProfileModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>

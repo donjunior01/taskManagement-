@@ -75,7 +75,11 @@
     "security": "Sécurité",
     "activeDevices": "Appareils actifs",
     "themeDark": "Passer en mode sombre",
-    "themeLight": "Passer en mode clair"
+    "themeLight": "Passer en mode clair",
+    "ariaMessages": "Messages",
+    "ariaNotifications": "Notifications",
+    "ariaAlerts": "Alertes critiques",
+    "ariaClose": "Fermer"
   },
   "role": {
     "admin": "Administrateur",

@@ -13,8 +13,23 @@ concurrency:
 
 jobs:
   backend:
-    name: Backend (build & unit tests)
+    name: Backend (build & tests)
     runs-on: ubuntu-latest
+    # MySQL on 3307 to match the app's datasource (application.properties), so the
+    # @SpringBootTest context + tenant-isolation tests run in CI, not just unit tests.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: project_management
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=20
     steps:
       - uses: actions/checkout@v4
 
@@ -28,10 +43,14 @@ jobs:
       - name: Compile
         run: mvn -B -ntp clean compile
 
-      # Runs the fast, DB-free unit tests (*ServiceTest). The @SpringBootTest
-      # context test needs a live MySQL and is excluded from CI for now.
+      # Fast feedback: DB-free unit tests (*ServiceTest) first.
       - name: Unit tests
         run: mvn -B -ntp test -Dtest='*ServiceTest' -DfailIfNoTests=false
+
+      # Full suite against the MySQL service — includes the boot/contextLoads test
+      # and the four multi-tenant isolation tests (which assert isolated=true).
+      - name: Integration & isolation tests
+        run: mvn -B -ntp test
 
   frontend:
     name: Frontend (build)
@@ -54,6 +73,12 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # Unit specs (Angular @angular/build:unit-test). Non-blocking until the runner
+      # is confirmed green in CI, so a runner/config hiccup can't block the pipeline.
+      - name: Unit tests
+        run: npm run test:ci
+        continue-on-error: true
 
   docker:
     name: Docker images (build, and publish on main)
