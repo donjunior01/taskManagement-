@@ -1,0 +1,40 @@
+version: 2
+updates:
+  # Backend (Maven)
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      spring:
+        patterns: ["org.springframework*"]
+
+  # Frontend (npm)
+  - package-ecosystem: npm
+    directory: "/frontend"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      angular:
+        patterns: ["@angular*", "@angular-devkit*"]
+
+  # AI sidecar (npm)
+  - package-ecosystem: npm
+    directory: "/ai-service"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+
+  # GitHub Actions workflow pins
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  # Container base images
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly

@@ -59,6 +59,15 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
+            // Baseline security headers on every response. CSP is left to the SPA's nginx layer so
+            // Swagger UI (served here) keeps working; frame-options SAMEORIGIN allows it to render.
+            .headers(headers -> headers
+                .contentTypeOptions(c -> {})                          // X-Content-Type-Options: nosniff
+                .frameOptions(f -> f.sameOrigin())                    // X-Frame-Options: SAMEORIGIN (clickjacking)
+                .referrerPolicy(r -> r.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                .httpStrictTransportSecurity(h -> h.includeSubDomains(true).maxAgeInSeconds(31536000))
+                .addHeaderWriter(new org.springframework.security.web.header.writers.StaticHeadersWriter(
+                        "Permissions-Policy", "geolocation=(), camera=(), microphone=(), payment=()")))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/auth/**",
@@ -82,6 +91,8 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/swagger-resources/**",
                     "/api-docs/**",
+                    // SCIM 2.0 provisioning — the controller enforces its own bearer token (SCIM_TOKEN).
+                    "/scim/**",
                     // SSO/OIDC login endpoints (inert unless SSO is configured)
                     "/oauth2/**",
                     "/login/**"

@@ -79,7 +79,8 @@
     "ariaMessages": "Messages",
     "ariaNotifications": "Notifications",
     "ariaAlerts": "Alertes critiques",
-    "ariaClose": "Fermer"
+    "ariaClose": "Fermer",
+    "exportMyData": "Exporter mes données"
   },
   "role": {
     "admin": "Administrateur",

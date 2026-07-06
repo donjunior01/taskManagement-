@@ -15,6 +15,7 @@ import java.util.Map;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -94,5 +95,16 @@ class SecurityAccessIntegrationTest {
     void adminCanReadSettings() throws Exception {
         mvc.perform(get("/api/settings").header("Authorization", bearer(ADMIN)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void responsesCarryBaselineSecurityHeaders() throws Exception {
+        mvc.perform(get("/api/settings/registration"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(header().string("X-Frame-Options", "SAMEORIGIN"))
+                .andExpect(header().exists("Referrer-Policy"))
+                .andExpect(header().string("Permissions-Policy",
+                        org.hamcrest.Matchers.containsString("camera=()")));
     }
 }

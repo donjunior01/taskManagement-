@@ -14,6 +14,7 @@ import { TaskService } from '../../../core/services/task.service';
 import { TeamService } from '../../../core/services/team.service';
 import { DeliverableService } from '../../../core/services/deliverable.service';
 import { LanguageService } from '../../../core/services/language.service';
+import { GdprService } from '../../../core/services/gdpr.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LangToggleComponent } from '../lang-toggle/lang-toggle';
@@ -115,6 +116,7 @@ export class HeaderComponent implements OnInit {
     private deliverableService: DeliverableService,
     public language: LanguageService,
     public theme: ThemeService,
+    private gdpr: GdprService,
     private cdr: ChangeDetectorRef
   ) {
     this.currentUser = this.authService.getCurrentUser();
@@ -565,6 +567,16 @@ export class HeaderComponent implements OnInit {
   }
 
   closeProfileModal(): void { this.showProfileModal = false; }
+
+  /** GDPR right of access: download all of the current user's personal data as JSON. */
+  exporting = false;
+  exportMyData(): void {
+    this.exporting = true;
+    this.gdpr.exportMyData().subscribe({
+      next: (data) => { this.gdpr.download(data); this.exporting = false; this.cdr.detectChanges(); },
+      error: () => { this.exporting = false; this.cdr.detectChanges(); }
+    });
+  }
 
   saveProfile(): void {
     if (!this.profileForm.firstName?.trim() || !this.profileForm.email?.trim()) {

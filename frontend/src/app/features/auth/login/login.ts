@@ -91,6 +91,10 @@ export class LoginComponent implements OnInit {
           return;
         }
         try {
+          // Re-load branding now that we're authenticated, so the org's own app name/logo replaces
+          // the default-tenant branding shown pre-login (per-tenant config isolation).
+          this.branding.load();
+
           // Dynamic redirection based on user roles
           const roles = response && response.roles ? response.roles : [];
           
