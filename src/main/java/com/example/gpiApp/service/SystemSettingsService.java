@@ -37,6 +37,9 @@ public class SystemSettingsService {
     }
 
     /** Public password policy — safe for the unauthenticated registration page. */
+    @org.springframework.cache.annotation.Cacheable(value = com.example.gpiApp.config.CacheConfig.PASSWORD_POLICY,
+            key = "T(com.example.gpiApp.config.security.TenantContext).getOrganizationId() != null "
+                + "? T(com.example.gpiApp.config.security.TenantContext).getOrganizationId() : 0L")
     public com.example.gpiApp.dto.PasswordPolicyDTO getPasswordPolicy() {
         SystemSettings s = getSettings();
         return com.example.gpiApp.dto.PasswordPolicyDTO.builder()
@@ -65,6 +68,9 @@ public class SystemSettingsService {
     }
 
     /** Public branding payload (app name, logo, PDF colours) — safe for unauthenticated pages. */
+    @org.springframework.cache.annotation.Cacheable(value = com.example.gpiApp.config.CacheConfig.BRANDING,
+            key = "T(com.example.gpiApp.config.security.TenantContext).getOrganizationId() != null "
+                + "? T(com.example.gpiApp.config.security.TenantContext).getOrganizationId() : 0L")
     public com.example.gpiApp.dto.BrandingDTO getBranding() {
         SystemSettings s = getSettings();
         return com.example.gpiApp.dto.BrandingDTO.builder()
@@ -78,6 +84,9 @@ public class SystemSettingsService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = com.example.gpiApp.config.CacheConfig.BRANDING, allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = com.example.gpiApp.config.CacheConfig.PASSWORD_POLICY, allEntries = true)})
     public SystemSettingsDTO updateGeneral(SystemSettingsDTO dto) {
         SystemSettings s = getSettings();
         if (dto.getAppName() != null && !dto.getAppName().trim().isEmpty()) s.setAppName(dto.getAppName().trim());
@@ -95,6 +104,9 @@ public class SystemSettingsService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = com.example.gpiApp.config.CacheConfig.BRANDING, allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = com.example.gpiApp.config.CacheConfig.PASSWORD_POLICY, allEntries = true)})
     public SystemSettingsDTO updateSecurity(SystemSettingsDTO dto) {
         SystemSettings s = getSettings();
         if (dto.getJwtValidityMinutes() != null) s.setJwtValidityMinutes(Math.max(5, dto.getJwtValidityMinutes()));
@@ -116,6 +128,9 @@ public class SystemSettingsService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = com.example.gpiApp.config.CacheConfig.BRANDING, allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = com.example.gpiApp.config.CacheConfig.PASSWORD_POLICY, allEntries = true)})
     public SystemSettingsDTO updateNotifications(SystemSettingsDTO dto) {
         SystemSettings s = getSettings();
         if (dto.getSmtpHost() != null) s.setSmtpHost(dto.getSmtpHost());
@@ -135,6 +150,9 @@ public class SystemSettingsService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = com.example.gpiApp.config.CacheConfig.BRANDING, allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = com.example.gpiApp.config.CacheConfig.PASSWORD_POLICY, allEntries = true)})
     public SystemSettingsDTO updateBackup(SystemSettingsDTO dto) {
         SystemSettings s = getSettings();
         if (dto.getBackupRetentionDays() != null) s.setBackupRetentionDays(Math.max(1, dto.getBackupRetentionDays()));

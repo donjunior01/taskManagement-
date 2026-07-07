@@ -52,8 +52,8 @@ CREATE TABLE IF NOT EXISTS `role_permissions` (
     `permission` VARCHAR(80) NOT NULL,
     FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_roles_org ON roles(organization_id);
-CREATE INDEX IF NOT EXISTS idx_role_permissions_role ON role_permissions(role_id);
+ALTER TABLE `roles` ADD INDEX idx_roles_org (organization_id);
+ALTER TABLE `role_permissions` ADD INDEX idx_role_permissions_role (role_id);
 
 -- API keys (machine credentials for the public API). Only the hash is stored.
 CREATE TABLE IF NOT EXISTS `api_keys` (
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS `api_keys` (
     UNIQUE KEY `uq_api_key_hash` (`key_hash`),
     FOREIGN KEY (`created_by`) REFERENCES `allUsers`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_api_keys_org ON api_keys(organization_id);
+ALTER TABLE `api_keys` ADD INDEX idx_api_keys_org (organization_id);
 
 -- Outbound webhook subscriptions (per tenant) + the events each is subscribed to.
 CREATE TABLE IF NOT EXISTS `webhook_subscriptions` (
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS `webhook_events` (
     `event` VARCHAR(80) NOT NULL,
     FOREIGN KEY (`subscription_id`) REFERENCES `webhook_subscriptions`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_webhooks_org ON webhook_subscriptions(organization_id);
+ALTER TABLE `webhook_subscriptions` ADD INDEX idx_webhooks_org (organization_id);
 
 -- Email invitations to join a specific organization (the token carries the target tenant).
 CREATE TABLE IF NOT EXISTS `invitations` (
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `invitations` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_invitation_token` (`token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_invitations_org ON invitations(organization_id);
+ALTER TABLE `invitations` ADD INDEX idx_invitations_org (organization_id);
 
 -- Automation rules (per tenant): When trigger ▸ If condition ▸ Then action.
 CREATE TABLE IF NOT EXISTS `automation_rules` (
@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS `automation_rules` (
     `run_count` BIGINT NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_automation_org ON automation_rules(organization_id);
+ALTER TABLE `automation_rules` ADD INDEX idx_automation_org (organization_id);
 
 -- Tenant-defined custom fields attached to tasks (values stored on tasks.custom_fields as JSON).
 CREATE TABLE IF NOT EXISTS `custom_field_definitions` (
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS `custom_field_definitions` (
     `created_at` DATETIME,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_customfield_org ON custom_field_definitions(organization_id);
+ALTER TABLE `custom_field_definitions` ADD INDEX idx_customfield_org (organization_id);
 
 -- OKRs: objectives and their measurable key results.
 CREATE TABLE IF NOT EXISTS `objectives` (
@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS `objectives` (
     `created_at` DATETIME,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_objective_org ON objectives(organization_id);
+ALTER TABLE `objectives` ADD INDEX idx_objective_org (organization_id);
 
 CREATE TABLE IF NOT EXISTS `key_results` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS `key_results` (
     `unit` VARCHAR(20),
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_keyresult_obj ON key_results(objective_id);
+ALTER TABLE `key_results` ADD INDEX idx_keyresult_obj (objective_id);
 
 -- Knowledge base / wiki pages (nestable via parent_id).
 CREATE TABLE IF NOT EXISTS `wiki_pages` (
@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS `wiki_pages` (
     `updated_at` DATETIME,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_wiki_org ON wiki_pages(organization_id);
+ALTER TABLE `wiki_pages` ADD INDEX idx_wiki_org (organization_id);
 
 -- Tenant-defined custom workflow statuses (board columns); each rolls up to a canonical category.
 CREATE TABLE IF NOT EXISTS `workflow_statuses` (
@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS `workflow_statuses` (
     `created_at` DATETIME,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_workflowstatus_org ON workflow_statuses(organization_id);
+ALTER TABLE `workflow_statuses` ADD INDEX idx_workflowstatus_org (organization_id);
 
 -- Tenant-defined reusable task templates.
 CREATE TABLE IF NOT EXISTS `task_templates` (
@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS `task_templates` (
     `created_at` DATETIME,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_tasktemplate_org ON task_templates(organization_id);
+ALTER TABLE `task_templates` ADD INDEX idx_tasktemplate_org (organization_id);
 
 -- Task dependencies: task_id is "blocked by" blocked_by_task_id.
 CREATE TABLE IF NOT EXISTS `task_dependencies` (
@@ -450,29 +450,29 @@ ALTER TABLE `comments` ADD COLUMN `attachment_name` VARCHAR(255);
 ALTER TABLE `comments` ADD COLUMN `updated_at` DATETIME;
 
 -- Performance indexes for frequently queried columns
-CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
-CREATE INDEX IF NOT EXISTS idx_tasks_deadline ON tasks(deadline);
-CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to_id ON tasks(assigned_to_id);
-CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id);
+ALTER TABLE `tasks` ADD INDEX idx_tasks_status (status);
+ALTER TABLE `tasks` ADD INDEX idx_tasks_deadline (deadline);
+ALTER TABLE `tasks` ADD INDEX idx_tasks_assigned_to_id (assigned_to_id);
+ALTER TABLE `tasks` ADD INDEX idx_tasks_project_id (project_id);
 
-CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
-CREATE INDEX IF NOT EXISTS idx_projects_manager_id ON projects(manager_id);
+ALTER TABLE `projects` ADD INDEX idx_projects_status (status);
+ALTER TABLE `projects` ADD INDEX idx_projects_manager_id (manager_id);
 
-CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+ALTER TABLE `notifications` ADD INDEX idx_notifications_user_id (user_id);
+ALTER TABLE `notifications` ADD INDEX idx_notifications_is_read (is_read);
 
-CREATE INDEX IF NOT EXISTS idx_time_logs_task_id ON time_logs(task_id);
-CREATE INDEX IF NOT EXISTS idx_time_logs_user_id ON time_logs(user_id);
-CREATE INDEX IF NOT EXISTS idx_time_logs_log_date ON time_logs(log_date);
+ALTER TABLE `time_logs` ADD INDEX idx_time_logs_task_id (task_id);
+ALTER TABLE `time_logs` ADD INDEX idx_time_logs_user_id (user_id);
+ALTER TABLE `time_logs` ADD INDEX idx_time_logs_log_date (log_date);
 
-CREATE INDEX IF NOT EXISTS idx_comments_task_id ON comments(task_id);
-CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
+ALTER TABLE `comments` ADD INDEX idx_comments_task_id (task_id);
+ALTER TABLE `comments` ADD INDEX idx_comments_user_id (user_id);
 
-CREATE INDEX IF NOT EXISTS idx_calendar_events_user_id ON calendar_events(user_id);
-CREATE INDEX IF NOT EXISTS idx_calendar_events_start_time ON calendar_events(start_time);
+ALTER TABLE `calendar_events` ADD INDEX idx_calendar_events_user_id (user_id);
+ALTER TABLE `calendar_events` ADD INDEX idx_calendar_events_start_time (start_time);
 
-CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
-CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at);
+ALTER TABLE `activity_logs` ADD INDEX idx_activity_logs_user_id (user_id);
+ALTER TABLE `activity_logs` ADD INDEX idx_activity_logs_created_at (created_at);
 
 -- Create login_attempts table
 CREATE TABLE IF NOT EXISTS `login_attempts` (
@@ -489,9 +489,9 @@ CREATE TABLE IF NOT EXISTS `login_attempts` (
     FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_login_attempts_attempted_at ON login_attempts(attempted_at);
-CREATE INDEX IF NOT EXISTS idx_login_attempts_status ON login_attempts(status);
-CREATE INDEX IF NOT EXISTS idx_login_attempts_email ON login_attempts(email);
+ALTER TABLE `login_attempts` ADD INDEX idx_login_attempts_attempted_at (attempted_at);
+ALTER TABLE `login_attempts` ADD INDEX idx_login_attempts_status (status);
+ALTER TABLE `login_attempts` ADD INDEX idx_login_attempts_email (email);
 
 -- Create password_reset_requests table
 CREATE TABLE IF NOT EXISTS `password_reset_requests` (
@@ -508,8 +508,8 @@ CREATE TABLE IF NOT EXISTS `password_reset_requests` (
     FOREIGN KEY (`processed_by_id`) REFERENCES `allUsers`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_password_reset_email ON password_reset_requests(email);
-CREATE INDEX IF NOT EXISTS idx_password_reset_status ON password_reset_requests(status);
+ALTER TABLE `password_reset_requests` ADD INDEX idx_password_reset_email (email);
+ALTER TABLE `password_reset_requests` ADD INDEX idx_password_reset_status (status);
 
 -- User notification preferences table
 CREATE TABLE IF NOT EXISTS `user_notification_preferences` (
@@ -578,11 +578,11 @@ ALTER TABLE `messages` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
 UPDATE `messages` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
 ALTER TABLE `task_checklist_items` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
 UPDATE `task_checklist_items` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
-CREATE INDEX IF NOT EXISTS idx_projects_org ON projects(organization_id);
-CREATE INDEX IF NOT EXISTS idx_tasks_org ON tasks(organization_id);
-CREATE INDEX IF NOT EXISTS idx_teams_org ON teams(organization_id);
-CREATE INDEX IF NOT EXISTS idx_deliverables_org ON deliverables(organization_id);
-CREATE INDEX IF NOT EXISTS idx_support_tickets_org ON support_tickets(organization_id);
+ALTER TABLE `projects` ADD INDEX idx_projects_org (organization_id);
+ALTER TABLE `tasks` ADD INDEX idx_tasks_org (organization_id);
+ALTER TABLE `teams` ADD INDEX idx_teams_org (organization_id);
+ALTER TABLE `deliverables` ADD INDEX idx_deliverables_org (organization_id);
+ALTER TABLE `support_tickets` ADD INDEX idx_support_tickets_org (organization_id);
 
 -- Create task_checklist_items table (sub-tasks / checklists)
 CREATE TABLE IF NOT EXISTS `task_checklist_items` (
@@ -652,7 +652,7 @@ ALTER TABLE `system_settings` ADD COLUMN `allowed_email_domains` VARCHAR(1000) D
 -- Per-organization settings (config isolation). The existing singleton row becomes the default org's.
 ALTER TABLE `system_settings` ADD COLUMN `organization_id` BIGINT DEFAULT 1;
 UPDATE `system_settings` SET `organization_id` = 1 WHERE `organization_id` IS NULL;
-CREATE INDEX IF NOT EXISTS idx_settings_org ON system_settings(organization_id);
+ALTER TABLE `system_settings` ADD INDEX idx_settings_org (organization_id);
 -- New orgs lazily get their own settings row, so the id must auto-increment (it was a fixed singleton).
 ALTER TABLE `system_settings` MODIFY COLUMN `id` BIGINT NOT NULL AUTO_INCREMENT;
 
@@ -695,7 +695,7 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
     UNIQUE KEY `uq_user_session_id` (`session_id`),
     FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+ALTER TABLE `user_sessions` ADD INDEX idx_user_sessions_user_id (user_id);
 
 -- Link per-recipient copies of a distributed calendar event (PM events sent to project members).
 ALTER TABLE `calendar_events` ADD COLUMN `series_id` VARCHAR(64);
@@ -713,3 +713,13 @@ ALTER TABLE `messages` ADD COLUMN `attachment_url` VARCHAR(500);
 ALTER TABLE `messages` ADD COLUMN `attachment_name` VARCHAR(255);
 ALTER TABLE `messages` ADD COLUMN `attachment_type` VARCHAR(30);
 ALTER TABLE `messages` ADD COLUMN `attachment_size` VARCHAR(40);
+
+-- Phase 3: organization_id indexes for tenant-scoped tables that lacked one (full-scan → index seek).
+ALTER TABLE `comments` ADD INDEX idx_comments_org (organization_id);
+ALTER TABLE `time_logs` ADD INDEX idx_time_logs_org (organization_id);
+ALTER TABLE `messages` ADD INDEX idx_messages_org (organization_id);
+ALTER TABLE `calendar_events` ADD INDEX idx_calendar_events_org (organization_id);
+ALTER TABLE `task_checklist_items` ADD INDEX idx_checklist_org (organization_id);
+ALTER TABLE `activity_logs` ADD INDEX idx_activity_logs_org (organization_id);
+ALTER TABLE `login_attempts` ADD INDEX idx_login_attempts_org (organization_id);
+ALTER TABLE `key_results` ADD INDEX idx_key_results_org (organization_id);
