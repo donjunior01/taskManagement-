@@ -23,7 +23,16 @@ public class TaskController {
     
     private final TaskService taskService;
     private final UserRepository userRepository;
-    
+    private final com.example.gpiApp.security.PermissionGuard perm;
+
+    @Operation(summary = "Bulk task action", description = "Apply one action (status/priority/assignee/delete) to many tasks atomically")
+    @org.springframework.security.access.prepost.PreAuthorize("@perm.has('task.edit')")
+    @PostMapping("/bulk")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> bulkUpdate(@RequestBody BulkTaskRequestDTO request) {
+        boolean canDelete = perm.has("task.delete");
+        return ResponseEntity.ok(taskService.bulkUpdate(request.getIds(), request.getAction(), request.getValue(), canDelete));
+    }
+
     @Operation(summary = "Get all tasks", description = "Retrieve paginated list of all tasks")
     @GetMapping
     public ResponseEntity<PagedResponse<TaskDTO>> getAllTasks(

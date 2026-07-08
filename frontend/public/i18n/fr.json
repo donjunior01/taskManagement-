@@ -2206,14 +2206,19 @@
         "task.created": "Une tâche est créée",
         "task.status_changed": "Le statut d une tâche change",
         "task.completed": "Une tâche est terminée",
-        "task.assigned": "Une tâche est assignée"
+        "task.assigned": "Une tâche est assignée",
+        "task.deadline_approaching": "L'échéance d'une tâche approche",
+        "task.overdue": "Une tâche est en retard"
       },
       "act": {
         "set_priority": "Définir la priorité",
         "set_status": "Définir le statut",
         "notify": "Notifier un utilisateur",
-        "assign": "Assigner à un utilisateur"
+        "assign": "Assigner à un utilisateur",
+        "notify_assignee": "Notifier le responsable"
       },
+      "assignee": "Le responsable de la tâche",
+      "assigneeHint": "Le responsable actuel de la tâche sera notifié.",
       "fld": {
         "priority": "Priorité",
         "status": "Statut",

@@ -91,6 +91,7 @@ import { ToastService } from '../../../core/services/toast.service';
         <select class="au-input" *ngIf="form.actionType === 'notify' || form.actionType === 'assign'" [(ngModel)]="form.actionValue">
           <option *ngFor="let u of users" [value]="u.id">{{ u.firstName }} {{ u.lastName }}</option>
         </select>
+        <span class="au-hint" *ngIf="form.actionType === 'notify_assignee'">{{ 'admin.automations.assigneeHint' | translate }}</span>
       </div>
 
       <div class="au-foot-modal">
@@ -126,6 +127,7 @@ import { ToastService } from '../../../core/services/toast.service';
     .au-label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-muted, #64748b); margin: 12px 0 5px; }
     .au-input { height: 40px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13.5px; outline: none; font-family: inherit; background: var(--bg-card); width: 100%; box-sizing: border-box; }
     .au-row { display: flex; align-items: center; gap: 8px; } .au-row .au-input { flex: 1; }
+    .au-hint { flex: 1; font-size: 12.5px; color: var(--text-muted, #64748b); font-style: italic; }
     .au-eq { font-weight: 800; color: var(--text-muted); }
     .au-foot-modal { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
   `]
@@ -170,6 +172,7 @@ export class AutomationsComponent implements OnInit {
   actionLabel(a: string): string { return this.translate.instant('admin.automations.act.' + a); }
   fieldLabel(f: string): string { return this.translate.instant('admin.automations.fld.' + f); }
   valueLabel(r: AutomationRule): string {
+    if (r.actionType === 'notify_assignee') return this.translate.instant('admin.automations.assignee');
     if (r.actionType === 'notify' || r.actionType === 'assign') { const u = this.users.find(x => String(x.id) === String(r.actionValue)); return u ? `${u.firstName} ${u.lastName}` : ('#' + r.actionValue); }
     return r.actionValue || '';
   }
@@ -178,7 +181,13 @@ export class AutomationsComponent implements OnInit {
   openEdit(r: AutomationRule): void { this.editing = r; this.form = { ...r }; this.showModal = true; }
   close(): void { this.showModal = false; }
 
-  valid(): boolean { return !!this.form.name.trim() && !!this.form.trigger && !!this.form.actionType && !!this.form.actionValue && (!this.form.conditionField || !!this.form.conditionValue); }
+  valid(): boolean {
+    // notify_assignee targets the task's own assignee, so it needs no actionValue.
+    const needsValue = this.form.actionType !== 'notify_assignee';
+    return !!this.form.name.trim() && !!this.form.trigger && !!this.form.actionType
+      && (!needsValue || !!this.form.actionValue)
+      && (!this.form.conditionField || !!this.form.conditionValue);
+  }
 
   save(): void {
     if (!this.valid() || this.busy) return;

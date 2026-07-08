@@ -186,6 +186,66 @@ public class TaskService {
         m.put("assignedToId", t.getAssignedTo() != null ? t.getAssignedTo().getId() : null);
         return m;
     }
+
+    /**
+     * Apply one action to many tasks in a single transaction (atomic: all change or none). Only tasks
+     * in the caller's organization are affected — the tenant @Filter scopes findAllById, so any ids
+     * from another org are silently ignored. Fires the same automation events as the single-task paths.
+     * {@code canDelete} must be true for the "delete" action (checked against task.delete in the controller).
+     */
+    @Transactional
+    public ApiResponse<java.util.Map<String, Object>> bulkUpdate(java.util.List<Long> ids, String action, String value, boolean canDelete) {
+        if (ids == null || ids.isEmpty()) throw new IllegalArgumentException("No tasks selected.");
+        if (action == null || action.isBlank()) throw new IllegalArgumentException("No action specified.");
+        java.util.List<Task> tasks = taskRepository.findAllById(ids);
+        int affected = 0;
+        for (Task t : tasks) {
+            switch (action) {
+                case "priority": {
+                    if (value == null) throw new IllegalArgumentException("A priority is required.");
+                    t.setPriority(Task.TaskPriority.valueOf(value));
+                    taskRepository.save(t);
+                    affected++;
+                    break;
+                }
+                case "assignee": {
+                    if (value == null) throw new IllegalArgumentException("An assignee is required.");
+                    Long assigneeId = Long.valueOf(value);
+                    var user = userRepository.findById(assigneeId).orElse(null);
+                    if (user == null) break;
+                    boolean changed = t.getAssignedTo() == null || !assigneeId.equals(t.getAssignedTo().getId());
+                    t.setAssignedTo(user);
+                    taskRepository.save(t);
+                    affected++;
+                    if (changed) automationService.fire("task.assigned", taskContext(t));
+                    break;
+                }
+                case "status": {
+                    if (value == null) throw new IllegalArgumentException("A status is required.");
+                    Task.TaskStatus next = Task.TaskStatus.valueOf(value);
+                    Task.TaskStatus prev = t.getStatus();
+                    t.setStatus(next);
+                    if (next == Task.TaskStatus.COMPLETED) t.setProgress(100);
+                    taskRepository.save(t);
+                    affected++;
+                    if (prev != next) {
+                        automationService.fire("task.status_changed", taskContext(t));
+                        if (next == Task.TaskStatus.COMPLETED) automationService.fire("task.completed", taskContext(t));
+                    }
+                    break;
+                }
+                case "delete": {
+                    if (!canDelete) throw new org.springframework.security.access.AccessDeniedException("Missing task.delete permission.");
+                    taskRepository.delete(t);
+                    affected++;
+                    break;
+                }
+                default:
+                    throw new IllegalArgumentException("Unknown bulk action: " + action);
+            }
+        }
+        return ApiResponse.success("Bulk action applied", java.util.Map.of("affected", affected, "requested", ids.size()));
+    }
     
     @Transactional
     public ApiResponse<TaskDTO> updateTask(Long id, TaskRequestDTO request, Long updatedById) {

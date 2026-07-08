@@ -697,6 +697,21 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ALTER TABLE `user_sessions` ADD INDEX idx_user_sessions_user_id (user_id);
 
+-- Saved filters / views (server-side, per-user; optionally shared org-wide).
+CREATE TABLE IF NOT EXISTS `saved_filters` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `organization_id` BIGINT DEFAULT 1,
+    `user_id` BIGINT NOT NULL,
+    `name` VARCHAR(120) NOT NULL,
+    `resource` VARCHAR(40) NOT NULL DEFAULT 'tasks',
+    `criteria` TEXT,
+    `shared` BOOLEAN NOT NULL DEFAULT FALSE,
+    `created_at` DATETIME,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ALTER TABLE `saved_filters` ADD INDEX idx_saved_filters_org (organization_id);
+ALTER TABLE `saved_filters` ADD INDEX idx_saved_filters_user (user_id);
+
 -- Link per-recipient copies of a distributed calendar event (PM events sent to project members).
 ALTER TABLE `calendar_events` ADD COLUMN `series_id` VARCHAR(64);
 

@@ -2,6 +2,7 @@ import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { WikiService, WikiPage } from '../../core/services/wiki.service';
 import { PermissionService } from '../../core/services/permission.service';
@@ -158,11 +159,21 @@ export class WikiComponent implements OnInit {
     private toast: ToastService,
     private t: TranslateService,
     private sanitizer: DomSanitizer
-  , private cdr: ChangeDetectorRef) {}
+  , private cdr: ChangeDetectorRef, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.canManage = this.perm.has('wiki.manage');
-    this.load();
+    // Deep-link support: global search navigates here with ?page=<id> to open a specific page.
+    const initial = this.route.snapshot.queryParamMap.get('page');
+    this.load(initial ? +initial : undefined);
+    // Handle re-navigation while the component is already alive (search → search).
+    this.route.queryParamMap.subscribe(qp => {
+      const id = qp.get('page');
+      if (id && this.pages.length) {
+        const target = this.pages.find(x => x.id === +id);
+        if (target) this.select(target);
+      }
+    });
   }
 
   load(selectId?: number): void {

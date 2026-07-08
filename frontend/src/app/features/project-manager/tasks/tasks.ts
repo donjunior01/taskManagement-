@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { forkJoin } from 'rxjs';
 import { AiDescribeButtonComponent } from '../../../shared/components/ai-describe/ai-describe';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { TaskService, Task, TaskRequest } from '../../../core/services/task.service';
@@ -12,6 +11,7 @@ import { UserService, User } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { CustomFieldService, CustomFieldDefinition } from '../../../core/services/custom-field.service';
+import { SavedFilterService } from '../../../core/services/saved-filter.service';
 import { TaskTemplateService, TaskTemplate } from '../../../core/services/task-template.service';
 import { WorkflowService, WorkflowStatus } from '../../../core/services/workflow.service';
 
@@ -475,27 +475,38 @@ export class PmTasksComponent implements OnInit {
   priorityFilter = '';
   statusFilter = '';
 
-  // ── Saved views (filter presets, persisted in localStorage per user) ──
-  savedViews: { name: string; f: any }[] = [];
+  // ── Saved views (filter presets, persisted server-side per user; may be shared org-wide) ──
+  savedViews: { id?: number; name: string; f: any; shared?: boolean }[] = [];
   savingView = false;
   newViewName = '';
   activeView = '';
 
-  private viewsKey(): string { return `tviews_${localStorage.getItem('user_id') || '0'}`; }
+  private parseCriteria(c?: string | null): any { try { return c ? JSON.parse(c) : {}; } catch { return {}; } }
   private loadViews(): void {
-    try { this.savedViews = JSON.parse(localStorage.getItem(this.viewsKey()) || '[]'); } catch { this.savedViews = []; }
+    this.savedFilterService.list('tasks').subscribe({
+      next: arr => {
+        this.savedViews = (arr || []).map(sf => ({ id: sf.id, name: sf.name, shared: sf.shared, f: this.parseCriteria(sf.criteria) }));
+        this.cdr.detectChanges();
+      },
+      error: () => { this.savedViews = []; }
+    });
   }
-  private persistViews(): void { localStorage.setItem(this.viewsKey(), JSON.stringify(this.savedViews)); }
 
   saveView(): void {
     const name = this.newViewName.trim();
     if (!name) return;
     const f = { searchTerm: this.searchTerm, projectFilter: this.projectFilter, assigneeFilter: this.assigneeFilter, priorityFilter: this.priorityFilter, statusFilter: this.statusFilter, view: this.view };
     const existing = this.savedViews.find(v => v.name === name);
-    if (existing) existing.f = f; else this.savedViews.push({ name, f });
-    this.persistViews();
-    this.savingView = false; this.newViewName = ''; this.activeView = name;
-    this.toast.show(this.translate.instant('pm.tasks.viewSaved'), 'success');
+    const payload = { name, resource: 'tasks', criteria: JSON.stringify(f), shared: existing?.shared || false };
+    const req = existing?.id ? this.savedFilterService.update(existing.id, payload) : this.savedFilterService.create(payload);
+    req.subscribe({
+      next: () => {
+        this.savingView = false; this.newViewName = ''; this.activeView = name;
+        this.toast.show(this.translate.instant('pm.tasks.viewSaved'), 'success');
+        this.loadViews();
+      },
+      error: () => this.toast.show(this.translate.instant('pm.tasks.toastBulkUpdateFailed'), 'error')
+    });
   }
   applyView(v: { name: string; f: any }): void {
     this.searchTerm = v.f.searchTerm || ''; this.projectFilter = v.f.projectFilter || '';
@@ -505,9 +516,10 @@ export class PmTasksComponent implements OnInit {
     this.applyFilters();
   }
   deleteView(name: string): void {
-    this.savedViews = this.savedViews.filter(v => v.name !== name);
-    this.persistViews();
-    if (this.activeView === name) { this.activeView = ''; }
+    const v = this.savedViews.find(x => x.name === name);
+    const done = () => { this.savedViews = this.savedViews.filter(x => x.name !== name); if (this.activeView === name) this.activeView = ''; this.cdr.detectChanges(); };
+    if (!v?.id) { done(); return; }
+    this.savedFilterService.delete(v.id).subscribe({ next: done, error: () => {} });
   }
   clearView(): void {
     this.searchTerm = ''; this.projectFilter = ''; this.assigneeFilter = ''; this.priorityFilter = ''; this.statusFilter = '';
@@ -546,7 +558,8 @@ export class PmTasksComponent implements OnInit {
     private translate: TranslateService,
     private customFieldService: CustomFieldService,
     private taskTemplateService: TaskTemplateService,
-    private workflowService: WorkflowService
+    private workflowService: WorkflowService,
+    private savedFilterService: SavedFilterService
   ) {}
 
   /** Date-format locale follows the active UI language. */
@@ -750,21 +763,10 @@ export class PmTasksComponent implements OnInit {
     this.selected = (e.target as HTMLInputElement).checked ? this.filtered.map(t => t.id!) : [];
   }
 
-  // ─── Bulk actions ───
+  // ─── Bulk actions (one atomic server request) ───
   applyBulk(): void {
     if (!this.bulkValue || this.selected.length === 0) return;
-    const tasks = this.allTasks.filter(t => this.selected.includes(t.id!));
-    const ops = tasks.map(t => {
-      if (this.bulkPanel === 'status') {
-        const prog = this.bulkValue === 'COMPLETED' ? 100 : (t.progress || 0);
-        return this.taskService.updateTaskProgress(t.id!, prog, this.bulkValue);
-      }
-      const req = this.toReq(t);
-      if (this.bulkPanel === 'assignee') req.assignedToId = +this.bulkValue;
-      if (this.bulkPanel === 'priority') req.priority = this.bulkValue;
-      return this.taskService.updateTask(t.id!, req);
-    });
-    forkJoin(ops).subscribe({
+    this.taskService.bulkAction(this.selected, this.bulkPanel, this.bulkValue).subscribe({
       next: () => this.afterBulk(),
       error: () => { this.toast.show(this.translate.instant('pm.tasks.toastBulkUpdateFailed'), 'error'); this.loadTasks(); }
     });
@@ -777,8 +779,7 @@ export class PmTasksComponent implements OnInit {
   bulkDelete(): void {
     if (this.selected.length === 0) return;
     const count = this.selected.length;
-    const ops = this.selected.map(id => this.taskService.deleteTask(id));
-    forkJoin(ops).subscribe({
+    this.taskService.bulkAction(this.selected, 'delete').subscribe({
       next: () => { this.toast.show(this.translate.instant('pm.tasks.toastDeletedCount', { count }), 'success'); this.selected = []; this.loadTasks(); },
       error: () => { this.toast.show(this.translate.instant('pm.tasks.toastDeleteFailed'), 'error'); this.loadTasks(); }
     });

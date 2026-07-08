@@ -12,6 +12,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -26,9 +27,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AutomationService {
 
-    public static final List<String> TRIGGERS = List.of("task.created", "task.status_changed", "task.completed", "task.assigned");
-    public static final List<String> ACTIONS = List.of("set_priority", "set_status", "assign", "notify");
+    public static final List<String> TRIGGERS = List.of("task.created", "task.status_changed", "task.completed", "task.assigned",
+            "task.deadline_approaching", "task.overdue");
+    public static final List<String> ACTIONS = List.of("set_priority", "set_status", "assign", "notify", "notify_assignee");
     public static final List<String> CONDITION_FIELDS = List.of("priority", "status", "projectId");
+
+    /** How many days ahead counts as a deadline "approaching" for the time-based scheduler. */
+    @org.springframework.beans.factory.annotation.Value("${automation.deadline-within-days:3}")
+    private int deadlineWithinDays;
 
     private final AutomationRuleRepository ruleRepository;
     private final TaskRepository taskRepository;
@@ -52,6 +58,61 @@ public class AutomationService {
         } catch (Exception e) {
             log.warn("Automation fire({}) failed: {}", trigger, e.getMessage());
         }
+    }
+
+    // ── Time-based engine (driven by AutomationScheduler; also runnable on demand) ──
+    /**
+     * Evaluate the time-based triggers ("deadline approaching" / "overdue") across every organization
+     * that has such a rule enabled. Runs outside the tenant @Filter and scopes each pass explicitly by
+     * org id, temporarily setting the TenantContext so {@link #fire} and its actions resolve correctly.
+     * Returns the number of (rule-candidate) task events fired. Best-effort: never throws.
+     */
+    public int runTimeBasedRules() {
+        LocalDate today = LocalDate.now();
+        int fired = 0;
+        fired += runForTrigger("task.deadline_approaching",
+                org -> taskRepository.findByOrganizationIdAndDeadlineBetweenAndStatusNot(
+                        org, today, today.plusDays(Math.max(0, deadlineWithinDays)), Task.TaskStatus.COMPLETED));
+        fired += runForTrigger("task.overdue",
+                org -> taskRepository.findByOrganizationIdAndDeadlineBeforeAndStatusNot(
+                        org, today, Task.TaskStatus.COMPLETED));
+        return fired;
+    }
+
+    private int runForTrigger(String trigger, java.util.function.Function<Long, List<Task>> finder) {
+        int fired = 0;
+        List<Long> orgs;
+        try {
+            orgs = ruleRepository.findOrgIdsWithEnabledTrigger(trigger);
+        } catch (Exception e) {
+            log.warn("Time-based trigger {} org lookup failed: {}", trigger, e.getMessage());
+            return 0;
+        }
+        for (Long org : orgs) {
+            Long previous = TenantContext.getOrganizationId();
+            try {
+                TenantContext.setOrganizationId(org);
+                for (Task t : finder.apply(org)) {
+                    fire(trigger, buildTaskContext(t));
+                    fired++;
+                }
+            } catch (Exception e) {
+                log.warn("Time-based trigger {} for org {} failed: {}", trigger, org, e.getMessage());
+            } finally {
+                if (previous != null) TenantContext.setOrganizationId(previous); else TenantContext.clear();
+            }
+        }
+        return fired;
+    }
+
+    private Map<String, Object> buildTaskContext(Task t) {
+        Map<String, Object> ctx = new java.util.HashMap<>();
+        ctx.put("taskId", t.getId());
+        ctx.put("name", t.getName());
+        ctx.put("priority", t.getPriority() != null ? t.getPriority().name() : null);
+        ctx.put("status", t.getStatus() != null ? t.getStatus().name() : null);
+        ctx.put("projectId", t.getProject() != null ? t.getProject().getId() : null);
+        return ctx;
     }
 
     private boolean matches(AutomationRule rule, Map<String, Object> ctx) {
@@ -92,6 +153,17 @@ public class AutomationService {
                 notificationService.createNotification(userId, "Automation: " + rule.getName(),
                         "An automation rule was triggered" + (ctx.get("name") != null ? " for: " + ctx.get("name") : "") + ".",
                         Notification.NotificationType.SYSTEM, taskId, "TASK");
+                break;
+            }
+            case "notify_assignee": {
+                if (taskId == null) return;
+                taskRepository.findById(taskId).ifPresent(t -> {
+                    if (t.getAssignedTo() != null) {
+                        notificationService.createNotification(t.getAssignedTo().getId(), "Automation: " + rule.getName(),
+                                "An automation rule was triggered" + (ctx.get("name") != null ? " for: " + ctx.get("name") : "") + ".",
+                                Notification.NotificationType.SYSTEM, taskId, "TASK");
+                    }
+                });
                 break;
             }
             default:

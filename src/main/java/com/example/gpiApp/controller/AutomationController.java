@@ -54,4 +54,10 @@ public class AutomationController {
         automationService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("Rule deleted", null));
     }
+
+    /** Evaluate the time-based rules (deadline approaching / overdue) now, instead of waiting for the daily run. */
+    @PostMapping("/run-time-rules")
+    public ResponseEntity<ApiResponse<Integer>> runTimeRules() {
+        return ResponseEntity.ok(ApiResponse.success("Time-based rules evaluated", automationService.runTimeBasedRules()));
+    }
 }

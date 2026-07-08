@@ -9,19 +9,18 @@ import { NotificationPreferencesService, NotificationPreference } from '../../..
 import { NotificationService } from '../../../core/services/notification.service';
 import { MessageService } from '../../../core/services/message.service';
 import { BadgeCountsService } from '../../../core/services/badge-counts.service';
-import { ProjectService } from '../../../core/services/project.service';
-import { TaskService } from '../../../core/services/task.service';
 import { TeamService } from '../../../core/services/team.service';
 import { DeliverableService } from '../../../core/services/deliverable.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { GdprService } from '../../../core/services/gdpr.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { SearchService, SearchResponse } from '../../../core/services/search.service';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LangToggleComponent } from '../lang-toggle/lang-toggle';
 import { TwofaManagerComponent } from '../twofa-manager/twofa-manager';
 import { SessionsManagerComponent } from '../sessions-manager/sessions-manager';
 
-interface SearchResult { type: 'project' | 'task' | 'deliverable' | 'user' | 'team'; id?: number; label: string; sub?: string; route: any[]; query?: any; }
+interface SearchResult { type: 'project' | 'task' | 'wiki' | 'deliverable' | 'user' | 'team'; id?: number; label: string; sub?: string; route: any[]; query?: any; }
 interface SearchGroup { title: string; items: SearchResult[]; }
 
 export interface DisplayNotification {
@@ -72,11 +71,13 @@ export class HeaderComponent implements OnInit {
   searchFocused = false;
   searchGroups: SearchGroup[] = [];
   private searchLoaded = false;
-  private sProjects: any[] = [];
-  private sTasks: any[] = [];
   private sUsers: any[] = [];
   private sTeams: any[] = [];
   private sDeliverables: any[] = [];
+  // Server-side full-text results (projects/tasks/wiki), merged with the local groups above.
+  private serverGroups: SearchGroup[] = [];
+  private searchDebounce: any;
+  private searchToken = 0;
 
   // Profile dropdown & modals
   showProfileDropdown: boolean = false;
@@ -110,13 +111,12 @@ export class HeaderComponent implements OnInit {
     private notificationService: NotificationService,
     private messageService: MessageService,
     private badges: BadgeCountsService,
-    private projectService: ProjectService,
-    private taskService: TaskService,
     private teamService: TeamService,
     private deliverableService: DeliverableService,
     public language: LanguageService,
     public theme: ThemeService,
     private gdpr: GdprService,
+    private searchApi: SearchService,
     private cdr: ChangeDetectorRef
   ) {
     this.currentUser = this.authService.getCurrentUser();
@@ -220,47 +220,61 @@ export class HeaderComponent implements OnInit {
   private loadSearchData(): void {
     if (this.searchLoaded) return;
     this.searchLoaded = true;
-    const managerId = this.currentUser?.id || 0;
-
+    // Projects/tasks/wiki are now searched server-side (full-text, tenant-scoped, unbounded).
+    // Only the auxiliary types still filtered in-browser are pre-loaded here.
     if (this.isAdmin()) {
-      this.projectService.getAllProjects(0, 200).subscribe({ next: (r: any) => { this.sProjects = r?.data || []; this.onSearch(); }, error: () => {} });
-      this.taskService.getAllTasks(0, 300).subscribe({ next: (r: any) => { this.sTasks = r?.data || []; this.onSearch(); }, error: () => {} });
-      this.userService.getAllUsers(0, 300).subscribe({ next: (r: any) => { this.sUsers = r?.data || []; this.onSearch(); }, error: () => {} });
-      this.teamService.getAllTeams().subscribe({ next: (r: any) => { this.sTeams = Array.isArray(r) ? r : (r?.data || []); this.onSearch(); }, error: () => {} });
+      this.userService.getAllUsers(0, 300).subscribe({ next: (r: any) => { this.sUsers = r?.data || []; this.composeGroups(); }, error: () => {} });
+      this.teamService.getAllTeams().subscribe({ next: (r: any) => { this.sTeams = Array.isArray(r) ? r : (r?.data || []); this.composeGroups(); }, error: () => {} });
     } else if (this.isProjectManager()) {
-      this.projectService.getProjectsByManager(managerId, 0, 200).subscribe({
-        next: (r: any) => {
-          this.sProjects = r?.data || [];
-          const pids = this.sProjects.map((p: any) => p.id);
-          this.taskService.getAllTasks(0, 400).subscribe({ next: (tr: any) => { const all = tr?.data || []; this.sTasks = pids.length ? all.filter((t: any) => pids.includes(t.projectId)) : all; this.onSearch(); }, error: () => {} });
-          this.onSearch();
-        },
-        error: () => {}
-      });
-      this.deliverableService.getAllDeliverables().subscribe({ next: (r: any) => { this.sDeliverables = Array.isArray(r) ? r : (r?.data || []); this.onSearch(); }, error: () => {} });
+      this.deliverableService.getAllDeliverables().subscribe({ next: (r: any) => { this.sDeliverables = Array.isArray(r) ? r : (r?.data || []); this.composeGroups(); }, error: () => {} });
     }
   }
 
   onSearch(): void {
-    const q = this.searchQuery.toLowerCase().trim();
-    if (!q) { this.searchGroups = []; return; }
+    if (!this.searchQuery.trim()) { this.searchGroups = []; this.serverGroups = []; return; }
+    this.composeGroups();        // instant local (users/teams/deliverables) results
+    this.queueServerSearch();    // debounced full-text (projects/tasks/wiki) results
+  }
+
+  /** Debounced server-side full-text call; stale responses are dropped via a monotonic token. */
+  private queueServerSearch(): void {
+    clearTimeout(this.searchDebounce);
+    const term = this.searchQuery.trim();
+    if (term.length < 2) { this.serverGroups = []; this.composeGroups(); return; }
+    this.searchDebounce = setTimeout(() => {
+      const token = ++this.searchToken;
+      this.searchApi.search(term, 8).subscribe({
+        next: (res) => {
+          if (token !== this.searchToken) return;
+          this.serverGroups = this.buildServerGroups(res);
+          this.composeGroups();
+        },
+        error: () => {}
+      });
+    }, 300);
+  }
+
+  private buildServerGroups(res: SearchResponse): SearchGroup[] {
+    const admin = this.isAdmin();
     const groups: SearchGroup[] = [];
-    const inc = (s?: string) => (s || '').toLowerCase().includes(q);
-
-    const projects = this.sProjects.filter(p => inc(p.name)).slice(0, 5)
-      .map(p => ({ type: 'project' as const, id: p.id, label: p.name, sub: this.statusFr(p.status), route: this.isAdmin() ? ['/admin/projects'] : ['/pm/projects', p.id] }));
+    const projects = (res.projects || []).map(p => ({ type: 'project' as const, id: p.id, label: p.title, sub: p.snippet || this.statusFr(p.subtitle || undefined), route: admin ? ['/admin/projects'] : ['/pm/projects', p.id] }));
     if (projects.length) groups.push({ title: 'Projets', items: projects });
-
-    const tasks = this.sTasks.filter(t => inc(t.name) || inc(t.projectName)).slice(0, 5)
-      .map(t => ({ type: 'task' as const, id: t.id, label: t.name, sub: t.projectName, route: this.isAdmin() ? ['/admin/tasks'] : ['/pm/tasks'], query: this.isAdmin() ? undefined : { focus: t.id } }));
+    const tasks = (res.tasks || []).map(t => ({ type: 'task' as const, id: t.id, label: t.title, sub: t.subtitle || t.snippet || undefined, route: admin ? ['/admin/tasks'] : ['/pm/tasks'], query: admin ? undefined : { focus: t.id } }));
     if (tasks.length) groups.push({ title: 'Tâches', items: tasks });
+    const wiki = (res.wiki || []).map(w => ({ type: 'wiki' as const, id: w.id, label: w.title, sub: w.snippet || undefined, route: admin ? ['/admin/wiki'] : ['/pm/wiki'], query: { page: w.id } }));
+    if (wiki.length) groups.push({ title: 'Wiki', items: wiki });
+    return groups;
+  }
 
+  private buildLocalGroups(): SearchGroup[] {
+    const q = this.searchQuery.toLowerCase().trim();
+    const inc = (s?: string) => (s || '').toLowerCase().includes(q);
+    const groups: SearchGroup[] = [];
     if (this.isProjectManager()) {
       const dels = this.sDeliverables.filter(d => inc(d.fileName) || inc(d.taskName)).slice(0, 5)
         .map(d => ({ type: 'deliverable' as const, id: d.id, label: d.fileName, sub: d.taskName, route: ['/pm/deliverables'] }));
       if (dels.length) groups.push({ title: 'Livrables', items: dels });
     }
-
     if (this.isAdmin()) {
       const users = this.sUsers.filter(u => inc(u.firstName) || inc(u.lastName) || inc(u.email)).slice(0, 5)
         .map(u => ({ type: 'user' as const, id: u.id, label: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email, sub: u.email, route: ['/admin/users'] }));
@@ -269,8 +283,12 @@ export class HeaderComponent implements OnInit {
         .map(t => ({ type: 'team' as const, id: t.id, label: t.name, sub: t.description, route: ['/admin/teams'] }));
       if (teams.length) groups.push({ title: 'Équipes', items: teams });
     }
+    return groups;
+  }
 
-    this.searchGroups = groups;
+  /** Merge server (projects/tasks/wiki) then local (deliverables/users/teams) groups, in that order. */
+  private composeGroups(): void {
+    this.searchGroups = [...this.serverGroups, ...this.buildLocalGroups()];
     this.cdr.detectChanges();
   }
 

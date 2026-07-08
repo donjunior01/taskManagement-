@@ -15,7 +15,13 @@ import java.util.List;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
-    
+
+    // Time-based automation: candidate tasks per org (org supplied explicitly; not @Filter-scoped).
+    List<Task> findByOrganizationIdAndDeadlineBetweenAndStatusNot(
+            Long organizationId, LocalDate from, LocalDate to, Task.TaskStatus status);
+    List<Task> findByOrganizationIdAndDeadlineBeforeAndStatusNot(
+            Long organizationId, LocalDate before, Task.TaskStatus status);
+
     Page<Task> findByAssignedTo(allUsers assignedTo, Pageable pageable);
     
     List<Task> findByAssignedTo(allUsers assignedTo);

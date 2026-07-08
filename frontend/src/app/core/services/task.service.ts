@@ -76,6 +76,11 @@ export class TaskService {
     return this.apiService.delete<void>(`/tasks/${id}`);
   }
 
+  /** Atomic bulk action on many tasks. action: 'status' | 'priority' | 'assignee' | 'delete'. */
+  bulkAction(ids: number[], action: string, value?: string): Observable<any> {
+    return this.apiService.post<any>('/tasks/bulk', { ids, action, value });
+  }
+
   // ── Dependencies (blockers) ──
   getDependencies(id: number): Observable<any[]> { return this.apiService.get<any[]>(`/tasks/${id}/dependencies`); }
   addDependency(id: number, blockerId: number): Observable<any> { return this.apiService.post<any>(`/tasks/${id}/dependencies/${blockerId}`, {}); }
