@@ -23,6 +23,7 @@
     "loginAttempts": "Tentatives de Connexion",
     "activityLogs": "Journal d'Activité",
     "reports": "Rapports Globaux",
+    "scheduledReports": "Rapports planifiés",
     "performance": "Performance",
     "notifications": "Notifications",
     "settings": "Configuration",
@@ -34,6 +35,7 @@
     "calendar": "Calendrier",
     "pmReports": "Rapports",
     "analytics2": "Analytique",
+    "customDash": "Mon tableau de bord",
     "messages": "Messagerie",
     "myTasks": "Mes Tâches",
     "timeLogs": "Suivi du Temps",
@@ -59,6 +61,7 @@
     "adminSubtitle": "Vue Administrateur · accès global",
     "searchPlaceholder": "Rechercher...",
     "noResults": "Aucun résultat pour",
+    "dailyDigest": "Résumé quotidien par email",
     "notifications": "Notifications",
     "messages": "Messages",
     "markAllRead": "Tout marquer comme lu",
@@ -686,6 +689,30 @@
       "toastTeamNameRequired": "Nom et projet de l'équipe requis.",
       "toastTeamCreated": "Équipe « {{name}} » créée.",
       "toastTeamCreatedLocal": "Équipe créée localement."
+    },
+    "customDash": {
+      "title": "Mon tableau de bord",
+      "subtitle": "Choisissez et réorganisez les indicateurs à afficher. Votre disposition est enregistrée.",
+      "customize": "Personnaliser",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "saved": "Tableau de bord enregistré",
+      "saveFailed": "Impossible d'enregistrer le tableau de bord",
+      "empty": "Aucun indicateur sélectionné. Cliquez sur « Personnaliser » pour en ajouter.",
+      "editHint": "Cochez les indicateurs à afficher, puis réorganisez-les avec les flèches.",
+      "w": {
+        "totalProjects": "Projets",
+        "totalTasks": "Tâches totales",
+        "completedTasks": "Tâches terminées",
+        "openTasks": "Tâches ouvertes",
+        "overdueTasks": "Tâches en retard",
+        "inProgressTasks": "En cours",
+        "todoTasks": "À faire",
+        "onHoldTasks": "En pause",
+        "onTimeCompletionRate": "Taux de ponctualité",
+        "avgCompletionDays": "Délai moyen (jours)",
+        "velocityLast4Weeks": "Vélocité (4 sem.)"
+      }
     },
     "analytics": {
       "trendTitle": "Tendance hebdomadaire",
@@ -2179,6 +2206,42 @@
       "toastChanged": "Plan changé pour {{plan}}.",
       "toastFailed": "Échec du changement de plan."
     },
+    "scheduledReports": {
+      "title": "Rapports planifiés",
+      "subtitle": "Programmez l'envoi automatique de rapports CSV par email selon une fréquence.",
+      "new": "Nouveau rapport planifié",
+      "editTitle": "Modifier le rapport planifié",
+      "empty": "Aucun rapport planifié. Créez-en un pour recevoir des exports réguliers par email.",
+      "name": "Nom",
+      "namePh": "ex. Tâches hebdomadaires",
+      "typeName": "Type de rapport",
+      "frequency": "Fréquence",
+      "recipients": "Destinataires (emails séparés par des virgules)",
+      "recipientsPh": "alice@exemple.com, bob@exemple.com",
+      "enabledLabel": "Activé",
+      "on": "Activé",
+      "off": "Désactivé",
+      "lastRun": "Dernier envoi",
+      "never": "jamais",
+      "sendNow": "Envoyer maintenant",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "saved": "Rapport planifié enregistré",
+      "deleted": "Rapport planifié supprimé",
+      "sent": "Rapport envoyé",
+      "failed": "L'opération a échoué",
+      "type": {
+        "tasks-csv": "Tâches (CSV)",
+        "projects-csv": "Projets (CSV)"
+      },
+      "freq": {
+        "DAILY": "Quotidien",
+        "WEEKLY": "Hebdomadaire (lundi)",
+        "MONTHLY": "Mensuel (1er)"
+      }
+    },
     "automations": {
       "title": "Automatisations",
       "subtitle": "Quand un événement se produit, faites automatiquement autre chose.",
@@ -2602,7 +2665,12 @@
     "editedBy": "Modifié par {{name}}",
     "saved": "Page enregistrée",
     "deleted": "Page supprimée",
-    "saveFailed": "Impossible d'enregistrer la page"
+    "saveFailed": "Impossible d'enregistrer la page",
+    "conflict": "Cette page a été modifiée depuis son ouverture. Rechargez pour voir les changements avant d'enregistrer.",
+    "someone": "quelqu'un",
+    "liveUpdated": "Page mise à jour par {{name}} — contenu actualisé.",
+    "liveUpdatedEditing": "{{name}} a modifié cette page. Vos changements sont conservés ; rechargez avant d'enregistrer pour éviter un conflit.",
+    "liveDeleted": "Cette page a été supprimée par {{name}}."
   },
   "okr": {
     "title": "OKR",

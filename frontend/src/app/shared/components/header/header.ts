@@ -100,7 +100,8 @@ export class HeaderComponent implements OnInit {
     smsNotifications: false,
     taskUpdates: true,
     mentions: true,
-    systemAlerts: false
+    systemAlerts: false,
+    dailyDigest: false
   };
 
   constructor(

@@ -139,6 +139,13 @@
         </svg>
         <span>{{ 'nav.reports' | translate }}</span>
       </a>
+      <a routerLink="/admin/scheduled-reports" routerLinkActive="active" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <circle cx="12" cy="12" r="9"></circle>
+          <polyline points="12 7 12 12 15 14"></polyline>
+        </svg>
+        <span>{{ 'nav.scheduledReports' | translate }}</span>
+      </a>
       <a routerLink="/admin/performance" routerLinkActive="active" class="nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
           <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -305,6 +312,15 @@
           <line x1="3" y1="20" x2="21" y2="20"></line>
         </svg>
         <span>{{ 'nav.analytics2' | translate }}</span>
+      </a>
+      <a routerLink="/pm/custom-dashboard" routerLinkActive="active" class="nav-link" *ngIf="perm.has('report.view')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="nav-icon">
+          <rect x="3" y="3" width="7" height="9"></rect>
+          <rect x="14" y="3" width="7" height="5"></rect>
+          <rect x="14" y="12" width="7" height="9"></rect>
+          <rect x="3" y="16" width="7" height="5"></rect>
+        </svg>
+        <span>{{ 'nav.customDash' | translate }}</span>
       </a>
 
       <div class="nav-section-title">{{ 'nav.section.communication' | translate }}</div>

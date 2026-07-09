@@ -51,7 +51,12 @@ public class UserNotificationPreferences {
     @Column(name = "message_notifications", nullable = false)
     @Builder.Default
     private Boolean messageNotifications = true;
-    
+
+    /** Opt-in: receive a single daily email summarising unread notifications (off by default). */
+    @Column(name = "daily_digest", nullable = false)
+    @Builder.Default
+    private Boolean dailyDigest = false;
+
     @Column(name = "deadline_reminder_hours", nullable = false)
     @Builder.Default
     private Integer deadlineReminderHours = 24;

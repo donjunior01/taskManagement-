@@ -522,6 +522,7 @@ CREATE TABLE IF NOT EXISTS `user_notification_preferences` (
     `project_update_notifications` BOOLEAN NOT NULL DEFAULT TRUE,
     `comment_notifications` BOOLEAN NOT NULL DEFAULT TRUE,
     `message_notifications` BOOLEAN NOT NULL DEFAULT TRUE,
+    `daily_digest` BOOLEAN NOT NULL DEFAULT FALSE,
     `deadline_reminder_hours` INT NOT NULL DEFAULT 24,
     `created_at` DATETIME,
     `updated_at` DATETIME,
@@ -529,6 +530,8 @@ CREATE TABLE IF NOT EXISTS `user_notification_preferences` (
     FOREIGN KEY (`user_id`) REFERENCES `allUsers`(`id`) ON DELETE CASCADE,
     UNIQUE KEY `unique_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Daily-digest opt-in for existing installs (idempotent via continue-on-error).
+ALTER TABLE `user_notification_preferences` ADD COLUMN `daily_digest` BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- Two-factor authentication columns on allUsers (CDC Lot 4).
 -- MySQL has no ADD COLUMN IF NOT EXISTS; spring.sql.init.continue-on-error=true makes the
@@ -711,6 +714,31 @@ CREATE TABLE IF NOT EXISTS `saved_filters` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ALTER TABLE `saved_filters` ADD INDEX idx_saved_filters_org (organization_id);
 ALTER TABLE `saved_filters` ADD INDEX idx_saved_filters_user (user_id);
+
+-- Scheduled report exports (recurring CSV emailed on a cadence).
+CREATE TABLE IF NOT EXISTS `scheduled_reports` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `organization_id` BIGINT DEFAULT 1,
+    `name` VARCHAR(120) NOT NULL,
+    `report_type` VARCHAR(40) NOT NULL,
+    `frequency` VARCHAR(20) NOT NULL,
+    `recipients` VARCHAR(2000) NOT NULL,
+    `enabled` BOOLEAN NOT NULL DEFAULT TRUE,
+    `last_run_on` DATE,
+    `created_at` DATETIME,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ALTER TABLE `scheduled_reports` ADD INDEX idx_scheduled_reports_org (organization_id);
+
+-- Per-user customizable dashboard layout (which KPI widgets, in what order).
+CREATE TABLE IF NOT EXISTS `dashboard_layouts` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `widgets` TEXT,
+    `updated_at` DATETIME,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_dashboard_layout_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Link per-recipient copies of a distributed calendar event (PM events sent to project members).
 ALTER TABLE `calendar_events` ADD COLUMN `series_id` VARCHAR(64);

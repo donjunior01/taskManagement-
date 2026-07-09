@@ -95,7 +95,10 @@ public class SecurityConfig {
                     "/scim/**",
                     // SSO/OIDC login endpoints (inert unless SSO is configured)
                     "/oauth2/**",
-                    "/login/**"
+                    "/login/**",
+                    // STOMP/SockJS WebSocket handshake (real-time wiki refresh); broadcasts are
+                    // page-id-scoped, so a subscriber must already hold the page (same tenant).
+                    "/ws/**"
                 ).permitAll()
                 // API endpoints with role-based access
                 .requestMatchers("/api/dashboard/admin/**").hasAuthority("ROLE_ADMIN")

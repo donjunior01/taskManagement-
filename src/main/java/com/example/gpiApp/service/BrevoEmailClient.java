@@ -45,8 +45,15 @@ public class BrevoEmailClient {
         return restClient != null;
     }
 
-    /** Send a plain-text email (also wrapped as simple HTML) via Brevo. Throws on transport/API failure. */
+    /** Send a plain-text email (wrapped as simple HTML) via Brevo. Throws on transport/API failure. */
     public void send(String to, String subject, String textBody) {
+        send(to, subject, textBody,
+                "<html><body><pre style=\"font-family:inherit;white-space:pre-wrap;margin:0\">"
+                        + escapeHtml(textBody) + "</pre></body></html>");
+    }
+
+    /** Send with an explicit HTML body (branded template) plus the plain-text fallback. */
+    public void send(String to, String subject, String textBody, String htmlBody) {
         ObjectNode root = objectMapper.createObjectNode();
         ObjectNode sender = root.putObject("sender");
         sender.put("name", senderName);
@@ -54,9 +61,36 @@ public class BrevoEmailClient {
         root.putArray("to").addObject().put("email", to);
         root.put("subject", subject);
         root.put("textContent", textBody == null ? "" : textBody);
-        root.put("htmlContent",
-                "<html><body><pre style=\"font-family:inherit;white-space:pre-wrap;margin:0\">"
-                        + escapeHtml(textBody) + "</pre></body></html>");
+        root.put("htmlContent", htmlBody);
+
+        String body;
+        try {
+            body = objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to build Brevo payload", e);
+        }
+
+        restClient.post()
+                .uri("/smtp/email")
+                .header("api-key", apiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    /** Send a plain-text email with a single file attachment (base64-encoded) via Brevo. */
+    public void sendWithAttachment(String to, String subject, String textBody, String attachmentName, byte[] content) {
+        ObjectNode root = objectMapper.createObjectNode();
+        ObjectNode sender = root.putObject("sender");
+        sender.put("name", senderName);
+        sender.put("email", senderEmail);
+        root.putArray("to").addObject().put("email", to);
+        root.put("subject", subject);
+        root.put("textContent", textBody == null ? "" : textBody);
+        root.putArray("attachment").addObject()
+                .put("name", attachmentName)
+                .put("content", java.util.Base64.getEncoder().encodeToString(content));
 
         String body;
         try {

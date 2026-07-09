@@ -45,6 +45,7 @@ public class UserNotificationPreferencesService {
         preferences.setProjectUpdateNotifications(request.getProjectUpdateNotifications() != null ? request.getProjectUpdateNotifications() : true);
         preferences.setCommentNotifications(request.getCommentNotifications() != null ? request.getCommentNotifications() : true);
         preferences.setMessageNotifications(request.getMessageNotifications() != null ? request.getMessageNotifications() : true);
+        preferences.setDailyDigest(request.getDailyDigest() != null ? request.getDailyDigest() : false);
         preferences.setDeadlineReminderHours(request.getDeadlineReminderHours() != null ? request.getDeadlineReminderHours() : 24);
 
         if (request.getUserId() != null) {
@@ -72,6 +73,7 @@ public class UserNotificationPreferencesService {
         if (request.getProjectUpdateNotifications() != null) preferences.setProjectUpdateNotifications(request.getProjectUpdateNotifications());
         if (request.getCommentNotifications() != null) preferences.setCommentNotifications(request.getCommentNotifications());
         if (request.getMessageNotifications() != null) preferences.setMessageNotifications(request.getMessageNotifications());
+        if (request.getDailyDigest() != null) preferences.setDailyDigest(request.getDailyDigest());
         if (request.getDeadlineReminderHours() != null) preferences.setDeadlineReminderHours(request.getDeadlineReminderHours());
 
         UserNotificationPreferences saved = preferencesRepository.save(preferences);
@@ -116,6 +118,7 @@ public class UserNotificationPreferencesService {
                 .projectUpdateNotifications(preferences.getProjectUpdateNotifications())
                 .commentNotifications(preferences.getCommentNotifications())
                 .messageNotifications(preferences.getMessageNotifications())
+                .dailyDigest(preferences.getDailyDigest())
                 .deadlineReminderHours(preferences.getDeadlineReminderHours())
                 .createdAt(preferences.getCreatedAt())
                 .updatedAt(preferences.getUpdatedAt())

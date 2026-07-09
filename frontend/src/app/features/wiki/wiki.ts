@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -7,6 +7,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { WikiService, WikiPage } from '../../core/services/wiki.service';
 import { PermissionService } from '../../core/services/permission.service';
 import { ToastService } from '../../core/services/toast.service';
+import { RealtimeService } from '../../core/services/realtime.service';
+import { AuthService } from '../../core/services/auth.service';
 
 interface TreeNode { page: WikiPage; depth: number; }
 
@@ -141,7 +143,7 @@ interface TreeNode { page: WikiPage; depth: number; }
     @media (max-width: 820px) { .wk { grid-template-columns: 1fr; } .wk-side { display: none; } .wk-edit-body { grid-template-columns: 1fr; } .wk-preview { display: none; } }
   `]
 })
-export class WikiComponent implements OnInit {
+export class WikiComponent implements OnInit, OnDestroy {
   pages: WikiPage[] = [];
   loading = true;
   busy = false;
@@ -152,6 +154,7 @@ export class WikiComponent implements OnInit {
   rendered: SafeHtml = '';
   draftRendered: SafeHtml = '';
   canManage = false;
+  private pageUnsub?: () => void;   // live-refresh subscription for the open page
 
   constructor(
     private svc: WikiService,
@@ -159,7 +162,10 @@ export class WikiComponent implements OnInit {
     private toast: ToastService,
     private t: TranslateService,
     private sanitizer: DomSanitizer
-  , private cdr: ChangeDetectorRef, private route: ActivatedRoute) {}
+  , private cdr: ChangeDetectorRef, private route: ActivatedRoute,
+    private realtime: RealtimeService, private auth: AuthService) {}
+
+  ngOnDestroy(): void { if (this.pageUnsub) this.pageUnsub(); }
 
   ngOnInit(): void {
     this.canManage = this.perm.has('wiki.manage');
@@ -231,6 +237,39 @@ export class WikiComponent implements OnInit {
       next: full => { this.selected = full; this.rendered = this.render(full.content || ''); },
       error: () => { this.rendered = this.render(p.content || ''); }
     });
+    this.subscribeToPage(p.id!);
+  }
+
+  /** Live-refresh: listen for saves/deletes to the open page by other users. */
+  private subscribeToPage(pageId: number): void {
+    if (this.pageUnsub) this.pageUnsub();
+    this.pageUnsub = this.realtime.subscribe('/topic/wiki-page/' + pageId, (evt: any) => this.onPageEvent(pageId, evt));
+  }
+
+  private onPageEvent(pageId: number, evt: any): void {
+    // Ignore our own changes and anything for a page we're no longer viewing.
+    const myId = this.auth.getCurrentUser()?.id;
+    if (!evt || evt.byId === myId || this.selected?.id !== pageId) return;
+    const who = evt.byName || this.t.instant('wiki.someone');
+    if (evt.type === 'deleted') {
+      this.toast.error(this.t.instant('wiki.liveDeleted', { name: who }));
+      this.selected = null;
+      this.load();
+      return;
+    }
+    // 'updated'
+    if (this.editing) {
+      // Don't clobber their in-progress edit; the save-time conflict guard covers the overwrite.
+      this.toast.show(this.t.instant('wiki.liveUpdatedEditing', { name: who }), 'info');
+    } else {
+      this.svc.get(pageId).subscribe({
+        next: full => {
+          if (this.selected?.id === pageId) { this.selected = full; this.rendered = this.render(full.content || ''); this.cdr.detectChanges(); }
+          this.toast.show(this.t.instant('wiki.liveUpdated', { name: who }), 'info');
+        },
+        error: () => {}
+      });
+    }
   }
 
   // ── CRUD ──
@@ -261,7 +300,16 @@ export class WikiComponent implements OnInit {
     this.busy = true;
     this.svc.update(this.selected.id, this.draft).subscribe({
       next: () => { this.busy = false; this.editing = false; this.toast.success(this.t.instant('wiki.saved')); this.load(this.selected!.id); },
-      error: (e: any) => { this.busy = false; this.toast.error(e?.error?.message || this.t.instant('wiki.saveFailed')); }
+      error: (e: any) => {
+        this.busy = false;
+        // 409 = a co-editor saved since we opened the page. Keep the user's draft (don't discard
+        // their work) and surface the conflict so they can reload and re-apply their changes.
+        if (e?.status === 409) {
+          this.toast.error(e?.error?.message || this.t.instant('wiki.conflict'));
+        } else {
+          this.toast.error(e?.error?.message || this.t.instant('wiki.saveFailed'));
+        }
+      }
     });
   }
 

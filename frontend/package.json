@@ -21,8 +21,11 @@
     "@angular/service-worker": "^21.2.13",
     "@ngx-translate/core": "^18.0.0",
     "@ngx-translate/http-loader": "^18.0.0",
+    "@stomp/stompjs": "^7.3.0",
+    "@types/sockjs-client": "^1.5.4",
     "qrcode": "^1.5.4",
     "rxjs": "~7.8.0",
+    "sockjs-client": "^1.6.1",
     "tslib": "^2.3.0",
     "zone.js": "^0.16.2"
   },

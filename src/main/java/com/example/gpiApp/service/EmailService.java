@@ -18,6 +18,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private final BrevoEmailClient brevoClient;
+    private final EmailTemplateService templateService;
 
     @Value("${spring.mail.from:noreply@taskmanagement.com}")
     private String fromEmail;
@@ -35,16 +36,29 @@ public class EmailService {
      * (JavaMailSender). Centralises delivery so every notification benefits from both paths.
      */
     private void dispatch(String to, String subject, String body) {
+        String html = templateService.render(subject, body);
         if (brevoClient.isEnabled()) {
-            brevoClient.send(to, subject, body);
+            brevoClient.send(to, subject, body, html);
             return;
         }
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromEmail);
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(body);
-        mailSender.send(message);
+        try {
+            jakarta.mail.internet.MimeMessage message = mailSender.createMimeMessage();
+            org.springframework.mail.javamail.MimeMessageHelper helper =
+                    new org.springframework.mail.javamail.MimeMessageHelper(message, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body, html); // plain-text + branded HTML (multipart/alternative)
+            mailSender.send(message);
+        } catch (Exception e) {
+            // Fall back to a plain-text message if MIME assembly/HTML fails for any reason.
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(body);
+            mailSender.send(message);
+        }
     }
 
     /** Whether any email provider (Brevo or SMTP) is configured. */
@@ -66,6 +80,48 @@ public class EmailService {
                 "This is a test email from TaskMaster Pro.\n\n"
                         + "If you received this, your email provider (" + activeProvider()
                         + ") is configured correctly and notifications (invitations, password resets, etc.) will be delivered.");
+    }
+
+    /** Send an email with a single file attachment (used for scheduled report exports). */
+    @Async
+    public void sendReport(String recipientEmail, String subject, String body, String filename, byte[] attachment) {
+        if (!canSend()) {
+            log.info("Email service is disabled. Skipping report '{}' to {}.", filename, recipientEmail);
+            return;
+        }
+        try {
+            if (brevoClient.isEnabled()) {
+                brevoClient.sendWithAttachment(recipientEmail, subject, body, filename, attachment);
+            } else {
+                jakarta.mail.internet.MimeMessage msg = mailSender.createMimeMessage();
+                org.springframework.mail.javamail.MimeMessageHelper helper =
+                        new org.springframework.mail.javamail.MimeMessageHelper(msg, true);
+                helper.setFrom(fromEmail);
+                helper.setTo(recipientEmail);
+                helper.setSubject(subject);
+                helper.setText(body);
+                helper.addAttachment(filename, new org.springframework.core.io.ByteArrayResource(attachment));
+                mailSender.send(msg);
+            }
+            log.info("Report '{}' emailed to {}", filename, recipientEmail);
+        } catch (Exception e) {
+            log.error("Failed to send report '{}' to {}: {}", filename, recipientEmail, e.getMessage());
+        }
+    }
+
+    /** Daily digest of a user's unread notifications. Body is pre-formatted by the digest service. */
+    @Async
+    public void sendDigest(String recipientEmail, String subject, String body) {
+        if (!canSend()) {
+            log.info("Email service is disabled. Skipping digest for {}.", recipientEmail);
+            return;
+        }
+        try {
+            dispatch(recipientEmail, subject, body);
+            log.info("Daily digest email sent to {}", recipientEmail);
+        } catch (Exception e) {
+            log.error("Failed to send digest email to {}: {}", recipientEmail, e.getMessage());
+        }
     }
 
     @Async

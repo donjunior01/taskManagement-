@@ -45,6 +45,13 @@ public class WikiService {
     @Transactional
     public WikiPage update(Long id, WikiPage patch, allUsers actor) {
         WikiPage p = getOwned(id);
+        // Optimistic concurrency: if the page changed since the editor loaded it (their baseline
+        // updatedAt is older than what's stored), reject rather than silently overwrite a co-editor.
+        if (patch.getUpdatedAt() != null && p.getUpdatedAt() != null && p.getUpdatedAt().isAfter(patch.getUpdatedAt())) {
+            String who = p.getUpdatedByName() != null ? p.getUpdatedByName() : "someone else";
+            throw new com.example.gpiApp.exception.ConflictException(
+                    "This page was updated by " + who + " since you opened it. Reload to see their changes before saving.");
+        }
         if (patch.getTitle() != null) p.setTitle(patch.getTitle());
         p.setContent(patch.getContent());
         p.setParentId(patch.getParentId());

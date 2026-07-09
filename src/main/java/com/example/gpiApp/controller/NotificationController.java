@@ -24,6 +24,14 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     private final UserRepository userRepository;
+    private final com.example.gpiApp.service.NotificationDigestService digestService;
+
+    /** Admin: run the daily digest now (instead of waiting for the scheduled job). Returns emails sent. */
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/send-digests")
+    public ResponseEntity<ApiResponse<Integer>> sendDigests() {
+        return ResponseEntity.ok(ApiResponse.success("Digests sent", digestService.sendDailyDigests()));
+    }
 
     @GetMapping
     public ResponseEntity<PagedResponse<NotificationDTO>> getNotifications(

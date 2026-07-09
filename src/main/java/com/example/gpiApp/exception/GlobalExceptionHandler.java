@@ -26,4 +26,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(ApiResponse.error(ex.getMessage() != null ? ex.getMessage() : "Invalid request"));
     }
+
+    /** Concurrent-edit conflict (e.g. a wiki page changed since it was opened) → 409 with the message. */
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConflict(ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ex.getMessage() != null ? ex.getMessage() : "Conflict"));
+    }
 }

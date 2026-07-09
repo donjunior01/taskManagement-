@@ -23,6 +23,7 @@ public class UserNotificationPreferencesDTO {
     private Boolean projectUpdateNotifications;
     private Boolean commentNotifications;
     private Boolean messageNotifications;
+    private Boolean dailyDigest;
     private Integer deadlineReminderHours;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

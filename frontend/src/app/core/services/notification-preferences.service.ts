@@ -11,6 +11,7 @@ export interface NotificationPreference {
   taskUpdates: boolean;
   mentions: boolean;
   systemAlerts: boolean;
+  dailyDigest?: boolean;
 }
 
 @Injectable({

@@ -23,6 +23,7 @@
     "loginAttempts": "Login Attempts",
     "activityLogs": "Activity Log",
     "reports": "Global Reports",
+    "scheduledReports": "Scheduled Reports",
     "performance": "Performance",
     "notifications": "Notifications",
     "settings": "Configuration",
@@ -34,6 +35,7 @@
     "calendar": "Calendar",
     "pmReports": "Reports",
     "analytics2": "Analytics",
+    "customDash": "My Dashboard",
     "messages": "Messages",
     "myTasks": "My Tasks",
     "timeLogs": "Time Tracking",
@@ -59,6 +61,7 @@
     "adminSubtitle": "Administrator view · global access",
     "searchPlaceholder": "Search...",
     "noResults": "No results for",
+    "dailyDigest": "Daily email digest",
     "notifications": "Notifications",
     "messages": "Messages",
     "markAllRead": "Mark all as read",
@@ -686,6 +689,30 @@
       "toastTeamNameRequired": "Team name and project are required.",
       "toastTeamCreated": "Team « {{name}} » created.",
       "toastTeamCreatedLocal": "Team created locally."
+    },
+    "customDash": {
+      "title": "My Dashboard",
+      "subtitle": "Pick and reorder the metrics you want to see. Your layout is saved.",
+      "customize": "Customize",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saved": "Dashboard saved",
+      "saveFailed": "Could not save the dashboard",
+      "empty": "No metrics selected. Click “Customize” to add some.",
+      "editHint": "Tick the metrics to show, then reorder them with the arrows.",
+      "w": {
+        "totalProjects": "Projects",
+        "totalTasks": "Total tasks",
+        "completedTasks": "Completed tasks",
+        "openTasks": "Open tasks",
+        "overdueTasks": "Overdue tasks",
+        "inProgressTasks": "In progress",
+        "todoTasks": "To do",
+        "onHoldTasks": "On hold",
+        "onTimeCompletionRate": "On-time rate",
+        "avgCompletionDays": "Avg. completion (days)",
+        "velocityLast4Weeks": "Velocity (4 wks)"
+      }
     },
     "analytics": {
       "trendTitle": "Weekly trend",
@@ -2179,6 +2206,42 @@
       "toastChanged": "Plan changed to {{plan}}.",
       "toastFailed": "Failed to change plan."
     },
+    "scheduledReports": {
+      "title": "Scheduled reports",
+      "subtitle": "Schedule CSV reports to be emailed automatically on a recurring cadence.",
+      "new": "New scheduled report",
+      "editTitle": "Edit scheduled report",
+      "empty": "No scheduled reports yet. Create one to receive regular exports by email.",
+      "name": "Name",
+      "namePh": "e.g. Weekly tasks",
+      "typeName": "Report type",
+      "frequency": "Frequency",
+      "recipients": "Recipients (comma-separated emails)",
+      "recipientsPh": "alice@example.com, bob@example.com",
+      "enabledLabel": "Enabled",
+      "on": "On",
+      "off": "Off",
+      "lastRun": "Last sent",
+      "never": "never",
+      "sendNow": "Send now",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saved": "Scheduled report saved",
+      "deleted": "Scheduled report deleted",
+      "sent": "Report sent",
+      "failed": "The operation failed",
+      "type": {
+        "tasks-csv": "Tasks (CSV)",
+        "projects-csv": "Projects (CSV)"
+      },
+      "freq": {
+        "DAILY": "Daily",
+        "WEEKLY": "Weekly (Monday)",
+        "MONTHLY": "Monthly (1st)"
+      }
+    },
     "automations": {
       "title": "Automations",
       "subtitle": "When something happens, automatically do something else.",
@@ -2602,7 +2665,12 @@
     "editedBy": "Edited by {{name}}",
     "saved": "Page saved",
     "deleted": "Page deleted",
-    "saveFailed": "Could not save the page"
+    "saveFailed": "Could not save the page",
+    "conflict": "This page was changed since you opened it. Reload to see the latest before saving.",
+    "someone": "someone",
+    "liveUpdated": "Page updated by {{name}} — content refreshed.",
+    "liveUpdatedEditing": "{{name}} edited this page. Your changes are kept; reload before saving to avoid a conflict.",
+    "liveDeleted": "This page was deleted by {{name}}."
   },
   "okr": {
     "title": "OKRs",

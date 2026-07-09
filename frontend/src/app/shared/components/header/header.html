@@ -315,6 +315,9 @@
             <input type="checkbox" name="emailNotif" [(ngModel)]="prefsForm.emailNotifications"> Notifications par email
           </label>
           <label style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" name="dailyDigest" [(ngModel)]="prefsForm.dailyDigest"> {{ 'header.dailyDigest' | translate }}
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px;">
             <input type="checkbox" name="pushNotif" [(ngModel)]="prefsForm.pushNotifications"> Notifications push
           </label>
           <label style="display: flex; align-items: center; gap: 10px;">
