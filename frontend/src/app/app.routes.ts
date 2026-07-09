@@ -32,6 +32,7 @@ export const routes: Routes = [
       { path: 'activity-logs', loadComponent: () => import('./features/admin/activity-logs/activity-logs').then(m => m.AdminActivityLogsComponent) },
       { path: 'reports', loadComponent: () => import('./features/admin/reports/reports').then(m => m.AdminReportsComponent) },
       { path: 'scheduled-reports', loadComponent: () => import('./features/admin/scheduled-reports/scheduled-reports').then(m => m.ScheduledReportsComponent) },
+      { path: 'import', loadComponent: () => import('./features/admin/import/import').then(m => m.ImportComponent) },
       { path: 'performance', loadComponent: () => import('./features/admin/performance/performance').then(m => m.AdminPerformanceComponent) },
       { path: 'notifications', loadComponent: () => import('./features/project-manager/notifications/notifications').then(m => m.PmNotificationsComponent) },
       { path: 'settings', loadComponent: () => import('./features/admin/settings/settings').then(m => m.AdminSettingsComponent) },

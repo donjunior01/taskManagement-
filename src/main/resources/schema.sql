@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS `webhook_subscriptions` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `organization_id` BIGINT DEFAULT 1,
     `url` VARCHAR(500) NOT NULL,
+    `type` VARCHAR(20) DEFAULT 'GENERIC',
     `secret` VARCHAR(120),
     `active` BOOLEAN NOT NULL DEFAULT TRUE,
     `created_at` DATETIME,
@@ -85,6 +86,7 @@ CREATE TABLE IF NOT EXISTS `webhook_subscriptions` (
     `last_delivery_at` DATETIME,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ALTER TABLE `webhook_subscriptions` ADD COLUMN `type` VARCHAR(20) DEFAULT 'GENERIC';
 CREATE TABLE IF NOT EXISTS `webhook_events` (
     `subscription_id` BIGINT NOT NULL,
     `event` VARCHAR(80) NOT NULL,

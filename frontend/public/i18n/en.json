@@ -1,4 +1,7 @@
 {
+  "pwa": {
+    "updateAvailable": "A new version of TaskMaster Pro is available. Reload to update?"
+  },
   "nav": {
     "section": {
       "administration": "Administration",
@@ -24,6 +27,7 @@
     "activityLogs": "Activity Log",
     "reports": "Global Reports",
     "scheduledReports": "Scheduled Reports",
+    "import": "Import",
     "performance": "Performance",
     "notifications": "Notifications",
     "settings": "Configuration",
@@ -2180,6 +2184,10 @@
       "delete": "Delete",
       "empty": "No webhooks configured.",
       "editHook": "Edit webhook",
+      "type": "Type",
+      "typeGeneric": "Generic webhook (JSON)",
+      "typeSlack": "Slack",
+      "slackHint": "In Slack: create an Incoming Webhook at api.slack.com, pick a channel, and paste the generated URL here. Selected events will be posted there as messages.",
       "url": "Destination URL",
       "events": "Events",
       "secret": "Signing secret",
@@ -2205,6 +2213,28 @@
       "note": "Payment isn't wired up yet — changing the plan only adjusts quotas for now.",
       "toastChanged": "Plan changed to {{plan}}.",
       "toastFailed": "Failed to change plan."
+    },
+    "import": {
+      "title": "Import data",
+      "subtitle": "Migrate from another tool by creating a project from an export file.",
+      "trelloHow": "In Trello: Menu ▸ More ▸ Print and export ▸ Export as JSON. Upload the .json file here — a new project will be created with its cards as tasks.",
+      "asanaHow": "In Asana: open a project ▸ menu ▸ Export ▸ CSV. Upload the .csv file here — each row becomes a task (name, notes, due date, status from its section).",
+      "jiraHow": "In Jira: open a filter/backlog ▸ Export ▸ CSV. Upload the .csv file here — each issue becomes a task (summary, description, due date, status and priority).",
+      "projectName": "Project name",
+      "projectNamePh": "e.g. Website redesign",
+      "chooseCsv": "Choose a .csv file",
+      "csvPreview": "≈ {{rows}} row(s) ready to import.",
+      "badCsv": "Empty or unreadable CSV file.",
+      "chooseFile": "Choose a .json file",
+      "preview": "“{{name}}” — {{cards}} card(s) ready to import.",
+      "badFile": "Could not read the file. Make sure you exported the board as JSON.",
+      "untitled": "Untitled board",
+      "import": "Import",
+      "importing": "Importing…",
+      "done": "Imported {{tasks}} task(s) into project “{{project}}”.",
+      "skipped": "{{n}} archived card(s) skipped.",
+      "openProject": "Open project",
+      "failed": "Import failed"
     },
     "scheduledReports": {
       "title": "Scheduled reports",

@@ -22,6 +22,7 @@ import { ToastService } from '../../../core/services/toast.service';
     <div class="wh-grid" *ngIf="!loading">
       <div class="wh-card" *ngFor="let w of hooks" [class.off]="!w.active">
         <div class="wh-card-head">
+          <span class="wh-type" *ngIf="w.type === 'SLACK'">Slack</span>
           <code class="wh-url">{{ w.url }}</code>
           <span class="badge" [class.on]="w.active">{{ (w.active ? 'admin.webhooks.active' : 'admin.webhooks.paused') | translate }}</span>
         </div>
@@ -50,8 +51,14 @@ import { ToastService } from '../../../core/services/toast.service';
   <div class="wh-backdrop" *ngIf="showModal" (click)="close()">
     <div class="wh-modal" (click)="$event.stopPropagation()">
       <h3>{{ (editing ? 'admin.webhooks.editHook' : 'admin.webhooks.newHook') | translate }}</h3>
+      <label class="wh-label">{{ 'admin.webhooks.type' | translate }}</label>
+      <select class="wh-input" [(ngModel)]="form.type">
+        <option value="GENERIC">{{ 'admin.webhooks.typeGeneric' | translate }}</option>
+        <option value="SLACK">{{ 'admin.webhooks.typeSlack' | translate }}</option>
+      </select>
       <label class="wh-label">{{ 'admin.webhooks.url' | translate }}</label>
-      <input class="wh-input" [(ngModel)]="form.url" placeholder="https://example.com/hooks/gpi" />
+      <input class="wh-input" [(ngModel)]="form.url" [placeholder]="form.type === 'SLACK' ? 'https://hooks.slack.com/services/…' : 'https://example.com/hooks/gpi'" />
+      <p class="wh-hint" *ngIf="form.type === 'SLACK'">{{ 'admin.webhooks.slackHint' | translate }}</p>
       <label class="wh-label">{{ 'admin.webhooks.events' | translate }}</label>
       <div class="wh-event-list">
         <label class="wh-event" *ngFor="let e of catalog">
@@ -92,6 +99,8 @@ import { ToastService } from '../../../core/services/toast.service';
     .wh-modal { width: 100%; max-width: 520px; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--bg-card); border-radius: 16px; padding: 20px 22px; box-shadow: 0 24px 60px rgba(15,23,42,.3); }
     .wh-modal h3 { font-size: 16px; font-weight: 700; margin: 0 0 12px; color: var(--text-primary); }
     .wh-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); margin: 10px 0 5px; }
+    .wh-hint { font-size: 12px; color: var(--text-muted); margin: 6px 0 0; line-height: 1.4; }
+    .wh-type { background: #4a154b; color: #fff; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 5px; }
     .wh-input { width: 100%; box-sizing: border-box; height: 40px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13.5px; outline: none; font-family: inherit; }
     .wh-event-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; border: 1px solid var(--border-light); border-radius: 10px; padding: 10px; }
     .wh-event { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-primary); }
@@ -107,7 +116,7 @@ export class AdminWebhooksComponent implements OnInit {
   showModal = false;
   editing: Webhook | null = null;
   busy = false;
-  form: Webhook = { url: '', events: [], active: true };
+  form: Webhook = { url: '', type: 'GENERIC', events: [], active: true };
 
   constructor(private svc: WebhookService, private toast: ToastService, private translate: TranslateService, private cdr: ChangeDetectorRef) {}
 
@@ -124,8 +133,8 @@ export class AdminWebhooksComponent implements OnInit {
     });
   }
 
-  openCreate(): void { this.editing = null; this.form = { url: '', events: [], active: true }; this.showModal = true; }
-  openEdit(w: Webhook): void { this.editing = w; this.form = { id: w.id, url: w.url, secret: w.secret, events: [...w.events], active: w.active }; this.showModal = true; }
+  openCreate(): void { this.editing = null; this.form = { url: '', type: 'GENERIC', events: [], active: true }; this.showModal = true; }
+  openEdit(w: Webhook): void { this.editing = w; this.form = { id: w.id, url: w.url, type: w.type || 'GENERIC', secret: w.secret, events: [...w.events], active: w.active }; this.showModal = true; }
   close(): void { this.showModal = false; }
   toggleEvent(e: string): void { const i = this.form.events.indexOf(e); if (i >= 0) this.form.events.splice(i, 1); else this.form.events.push(e); }
 

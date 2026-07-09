@@ -33,12 +33,12 @@ public class WebhookDispatcher {
 
     @Async
     @Transactional
-    public void deliver(Long organizationId, String event, String jsonBody) {
+    public void deliver(Long organizationId, String event, String jsonBody, String slackText) {
         if (organizationId == null) return;
         List<WebhookSubscription> subs = subscriptionRepository.findByOrganizationIdAndActiveTrue(organizationId);
         for (WebhookSubscription sub : subs) {
             if (sub.getEvents() == null || !sub.getEvents().contains(event)) continue;
-            int status = post(sub, jsonBody);
+            int status = post(sub, bodyFor(sub, jsonBody, slackText));
             sub.setLastStatus(status);
             sub.setLastDeliveryAt(LocalDateTime.now());
             subscriptionRepository.save(sub);
@@ -48,12 +48,25 @@ public class WebhookDispatcher {
     /** Deliver a one-off test payload to a single subscription (ignores event filtering). */
     @Async
     @Transactional
-    public void testDeliver(Long subscriptionId, String jsonBody) {
+    public void testDeliver(Long subscriptionId, String jsonBody, String slackText) {
         subscriptionRepository.findById(subscriptionId).ifPresent(sub -> {
-            sub.setLastStatus(post(sub, jsonBody));
+            sub.setLastStatus(post(sub, bodyFor(sub, jsonBody, slackText)));
             sub.setLastDeliveryAt(LocalDateTime.now());
             subscriptionRepository.save(sub);
         });
+    }
+
+    /** Slack subscriptions receive a Slack message ({"text": ...}); everyone else gets the raw JSON. */
+    private String bodyFor(WebhookSubscription sub, String jsonBody, String slackText) {
+        return "SLACK".equals(sub.getType()) ? slackBody(slackText) : jsonBody;
+    }
+
+    /** Build a Slack incoming-webhook body with the text safely JSON-encoded. */
+    public static String slackBody(String text) {
+        com.fasterxml.jackson.databind.node.ObjectNode node =
+                new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode();
+        node.put("text", text == null ? "" : text);
+        return node.toString();
     }
 
     /** POST with one quick retry; returns the HTTP status (or -1 on transport failure). */

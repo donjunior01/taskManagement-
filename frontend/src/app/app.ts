@@ -8,6 +8,7 @@ import { CommandPaletteComponent } from './shared/components/command-palette/com
 import { BrandingService } from './core/services/branding.service';
 import { IdleTimeoutService } from './core/services/idle-timeout.service';
 import { ThemeService } from './core/services/theme.service';
+import { PwaUpdateService } from './core/services/pwa-update.service';
 
 @Component({
   selector: 'app-root',
@@ -18,12 +19,15 @@ import { ThemeService } from './core/services/theme.service';
 export class App {
   protected readonly title = signal('frontend');
 
-  constructor(private branding: BrandingService, private idle: IdleTimeoutService, private theme: ThemeService) {
+  constructor(private branding: BrandingService, private idle: IdleTimeoutService, private theme: ThemeService,
+              private pwaUpdate: PwaUpdateService) {
     // Load the admin-configured app name / logo / PDF colours app-wide (public endpoint).
     this.branding.load();
     // Start the inactivity watchdog (logs out after a period of no activity).
     this.idle.start();
     // ThemeService applies the saved/OS theme to <html> on construction.
     void this.theme;
+    // Prompt to reload when the service worker has a new version ready (installed PWAs).
+    this.pwaUpdate.init();
   }
 }

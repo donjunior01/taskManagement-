@@ -63,4 +63,13 @@ public class PlanService {
         PlanCatalog.Plan plan = PlanCatalog.get(org != null ? org.getPlan() : "ENTERPRISE");
         return PlanCatalog.withinLimit((int) userRepository.countByOrganizationId(orgId), plan.maxUsers);
     }
+
+    /** Whether the given tenant can still create a project under its plan's project limit. */
+    @Transactional(readOnly = true)
+    public boolean canAddProject(Long orgId) {
+        if (orgId == null) return true;
+        Organization org = organizationRepository.findById(orgId).orElse(null);
+        PlanCatalog.Plan plan = PlanCatalog.get(org != null ? org.getPlan() : "ENTERPRISE");
+        return PlanCatalog.withinLimit((int) projectRepository.countByOrganizationId(orgId), plan.maxProjects);
+    }
 }

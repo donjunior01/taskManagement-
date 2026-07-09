@@ -15,6 +15,7 @@ import java.util.Set;
 public class WebhookDTO {
     private Long id;
     private String url;
+    private String type;
     private String secret;
     private Set<String> events;
     private boolean active;

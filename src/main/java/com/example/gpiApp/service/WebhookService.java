@@ -54,8 +54,18 @@ public class WebhookService {
                     "timestamp", LocalDateTime.now().toString(),
                     "data", payload != null ? payload : Map.of());
             String json = MAPPER.writeValueAsString(envelope);
-            dispatcher.deliver(org, event, json);
+            dispatcher.deliver(org, event, json, buildSlackText(event, payload));
         } catch (Exception ignore) { /* delivery is best-effort */ }
+    }
+
+    /** Human-readable one-liner for Slack-type subscriptions (Slack renders *bold* and :emoji:). */
+    public static String buildSlackText(String event, Map<String, Object> payload) {
+        Object name = payload != null ? payload.get("name") : null;
+        return ":bell: *" + event + "*" + (name != null ? " — " + name : "");
+    }
+
+    private static String normalizeType(String type) {
+        return "SLACK".equalsIgnoreCase(type) ? "SLACK" : "GENERIC";
     }
 
     @Transactional(readOnly = true)
@@ -69,10 +79,14 @@ public class WebhookService {
 
     @Transactional
     public WebhookDTO create(WebhookDTO dto) {
+        String type = normalizeType(dto.getType());
         WebhookSubscription sub = WebhookSubscription.builder()
                 .url(dto.getUrl())
-                .secret(dto.getSecret() != null && !dto.getSecret().isBlank()
-                        ? dto.getSecret() : "whsec_" + UUID.randomUUID().toString().replace("-", ""))
+                .type(type)
+                // Slack incoming webhooks don't verify our HMAC, so only generic subscriptions get a secret.
+                .secret("SLACK".equals(type) ? null
+                        : (dto.getSecret() != null && !dto.getSecret().isBlank()
+                            ? dto.getSecret() : "whsec_" + UUID.randomUUID().toString().replace("-", "")))
                 .events(sanitize(dto.getEvents()))
                 .active(true)
                 .build();
@@ -83,6 +97,7 @@ public class WebhookService {
     public WebhookDTO update(Long id, WebhookDTO dto) {
         WebhookSubscription sub = getOwned(id);
         if (dto.getUrl() != null) sub.setUrl(dto.getUrl());
+        if (dto.getType() != null) sub.setType(normalizeType(dto.getType()));
         if (dto.getEvents() != null) sub.setEvents(sanitize(dto.getEvents()));
         sub.setActive(dto.isActive());
         return toDTO(subscriptionRepository.save(sub));
@@ -99,7 +114,7 @@ public class WebhookService {
             String json = MAPPER.writeValueAsString(Map.of(
                     "event", "ping", "organizationId", sub.getOrganizationId() != null ? sub.getOrganizationId() : 0,
                     "timestamp", LocalDateTime.now().toString(), "data", Map.of("message", "Test delivery")));
-            dispatcher.testDeliver(sub.getId(), json);
+            dispatcher.testDeliver(sub.getId(), json, ":bell: *TaskMaster Pro* — test delivery");
         } catch (Exception ignore) { }
     }
 
@@ -120,7 +135,7 @@ public class WebhookService {
 
     private WebhookDTO toDTO(WebhookSubscription s) {
         return WebhookDTO.builder()
-                .id(s.getId()).url(s.getUrl()).secret(s.getSecret())
+                .id(s.getId()).url(s.getUrl()).type(s.getType()).secret(s.getSecret())
                 .events(s.getEvents() != null ? new HashSet<>(s.getEvents()) : new HashSet<>())
                 .active(s.isActive()).lastStatus(s.getLastStatus()).lastDeliveryAt(s.getLastDeliveryAt())
                 .createdAt(s.getCreatedAt()).build();

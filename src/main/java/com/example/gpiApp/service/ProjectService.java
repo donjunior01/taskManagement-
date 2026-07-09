@@ -29,6 +29,7 @@ public class ProjectService {
     private final ActivityLogService activityLogService;
     private final CalendarService calendarService;
     private final AuthorizationService authorizationService;
+    private final PlanService planService;
 
     public ProjectService(ProjectRepository projectRepository,
                           UserRepository userRepository,
@@ -36,7 +37,8 @@ public class ProjectService {
                           TeamRepository teamRepository,
                           ActivityLogService activityLogService,
                           CalendarService calendarService,
-                          AuthorizationService authorizationService) {
+                          AuthorizationService authorizationService,
+                          PlanService planService) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.taskRepository = taskRepository;
@@ -44,6 +46,7 @@ public class ProjectService {
         this.activityLogService = activityLogService;
         this.calendarService = calendarService;
         this.authorizationService = authorizationService;
+        this.planService = planService;
     }
     
     @Transactional(readOnly = true)
@@ -82,6 +85,11 @@ public class ProjectService {
     
     @Transactional
     public ApiResponse<ProjectDTO> createProject(ProjectRequestDTO request, Long createdById) {
+        // Plan enforcement: refuse to exceed the tenant's project limit (default tenant is unlimited).
+        if (!planService.canAddProject(com.example.gpiApp.config.security.TenantContext.getOrganizationId())) {
+            return ApiResponse.error("Your plan's project limit has been reached. Upgrade to add more projects.");
+        }
+
         Project project = new Project();
         project.setName(request.getName());
         project.setDescription(request.getDescription());

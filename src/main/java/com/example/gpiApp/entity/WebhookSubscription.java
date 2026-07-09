@@ -35,7 +35,12 @@ public class WebhookSubscription implements TenantOwned {
     @Column(nullable = false, length = 500)
     private String url;
 
-    /** Shared secret used to HMAC-sign payloads. */
+    /** Delivery format: "GENERIC" posts the raw JSON envelope; "SLACK" posts a Slack {text} message. */
+    @Column(name = "type", length = 20)
+    @Builder.Default
+    private String type = "GENERIC";
+
+    /** Shared secret used to HMAC-sign payloads (GENERIC only). */
     @Column(name = "secret", length = 120)
     private String secret;
 

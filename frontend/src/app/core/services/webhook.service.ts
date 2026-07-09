@@ -5,6 +5,7 @@ import { ApiService } from './api.service';
 export interface Webhook {
   id?: number;
   url: string;
+  type?: 'GENERIC' | 'SLACK';
   secret?: string;
   events: string[];
   active: boolean;

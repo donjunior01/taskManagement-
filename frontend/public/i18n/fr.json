@@ -1,4 +1,7 @@
 {
+  "pwa": {
+    "updateAvailable": "Une nouvelle version de TaskMaster Pro est disponible. Recharger pour mettre à jour ?"
+  },
   "nav": {
     "section": {
       "administration": "Administration",
@@ -24,6 +27,7 @@
     "activityLogs": "Journal d'Activité",
     "reports": "Rapports Globaux",
     "scheduledReports": "Rapports planifiés",
+    "import": "Importer",
     "performance": "Performance",
     "notifications": "Notifications",
     "settings": "Configuration",
@@ -2180,6 +2184,10 @@
       "delete": "Supprimer",
       "empty": "Aucun webhook configuré.",
       "editHook": "Modifier le webhook",
+      "type": "Type",
+      "typeGeneric": "Webhook générique (JSON)",
+      "typeSlack": "Slack",
+      "slackHint": "Dans Slack : créez une « Incoming Webhook » sur api.slack.com, choisissez un canal et collez l'URL fournie ici. Les événements sélectionnés y seront publiés sous forme de messages.",
       "url": "URL de destination",
       "events": "Événements",
       "secret": "Secret de signature",
@@ -2205,6 +2213,28 @@
       "note": "Le paiement n'est pas encore intégré — le changement de plan ajuste uniquement les quotas pour l'instant.",
       "toastChanged": "Plan changé pour {{plan}}.",
       "toastFailed": "Échec du changement de plan."
+    },
+    "import": {
+      "title": "Importer des données",
+      "subtitle": "Migrez depuis un autre outil en créant un projet à partir d'un export.",
+      "trelloHow": "Dans Trello : Menu ▸ Plus ▸ Imprimer et exporter ▸ Exporter en JSON. Téléversez le fichier .json ici — un nouveau projet sera créé avec ses cartes comme tâches.",
+      "asanaHow": "Dans Asana : ouvrez un projet ▸ menu ▸ Exporter ▸ CSV. Téléversez le fichier .csv ici — chaque ligne devient une tâche (nom, notes, échéance, statut selon la section).",
+      "jiraHow": "Dans Jira : ouvrez un filtre/backlog ▸ Exporter ▸ CSV. Téléversez le fichier .csv ici — chaque ticket devient une tâche (résumé, description, échéance, statut et priorité).",
+      "projectName": "Nom du projet",
+      "projectNamePh": "ex. Refonte du site",
+      "chooseCsv": "Choisir un fichier .csv",
+      "csvPreview": "≈ {{rows}} ligne(s) prête(s) à importer.",
+      "badCsv": "Fichier CSV vide ou illisible.",
+      "chooseFile": "Choisir un fichier .json",
+      "preview": "« {{name}} » — {{cards}} carte(s) prête(s) à importer.",
+      "badFile": "Fichier illisible. Assurez-vous d'exporter le tableau au format JSON.",
+      "untitled": "Tableau sans nom",
+      "import": "Importer",
+      "importing": "Import en cours…",
+      "done": "{{tasks}} tâche(s) importée(s) dans le projet « {{project}} ».",
+      "skipped": "{{n}} carte(s) archivée(s) ignorée(s).",
+      "openProject": "Ouvrir le projet",
+      "failed": "L'import a échoué"
     },
     "scheduledReports": {
       "title": "Rapports planifiés",
